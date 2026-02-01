@@ -1,0 +1,15 @@
+-- ============================================================
+-- V1: 초기 스키마 생성
+-- ⚠️ Flyway로 스키마를 관리합니다. JPA DDL 자동 생성(ddl-auto=create) 절대 금지.
+-- 명명 규칙: V{버전}__{설명}.sql (언더스코어 2개)
+-- ============================================================
+
+-- 예시: 사용자 테이블 (실제 도메인에 맞게 수정 필요)
+-- CREATE TABLE users (
+--     id          BIGSERIAL PRIMARY KEY,
+--     email       VARCHAR(255) NOT NULL UNIQUE,
+--     password    VARCHAR(255) NOT NULL,
+--     created_at  TIMESTAMP NOT NULL DEFAULT NOW(),
+--     updated_at  TIMESTAMP NOT NULL DEFAULT NOW(),
+--     deleted_at  TIMESTAMP
+-- );

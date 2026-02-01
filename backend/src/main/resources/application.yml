@@ -1,0 +1,44 @@
+# ============================================================
+# 공통 설정 (모든 프로파일에 적용)
+# 프로파일별 설정은 application-{profile}.yml 에서 오버라이드
+# ============================================================
+spring:
+  application:
+    name: dear-mi-backend
+
+  # 활성 프로파일 (환경변수로 재정의 가능: SPRING_PROFILES_ACTIVE=prod)
+  profiles:
+    active: local
+
+  # JPA 공통 설정
+  jpa:
+    # ⚠️ DDL 자동 생성 절대 금지 - Flyway로 스키마 관리
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+        default_batch_fetch_size: 100
+    # SQL 로깅은 프로파일별로 조정
+    show-sql: false
+
+  # Flyway 공통 설정
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+# Actuator 엔드포인트 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# 로깅 기본 설정
+logging:
+  level:
+    com.dearmi: INFO

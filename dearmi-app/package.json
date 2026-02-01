@@ -1,0 +1,40 @@
+{
+  "name": "dearmi-app",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@react-native-community/netinfo": "^12.0.1",
+    "@react-navigation/bottom-tabs": "^7.15.9",
+    "@react-navigation/native": "^7.2.2",
+    "@react-navigation/stack": "^7.8.9",
+    "@tanstack/react-query": "^5.96.2",
+    "axios": "^1.15.0",
+    "expo": "~54.0.33",
+    "expo-constants": "^55.0.12",
+    "expo-device": "^55.0.13",
+    "expo-image-picker": "^55.0.17",
+    "expo-notifications": "^55.0.17",
+    "expo-secure-store": "^55.0.12",
+    "expo-status-bar": "~3.0.9",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-calendars": "^1.1314.0",
+    "react-native-mmkv": "^4.3.1",
+    "react-native-safe-area-context": "^5.7.0",
+    "react-native-screens": "^4.24.0",
+    "zustand": "^5.0.12"
+  },
+  "devDependencies": {
+    "@types/react": "~19.1.0",
+    "babel-plugin-module-resolver": "^5.0.3",
+    "babel-preset-expo": "^55.0.16",
+    "typescript": "~5.9.2"
+  },
+  "private": true
+}

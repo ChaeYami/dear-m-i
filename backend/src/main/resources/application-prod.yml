@@ -1,0 +1,44 @@
+# ============================================================
+# Production 환경 설정
+# ⚠️ 모든 민감 정보는 환경변수로 주입 - 하드코딩 절대 금지
+# 환경변수 주입 방법: ECS Task Definition, K8s Secret, AWS Secrets Manager 등
+# ============================================================
+spring:
+  datasource:
+    url: ${DB_URL}                  # 예: jdbc:postgresql://rds-host:5432/dearmidb
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    show-sql: false
+
+  # Flyway 운영 설정
+  flyway:
+    url: ${DB_URL}
+    user: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+# 운영 로깅 (INFO 레벨, SQL 노출 금지)
+logging:
+  level:
+    com.dearmi: INFO
+    org.hibernate.SQL: WARN
+
+# JWT 설정 (환경변수로 주입)
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiry-ms: ${JWT_ACCESS_EXPIRY_MS:3600000}     # 기본 1시간
+  refresh-token-expiry-ms: ${JWT_REFRESH_EXPIRY_MS:604800000} # 기본 7일
+
+# AWS 설정 (환경변수로 주입)
+aws:
+  region: ${AWS_REGION:ap-northeast-2}
+  s3:
+    bucket-name: ${S3_BUCKET_NAME}

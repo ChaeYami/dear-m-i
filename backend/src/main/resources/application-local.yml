@@ -1,0 +1,38 @@
+# ============================================================
+# Local 개발 환경 설정
+# ⚠️ 이 파일은 Git에 커밋되어도 되지만 실제 운영 정보는 절대 포함 금지
+# ============================================================
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/dearmidb
+    username: postgres
+    password: local1234
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      connection-timeout: 30000
+
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  # Flyway 로컬 설정
+  flyway:
+    url: jdbc:postgresql://localhost:5432/dearmidb
+    user: postgres
+    password: local1234
+
+# 로컬 환경 상세 로깅
+logging:
+  level:
+    com.dearmi: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+
+# JWT 설정 (로컬 테스트용 - 운영에서는 환경변수로 주입)
+jwt:
+  secret: local-dev-secret-key-must-be-at-least-256-bits-long-for-hs256
+  access-token-expiry-ms: 3600000    # 1시간
+  refresh-token-expiry-ms: 604800000 # 7일
