@@ -1,0 +1,30 @@
+import React from 'react';
+import { createStackNavigator } from '@react-navigation/stack';
+import { colors } from '@/constants';
+import { ScheduleTab } from '@/features/schedule/screens/ScheduleTab';
+import { ScheduleDetailScreen } from '@/features/schedule/screens/ScheduleDetailScreen';
+import { ScheduleFormScreen } from '@/features/schedule/screens/ScheduleFormScreen';
+import type { HospitalSchedule } from '@/shared/types/domain.types';
+
+export type ScheduleStackParamList = {
+  ScheduleTab: undefined;
+  ScheduleDetail: { scheduleId: number };
+  ScheduleForm: { schedule?: HospitalSchedule; defaultDate?: string } | undefined;
+};
+
+const Stack = createStackNavigator<ScheduleStackParamList>();
+
+export const ScheduleNavigator: React.FC = () => {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        cardStyle: { backgroundColor: colors.background },
+      }}
+    >
+      <Stack.Screen name="ScheduleTab" component={ScheduleTab} />
+      <Stack.Screen name="ScheduleDetail" component={ScheduleDetailScreen} />
+      <Stack.Screen name="ScheduleForm" component={ScheduleFormScreen} />
+    </Stack.Navigator>
+  );
+};

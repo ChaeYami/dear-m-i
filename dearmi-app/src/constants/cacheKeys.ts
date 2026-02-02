@@ -35,7 +35,7 @@ export const QUERY_KEYS = {
   me: () => ['me'] as const,
 
   // 일정
-  schedules: () => ['schedules'] as const,
+  monthlySchedules: (year: number, month: number) => ['schedules', year, month] as const,
   schedule: (id: number) => ['schedule', id] as const,
 
   // 상담 기록

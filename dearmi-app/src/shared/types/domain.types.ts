@@ -24,11 +24,22 @@ export interface HospitalSchedule {
   id: number;
   hospitalName: string;
   doctorName?: string;
-  scheduledAt: string;
+  scheduledAt: string; // ISO 8601 datetime
   memo?: string;
   createdAt: string;
   updatedAt: string;
 }
+
+/** 일정 생성 요청 */
+export interface CreateScheduleRequest {
+  hospitalName: string;
+  doctorName?: string;
+  scheduledAt: string; // ISO 8601 datetime
+  memo?: string;
+}
+
+/** 일정 수정 요청 */
+export type UpdateScheduleRequest = Partial<CreateScheduleRequest>;
 
 /** 상담 기록 */
 export interface CounselingRecord {

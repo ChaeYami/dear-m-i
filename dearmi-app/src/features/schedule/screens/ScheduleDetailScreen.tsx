@@ -1,0 +1,230 @@
+import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  SafeAreaView,
+} from 'react-native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import { colors, sizes } from '@/constants';
+import { useScheduleDetail, useDeleteSchedule } from '@/features/schedule/hooks/useSchedule';
+import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
+import type { ScheduleStackParamList } from '@/navigation/ScheduleNavigator';
+
+type Nav = StackNavigationProp<ScheduleStackParamList, 'ScheduleDetail'>;
+type Route = RouteProp<ScheduleStackParamList, 'ScheduleDetail'>;
+
+const formatDateTime = (iso: string) => {
+  const d = new Date(iso);
+  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일  ${d
+    .getHours()
+    .toString()
+    .padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+};
+
+export const ScheduleDetailScreen: React.FC = () => {
+  const navigation = useNavigation<Nav>();
+  const { scheduleId } = useRoute<Route>().params;
+
+  const { data: schedule, isLoading } = useScheduleDetail(scheduleId);
+  const { mutate: deleteSchedule, isPending: isDeleting } = useDeleteSchedule();
+
+  const handleDelete = () => {
+    if (!schedule) return;
+    Alert.alert('일정 삭제', '이 일정을 삭제할까요?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: () => {
+          const d = new Date(schedule.scheduledAt);
+          deleteSchedule(
+            { id: schedule.id, year: d.getFullYear(), month: d.getMonth() + 1 },
+            { onSuccess: () => navigation.goBack() }
+          );
+        },
+      },
+    ]);
+  };
+
+  const handleLinkRecord = () => {
+    // RecordFormScreen 구현 후 연결
+    Alert.alert('준비 중', '상담 기록 기능이 곧 추가됩니다.');
+  };
+
+  if (isLoading) return <LoadingSpinner fullscreen />;
+
+  if (!schedule) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Header onBack={() => navigation.goBack()} title="일정 상세" />
+        <View style={styles.emptyWrap}>
+          <Text style={styles.emptyText}>일정을 찾을 수 없습니다.</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <Header onBack={() => navigation.goBack()} title="일정 상세" />
+
+      <ScrollView contentContainerStyle={styles.content}>
+        {/* 카드 */}
+        <View style={styles.card}>
+          <InfoRow label="병원" value={schedule.hospitalName} />
+          {schedule.doctorName && (
+            <InfoRow label="담당 선생님" value={`${schedule.doctorName} 선생님`} />
+          )}
+          <InfoRow label="일시" value={formatDateTime(schedule.scheduledAt)} />
+          {schedule.memo && <InfoRow label="메모" value={schedule.memo} multiline />}
+        </View>
+
+        {/* 상담 기록 연결 버튼 */}
+        <TouchableOpacity style={styles.linkButton} onPress={handleLinkRecord} activeOpacity={0.8}>
+          <Text style={styles.linkButtonText}>📋  상담 기록 연결하기</Text>
+        </TouchableOpacity>
+
+        {/* 수정 / 삭제 버튼 */}
+        <View style={styles.actions}>
+          <TouchableOpacity
+            style={[styles.actionBtn, styles.editBtn]}
+            onPress={() => navigation.navigate('ScheduleForm', { schedule })}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.editBtnText}>수정</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionBtn, styles.deleteBtn]}
+            onPress={handleDelete}
+            disabled={isDeleting}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.deleteBtnText}>{isDeleting ? '삭제 중…' : '삭제'}</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+};
+
+const Header: React.FC<{ onBack: () => void; title: string }> = ({ onBack, title }) => (
+  <View style={styles.header}>
+    <TouchableOpacity onPress={onBack} hitSlop={12}>
+      <Text style={styles.backBtn}>‹  뒤로</Text>
+    </TouchableOpacity>
+    <Text style={styles.headerTitle}>{title}</Text>
+    <View style={styles.headerRight} />
+  </View>
+);
+
+const InfoRow: React.FC<{ label: string; value: string; multiline?: boolean }> = ({
+  label,
+  value,
+  multiline,
+}) => (
+  <View style={[styles.infoRow, multiline && styles.infoRowMultiline]}>
+    <Text style={styles.infoLabel}>{label}</Text>
+    <Text style={[styles.infoValue, multiline && styles.infoValueMultiline]}>{value}</Text>
+  </View>
+);
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
+  header: {
+    height: sizes.headerHeight,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: sizes.spacing.lg,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  backBtn: {
+    fontSize: sizes.font.md,
+    color: colors.primary,
+    fontWeight: sizes.fontWeight.medium,
+  },
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: sizes.font.lg,
+    fontWeight: sizes.fontWeight.bold,
+    color: colors.text.primary,
+  },
+  headerRight: { width: 48 },
+  content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg },
+  emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  emptyText: { fontSize: sizes.font.md, color: colors.text.secondary },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: sizes.radius.lg,
+    padding: sizes.spacing.lg,
+    gap: sizes.spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  infoRowMultiline: { flexDirection: 'column', alignItems: 'flex-start', gap: sizes.spacing.xs },
+  infoLabel: {
+    fontSize: sizes.font.sm,
+    color: colors.text.secondary,
+    fontWeight: sizes.fontWeight.medium,
+    minWidth: 80,
+  },
+  infoValue: {
+    fontSize: sizes.font.md,
+    color: colors.text.primary,
+    flex: 1,
+    textAlign: 'right',
+  },
+  infoValueMultiline: { textAlign: 'left', flex: undefined, lineHeight: 22 },
+  linkButton: {
+    backgroundColor: colors.surface,
+    borderRadius: sizes.radius.lg,
+    paddingVertical: sizes.spacing.md,
+    paddingHorizontal: sizes.spacing.lg,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.secondary,
+    borderStyle: 'dashed',
+  },
+  linkButtonText: {
+    fontSize: sizes.font.md,
+    color: colors.secondary,
+    fontWeight: sizes.fontWeight.semibold,
+  },
+  actions: { flexDirection: 'row', gap: sizes.spacing.md },
+  actionBtn: {
+    flex: 1,
+    paddingVertical: sizes.spacing.md,
+    borderRadius: sizes.radius.md,
+    alignItems: 'center',
+  },
+  editBtn: {
+    backgroundColor: colors.primary,
+  },
+  editBtnText: {
+    fontSize: sizes.font.md,
+    fontWeight: sizes.fontWeight.semibold,
+    color: colors.text.onPrimary,
+  },
+  deleteBtn: {
+    backgroundColor: colors.errorLight,
+    borderWidth: 1,
+    borderColor: colors.error,
+  },
+  deleteBtnText: {
+    fontSize: sizes.font.md,
+    fontWeight: sizes.fontWeight.semibold,
+    color: colors.error,
+  },
+});
