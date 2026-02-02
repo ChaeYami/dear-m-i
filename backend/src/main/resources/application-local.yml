@@ -3,6 +3,21 @@
 # ⚠️ 이 파일은 Git에 커밋되어도 되지만 실제 운영 정보는 절대 포함 금지
 # ============================================================
 spring:
+  # OAuth2 로컬 플레이스홀더 — Google Cloud Console에서 발급 후 교체
+  # Google: https://console.cloud.google.com/apis/credentials
+  # Apple: https://developer.apple.com/account/resources/identifiers
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: REPLACE_ME_GOOGLE_CLIENT_ID
+            client-secret: REPLACE_ME_GOOGLE_CLIENT_SECRET
+          apple:
+            client-id: REPLACE_ME_APPLE_BUNDLE_ID
+            # Apple client-secret은 단순 문자열이 아닌 JWT (ES256 서명)
+            # 참고: https://developer.apple.com/documentation/accountorganizationaldatasharing/creating-a-client-secret
+            client-secret: REPLACE_ME_APPLE_CLIENT_SECRET_JWT
   datasource:
     url: jdbc:postgresql://localhost:5432/dearmidb
     username: postgres
