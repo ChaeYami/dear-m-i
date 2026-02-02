@@ -13,5 +13,8 @@ public interface HospitalScheduleRepository {
 
     List<HospitalSchedule> findByUserIdAndDeletedAtIsNullOrderByScheduledAtDesc(UUID userId);
 
+    /** QueryDSL: 월별 필터 — scheduledAt이 해당 월 범위 내, deleted_at IS NULL, 본인 userId만 */
+    List<HospitalSchedule> findByUserIdAndMonth(UUID userId, int year, int month);
+
     void delete(HospitalSchedule schedule);
 }

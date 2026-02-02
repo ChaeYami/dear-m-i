@@ -3,6 +3,7 @@ package com.dearmi.backend.domain.counseling;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 public interface CounselingRecordRepository {
@@ -19,4 +20,10 @@ public interface CounselingRecordRepository {
 
     /** hospital_schedules 소프트 딜리트 시 연결 해제 (⑤ 원칙) */
     void detachSchedule(UUID scheduleId);
+
+    /** 해당 scheduleId로 활성 상담 기록이 존재하는지 확인 */
+    boolean existsByScheduleIdAndDeletedAtIsNull(UUID scheduleId);
+
+    /** 주어진 scheduleId 목록 중 활성 상담 기록을 가진 것만 반환 (월별 목록 hasCounselingRecord 배치 조회) */
+    Set<UUID> findScheduleIdsHavingRecords(UUID userId, List<UUID> scheduleIds);
 }
