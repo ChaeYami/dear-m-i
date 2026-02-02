@@ -18,6 +18,12 @@ public interface CounselingRecordRepository {
     /** 프리미엄: 기간 필터 조회 */
     List<CounselingRecord> findByUserIdAndDeletedAtIsNullAndCreatedAtAfterOrderByCreatedAtDesc(UUID userId, LocalDateTime after);
 
+    /** 타임라인 페이지네이션 (createdAt DESC, deleted_at IS NULL) */
+    List<CounselingRecord> findByUserIdOrderByCreatedAtDesc(UUID userId, int offset, int limit);
+
+    /** 타임라인 전체 카운트 */
+    long countByUserIdAndDeletedAtIsNull(UUID userId);
+
     /** hospital_schedules 소프트 딜리트 시 연결 해제 (⑤ 원칙) */
     void detachSchedule(UUID scheduleId);
 

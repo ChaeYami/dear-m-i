@@ -2,6 +2,8 @@ package com.dearmi.backend.infrastructure.persistence;
 
 import com.dearmi.backend.domain.counseling.CounselingRecord;
 import com.dearmi.backend.domain.counseling.CounselingRecordRepository;
+import com.dearmi.backend.domain.counseling.QCounselingRecord;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -17,6 +19,7 @@ import java.util.UUID;
 public class CounselingRecordRepositoryImpl implements CounselingRecordRepository {
 
     private final CounselingRecordJpaRepository jpa;
+    private final JPAQueryFactory queryFactory;
 
     @Override
     public CounselingRecord save(CounselingRecord record) {
@@ -37,6 +40,29 @@ public class CounselingRecordRepositoryImpl implements CounselingRecordRepositor
     public List<CounselingRecord> findByUserIdAndDeletedAtIsNullAndCreatedAtAfterOrderByCreatedAtDesc(
             UUID userId, LocalDateTime after) {
         return jpa.findByUserIdAndDeletedAtIsNullAndCreatedAtAfterOrderByCreatedAtDesc(userId, after);
+    }
+
+    @Override
+    public List<CounselingRecord> findByUserIdOrderByCreatedAtDesc(UUID userId, int offset, int limit) {
+        QCounselingRecord cr = QCounselingRecord.counselingRecord;
+        return queryFactory
+                .selectFrom(cr)
+                .where(cr.userId.eq(userId), cr.deletedAt.isNull())
+                .orderBy(cr.createdAt.desc())
+                .offset(offset)
+                .limit(limit)
+                .fetch();
+    }
+
+    @Override
+    public long countByUserIdAndDeletedAtIsNull(UUID userId) {
+        QCounselingRecord cr = QCounselingRecord.counselingRecord;
+        Long count = queryFactory
+                .select(cr.count())
+                .from(cr)
+                .where(cr.userId.eq(userId), cr.deletedAt.isNull())
+                .fetchOne();
+        return count != null ? count : 0L;
     }
 
     @Override

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { colors, sizes } from '@/constants';
 import { ScheduleNavigator } from './ScheduleNavigator';
+import { RecordNavigator } from './RecordNavigator';
 
 export type MainTabParamList = {
   Schedule: undefined;
@@ -44,7 +45,7 @@ export const MainTabNavigator: React.FC = () => {
         component={ScheduleNavigator}
         options={{ title: '일정' }}
       />
-      <Tab.Screen name="Record" component={Placeholder('기록')} options={{ title: '기록' }} />
+      <Tab.Screen name="Record" component={RecordNavigator} options={{ title: '기록' }} />
       <Tab.Screen name="Prescription" component={Placeholder('처방전')} options={{ title: '처방전' }} />
       <Tab.Screen name="MyPage" component={Placeholder('마이페이지')} options={{ title: '마이' }} />
     </Tab.Navigator>

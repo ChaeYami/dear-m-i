@@ -38,3 +38,10 @@ export interface TokenRefreshResponse {
   accessToken: string;
   refreshToken: string;
 }
+
+/** 타임라인 커서 페이지 응답 */
+export interface TimelineResponse {
+  items: import('./domain.types').TimelineItem[];
+  nextCursor?: string;
+  hasNext: boolean;
+}

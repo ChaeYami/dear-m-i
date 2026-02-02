@@ -16,6 +16,8 @@ import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import type { ScheduleStackParamList } from '@/navigation/ScheduleNavigator';
 
 type Nav = StackNavigationProp<ScheduleStackParamList, 'ScheduleDetail'>;
+// 크로스탭 네비게이션: MainTab → Record → RecordForm
+type RootNav = any;
 type Route = RouteProp<ScheduleStackParamList, 'ScheduleDetail'>;
 
 const formatDateTime = (iso: string) => {
@@ -52,8 +54,13 @@ export const ScheduleDetailScreen: React.FC = () => {
   };
 
   const handleLinkRecord = () => {
-    // RecordFormScreen 구현 후 연결
-    Alert.alert('준비 중', '상담 기록 기능이 곧 추가됩니다.');
+    if (!schedule) return;
+    // MainTab → Record 탭 → RecordForm (scheduleId 전달)
+    const tabNav = navigation.getParent()?.getParent() as RootNav;
+    tabNav?.navigate('Record', {
+      screen: 'RecordForm',
+      params: { scheduleId: schedule.id },
+    });
   };
 
   if (isLoading) return <LoadingSpinner fullscreen />;

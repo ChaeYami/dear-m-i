@@ -45,11 +45,49 @@ export type UpdateScheduleRequest = Partial<CreateScheduleRequest>;
 export interface CounselingRecord {
   id: number;
   scheduleId?: number;
+  hospitalName?: string; // 연결된 일정의 병원명 (백엔드 조인)
   content: string;
   emotionScore?: number;
+  tags?: string[];
   createdAt: string;
   updatedAt: string;
 }
+
+/** 상담 기록 생성 요청 */
+export interface CreateRecordRequest {
+  scheduleId?: number;
+  content: string;
+  emotionScore?: number;
+  tags?: string[];
+}
+
+/** 상담 기록 수정 요청 */
+export type UpdateRecordRequest = Partial<CreateRecordRequest>;
+
+// ─── 타임라인 (상담 기록 + 처방전 혼합) ─────────────────────────────────────
+
+export interface TimelineRecord {
+  type: 'record';
+  id: number;
+  scheduleId?: number;
+  hospitalName?: string;
+  content: string;
+  emotionScore?: number;
+  tags?: string[];
+  createdAt: string;
+}
+
+export interface TimelinePrescription {
+  type: 'prescription';
+  id: number;
+  scheduleId?: number;
+  hospitalName?: string;
+  prescribedAt?: string;
+  medicationCount: number;
+  createdAt: string;
+}
+
+export type TimelineItem = TimelineRecord | TimelinePrescription;
 
 /** 처방전 */
 export interface Prescription {

@@ -38,9 +38,15 @@ export const QUERY_KEYS = {
   monthlySchedules: (year: number, month: number) => ['schedules', year, month] as const,
   schedule: (id: number) => ['schedule', id] as const,
 
+  // 타임라인 (상담 기록 + 처방전 혼합)
+  timeline: () => ['timeline'] as const,
+
   // 상담 기록
   records: () => ['records'] as const,
   record: (id: number) => ['record', id] as const,
+
+  // 최근 일정 (RecordForm 드롭다운용)
+  recentSchedules: () => ['recentSchedules'] as const,
 
   // 처방전
   prescriptions: () => ['prescriptions'] as const,

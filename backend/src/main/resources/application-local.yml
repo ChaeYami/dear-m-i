@@ -46,6 +46,10 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.orm.jdbc.bind: TRACE
 
+# 암호화 키 (로컬 테스트용 - 운영에서는 AWS Secrets Manager로 주입)
+encryption:
+  key: local-dev-encryption-key-for-testing-only
+
 # JWT 설정 (로컬 테스트용 - 운영에서는 환경변수로 주입)
 jwt:
   secret: local-dev-secret-key-must-be-at-least-256-bits-long-for-hs256

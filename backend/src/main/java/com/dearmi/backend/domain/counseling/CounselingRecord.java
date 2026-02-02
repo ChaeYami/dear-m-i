@@ -1,9 +1,12 @@
 package com.dearmi.backend.domain.counseling;
 
 import com.dearmi.backend.common.entity.BaseTimeEntity;
+import com.dearmi.backend.common.converter.AesEncryptionConverter;
+import com.dearmi.backend.common.converter.TagsJsonConverter;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -29,17 +32,21 @@ public class CounselingRecord extends BaseTimeEntity {
     @Column(name = "emotion_score")
     private Short emotionScore;
 
+    /** AES-256-GCM 암호화 저장 */
+    @Convert(converter = AesEncryptionConverter.class)
     @Column(columnDefinition = "text")
     private String content;
 
+    /** JSON 배열로 DB 저장: ["스트레스","불안"] */
+    @Convert(converter = TagsJsonConverter.class)
     @Column(length = 500)
-    private String tags;
+    private List<String> tags;
 
     public void detachSchedule() {
         this.scheduleId = null;
     }
 
-    public void update(Short emotionScore, String content, String tags) {
+    public void update(Short emotionScore, String content, List<String> tags) {
         this.emotionScore = emotionScore;
         this.content = content;
         this.tags = tags;
