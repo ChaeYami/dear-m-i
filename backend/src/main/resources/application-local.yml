@@ -46,6 +46,20 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.orm.jdbc.bind: TRACE
 
+# AWS (로컬 테스트용 플레이스홀더 - 실제 값 없이 앱 기동 가능, S3 호출 시에는 실패)
+aws:
+  s3:
+    bucket: dearmi-dev-bucket
+    region: ap-northeast-2
+  credentials:
+    access-key: REPLACE_ME_AWS_ACCESS_KEY
+    secret-key: REPLACE_ME_AWS_SECRET_KEY
+
+# Claude API (로컬 테스트용 플레이스홀더)
+claude:
+  api-key: REPLACE_ME_CLAUDE_API_KEY
+  api-url: https://api.anthropic.com/v1/messages
+
 # 암호화 키 (로컬 테스트용 - 운영에서는 AWS Secrets Manager로 주입)
 encryption:
   key: local-dev-encryption-key-for-testing-only

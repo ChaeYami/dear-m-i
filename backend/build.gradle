@@ -64,6 +64,9 @@ dependencies {
     implementation 'software.amazon.awssdk:s3'
     implementation 'software.amazon.awssdk:secretsmanager'
 
+    // AOP (AuditLogAspect, @Async proxy)
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+
     // Bucket4j (Rate Limiting)
     implementation 'com.bucket4j:bucket4j-core:8.10.1'
 

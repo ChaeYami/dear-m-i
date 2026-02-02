@@ -51,6 +51,17 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 처방전 OCR 실패 예외 처리
+     */
+    @ExceptionHandler(PrescriptionOcrException.class)
+    public ResponseEntity<ApiResponse<Void>> handleOcrException(PrescriptionOcrException e) {
+        log.error("처방전 OCR 실패: {}", e.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.fail(ErrorCode.EXTERNAL_SERVICE_ERROR.getCode(), e.getMessage()));
+    }
+
+    /**
      * 예상치 못한 예외 처리 (500 Internal Server Error)
      * 민감한 내부 정보가 외부로 노출되지 않도록 일반 메시지만 반환
      */

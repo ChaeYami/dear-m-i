@@ -21,6 +21,11 @@ public class PrescriptionRepositoryImpl implements PrescriptionRepository {
     }
 
     @Override
+    public Optional<Prescription> findById(UUID id) {
+        return jpa.findById(id);
+    }
+
+    @Override
     public Optional<Prescription> findByIdAndUserIdAndDeletedAtIsNull(UUID id, UUID userId) {
         return jpa.findByIdAndUserIdAndDeletedAtIsNull(id, userId);
     }

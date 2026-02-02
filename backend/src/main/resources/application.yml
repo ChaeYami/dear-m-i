@@ -62,6 +62,20 @@ management:
     health:
       show-details: when-authorized
 
+# AWS 설정
+aws:
+  s3:
+    bucket: ${AWS_S3_BUCKET}
+    region: ${AWS_REGION:ap-northeast-2}
+  credentials:
+    access-key: ${AWS_ACCESS_KEY}
+    secret-key: ${AWS_SECRET_KEY}
+
+# Claude API 설정 (처방전 OCR)
+claude:
+  api-key: ${CLAUDE_API_KEY}
+  api-url: https://api.anthropic.com/v1/messages
+
 # 암호화 설정 (상담 기록 content AES-256-GCM)
 encryption:
   key: ${ENCRYPTION_KEY}

@@ -8,6 +8,8 @@ public interface PrescriptionRepository {
 
     Prescription save(Prescription prescription);
 
+    Optional<Prescription> findById(UUID id);
+
     Optional<Prescription> findByIdAndUserIdAndDeletedAtIsNull(UUID id, UUID userId);
 
     List<Prescription> findByUserIdAndDeletedAtIsNullOrderByPrescribedAtDesc(UUID userId);
