@@ -53,6 +53,10 @@ export const QUERY_KEYS = {
   prescription: (id: number) => ['prescription', id] as const,
   medicationDetail: (id: number) => ['medication', id] as const,
 
+  // 진료 준비 메모
+  prepNotes: () => ['prepNotes'] as const,
+  prepNotesBySchedule: (scheduleId: string) => ['prepNotes', scheduleId] as const,
+
   // 복약 관리
   todayMedication: () => ['todayMedication'] as const,
   medicationLogs: (startDate?: string, endDate?: string) =>

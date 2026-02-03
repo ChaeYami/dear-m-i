@@ -14,6 +14,7 @@ import type { StackNavigationProp } from '@react-navigation/stack';
 import { colors, sizes } from '@/constants';
 import { EmotionSlider } from '@/shared/components/EmotionSlider';
 import { useCreateRecord, useUpdateRecord, useRecordDetail, useRecentSchedules } from '@/features/record/hooks/useRecord';
+import { usePrepNotesBySchedule } from '@/features/prepnote/hooks/usePrepNote';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import type { RecordStackParamList } from '@/navigation/RecordNavigator';
@@ -50,6 +51,11 @@ export const RecordFormScreen: React.FC = () => {
   const [tags, setTags] = useState<string[]>(existingRecord?.tags ?? []);
   const [tagInput, setTagInput] = useState('');
   const [showSchedulePicker, setShowSchedulePicker] = useState(false);
+  const [showPrepNotes, setShowPrepNotes] = useState(false);
+
+  const { data: prepNotes = [] } = usePrepNotesBySchedule(
+    selectedScheduleId ? String(selectedScheduleId) : undefined
+  );
 
   const handleAddTag = () => {
     const trimmed = tagInput.trim().replace(/^#/, '');
@@ -160,6 +166,28 @@ export const RecordFormScreen: React.FC = () => {
             </View>
           )}
         </View>
+
+        {/* 진료 준비 메모 참고 (연결 일정에 메모가 있을 때만 표시) */}
+        {selectedScheduleId && prepNotes.length > 0 && (
+          <View style={styles.prepNoteSection}>
+            <TouchableOpacity
+              style={styles.prepNoteToggle}
+              onPress={() => setShowPrepNotes((v) => !v)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.prepNoteToggleText}>
+                📝 진료 준비 메모 참고 ({prepNotes.length}개)
+              </Text>
+              <Text style={styles.prepNoteToggleArrow}>{showPrepNotes ? '▲' : '▼'}</Text>
+            </TouchableOpacity>
+            {showPrepNotes &&
+              prepNotes.map((note) => (
+                <View key={note.id} style={styles.prepNoteCard}>
+                  <Text style={styles.prepNoteContent}>{note.content}</Text>
+                </View>
+              ))}
+          </View>
+        )}
 
         {/* 감정 점수 */}
         <View style={styles.field}>
@@ -366,5 +394,41 @@ const styles = StyleSheet.create({
     fontSize: sizes.font.sm,
     color: colors.primary,
     fontWeight: sizes.fontWeight.bold,
+  },
+  // 준비 메모 참고
+  prepNoteSection: { gap: sizes.spacing.sm },
+  prepNoteToggle: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.primary + '10',
+    borderRadius: sizes.radius.md,
+    paddingHorizontal: sizes.spacing.md,
+    paddingVertical: sizes.spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.primary + '30',
+  },
+  prepNoteToggleText: {
+    fontSize: sizes.font.sm,
+    color: colors.primary,
+    fontWeight: sizes.fontWeight.semibold,
+  },
+  prepNoteToggleArrow: {
+    fontSize: sizes.font.xs,
+    color: colors.primary,
+  },
+  prepNoteCard: {
+    backgroundColor: colors.surface,
+    borderRadius: sizes.radius.md,
+    padding: sizes.spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.primary,
+  },
+  prepNoteContent: {
+    fontSize: sizes.font.sm,
+    color: colors.text.secondary,
+    lineHeight: 20,
   },
 });

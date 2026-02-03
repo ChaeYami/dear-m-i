@@ -12,6 +12,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { colors, sizes } from '@/constants';
 import { useScheduleDetail, useDeleteSchedule } from '@/features/schedule/hooks/useSchedule';
+import { usePrepNotesBySchedule } from '@/features/prepnote/hooks/usePrepNote';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import type { ScheduleStackParamList } from '@/navigation/ScheduleNavigator';
 
@@ -33,6 +34,7 @@ export const ScheduleDetailScreen: React.FC = () => {
   const { scheduleId } = useRoute<Route>().params;
 
   const { data: schedule, isLoading } = useScheduleDetail(scheduleId);
+  const { data: prepNotes = [] } = usePrepNotesBySchedule(String(scheduleId));
   const { mutate: deleteSchedule, isPending: isDeleting } = useDeleteSchedule();
 
   const handleDelete = () => {
@@ -89,6 +91,42 @@ export const ScheduleDetailScreen: React.FC = () => {
           )}
           <InfoRow label="일시" value={formatDateTime(schedule.scheduledAt)} />
           {schedule.memo && <InfoRow label="메모" value={schedule.memo} multiline />}
+        </View>
+
+        {/* 진료 준비 메모 */}
+        <View style={styles.prepNoteSection}>
+          <View style={styles.prepNoteHeader}>
+            <Text style={styles.prepNoteSectionTitle}>진료 준비 메모</Text>
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate('PrepNoteForm', { scheduleId: String(scheduleId) })
+              }
+              hitSlop={8}
+            >
+              <Text style={styles.prepNoteAddBtn}>+ 메모 추가</Text>
+            </TouchableOpacity>
+          </View>
+          {prepNotes.length === 0 ? (
+            <Text style={styles.prepNoteEmpty}>아직 준비 메모가 없어요.</Text>
+          ) : (
+            prepNotes.map((note) => (
+              <TouchableOpacity
+                key={note.id}
+                style={styles.prepNoteCard}
+                onPress={() =>
+                  navigation.navigate('PrepNoteForm', {
+                    noteId: note.id,
+                    scheduleId: String(scheduleId),
+                  })
+                }
+                activeOpacity={0.75}
+              >
+                <Text style={styles.prepNoteContent} numberOfLines={3}>
+                  {note.content}
+                </Text>
+              </TouchableOpacity>
+            ))
+          )}
         </View>
 
         {/* 상담 기록 연결 버튼 */}
@@ -194,6 +232,45 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   infoValueMultiline: { textAlign: 'left', flex: undefined, lineHeight: 22 },
+  prepNoteSection: {
+    gap: sizes.spacing.sm,
+  },
+  prepNoteHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  prepNoteSectionTitle: {
+    fontSize: sizes.font.sm,
+    fontWeight: sizes.fontWeight.bold,
+    color: colors.text.secondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  prepNoteAddBtn: {
+    fontSize: sizes.font.sm,
+    color: colors.primary,
+    fontWeight: sizes.fontWeight.semibold,
+  },
+  prepNoteEmpty: {
+    fontSize: sizes.font.sm,
+    color: colors.text.disabled,
+    paddingVertical: sizes.spacing.sm,
+  },
+  prepNoteCard: {
+    backgroundColor: colors.surface,
+    borderRadius: sizes.radius.md,
+    padding: sizes.spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.primary,
+  },
+  prepNoteContent: {
+    fontSize: sizes.font.md,
+    color: colors.text.primary,
+    lineHeight: 22,
+  },
   linkButton: {
     backgroundColor: colors.surface,
     borderRadius: sizes.radius.lg,

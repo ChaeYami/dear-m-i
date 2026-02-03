@@ -101,6 +101,9 @@ export const ScheduleTab: React.FC = () => {
       {/* 헤더 */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>일정</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('PrepNoteList')} hitSlop={8}>
+          <Text style={styles.headerNoteBtn}>📝 준비 메모</Text>
+        </TouchableOpacity>
       </View>
 
       {/* 캘린더 */}
@@ -204,7 +207,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   header: {
     height: sizes.headerHeight,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: sizes.spacing.lg,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
@@ -214,6 +219,11 @@ const styles = StyleSheet.create({
     fontSize: sizes.font.xl,
     fontWeight: sizes.fontWeight.bold,
     color: colors.text.primary,
+  },
+  headerNoteBtn: {
+    fontSize: sizes.font.sm,
+    color: colors.primary,
+    fontWeight: sizes.fontWeight.medium,
   },
   calendar: {
     flex: 1,

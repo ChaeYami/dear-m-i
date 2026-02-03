@@ -246,3 +246,22 @@ export interface MedicationStats {
   skippedCount: number;
   completionRate: number;
 }
+
+// ─── 진료 준비 메모 ────────────────────────────────────────────────────────────
+
+export interface PrepNote {
+  id: string; // UUID
+  scheduleId?: string | null; // UUID (null = 미연결)
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreatePrepNoteRequest {
+  scheduleId?: string; // UUID
+  content: string;
+}
+
+export interface UpdatePrepNoteRequest {
+  content: string;
+}
