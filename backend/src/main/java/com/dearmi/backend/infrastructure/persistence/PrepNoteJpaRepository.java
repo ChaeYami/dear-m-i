@@ -16,6 +16,10 @@ public interface PrepNoteJpaRepository extends JpaRepository<PrepNote, UUID> {
 
     List<PrepNote> findByUserIdAndDeletedAtIsNullOrderByCreatedAtDesc(UUID userId);
 
+    List<PrepNote> findByUserIdAndScheduleIdAndDeletedAtIsNull(UUID userId, UUID scheduleId);
+
+    boolean existsByScheduleIdAndDeletedAtIsNull(UUID scheduleId);
+
     /** hospital_schedules 소프트 딜리트 시 schedule_id NULL 처리 (⑤ 원칙) */
     @Modifying
     @Query("UPDATE PrepNote p SET p.scheduleId = NULL WHERE p.scheduleId = :scheduleId")

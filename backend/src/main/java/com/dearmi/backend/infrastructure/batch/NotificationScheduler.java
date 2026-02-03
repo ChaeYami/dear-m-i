@@ -9,6 +9,7 @@ import com.dearmi.backend.domain.medication.MedicationLogRepository;
 import com.dearmi.backend.domain.medication.TimeSlot;
 import com.dearmi.backend.domain.notification.NotificationSetting;
 import com.dearmi.backend.domain.notification.NotificationSettingRepository;
+import com.dearmi.backend.domain.prepnote.PrepNoteRepository;
 import com.dearmi.backend.domain.user.User;
 import com.dearmi.backend.domain.user.UserRepository;
 import com.dearmi.backend.infrastructure.external.fcm.FcmService;
@@ -43,6 +44,7 @@ public class NotificationScheduler {
     private final MedicationScheduleRepository medicationScheduleRepository;
     private final MedicationLogRepository medicationLogRepository;
     private final DailyCheckinRepository dailyCheckinRepository;
+    private final PrepNoteRepository prepNoteRepository;
     private final UserRepository userRepository;
     private final FcmService fcmService;
 
@@ -114,11 +116,14 @@ public class NotificationScheduler {
             User user = userOpt.get();
 
             String timeStr = schedule.getScheduledAt().format(TIME_FMT);
+            boolean hasPrepNotes = prepNoteRepository.existsByScheduleIdAndDeletedAtIsNull(schedule.getId());
+            String body = timeStr + "에 예약되어 있습니다"
+                    + (hasPrepNotes ? "\n오늘 상담 준비 메모가 있어요" : "");
 
             fcmService.sendNotification(
                     user.getFcmToken(),
                     "오늘 " + schedule.getHospitalName() + " 예약이 있어요",
-                    timeStr + "에 예약되어 있습니다",
+                    body,
                     Map.of("scheduleId", schedule.getId().toString(), "type", "DAY_OF")
             );
         }

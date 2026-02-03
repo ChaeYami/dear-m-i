@@ -31,6 +31,16 @@ public class PrepNoteRepositoryImpl implements PrepNoteRepository {
     }
 
     @Override
+    public List<PrepNote> findByUserIdAndScheduleIdAndDeletedAtIsNull(UUID userId, UUID scheduleId) {
+        return jpa.findByUserIdAndScheduleIdAndDeletedAtIsNull(userId, scheduleId);
+    }
+
+    @Override
+    public boolean existsByScheduleIdAndDeletedAtIsNull(UUID scheduleId) {
+        return jpa.existsByScheduleIdAndDeletedAtIsNull(scheduleId);
+    }
+
+    @Override
     public void detachSchedule(UUID scheduleId) {
         jpa.detachSchedule(scheduleId);
     }
