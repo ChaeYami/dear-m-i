@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { colors, sizes } from '@/constants';
@@ -72,7 +73,7 @@ export const MedicationDetailScreen: React.FC = () => {
       {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <Text style={styles.backBtn}>‹  뒤로</Text>
+          <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>
           {med?.medicationName ?? medicationName}
@@ -166,7 +167,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: sizes.spacing.lg,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
   },
   backBtn: {
     fontSize: sizes.font.md,
@@ -179,7 +180,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg, paddingBottom: 40 },
   // 섹션
@@ -188,7 +189,7 @@ const styles = StyleSheet.create({
     borderRadius: sizes.radius.lg,
     padding: sizes.spacing.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     gap: sizes.spacing.sm,
   },
   sectionWarning: {
@@ -201,7 +202,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: sizes.font.sm,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.secondary,
+    color: colors.textSub,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -210,11 +211,11 @@ const styles = StyleSheet.create({
   medNameLarge: {
     fontSize: sizes.font.xl,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   manufacturer: {
     fontSize: sizes.font.sm,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
   // 처방 정보 행
   infoRow: {
@@ -225,35 +226,35 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: sizes.font.sm,
-    color: colors.text.secondary,
+    color: colors.textSub,
     fontWeight: sizes.fontWeight.medium,
     minWidth: 60,
   },
   infoValue: {
     fontSize: sizes.font.md,
-    color: colors.text.primary,
+    color: colors.text,
     flex: 1,
     textAlign: 'right',
   },
   // 본문
   bodyText: {
     fontSize: sizes.font.sm,
-    color: colors.text.primary,
+    color: colors.text,
     lineHeight: 22,
   },
   emptyFieldText: {
     fontSize: sizes.font.sm,
-    color: colors.text.disabled,
+    color: colors.textDisabled,
     fontStyle: 'italic',
   },
   fetchingText: {
     fontSize: sizes.font.sm,
-    color: colors.text.secondary,
+    color: colors.textSub,
     fontStyle: 'italic',
   },
   fetchedAt: {
     fontSize: sizes.font.xs,
-    color: colors.text.disabled,
+    color: colors.textDisabled,
     textAlign: 'center',
     marginTop: -sizes.spacing.sm,
   },
@@ -264,5 +265,5 @@ const styles = StyleSheet.create({
   },
   // 에러
   errorWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60 },
-  errorText: { fontSize: sizes.font.md, color: colors.text.secondary },
+  errorText: { fontSize: sizes.font.md, color: colors.textSub },
 });

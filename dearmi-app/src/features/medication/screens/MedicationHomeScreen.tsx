@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { colors, sizes } from '@/constants';
@@ -87,7 +88,7 @@ export const MedicationHomeScreen: React.FC = () => {
       {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <Text style={styles.backBtn}>‹  뒤로</Text>
+          <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>복약 관리</Text>
         <View style={{ width: 48 }} />
@@ -149,7 +150,7 @@ export const MedicationHomeScreen: React.FC = () => {
         onPress={() => navigation.navigate('MedicationForm', {})}
         activeOpacity={0.85}
       >
-        <Text style={styles.fabIcon}>+</Text>
+        <Ionicons name="add" size={28} color={colors.textInverse} />
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -164,7 +165,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: sizes.spacing.lg,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
   },
   backBtn: {
     fontSize: sizes.font.md,
@@ -177,7 +178,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   content: { padding: sizes.spacing.lg, paddingBottom: 100, gap: sizes.spacing.md },
   summaryCard: {
@@ -185,7 +186,7 @@ const styles = StyleSheet.create({
     borderRadius: sizes.radius.lg,
     padding: sizes.spacing.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     gap: sizes.spacing.sm,
     marginBottom: sizes.spacing.sm,
   },
@@ -197,7 +198,7 @@ const styles = StyleSheet.create({
   summaryDate: {
     fontSize: sizes.font.md,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   summaryRate: {
     fontSize: sizes.font.md,
@@ -217,7 +218,7 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: sizes.font.xs,
-    color: colors.text.secondary,
+    color: colors.textSub,
     textAlign: 'right',
   },
   emptyWrap: {
@@ -228,17 +229,17 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
   emptySubText: {
     fontSize: sizes.font.sm,
-    color: colors.text.disabled,
+    color: colors.textDisabled,
   },
   historyBtn: {
     paddingVertical: sizes.spacing.md,
     borderRadius: sizes.radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     backgroundColor: colors.surface,
     alignItems: 'center',
     marginTop: sizes.spacing.sm,
@@ -264,5 +265,5 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  fabIcon: { fontSize: 28, color: colors.text.onPrimary, lineHeight: 32 },
+  fabIcon: { fontSize: 28, color: colors.textInverse, lineHeight: 32 },
 });

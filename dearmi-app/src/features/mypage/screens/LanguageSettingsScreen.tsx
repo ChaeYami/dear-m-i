@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: sizes.spacing.lg,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
   },
   backBtn: {
     fontSize: sizes.font.md,
@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   content: {
     padding: sizes.spacing.lg,

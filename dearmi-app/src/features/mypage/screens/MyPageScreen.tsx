@@ -8,6 +8,7 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, CompositeNavigationProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { useTranslation } from 'react-i18next';
@@ -23,22 +24,23 @@ type Nav = CompositeNavigationProp<
 >;
 
 interface MenuItemProps {
-  icon: string;
+  icon: keyof typeof Ionicons.glyphMap;
   label: string;
   onPress: () => void;
   badge?: string;
+  danger?: boolean;
 }
 
-const MenuItem: React.FC<MenuItemProps> = ({ icon, label, onPress, badge }) => (
+const MenuItem: React.FC<MenuItemProps> = ({ icon, label, onPress, badge, danger }) => (
   <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
-    <Text style={styles.menuIcon}>{icon}</Text>
-    <Text style={styles.menuLabel}>{label}</Text>
+    <Ionicons name={icon} size={20} color={danger ? colors.error : colors.primary} />
+    <Text style={[styles.menuLabel, danger && styles.menuLabelDanger]}>{label}</Text>
     {badge && (
       <View style={styles.badge}>
         <Text style={styles.badgeText}>{badge}</Text>
       </View>
     )}
-    <Text style={styles.menuArrow}>›</Text>
+    <Ionicons name="chevron-forward" size={18} color={colors.textDisabled} />
   </TouchableOpacity>
 );
 
@@ -60,12 +62,11 @@ export const MyPageScreen: React.FC = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t('mypage_title')}</Text>
         <TouchableOpacity onPress={() => navigation.navigate('Search')} hitSlop={8}>
-          <Text style={styles.headerSearchIcon}>🔍</Text>
+          <Ionicons name="search-outline" size={22} color={colors.text} />
         </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        {/* 프로필 */}
         <View style={styles.profileCard}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>
@@ -83,7 +84,6 @@ export const MyPageScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* 구독 상태 카드 */}
         {plan === 'PREMIUM' ? (
           <TouchableOpacity
             style={[styles.subCard, styles.subCardPremium]}
@@ -99,7 +99,7 @@ export const MyPageScreen: React.FC = () => {
                 </Text>
               )}
             </View>
-            <Text style={styles.subCardArrow}>›</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.textDisabled} />
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
@@ -112,47 +112,46 @@ export const MyPageScreen: React.FC = () => {
               <Text style={styles.subCardTitle}>{t('upgrade_cta')}</Text>
               <Text style={styles.subCardDesc}>{t('upgrade_features')}</Text>
             </View>
-            <Text style={styles.subCardArrow}>›</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.textDisabled} />
           </TouchableOpacity>
         )}
 
-        {/* 기능 메뉴 */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('section_health')}</Text>
           <View style={styles.card}>
             <MenuItem
-              icon="💊"
+              icon="medical-outline"
               label={t('menu_medication')}
               onPress={() => navigation.navigate('MedicationHome')}
             />
           </View>
         </View>
 
-        {/* 설정 */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('section_settings')}</Text>
           <View style={styles.card}>
             <MenuItem
-              icon="🔔"
+              icon="notifications-outline"
               label={t('menu_notification')}
               onPress={() => navigation.navigate('NotificationSettings')}
             />
             <MenuItem
-              icon="🌐"
+              icon="language-outline"
               label={t('menu_language')}
               onPress={() => navigation.navigate('LanguageSettings')}
             />
           </View>
         </View>
 
-        {/* 계정 */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('section_account')}</Text>
           <View style={styles.card}>
-            <TouchableOpacity style={styles.menuItem} onPress={handleLogout} activeOpacity={0.7}>
-              <Text style={styles.menuIcon}>🚪</Text>
-              <Text style={[styles.menuLabel, styles.menuLabelDanger]}>{t('auth:logout')}</Text>
-            </TouchableOpacity>
+            <MenuItem
+              icon="log-out-outline"
+              label={t('auth:logout')}
+              onPress={handleLogout}
+              danger
+            />
           </View>
         </View>
       </ScrollView>
@@ -168,25 +167,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: sizes.spacing.lg,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  headerSearchIcon: {
-    fontSize: 22,
   },
   headerTitle: {
     fontSize: sizes.font.xl,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
-  content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg, paddingBottom: 40 },
-  // 프로필 카드
+  content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg, paddingBottom: sizes.tabBarSafeBottom + 16 },
   profileCard: {
-    backgroundColor: colors.surface,
-    borderRadius: sizes.radius.lg,
+    backgroundColor: colors.surfaceSolid,
+    borderRadius: sizes.radius.xl,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     padding: sizes.spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
@@ -196,58 +188,57 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
     fontSize: sizes.font.xl,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.onPrimary,
+    color: colors.textInverse,
   },
   profileInfo: { flex: 1 },
   profileName: {
     fontSize: sizes.font.md,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   profileEmail: {
     fontSize: sizes.font.xs,
-    color: colors.text.secondary,
+    color: colors.textSub,
     marginTop: 2,
   },
   planBadge: {
     paddingHorizontal: sizes.spacing.sm,
-    paddingVertical: 3,
+    paddingVertical: sizes.spacing.xs,
     borderRadius: sizes.radius.full,
-    backgroundColor: colors.skeleton,
+    backgroundColor: colors.disabled,
   },
   planBadgePremium: {
-    backgroundColor: colors.secondary + '20',
+    backgroundColor: colors.secondaryLight + '30',
   },
   planBadgeText: {
     fontSize: sizes.font.xs,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
   planBadgeTextPremium: {
     color: colors.secondary,
   },
-  // 섹션
   section: { gap: sizes.spacing.sm },
   sectionTitle: {
     fontSize: sizes.font.xs,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.secondary,
+    color: colors.textSub,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     paddingHorizontal: sizes.spacing.xs,
   },
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSolid,
     borderRadius: sizes.radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     overflow: 'hidden',
   },
   menuItem: {
@@ -257,17 +248,16 @@ const styles = StyleSheet.create({
     paddingVertical: sizes.spacing.md,
     gap: sizes.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
   },
-  menuIcon: { fontSize: 20, width: 28, textAlign: 'center' },
   menuLabel: {
     flex: 1,
     fontSize: sizes.font.md,
-    color: colors.text.primary,
+    color: colors.text,
   },
   menuLabelDanger: { color: colors.error },
   badge: {
-    backgroundColor: colors.primary + '18',
+    backgroundColor: colors.primaryLight + '25',
     paddingHorizontal: sizes.spacing.sm,
     paddingVertical: 2,
     borderRadius: sizes.radius.full,
@@ -277,24 +267,20 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: sizes.fontWeight.semibold,
   },
-  menuArrow: {
-    fontSize: sizes.font.lg,
-    color: colors.text.disabled,
-  },
   subCard: {
-    backgroundColor: colors.surface,
-    borderRadius: sizes.radius.lg,
+    backgroundColor: colors.surfaceSolid,
+    borderRadius: sizes.radius.xl,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     padding: sizes.spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
   },
   subCardPremium: {
-    borderColor: colors.primary + '55',
-    backgroundColor: colors.primary + '06',
+    borderColor: colors.primaryLight,
+    backgroundColor: colors.primaryLight + '10',
   },
-  subCardLeft: { flex: 1, gap: 3 },
+  subCardLeft: { flex: 1, gap: sizes.spacing.xs },
   subCardBadge: {
     fontSize: sizes.font.xs,
     fontWeight: sizes.fontWeight.bold,
@@ -304,20 +290,16 @@ const styles = StyleSheet.create({
   subCardBadgeGray: {
     fontSize: sizes.font.xs,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.disabled,
+    color: colors.textDisabled,
     letterSpacing: 1,
   },
   subCardTitle: {
     fontSize: sizes.font.md,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   subCardDesc: {
     fontSize: sizes.font.xs,
-    color: colors.text.secondary,
-  },
-  subCardArrow: {
-    fontSize: sizes.font.xl,
-    color: colors.text.disabled,
+    color: colors.textSub,
   },
 });

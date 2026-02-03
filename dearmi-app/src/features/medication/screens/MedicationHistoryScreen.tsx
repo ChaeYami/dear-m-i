@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { CompositeNavigationProp } from '@react-navigation/native';
@@ -29,7 +30,7 @@ const SLOT_LABELS: Record<TimeSlotType, string> = {
 
 const STATUS_CONFIG: Record<MedicationLogStatus, { label: string; color: string }> = {
   TAKEN: { label: '복용', color: colors.success },
-  SKIPPED: { label: '건너뜀', color: colors.text.disabled },
+  SKIPPED: { label: '건너뜀', color: colors.textDisabled },
   MISSED: { label: '미복용', color: colors.error },
 };
 
@@ -77,7 +78,7 @@ export const MedicationHistoryScreen: React.FC = () => {
       {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <Text style={styles.backBtn}>‹  뒤로</Text>
+          <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>복약 이력</Text>
         <View style={{ width: 48 }} />
@@ -87,7 +88,7 @@ export const MedicationHistoryScreen: React.FC = () => {
       {isFree && (
         <View style={styles.freeBanner}>
           <Text style={styles.freeBannerText}>
-            🔒 무료 플랜은 최근 30일 이력만 조회됩니다.
+            무료 플랜은 최근 30일 이력만 조회됩니다.
           </Text>
           <TouchableOpacity
             onPress={() => navigation.navigate('Paywall')}
@@ -144,7 +145,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: sizes.spacing.lg,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
   },
   backBtn: {
     fontSize: sizes.font.md,
@@ -157,7 +158,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   freeBanner: {
     backgroundColor: colors.warningLight,
@@ -190,16 +191,16 @@ const styles = StyleSheet.create({
     paddingVertical: sizes.spacing.sm,
     backgroundColor: colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
   },
   sectionDate: {
     fontSize: sizes.font.sm,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   sectionRate: {
     fontSize: sizes.font.xs,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
   logRow: {
     flexDirection: 'row',
@@ -209,11 +210,11 @@ const styles = StyleSheet.create({
     paddingVertical: sizes.spacing.md,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
   },
   slotLabel: {
     fontSize: sizes.font.md,
-    color: colors.text.primary,
+    color: colors.text,
   },
   statusBadge: {
     paddingHorizontal: sizes.spacing.sm,
@@ -234,7 +235,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
-  emptySubText: { fontSize: sizes.font.sm, color: colors.text.disabled },
+  emptySubText: { fontSize: sizes.font.sm, color: colors.textDisabled },
 });

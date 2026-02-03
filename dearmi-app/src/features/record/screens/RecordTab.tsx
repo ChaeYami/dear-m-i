@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   SafeAreaView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { CompositeNavigationProp } from '@react-navigation/native';
@@ -25,10 +26,8 @@ type Nav = CompositeNavigationProp<
   StackNavigationProp<RootStackParamList>
 >;
 
-// ─── 날짜별 섹션 그룹핑 ──────────────────────────────────────────────────────
-
 interface Section {
-  title: string; // YYYY-MM-DD
+  title: string;
   data: TimelineItem[];
 }
 
@@ -46,8 +45,6 @@ const toSections = (items: TimelineItem[]): Section[] => {
   });
   return Array.from(map.entries()).map(([title, data]) => ({ title, data }));
 };
-
-// ─── 카드 컴포넌트 ───────────────────────────────────────────────────────────
 
 const RecordCard: React.FC<{ item: TimelineRecord }> = ({ item }) => (
   <View style={styles.card}>
@@ -94,9 +91,10 @@ const PrescriptionCard: React.FC<{ item: TimelinePrescription }> = ({ item }) =>
         <Text style={styles.cardHospital}>{item.hospitalName}</Text>
       )}
     </View>
-    <Text style={styles.prescriptionMedCount}>
-      💊 약품 {item.medicationCount}종
-    </Text>
+    <View style={styles.prescriptionMedRow}>
+      <Ionicons name="medical-outline" size={16} color={colors.text} />
+      <Text style={styles.prescriptionMedCount}>약품 {item.medicationCount}종</Text>
+    </View>
     {item.prescribedAt && (
       <Text style={styles.prescriptionDate}>
         처방일: {item.prescribedAt.split('T')[0]}
@@ -118,8 +116,6 @@ const EmotionBar: React.FC<{ score: number }> = ({ score }) => (
     />
   </View>
 );
-
-// ─── 메인 화면 ───────────────────────────────────────────────────────────────
 
 export const RecordTab: React.FC = () => {
   const navigation = useNavigation<Nav>();
@@ -145,17 +141,18 @@ export const RecordTab: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* 헤더 */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>진료 기록</Text>
       </View>
 
-      {/* FREE 플랜: 조회 기간 안내 배너 */}
       {!isPremium && (
         <View style={styles.freeBanner}>
-          <Text style={styles.freeBannerText}>
-            🔒 무료 플랜은 최근 2개월 기록만 조회됩니다.
-          </Text>
+          <View style={styles.freeBannerLeft}>
+            <Ionicons name="lock-closed-outline" size={14} color={colors.text} />
+            <Text style={styles.freeBannerText}>
+              무료 플랜은 최근 2개월 기록만 조회됩니다.
+            </Text>
+          </View>
           <TouchableOpacity onPress={() => navigation.navigate('Paywall')} hitSlop={8}>
             <Text style={styles.freeBannerUpgrade}>업그레이드</Text>
           </TouchableOpacity>
@@ -199,13 +196,12 @@ export const RecordTab: React.FC = () => {
         stickySectionHeadersEnabled
       />
 
-      {/* FAB */}
       <TouchableOpacity
         style={styles.fab}
         onPress={() => navigation.navigate('RecordForm', undefined)}
         activeOpacity={0.85}
       >
-        <Text style={styles.fabIcon}>+</Text>
+        <Ionicons name="add" size={28} color={colors.textInverse} />
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -217,28 +213,31 @@ const styles = StyleSheet.create({
     height: sizes.headerHeight,
     justifyContent: 'center',
     paddingHorizontal: sizes.spacing.lg,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   headerTitle: {
     fontSize: sizes.font.xl,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   freeBanner: {
     backgroundColor: colors.warningLight,
     paddingHorizontal: sizes.spacing.lg,
     paddingVertical: sizes.spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.warning + '44',
+    borderBottomColor: colors.warning + '30',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  freeBannerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sizes.spacing.xs,
+    flex: 1,
+  },
   freeBannerText: {
     fontSize: sizes.font.sm,
-    color: '#92400E',
+    color: colors.text,
     flex: 1,
   },
   freeBannerUpgrade: {
@@ -247,32 +246,34 @@ const styles = StyleSheet.create({
     color: colors.primary,
     marginLeft: sizes.spacing.sm,
   },
-  listContent: { paddingBottom: 80 },
+  listContent: { paddingBottom: sizes.tabBarSafeBottom + 20 },
   emptyContainer: { flexGrow: 1 },
   sectionHeader: {
     paddingHorizontal: sizes.spacing.lg,
     paddingVertical: sizes.spacing.sm,
     backgroundColor: colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
   },
   sectionHeaderText: {
     fontSize: sizes.font.sm,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSolid,
     marginHorizontal: sizes.spacing.lg,
     marginTop: sizes.spacing.md,
-    borderRadius: sizes.radius.lg,
+    borderRadius: sizes.radius.xl,
     padding: sizes.spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
     gap: sizes.spacing.sm,
+    shadowColor: colors.glassShadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 2,
   },
   prescriptionCard: {
-    borderColor: colors.secondary + '55',
     borderLeftWidth: 3,
     borderLeftColor: colors.secondary,
   },
@@ -297,18 +298,18 @@ const styles = StyleSheet.create({
     fontWeight: sizes.fontWeight.bold,
   },
   emotionBarBg: {
-    height: 4,
-    backgroundColor: colors.border,
-    borderRadius: 2,
+    height: 6,
+    backgroundColor: colors.disabled,
+    borderRadius: 3,
     overflow: 'hidden',
   },
   emotionBarFill: {
     height: '100%',
-    borderRadius: 2,
+    borderRadius: 3,
   },
   cardContent: {
     fontSize: sizes.font.sm,
-    color: colors.text.primary,
+    color: colors.text,
     lineHeight: 20,
   },
   tagRow: {
@@ -317,7 +318,7 @@ const styles = StyleSheet.create({
     gap: sizes.spacing.xs,
   },
   tag: {
-    backgroundColor: colors.primary + '15',
+    backgroundColor: colors.primaryLight + '25',
     paddingHorizontal: sizes.spacing.sm,
     paddingVertical: 2,
     borderRadius: sizes.radius.full,
@@ -328,7 +329,7 @@ const styles = StyleSheet.create({
     fontWeight: sizes.fontWeight.medium,
   },
   prescriptionBadge: {
-    backgroundColor: colors.secondary + '20',
+    backgroundColor: colors.secondaryLight + '30',
     paddingHorizontal: sizes.spacing.sm,
     paddingVertical: 2,
     borderRadius: sizes.radius.full,
@@ -339,13 +340,18 @@ const styles = StyleSheet.create({
     color: colors.secondary,
     fontWeight: sizes.fontWeight.semibold,
   },
+  prescriptionMedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sizes.spacing.xs,
+  },
   prescriptionMedCount: {
     fontSize: sizes.font.md,
-    color: colors.text.primary,
+    color: colors.text,
   },
   prescriptionDate: {
     fontSize: sizes.font.sm,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
   footerSpinner: { marginVertical: sizes.spacing.lg },
   emptyWrap: {
@@ -358,15 +364,15 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
   emptySubText: {
     fontSize: sizes.font.sm,
-    color: colors.text.disabled,
+    color: colors.textDisabled,
   },
   fab: {
     position: 'absolute',
-    bottom: sizes.spacing.xl,
+    bottom: sizes.tabBarSafeBottom + sizes.spacing.md,
     right: sizes.spacing.xl,
     width: 56,
     height: 56,
@@ -374,15 +380,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.primary,
+    shadowColor: colors.glassShadow,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
+    shadowOpacity: 1,
+    shadowRadius: 12,
     elevation: 8,
-  },
-  fabIcon: {
-    fontSize: 28,
-    color: colors.text.onPrimary,
-    lineHeight: 32,
   },
 });

@@ -46,14 +46,14 @@ export const Button: React.FC<ButtonProps> = ({
   const indicatorColor =
     variant === 'outline' || variant === 'ghost'
       ? colors.primary
-      : colors.text.onPrimary;
+      : colors.textInverse;
 
   return (
     <TouchableOpacity
       onPress={onPress}
       disabled={isDisabled}
       style={containerStyles}
-      activeOpacity={0.7}
+      activeOpacity={0.8}
     >
       {isLoading ? (
         <ActivityIndicator color={indicatorColor} size="small" />
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
   base: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: sizes.radius.md,
+    borderRadius: sizes.radius.lg,
   },
 });
 
@@ -87,7 +87,7 @@ const variantStyles: Record<ButtonVariant, ViewStyle> = {
   outline: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: colors.primary,
+    borderColor: colors.divider,
   },
   ghost: { backgroundColor: 'transparent' },
 };
@@ -95,7 +95,7 @@ const variantStyles: Record<ButtonVariant, ViewStyle> = {
 const disabledContainerStyles: Record<ButtonVariant, ViewStyle> = {
   primary: { backgroundColor: colors.disabled },
   secondary: { backgroundColor: colors.disabled },
-  outline: { borderColor: colors.border, backgroundColor: 'transparent' },
+  outline: { borderColor: colors.divider, backgroundColor: 'transparent' },
   ghost: { backgroundColor: 'transparent' },
 };
 
@@ -112,15 +112,15 @@ const labelBaseStyles: Record<ButtonSize, TextStyle> = {
 };
 
 const labelColorStyles: Record<ButtonVariant, TextStyle> = {
-  primary: { color: colors.text.onPrimary },
-  secondary: { color: colors.text.onPrimary },
+  primary: { color: colors.textInverse },
+  secondary: { color: colors.textInverse },
   outline: { color: colors.primary },
   ghost: { color: colors.primary },
 };
 
 const labelDisabledStyles: Record<ButtonVariant, TextStyle> = {
-  primary: { color: colors.text.onPrimary },
-  secondary: { color: colors.text.onPrimary },
-  outline: { color: colors.text.disabled },
-  ghost: { color: colors.text.disabled },
+  primary: { color: colors.textInverse },
+  secondary: { color: colors.textInverse },
+  outline: { color: colors.textDisabled },
+  ghost: { color: colors.textDisabled },
 };

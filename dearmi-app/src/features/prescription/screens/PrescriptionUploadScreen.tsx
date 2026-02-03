@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   ScrollView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
@@ -172,7 +173,7 @@ export const PrescriptionUploadScreen: React.FC = () => {
       {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <Text style={styles.backBtn}>‹  뒤로</Text>
+          <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>처방전 등록</Text>
         <View style={{ width: 48 }} />
@@ -190,7 +191,7 @@ export const PrescriptionUploadScreen: React.FC = () => {
             <Image source={{ uri: imageAsset.uri }} style={styles.previewImage} resizeMode="contain" />
           ) : (
             <View style={styles.imagePlaceholder}>
-              <Text style={styles.imagePlaceholderIcon}>📄</Text>
+              <Ionicons name="document-outline" size={48} color={colors.textDisabled} />
               <Text style={styles.imagePlaceholderText}>처방전 사진을 선택하세요</Text>
               <Text style={styles.imagePlaceholderSub}>카메라 촬영 또는 갤러리</Text>
             </View>
@@ -214,7 +215,7 @@ export const PrescriptionUploadScreen: React.FC = () => {
         {!isPremium && (
           <View style={styles.premiumNotice}>
             <Text style={styles.premiumNoticeText}>
-              🔒  처방전 OCR은 프리미엄 플랜 전용 기능입니다.
+              처방전 OCR은 프리미엄 플랜 전용 기능입니다.
             </Text>
           </View>
         )}
@@ -247,7 +248,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: sizes.spacing.lg,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
   },
   backBtn: { fontSize: sizes.font.md, color: colors.primary, fontWeight: sizes.fontWeight.medium },
   headerTitle: {
@@ -255,14 +256,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg },
   imageArea: {
     height: 300,
     borderRadius: sizes.radius.lg,
     borderWidth: 2,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderStyle: 'dashed',
     overflow: 'hidden',
     backgroundColor: colors.surface,
@@ -278,9 +279,9 @@ const styles = StyleSheet.create({
   imagePlaceholderText: {
     fontSize: sizes.font.md,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
-  imagePlaceholderSub: { fontSize: sizes.font.sm, color: colors.text.disabled },
+  imagePlaceholderSub: { fontSize: sizes.font.sm, color: colors.textDisabled },
   reSelectBtn: { alignSelf: 'center' },
   reSelectText: {
     fontSize: sizes.font.sm,
@@ -290,14 +291,14 @@ const styles = StyleSheet.create({
   progressBox: { gap: sizes.spacing.sm },
   progressBar: {
     height: 6,
-    backgroundColor: colors.border,
+    backgroundColor: colors.divider,
     borderRadius: 3,
     overflow: 'hidden',
   },
   progressFill: { height: '100%', borderRadius: 3 },
   progressLabel: {
     fontSize: sizes.font.sm,
-    color: colors.text.secondary,
+    color: colors.textSub,
     textAlign: 'center',
   },
   errorText: { color: colors.error, fontWeight: sizes.fontWeight.medium },
@@ -310,7 +311,7 @@ const styles = StyleSheet.create({
   },
   premiumNoticeText: {
     fontSize: sizes.font.sm,
-    color: colors.text.secondary,
+    color: colors.textSub,
     textAlign: 'center',
   },
   uploadBtn: {
@@ -323,6 +324,6 @@ const styles = StyleSheet.create({
   uploadBtnText: {
     fontSize: sizes.font.md,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.text.onPrimary,
+    color: colors.textInverse,
   },
 });

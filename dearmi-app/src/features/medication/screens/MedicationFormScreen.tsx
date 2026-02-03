@@ -11,6 +11,7 @@ import {
   Alert,
   Switch,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
@@ -199,7 +200,7 @@ export const MedicationFormScreen: React.FC = () => {
       {isFromOcr && (
         <View style={styles.ocrBanner}>
           <Text style={styles.ocrBannerText}>
-            💊 {drugName || drugNameParam || '약품'}
+            {drugName || drugNameParam || '약품'}
             {remainingMeds && remainingMeds.length > 0
               ? ` 외 ${remainingMeds.length}개`
               : ''}
@@ -220,7 +221,7 @@ export const MedicationFormScreen: React.FC = () => {
             value={drugName}
             onChangeText={setDrugName}
             placeholder="예: 아스피린"
-            placeholderTextColor={colors.text.disabled}
+            placeholderTextColor={colors.textDisabled}
           />
         </View>
 
@@ -232,7 +233,7 @@ export const MedicationFormScreen: React.FC = () => {
             value={dosage}
             onChangeText={setDosage}
             placeholder="예: 100mg"
-            placeholderTextColor={colors.text.disabled}
+            placeholderTextColor={colors.textDisabled}
           />
         </View>
 
@@ -245,8 +246,8 @@ export const MedicationFormScreen: React.FC = () => {
                 <Switch
                   value={activeSlots[s.key]}
                   onValueChange={() => toggleSlot(s.key)}
-                  trackColor={{ false: colors.border, true: colors.primary + '80' }}
-                  thumbColor={activeSlots[s.key] ? colors.primary : colors.text.disabled}
+                  trackColor={{ false: colors.divider, true: colors.primary + '80' }}
+                  thumbColor={activeSlots[s.key] ? colors.primary : colors.textDisabled}
                 />
                 <Text style={styles.slotLabel}>{s.label}</Text>
               </View>
@@ -302,7 +303,7 @@ export const MedicationFormScreen: React.FC = () => {
             onChangeText={setDurationDays}
             placeholder="예: 7"
             keyboardType="number-pad"
-            placeholderTextColor={colors.text.disabled}
+            placeholderTextColor={colors.textDisabled}
           />
           {endDate && (
             <Text style={styles.endDateHint}>종료일: {formatDateDisplay(endDate)}</Text>
@@ -339,13 +340,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: sizes.spacing.lg,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
   },
-  headerCancel: { fontSize: sizes.font.md, color: colors.text.secondary },
+  headerCancel: { fontSize: sizes.font.md, color: colors.textSub },
   headerTitle: {
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   headerSave: {
     fontSize: sizes.font.md,
@@ -371,7 +372,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: sizes.font.sm,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.text.secondary,
+    color: colors.textSub,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -380,10 +381,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: sizes.radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     paddingHorizontal: sizes.spacing.md,
     fontSize: sizes.font.md,
-    color: colors.text.primary,
+    color: colors.text,
   },
   slotRow: {
     flexDirection: 'row',
@@ -392,7 +393,7 @@ const styles = StyleSheet.create({
     paddingVertical: sizes.spacing.xs,
   },
   slotLeft: { flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.sm },
-  slotLabel: { fontSize: sizes.font.md, color: colors.text.primary },
+  slotLabel: { fontSize: sizes.font.md, color: colors.text },
   timePill: {
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: 6,
@@ -411,11 +412,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: sizes.radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     paddingHorizontal: sizes.spacing.md,
     justifyContent: 'center',
   },
-  dateBtnText: { fontSize: sizes.font.md, color: colors.text.primary },
+  dateBtnText: { fontSize: sizes.font.md, color: colors.text },
   doneBtn: { alignItems: 'flex-end', paddingVertical: sizes.spacing.xs },
   doneBtnText: {
     fontSize: sizes.font.md,
@@ -424,7 +425,7 @@ const styles = StyleSheet.create({
   },
   endDateHint: {
     fontSize: sizes.font.xs,
-    color: colors.text.secondary,
+    color: colors.textSub,
     marginTop: 2,
   },
   // 다음 약품 버튼
@@ -437,7 +438,7 @@ const styles = StyleSheet.create({
     paddingBottom: sizes.spacing.xl,
     backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: colors.divider,
   },
   nextBtn: {
     height: sizes.buttonHeight.lg,
@@ -450,6 +451,6 @@ const styles = StyleSheet.create({
   nextBtnText: {
     fontSize: sizes.font.md,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.onPrimary,
+    color: colors.textInverse,
   },
 });

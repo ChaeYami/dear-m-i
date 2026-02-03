@@ -9,6 +9,7 @@ import {
   Pressable,
   SafeAreaView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Calendar } from 'react-native-calendars';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
@@ -44,7 +45,6 @@ export const ScheduleTab: React.FC = () => {
 
   const { data: schedules = [] } = useMonthlySchedules(visibleYear, visibleMonth);
 
-  // 슬라이드업 애니메이션
   const slideAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -98,15 +98,18 @@ export const ScheduleTab: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* 헤더 */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>일정</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('PrepNoteList')} hitSlop={8}>
-          <Text style={styles.headerNoteBtn}>📝 준비 메모</Text>
+        <TouchableOpacity
+          style={styles.headerNoteBtnWrap}
+          onPress={() => navigation.navigate('PrepNoteList')}
+          hitSlop={8}
+        >
+          <Ionicons name="create-outline" size={18} color={colors.primary} />
+          <Text style={styles.headerNoteBtn}>준비 메모</Text>
         </TouchableOpacity>
       </View>
 
-      {/* 캘린더 */}
       <Calendar
         key={currentMonth}
         current={currentMonth}
@@ -119,7 +122,6 @@ export const ScheduleTab: React.FC = () => {
         style={styles.calendar}
       />
 
-      {/* 일정 슬라이드업 패널 */}
       {selectedDate && (
         <Pressable style={styles.overlay} onPress={() => setSelectedDate(null)} />
       )}
@@ -158,13 +160,12 @@ export const ScheduleTab: React.FC = () => {
         )}
       </Animated.View>
 
-      {/* FAB */}
       <TouchableOpacity
         style={styles.fab}
         onPress={() => navigation.navigate('ScheduleForm', { defaultDate: selectedDate ?? undefined })}
         activeOpacity={0.85}
       >
-        <Text style={styles.fabIcon}>+</Text>
+        <Ionicons name="add" size={28} color={colors.textInverse} />
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -187,17 +188,17 @@ const ScheduleListItem: React.FC<{
 );
 
 const calendarTheme = {
-  backgroundColor: colors.surface,
-  calendarBackground: colors.surface,
+  backgroundColor: 'transparent',
+  calendarBackground: 'transparent',
   selectedDayBackgroundColor: colors.primary,
-  selectedDayTextColor: colors.text.onPrimary,
+  selectedDayTextColor: colors.textInverse,
   todayTextColor: colors.primary,
-  dayTextColor: colors.text.primary,
-  textDisabledColor: colors.text.disabled,
+  dayTextColor: colors.text,
+  textDisabledColor: colors.textDisabled,
   dotColor: colors.primary,
-  monthTextColor: colors.text.primary,
+  monthTextColor: colors.text,
   arrowColor: colors.primary,
-  textSectionTitleColor: colors.text.secondary,
+  textSectionTitleColor: colors.textSub,
   textMonthFontSize: sizes.font.lg,
   textMonthFontWeight: '700' as const,
   textDayHeaderFontSize: sizes.font.sm,
@@ -224,14 +225,14 @@ const calendarTheme = {
     },
     text: {
       fontSize: sizes.font.md,
-      color: colors.text.primary,
+      color: colors.text,
     },
     todayText: {
       color: colors.primary,
       fontWeight: '700' as const,
     },
     selectedText: {
-      color: colors.text.onPrimary,
+      color: colors.textInverse,
     },
   },
 };
@@ -244,14 +245,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: sizes.spacing.lg,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   headerTitle: {
     fontSize: sizes.font.xl,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
+  },
+  headerNoteBtnWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   headerNoteBtn: {
     fontSize: sizes.font.sm,
@@ -263,7 +266,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.25)',
+    backgroundColor: 'rgba(0,0,0,0.2)',
     zIndex: 10,
   },
   bottomSheet: {
@@ -272,30 +275,30 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: BOTTOM_SHEET_HEIGHT,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSolid,
     borderTopLeftRadius: sizes.radius.xl,
     borderTopRightRadius: sizes.radius.xl,
     zIndex: 11,
     paddingHorizontal: sizes.spacing.lg,
     paddingTop: sizes.spacing.sm,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowColor: colors.glassShadow,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 1,
+    shadowRadius: 16,
     elevation: 12,
   },
   sheetHandle: {
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: colors.border,
+    backgroundColor: colors.disabled,
     alignSelf: 'center',
     marginBottom: sizes.spacing.md,
   },
   sheetTitle: {
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
     marginBottom: sizes.spacing.md,
   },
   emptyWrap: {
@@ -304,7 +307,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: sizes.spacing.md,
   },
-  emptyText: { fontSize: sizes.font.md, color: colors.text.secondary },
+  emptyText: { fontSize: sizes.font.md, color: colors.textSub },
   addInSheetBtn: {
     paddingVertical: sizes.spacing.sm,
     paddingHorizontal: sizes.spacing.lg,
@@ -319,7 +322,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: sizes.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
     gap: sizes.spacing.md,
   },
   listItemDot: {
@@ -332,21 +335,21 @@ const styles = StyleSheet.create({
   listItemHospital: {
     fontSize: sizes.font.md,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   listItemDoctor: {
     fontSize: sizes.font.sm,
-    color: colors.text.secondary,
+    color: colors.textSub,
     marginTop: 2,
   },
   listItemTime: {
     fontSize: sizes.font.sm,
-    color: colors.text.secondary,
+    color: colors.textSub,
     fontWeight: sizes.fontWeight.medium,
   },
   fab: {
     position: 'absolute',
-    bottom: sizes.spacing.xl,
+    bottom: sizes.tabBarSafeBottom + sizes.spacing.md,
     right: sizes.spacing.xl,
     width: 56,
     height: 56,
@@ -354,16 +357,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.primary,
+    shadowColor: colors.glassShadow,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
+    shadowOpacity: 1,
+    shadowRadius: 12,
     elevation: 8,
     zIndex: 5,
-  },
-  fabIcon: {
-    fontSize: 28,
-    color: colors.text.onPrimary,
-    lineHeight: 32,
   },
 });

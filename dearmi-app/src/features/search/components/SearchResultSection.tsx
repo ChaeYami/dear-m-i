@@ -81,30 +81,30 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: sizes.font.sm,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.secondary,
+    color: colors.textSub,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   sectionCount: {
     fontSize: sizes.font.xs,
-    color: colors.text.disabled,
+    color: colors.textDisabled,
   },
   card: {
     backgroundColor: colors.surface,
     borderRadius: sizes.radius.md,
     padding: sizes.spacing.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     marginBottom: sizes.spacing.sm,
     gap: sizes.spacing.xs,
   },
   cardContent: {
     fontSize: sizes.font.md,
-    color: colors.text.primary,
+    color: colors.text,
     lineHeight: 22,
   },
   cardMeta: {
     fontSize: sizes.font.xs,
-    color: colors.text.disabled,
+    color: colors.textDisabled,
   },
 });

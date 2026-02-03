@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { colors, sizes } from '@/constants';
@@ -78,7 +79,7 @@ export const PrepNoteListScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <Text style={styles.backBtn}>‹  뒤로</Text>
+          <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>진료 준비 메모</Text>
         <View style={styles.headerRight} />
@@ -86,7 +87,7 @@ export const PrepNoteListScreen: React.FC = () => {
 
       {notes.length === 0 ? (
         <View style={styles.emptyWrap}>
-          <Text style={styles.emptyIcon}>📝</Text>
+          <Ionicons name="create-outline" size={48} color={colors.textDisabled} />
           <Text style={styles.emptyTitle}>준비 메모가 없어요</Text>
           <Text style={styles.emptyDesc}>진료 전 궁금한 점이나{'\n'}증상을 미리 기록해 보세요.</Text>
         </View>
@@ -121,7 +122,7 @@ export const PrepNoteListScreen: React.FC = () => {
         onPress={() => navigation.navigate('PrepNoteForm', {})}
         activeOpacity={0.85}
       >
-        <Text style={styles.fabIcon}>+</Text>
+        <Ionicons name="add" size={28} color={colors.textInverse} />
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -154,7 +155,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: sizes.spacing.lg,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
   },
   backBtn: {
     fontSize: sizes.font.md,
@@ -166,7 +167,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   headerRight: { width: 48 },
   listContent: { padding: sizes.spacing.lg, paddingBottom: 100, gap: sizes.spacing.sm },
@@ -177,7 +178,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: sizes.font.xs,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.secondary,
+    color: colors.textSub,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -186,12 +187,12 @@ const styles = StyleSheet.create({
     borderRadius: sizes.radius.lg,
     padding: sizes.spacing.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     gap: sizes.spacing.sm,
   },
   cardContent: {
     fontSize: sizes.font.md,
-    color: colors.text.primary,
+    color: colors.text,
     lineHeight: 22,
   },
   cardFooter: {
@@ -201,7 +202,7 @@ const styles = StyleSheet.create({
   },
   cardDate: {
     fontSize: sizes.font.xs,
-    color: colors.text.disabled,
+    color: colors.textDisabled,
   },
   deleteBtn: { paddingHorizontal: sizes.spacing.xs },
   deleteBtnText: {
@@ -220,11 +221,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   emptyDesc: {
     fontSize: sizes.font.md,
-    color: colors.text.secondary,
+    color: colors.textSub,
     textAlign: 'center',
     lineHeight: 22,
   },
@@ -246,7 +247,7 @@ const styles = StyleSheet.create({
   },
   fabIcon: {
     fontSize: 28,
-    color: colors.text.onPrimary,
+    color: colors.textInverse,
     lineHeight: 32,
   },
 });

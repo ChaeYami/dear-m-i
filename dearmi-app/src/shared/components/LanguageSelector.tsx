@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { colors, sizes } from '@/constants';
 import { changeLanguage } from '@/locales/i18n';
@@ -27,7 +28,7 @@ export const LanguageSelector: React.FC = () => {
             <Text style={[styles.optionText, isActive && styles.optionTextActive]}>
               {opt.label}
             </Text>
-            {isActive && <Text style={styles.check}>✓</Text>}
+            {isActive && <Ionicons name="checkmark" size={sizes.font.md} color={colors.primary} />}
           </TouchableOpacity>
         );
       })}
@@ -37,10 +38,10 @@ export const LanguageSelector: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSolid,
     borderRadius: sizes.radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     overflow: 'hidden',
   },
   option: {
@@ -50,22 +51,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: sizes.spacing.lg,
     paddingVertical: sizes.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
   },
   optionActive: {
-    backgroundColor: colors.primary + '08',
+    backgroundColor: colors.primaryLight + '20',
   },
   optionText: {
     fontSize: sizes.font.md,
-    color: colors.text.primary,
+    color: colors.text,
   },
   optionTextActive: {
     color: colors.primary,
     fontWeight: sizes.fontWeight.semibold,
-  },
-  check: {
-    fontSize: sizes.font.md,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.bold,
   },
 });

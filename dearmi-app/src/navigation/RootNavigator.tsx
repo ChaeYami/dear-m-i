@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Linking, Platform } from 'react-native';
+import { Alert, Linking, Platform, StyleSheet, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { LinearGradient } from 'expo-linear-gradient';
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 
@@ -183,43 +184,63 @@ export const RootNavigator: React.FC = () => {
   }
 
   return (
-    <NavigationContainer ref={navigationRef}>
-      <OfflineBanner />
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {isAuthenticated ? (
-          <Stack.Screen name="Main" component={MainTabNavigator} />
-        ) : (
-          <Stack.Screen name="Auth" component={AuthNavigator} />
-        )}
-        <Stack.Screen
-          name="Paywall"
-          component={PaywallScreen}
-          options={{ presentation: 'modal' } as any}
-        />
-        <Stack.Screen
-          name="WebPayment"
-          component={WebPaymentScreen}
-          options={{ presentation: 'modal' } as any}
-        />
-        <Stack.Screen
-          name="Search"
-          component={SearchScreen}
-          options={{ presentation: 'modal' } as any}
-        />
-      </Stack.Navigator>
+    <View style={styles.root}>
+      {/* 앱 전체 그라데이션 배경 */}
+      <LinearGradient
+        colors={['#F7F4F0', '#EEE8F8', '#F0F4F0']}
+        locations={[0, 0.5, 1]}
+        style={StyleSheet.absoluteFill}
+      />
 
-      {/* 포그라운드 인앱 알림 배너 */}
-      {activeNotification && (
-        <InAppNotificationBanner
-          notification={activeNotification}
-          onDismiss={() => setActiveNotification(null)}
-          onPress={() => {
-            const data = activeNotification.request.content.data as Record<string, unknown>;
-            navigateToScheduleDetail(data);
-            setActiveNotification(null);
+      <NavigationContainer ref={navigationRef}>
+        <OfflineBanner />
+        <Stack.Navigator
+          screenOptions={{
+            headerShown: false,
+            cardStyle: { backgroundColor: 'transparent' },
           }}
-        />
-      )}
-    </NavigationContainer>
+        >
+          {isAuthenticated ? (
+            <Stack.Screen name="Main" component={MainTabNavigator} />
+          ) : (
+            <Stack.Screen name="Auth" component={AuthNavigator} />
+          )}
+          <Stack.Screen
+            name="Paywall"
+            component={PaywallScreen}
+            options={{ presentation: 'modal' } as any}
+          />
+          <Stack.Screen
+            name="WebPayment"
+            component={WebPaymentScreen}
+            options={{ presentation: 'modal' } as any}
+          />
+          <Stack.Screen
+            name="Search"
+            component={SearchScreen}
+            options={{ presentation: 'modal' } as any}
+          />
+        </Stack.Navigator>
+
+        {/* 포그라운드 인앱 알림 배너 */}
+        {activeNotification && (
+          <InAppNotificationBanner
+            notification={activeNotification}
+            onDismiss={() => setActiveNotification(null)}
+            onPress={() => {
+              const data = activeNotification.request.content.data as Record<string, unknown>;
+              navigateToScheduleDetail(data);
+              setActiveNotification(null);
+            }}
+          />
+        )}
+      </NavigationContainer>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+});

@@ -8,6 +8,7 @@ import {
   Alert,
   SafeAreaView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { colors, sizes } from '@/constants';
@@ -17,7 +18,6 @@ import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import type { ScheduleStackParamList } from '@/navigation/ScheduleNavigator';
 
 type Nav = StackNavigationProp<ScheduleStackParamList, 'ScheduleDetail'>;
-// 크로스탭 네비게이션: MainTab → Record → RecordForm
 type RootNav = any;
 type Route = RouteProp<ScheduleStackParamList, 'ScheduleDetail'>;
 
@@ -57,7 +57,6 @@ export const ScheduleDetailScreen: React.FC = () => {
 
   const handleLinkRecord = () => {
     if (!schedule) return;
-    // MainTab → Record 탭 → RecordForm (scheduleId 전달)
     const tabNav = navigation.getParent()?.getParent() as RootNav;
     tabNav?.navigate('Record', {
       screen: 'RecordForm',
@@ -83,7 +82,6 @@ export const ScheduleDetailScreen: React.FC = () => {
       <Header onBack={() => navigation.goBack()} title="일정 상세" />
 
       <ScrollView contentContainerStyle={styles.content}>
-        {/* 카드 */}
         <View style={styles.card}>
           <InfoRow label="병원" value={schedule.hospitalName} />
           {schedule.doctorName && (
@@ -93,7 +91,6 @@ export const ScheduleDetailScreen: React.FC = () => {
           {schedule.memo && <InfoRow label="메모" value={schedule.memo} multiline />}
         </View>
 
-        {/* 진료 준비 메모 */}
         <View style={styles.prepNoteSection}>
           <View style={styles.prepNoteHeader}>
             <Text style={styles.prepNoteSectionTitle}>진료 준비 메모</Text>
@@ -129,12 +126,11 @@ export const ScheduleDetailScreen: React.FC = () => {
           )}
         </View>
 
-        {/* 상담 기록 연결 버튼 */}
         <TouchableOpacity style={styles.linkButton} onPress={handleLinkRecord} activeOpacity={0.8}>
-          <Text style={styles.linkButtonText}>📋  상담 기록 연결하기</Text>
+          <Ionicons name="document-text-outline" size={18} color={colors.secondary} />
+          <Text style={styles.linkButtonText}>상담 기록 연결하기</Text>
         </TouchableOpacity>
 
-        {/* 수정 / 삭제 버튼 */}
         <View style={styles.actions}>
           <TouchableOpacity
             style={[styles.actionBtn, styles.editBtn]}
@@ -160,7 +156,7 @@ export const ScheduleDetailScreen: React.FC = () => {
 const Header: React.FC<{ onBack: () => void; title: string }> = ({ onBack, title }) => (
   <View style={styles.header}>
     <TouchableOpacity onPress={onBack} hitSlop={12}>
-      <Text style={styles.backBtn}>‹  뒤로</Text>
+      <Ionicons name="chevron-back" size={24} color={colors.primary} />
     </TouchableOpacity>
     <Text style={styles.headerTitle}>{title}</Text>
     <View style={styles.headerRight} />
@@ -185,33 +181,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: sizes.spacing.lg,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  backBtn: {
-    fontSize: sizes.font.md,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.medium,
   },
   headerTitle: {
     flex: 1,
     textAlign: 'center',
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   headerRight: { width: 48 },
   content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg },
   emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  emptyText: { fontSize: sizes.font.md, color: colors.text.secondary },
+  emptyText: { fontSize: sizes.font.md, color: colors.textSub },
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: sizes.radius.lg,
+    backgroundColor: colors.surfaceSolid,
+    borderRadius: sizes.radius.xl,
     padding: sizes.spacing.lg,
     gap: sizes.spacing.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
   },
   infoRow: {
     flexDirection: 'row',
@@ -221,13 +209,13 @@ const styles = StyleSheet.create({
   infoRowMultiline: { flexDirection: 'column', alignItems: 'flex-start', gap: sizes.spacing.xs },
   infoLabel: {
     fontSize: sizes.font.sm,
-    color: colors.text.secondary,
+    color: colors.textSub,
     fontWeight: sizes.fontWeight.medium,
     minWidth: 80,
   },
   infoValue: {
     fontSize: sizes.font.md,
-    color: colors.text.primary,
+    color: colors.text,
     flex: 1,
     textAlign: 'right',
   },
@@ -243,7 +231,7 @@ const styles = StyleSheet.create({
   prepNoteSectionTitle: {
     fontSize: sizes.font.sm,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.secondary,
+    color: colors.textSub,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -254,29 +242,32 @@ const styles = StyleSheet.create({
   },
   prepNoteEmpty: {
     fontSize: sizes.font.sm,
-    color: colors.text.disabled,
+    color: colors.textDisabled,
     paddingVertical: sizes.spacing.sm,
   },
   prepNoteCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSolid,
     borderRadius: sizes.radius.md,
     padding: sizes.spacing.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderLeftWidth: 3,
     borderLeftColor: colors.primary,
   },
   prepNoteContent: {
     fontSize: sizes.font.md,
-    color: colors.text.primary,
+    color: colors.text,
     lineHeight: 22,
   },
   linkButton: {
-    backgroundColor: colors.surface,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: sizes.spacing.sm,
+    backgroundColor: colors.surfaceSolid,
     borderRadius: sizes.radius.lg,
     paddingVertical: sizes.spacing.md,
     paddingHorizontal: sizes.spacing.lg,
-    alignItems: 'center',
     borderWidth: 1.5,
     borderColor: colors.secondary,
     borderStyle: 'dashed',
@@ -290,7 +281,7 @@ const styles = StyleSheet.create({
   actionBtn: {
     flex: 1,
     paddingVertical: sizes.spacing.md,
-    borderRadius: sizes.radius.md,
+    borderRadius: sizes.radius.lg,
     alignItems: 'center',
   },
   editBtn: {
@@ -299,7 +290,7 @@ const styles = StyleSheet.create({
   editBtnText: {
     fontSize: sizes.font.md,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.text.onPrimary,
+    color: colors.textInverse,
   },
   deleteBtn: {
     backgroundColor: colors.errorLight,

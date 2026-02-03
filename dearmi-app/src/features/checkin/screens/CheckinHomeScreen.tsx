@@ -8,6 +8,7 @@ import {
   ScrollView,
   Modal,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { useTranslation } from 'react-i18next';
@@ -133,7 +134,7 @@ export const CheckinHomeScreen: React.FC = () => {
           activeOpacity={0.7}
         >
           <Text style={styles.historyLinkText}>{t('view_all')}</Text>
-          <Text style={styles.historyArrow}>{' >'}</Text>
+          <Ionicons name="chevron-forward" size={16} color={colors.primary} />
         </TouchableOpacity>
       </ScrollView>
 
@@ -153,12 +154,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: sizes.spacing.lg,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
   },
   headerTitle: {
     fontSize: sizes.font.xl,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   content: {
     padding: sizes.spacing.lg,
@@ -175,12 +176,12 @@ const styles = StyleSheet.create({
   todayPrompt: {
     fontSize: sizes.font.xl,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
     textAlign: 'center',
   },
   todaySubPrompt: {
     fontSize: sizes.font.sm,
-    color: colors.text.secondary,
+    color: colors.textSub,
     textAlign: 'center',
   },
   writeBtn: {
@@ -194,7 +195,7 @@ const styles = StyleSheet.create({
   writeBtnText: {
     fontSize: sizes.font.md,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.onPrimary,
+    color: colors.textInverse,
   },
   todayHeader: {
     flexDirection: 'row',
@@ -204,7 +205,7 @@ const styles = StyleSheet.create({
   todayDateLabel: {
     fontSize: sizes.font.sm,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
   editBtn: {
     fontSize: sizes.font.sm,
@@ -250,7 +251,7 @@ const styles = StyleSheet.create({
   },
   memoPreview: {
     fontSize: sizes.font.sm,
-    color: colors.text.secondary,
+    color: colors.textSub,
     lineHeight: 20,
   },
   metaRow: {
@@ -259,7 +260,7 @@ const styles = StyleSheet.create({
   },
   metaItem: {
     fontSize: sizes.font.xs,
-    color: colors.text.disabled,
+    color: colors.textDisabled,
   },
   // 섹션
   section: {
@@ -268,7 +269,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: sizes.font.md,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   // 전체 기록 보기
   historyLink: {

@@ -103,7 +103,6 @@ export const ScheduleFormScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
           <Text style={styles.headerCancel}>취소</Text>
@@ -117,18 +116,16 @@ export const ScheduleFormScreen: React.FC = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        {/* 병원명 */}
         <Field label="병원명" required>
           <TextInput
             style={styles.input}
             placeholder="병원 이름을 입력하세요"
-            placeholderTextColor={colors.text.disabled}
+            placeholderTextColor={colors.textDisabled}
             value={hospitalName}
             onChangeText={setHospitalName}
           />
         </Field>
 
-        {/* 날짜 */}
         <Field label="날짜">
           <TouchableOpacity
             style={styles.pickerButton}
@@ -138,7 +135,6 @@ export const ScheduleFormScreen: React.FC = () => {
           </TouchableOpacity>
         </Field>
 
-        {/* 시간 */}
         <Field label="시간">
           <TouchableOpacity
             style={styles.pickerButton}
@@ -148,7 +144,6 @@ export const ScheduleFormScreen: React.FC = () => {
           </TouchableOpacity>
         </Field>
 
-        {/* DateTimePicker (iOS: inline / Android: modal) */}
         {showDatePicker && (
           <DateTimePicker
             value={selectedDate}
@@ -179,23 +174,21 @@ export const ScheduleFormScreen: React.FC = () => {
           </TouchableOpacity>
         )}
 
-        {/* 담당의 (선택) */}
         <Field label="담당 선생님 (선택)">
           <TextInput
             style={styles.input}
             placeholder="담당 선생님 이름"
-            placeholderTextColor={colors.text.disabled}
+            placeholderTextColor={colors.textDisabled}
             value={doctorName}
             onChangeText={setDoctorName}
           />
         </Field>
 
-        {/* 메모 */}
         <Field label="메모 (선택)">
           <TextInput
             style={[styles.input, styles.textArea]}
             placeholder="메모를 입력하세요"
-            placeholderTextColor={colors.text.disabled}
+            placeholderTextColor={colors.textDisabled}
             value={memo}
             onChangeText={setMemo}
             multiline
@@ -230,18 +223,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: sizes.spacing.lg,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   headerTitle: {
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   headerCancel: {
     fontSize: sizes.font.md,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
   headerSave: {
     fontSize: sizes.font.md,
@@ -254,42 +244,39 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: sizes.font.sm,
     fontWeight: sizes.fontWeight.medium,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
   required: { color: colors.error },
   input: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSolid,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.md,
     fontSize: sizes.font.md,
-    color: colors.text.primary,
+    color: colors.text,
   },
   textArea: {
     height: 100,
     paddingTop: sizes.spacing.md,
   },
   pickerButton: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSolid,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.md,
   },
   pickerText: {
     fontSize: sizes.font.md,
-    color: colors.text.primary,
+    color: colors.text,
   },
   pickerDone: {
     alignItems: 'flex-end',
     paddingHorizontal: sizes.spacing.lg,
     paddingVertical: sizes.spacing.sm,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   pickerDoneText: {
     fontSize: sizes.font.md,

@@ -1,47 +1,56 @@
 /**
- * 앱 전역 색상 상수
- * - 디자인 시스템의 단일 출처(single source of truth)
- * - 색상 값을 컴포넌트에 직접 하드코딩하지 말 것
+ * DearMI 디자인 시스템 — 색상 팔레트
+ * 따뜻하고 차분한 세이지/라벤더 계열
+ *
+ * "정신건강의학과·심리상담을 받는 사람들이 매일 열고 싶은 앱"
  */
 export const colors = {
-  /** 주요 브랜드 색상 (버튼, 강조 요소) */
-  primary: '#2E5FA3',
+  // ── 배경 ────────────────────────────────
+  background: '#F7F4F0',
+  backgroundDark: '#1A1825',
+  surface: 'rgba(255, 255, 255, 0.72)',
+  surfaceSolid: '#FFFFFF',
+  surfaceDark: 'rgba(40, 35, 60, 0.72)',
 
-  /** 보조 브랜드 색상 (성공, 확인 요소) */
-  secondary: '#0F6E56',
+  // ── 주색 — 소프트 라벤더 퍼플 ──────────
+  primary: '#8B7EBD',
+  primaryLight: '#B8AEDD',
+  primaryDark: '#6B5E9E',
 
-  /** 기본 배경색 */
-  background: '#F8F9FA',
+  // ── 보조색 — 세이지 그린 ───────────────
+  secondary: '#7EAD9B',
+  secondaryLight: '#A8C8BB',
 
-  /** 카드, 모달 등 표면 배경색 */
-  surface: '#FFFFFF',
+  // ── 텍스트 ─────────────────────────────
+  text: '#2D2840',
+  textSub: '#8C879E',
+  textDisabled: '#BDB9CC',
+  textInverse: '#FFFFFF',
 
-  /** 구분선, 테두리 색상 */
-  border: '#E0E0E0',
+  // ── 감정 점수 (소프트 톤) ──────────────
+  emotionLow: '#E8A5A5',     // 1-3
+  emotionMid: '#F0C97A',     // 4-6
+  emotionHigh: '#8BC4A8',    // 7-10
 
-  /** 텍스트 색상 계층 */
-  text: {
-    primary: '#1A1A2E',
-    secondary: '#6B7280',
-    disabled: '#9CA3AF',
-    onPrimary: '#FFFFFF',
-  },
+  // ── 상태 ───────────────────────────────
+  error: '#D4747B',
+  errorLight: '#FDF0F0',
+  warning: '#E8B86D',
+  warningLight: '#FDF8EE',
+  success: '#7EAD9B',
+  successLight: '#EEF6F2',
 
-  /** 에러 및 경고 색상 */
-  error: '#D32F2F',
-  errorLight: '#FFEBEE',
+  // ── 비활성 & 스켈레톤 ──────────────────
+  disabled: '#E5E0EC',
+  skeleton: '#EDE9F0',
 
-  /** 경고 색상 */
-  warning: '#F59E0B',
-  warningLight: '#FFFBEB',
+  // ── 글래스모피즘 ───────────────────────
+  glassBorder: 'rgba(255, 255, 255, 0.3)',
+  glassBlur: 'rgba(255, 255, 255, 0.15)',
+  glassShadow: 'rgba(139, 126, 189, 0.15)',
 
-  /** 성공 색상 */
-  success: '#0F6E56',
-  successLight: '#ECFDF5',
-
-  /** 비활성 및 스켈레톤 색상 */
-  disabled: '#E5E7EB',
-  skeleton: '#F3F4F6',
+  // ── 구분선 ─────────────────────────────
+  divider: 'rgba(139, 126, 189, 0.12)',
 } as const;
 
 export type Colors = typeof colors;

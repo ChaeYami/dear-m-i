@@ -12,6 +12,7 @@ import {
   Platform,
   UIManager,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { colors, sizes } from '@/constants';
@@ -23,14 +24,11 @@ import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import type { PrescriptionStackParamList } from '@/navigation/PrescriptionNavigator';
 import type { Prescription, PrescriptionMedication, OcrStatus } from '@/shared/types/domain.types';
 
-// Android에서 LayoutAnimation 활성화
 if (Platform.OS === 'android') {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
 }
 
 type Nav = StackNavigationProp<PrescriptionStackParamList, 'PrescriptionTab'>;
-
-// ─── 유틸 ──────────────────────────────────────────────────────────────────
 
 const formatDate = (dateStr?: string) => {
   if (!dateStr) return '날짜 미상';
@@ -45,8 +43,6 @@ const OCR_STATUS_CONFIG: Record<OcrStatus, { label: string; color: string }> = {
   FAILED: { label: '인식 실패', color: colors.error },
 };
 
-// ─── 약품 행 ───────────────────────────────────────────────────────────────
-
 const MedicationRow: React.FC<{
   med: PrescriptionMedication;
   onPress: () => void;
@@ -60,11 +56,9 @@ const MedicationRow: React.FC<{
           .join(' · ') || '정보 없음'}
       </Text>
     </View>
-    <Text style={styles.medArrow}>›</Text>
+    <Ionicons name="chevron-forward" size={18} color={colors.textDisabled} />
   </TouchableOpacity>
 );
-
-// ─── 처방전 카드 (아코디언) ────────────────────────────────────────────────
 
 const PrescriptionCard: React.FC<{
   item: Prescription;
@@ -79,7 +73,6 @@ const PrescriptionCard: React.FC<{
 
   return (
     <View style={styles.card}>
-      {/* 카드 헤더 — 탭으로 아코디언 토글 */}
       <TouchableOpacity style={styles.cardHeader} onPress={onToggle} activeOpacity={0.8}>
         <View style={styles.cardHeaderLeft}>
           <Text style={styles.cardDate}>{formatDate(item.prescribedAt)}</Text>
@@ -94,12 +87,18 @@ const PrescriptionCard: React.FC<{
               <Text style={[styles.statusText, { color: statusCfg.color }]}>{statusCfg.label}</Text>
             </View>
           )}
-          <Text style={styles.medCount}>💊 {item.medications.length}종</Text>
-          <Text style={styles.accordionArrow}>{expanded ? '▲' : '▼'}</Text>
+          <View style={styles.medCountRow}>
+            <Ionicons name="medical-outline" size={14} color={colors.textSub} />
+            <Text style={styles.medCount}>{item.medications.length}종</Text>
+          </View>
+          <Ionicons
+            name={expanded ? 'chevron-up' : 'chevron-down'}
+            size={16}
+            color={colors.textDisabled}
+          />
         </View>
       </TouchableOpacity>
 
-      {/* 아코디언 펼침 */}
       {expanded && (
         <View style={styles.accordion}>
           {item.medications.length === 0 ? (
@@ -114,7 +113,6 @@ const PrescriptionCard: React.FC<{
             ))
           )}
 
-          {/* 하단 액션 버튼 */}
           <View style={styles.cardActions}>
             {(item.ocrStatus === 'FAILED' || item.ocrStatus === 'COMPLETED') && (
               <TouchableOpacity style={styles.actionBtn} onPress={onViewOcr}>
@@ -133,8 +131,6 @@ const PrescriptionCard: React.FC<{
     </View>
   );
 };
-
-// ─── 메인 화면 ────────────────────────────────────────────────────────────
 
 export const PrescriptionTab: React.FC = () => {
   const navigation = useNavigation<Nav>();
@@ -218,7 +214,7 @@ export const PrescriptionTab: React.FC = () => {
         onPress={() => navigation.navigate('PrescriptionUpload')}
         activeOpacity={0.85}
       >
-        <Text style={styles.fabIcon}>+</Text>
+        <Ionicons name="add" size={28} color={colors.textInverse} />
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -230,23 +226,19 @@ const styles = StyleSheet.create({
     height: sizes.headerHeight,
     justifyContent: 'center',
     paddingHorizontal: sizes.spacing.lg,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   headerTitle: {
     fontSize: sizes.font.xl,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
-  listContent: { padding: sizes.spacing.lg, gap: sizes.spacing.md, paddingBottom: 80 },
+  listContent: { padding: sizes.spacing.lg, gap: sizes.spacing.md, paddingBottom: sizes.tabBarSafeBottom + 20 },
   emptyContainer: { flexGrow: 1 },
-  // 카드
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSolid,
     borderRadius: sizes.radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     overflow: 'hidden',
   },
   cardHeader: {
@@ -255,14 +247,14 @@ const styles = StyleSheet.create({
     padding: sizes.spacing.md,
     gap: sizes.spacing.sm,
   },
-  cardHeaderLeft: { flex: 1, gap: 3 },
-  cardDate: { fontSize: sizes.font.sm, color: colors.text.secondary },
+  cardHeaderLeft: { flex: 1, gap: sizes.spacing.xs },
+  cardDate: { fontSize: sizes.font.sm, color: colors.textSub },
   cardHospital: {
     fontSize: sizes.font.md,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.text.primary,
+    color: colors.text,
   },
-  cardHeaderRight: { alignItems: 'flex-end', gap: 4 },
+  cardHeaderRight: { alignItems: 'flex-end', gap: sizes.spacing.xs },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -273,12 +265,11 @@ const styles = StyleSheet.create({
   },
   statusSpinner: { transform: [{ scale: 0.7 }] },
   statusText: { fontSize: sizes.font.xs, fontWeight: sizes.fontWeight.semibold },
-  medCount: { fontSize: sizes.font.xs, color: colors.text.secondary },
-  accordionArrow: { fontSize: sizes.font.xs, color: colors.text.disabled },
-  // 아코디언
+  medCountRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  medCount: { fontSize: sizes.font.xs, color: colors.textSub },
   accordion: {
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: colors.divider,
   },
   medRow: {
     flexDirection: 'row',
@@ -286,20 +277,19 @@ const styles = StyleSheet.create({
     paddingVertical: sizes.spacing.md,
     paddingHorizontal: sizes.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
     gap: sizes.spacing.sm,
   },
   medRowLeft: { flex: 1 },
   medName: {
     fontSize: sizes.font.md,
     fontWeight: sizes.fontWeight.medium,
-    color: colors.text.primary,
+    color: colors.text,
   },
-  medSub: { fontSize: sizes.font.xs, color: colors.text.secondary, marginTop: 2 },
-  medArrow: { fontSize: sizes.font.lg, color: colors.text.disabled },
+  medSub: { fontSize: sizes.font.xs, color: colors.textSub, marginTop: 2 },
   noMedText: {
     fontSize: sizes.font.sm,
-    color: colors.text.disabled,
+    color: colors.textDisabled,
     textAlign: 'center',
     paddingVertical: sizes.spacing.lg,
   },
@@ -314,9 +304,9 @@ const styles = StyleSheet.create({
     paddingVertical: sizes.spacing.sm,
     borderRadius: sizes.radius.md,
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSolid,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
   },
   actionBtnText: {
     fontSize: sizes.font.sm,
@@ -336,24 +326,23 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
-  emptySubText: { fontSize: sizes.font.sm, color: colors.text.disabled },
+  emptySubText: { fontSize: sizes.font.sm, color: colors.textDisabled },
   fab: {
     position: 'absolute',
-    bottom: sizes.spacing.xl,
+    bottom: sizes.tabBarSafeBottom + sizes.spacing.md,
     right: sizes.spacing.xl,
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.secondary,
+    shadowColor: colors.glassShadow,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
+    shadowOpacity: 1,
+    shadowRadius: 12,
     elevation: 8,
   },
-  fabIcon: { fontSize: 28, color: colors.text.onPrimary, lineHeight: 32 },
 });

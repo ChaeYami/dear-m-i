@@ -55,7 +55,7 @@ export const Input = forwardRef<TextInput, InputProps>(
               multiline && styles.inputMultiline,
               style,
             ]}
-            placeholderTextColor={colors.text.disabled}
+            placeholderTextColor={colors.textDisabled}
             secureTextEntry={isSecure}
             multiline={multiline}
             textAlignVertical={multiline ? 'top' : 'center'}
@@ -98,16 +98,16 @@ const styles = StyleSheet.create({
   label: {
     fontSize: sizes.font.sm,
     fontWeight: sizes.fontWeight.medium,
-    color: colors.text.secondary,
+    color: colors.textSub,
     marginBottom: sizes.spacing.xs,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: sizes.radius.md,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSolid,
     height: 48,
   },
   inputWrapperMultiline: {
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: sizes.spacing.md,
     fontSize: sizes.font.md,
-    color: colors.text.primary,
+    color: colors.text,
     height: '100%',
   },
   inputMultiline: {

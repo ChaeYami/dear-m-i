@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, CompositeNavigationProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { colors, sizes } from '@/constants';
@@ -54,7 +55,7 @@ export const SubscriptionManageScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <Text style={styles.backBtn}>‹  뒤로</Text>
+          <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>구독 관리</Text>
         <View style={{ width: 60 }} />
@@ -150,7 +151,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: sizes.spacing.lg,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
   },
   backBtn: { fontSize: sizes.font.md, color: colors.primary, fontWeight: sizes.fontWeight.medium, width: 60 },
   headerTitle: {
@@ -158,14 +159,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg, paddingBottom: 40 },
   planCard: {
     backgroundColor: colors.surface,
     borderRadius: sizes.radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     padding: sizes.spacing.lg,
     gap: sizes.spacing.sm,
   },
@@ -184,28 +185,28 @@ const styles = StyleSheet.create({
   planBadgeText: {
     fontSize: sizes.font.xs,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
   planBadgeTextPremium: { color: colors.primary },
   planTitle: {
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   planExpiry: {
     fontSize: sizes.font.sm,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
   planDesc: {
     fontSize: sizes.font.sm,
-    color: colors.text.secondary,
+    color: colors.textSub,
     lineHeight: 20,
   },
   section: { gap: sizes.spacing.md },
   sectionTitle: {
     fontSize: sizes.font.xs,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.secondary,
+    color: colors.textSub,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -213,13 +214,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: sizes.radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     padding: sizes.spacing.lg,
     gap: sizes.spacing.md,
   },
   benefitRow: { flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.md },
   benefitCheck: { fontSize: sizes.font.md, color: colors.secondary, fontWeight: sizes.fontWeight.bold },
-  benefitText: { fontSize: sizes.font.md, color: colors.text.primary, flex: 1 },
+  benefitText: { fontSize: sizes.font.md, color: colors.text, flex: 1 },
   upgradeBtn: {
     backgroundColor: colors.primary,
     borderRadius: sizes.radius.lg,
@@ -230,7 +231,7 @@ const styles = StyleSheet.create({
   upgradeBtnText: {
     fontSize: sizes.font.md,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.onPrimary,
+    color: colors.textInverse,
   },
   cancelBtn: {
     borderWidth: 1,
@@ -247,7 +248,7 @@ const styles = StyleSheet.create({
   },
   cancelNote: {
     fontSize: sizes.font.xs,
-    color: colors.text.disabled,
+    color: colors.textDisabled,
     textAlign: 'center',
   },
 });

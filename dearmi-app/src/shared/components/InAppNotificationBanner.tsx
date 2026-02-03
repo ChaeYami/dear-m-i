@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type * as Notifications from 'expo-notifications';
 import { colors, sizes } from '@/constants';
@@ -23,7 +24,6 @@ export const InAppNotificationBanner: React.FC<Props> = ({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    // 슬라이드 인
     Animated.spring(translateY, {
       toValue: 0,
       useNativeDriver: true,
@@ -31,7 +31,6 @@ export const InAppNotificationBanner: React.FC<Props> = ({
       friction: 10,
     }).start();
 
-    // 3초 후 자동 해제
     timerRef.current = setTimeout(dismiss, AUTO_DISMISS_MS);
 
     return () => {
@@ -70,7 +69,7 @@ export const InAppNotificationBanner: React.FC<Props> = ({
           {body ? <Text style={styles.body} numberOfLines={2}>{body}</Text> : null}
         </View>
         <TouchableOpacity style={styles.closeBtn} onPress={dismiss} hitSlop={10}>
-          <Text style={styles.closeText}>✕</Text>
+          <Ionicons name="close" size={sizes.font.md} color={colors.textDisabled} />
         </TouchableOpacity>
       </TouchableOpacity>
     </Animated.View>
@@ -90,24 +89,23 @@ const styles = StyleSheet.create({
   inner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSolid,
     borderRadius: sizes.radius.lg,
     minHeight: BANNER_HEIGHT,
     paddingVertical: sizes.spacing.md,
     paddingHorizontal: sizes.spacing.md,
     gap: sizes.spacing.sm,
-    // 그림자
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: colors.glassShadow,
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
+        shadowOpacity: 1,
+        shadowRadius: 12,
       },
       android: { elevation: 8 },
     }),
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
   },
   accent: {
     width: 3,
@@ -119,13 +117,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: sizes.font.md,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   body: {
     fontSize: sizes.font.sm,
-    color: colors.text.secondary,
+    color: colors.textSub,
     lineHeight: 18,
   },
   closeBtn: { padding: 4 },
-  closeText: { fontSize: sizes.font.sm, color: colors.text.disabled },
 });

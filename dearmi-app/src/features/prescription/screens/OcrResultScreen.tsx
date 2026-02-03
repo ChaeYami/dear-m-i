@@ -10,6 +10,7 @@ import {
   SafeAreaView,
   ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { CompositeNavigationProp } from '@react-navigation/native';
@@ -86,7 +87,7 @@ const MedicationRow: React.FC<{
     <TextInput
       style={styles.medInput}
       placeholder="약품명 *"
-      placeholderTextColor={colors.text.disabled}
+      placeholderTextColor={colors.textDisabled}
       value={item.medicationName}
       onChangeText={(v) => onChange(index, 'medicationName', v)}
     />
@@ -94,14 +95,14 @@ const MedicationRow: React.FC<{
       <TextInput
         style={[styles.medInput, styles.medInputHalf]}
         placeholder="용량 (예: 10mg)"
-        placeholderTextColor={colors.text.disabled}
+        placeholderTextColor={colors.textDisabled}
         value={item.dosage}
         onChangeText={(v) => onChange(index, 'dosage', v)}
       />
       <TextInput
         style={[styles.medInput, styles.medInputHalf]}
         placeholder="용법 (예: 1일 2회)"
-        placeholderTextColor={colors.text.disabled}
+        placeholderTextColor={colors.textDisabled}
         value={item.frequency}
         onChangeText={(v) => onChange(index, 'frequency', v)}
       />
@@ -109,7 +110,7 @@ const MedicationRow: React.FC<{
     <TextInput
       style={[styles.medInput, styles.medInputShort]}
       placeholder="투약일수 (예: 7)"
-      placeholderTextColor={colors.text.disabled}
+      placeholderTextColor={colors.textDisabled}
       value={item.durationDays}
       onChangeText={(v) => onChange(index, 'durationDays', v)}
       keyboardType="numeric"
@@ -255,7 +256,7 @@ export const OcrResultScreen: React.FC = () => {
       {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <Text style={styles.backBtn}>‹  뒤로</Text>
+          <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>OCR 결과</Text>
         {showEditor ? (
@@ -282,14 +283,14 @@ export const OcrResultScreen: React.FC = () => {
             <TextInput
               style={styles.input}
               placeholder="병원명 (선택)"
-              placeholderTextColor={colors.text.disabled}
+              placeholderTextColor={colors.textDisabled}
               value={hospitalName}
               onChangeText={setHospitalName}
             />
             <TextInput
               style={styles.input}
               placeholder="처방일 (예: 2025-01-15)"
-              placeholderTextColor={colors.text.disabled}
+              placeholderTextColor={colors.textDisabled}
               value={prescribedAt}
               onChangeText={setPrescribedAt}
             />
@@ -331,7 +332,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: sizes.spacing.lg,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
   },
   backBtn: { fontSize: sizes.font.md, color: colors.primary, fontWeight: sizes.fontWeight.medium },
   headerTitle: {
@@ -339,7 +340,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   saveBtn: {
     fontSize: sizes.font.md,
@@ -359,12 +360,12 @@ const styles = StyleSheet.create({
   statusTitle: {
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
     textAlign: 'center',
   },
   statusSub: {
     fontSize: sizes.font.md,
-    color: colors.text.secondary,
+    color: colors.textSub,
     textAlign: 'center',
   },
   manualEntryBtn: {
@@ -377,7 +378,7 @@ const styles = StyleSheet.create({
   manualEntryBtnText: {
     fontSize: sizes.font.md,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.text.onPrimary,
+    color: colors.textInverse,
   },
   // 편집기
   content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg, paddingBottom: 40 },
@@ -386,12 +387,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: sizes.font.md,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   sectionCount: {
     fontSize: sizes.font.sm,
-    color: colors.text.secondary,
-    backgroundColor: colors.border,
+    color: colors.textSub,
+    backgroundColor: colors.divider,
     paddingHorizontal: sizes.spacing.sm,
     paddingVertical: 2,
     borderRadius: sizes.radius.full,
@@ -399,12 +400,12 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.md,
     fontSize: sizes.font.md,
-    color: colors.text.primary,
+    color: colors.text,
   },
   // 약품 행
   medRow: {
@@ -413,7 +414,7 @@ const styles = StyleSheet.create({
     padding: sizes.spacing.md,
     gap: sizes.spacing.sm,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
   },
   medRowHeader: {
     flexDirection: 'row',
@@ -423,7 +424,7 @@ const styles = StyleSheet.create({
   medRowIndex: {
     fontSize: sizes.font.sm,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
   removeBtn: {
     fontSize: sizes.font.md,
@@ -434,12 +435,12 @@ const styles = StyleSheet.create({
   medInput: {
     backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: sizes.radius.sm,
     paddingHorizontal: sizes.spacing.sm,
     paddingVertical: sizes.spacing.sm,
     fontSize: sizes.font.sm,
-    color: colors.text.primary,
+    color: colors.text,
   },
   medInputRow: { flexDirection: 'row', gap: sizes.spacing.sm },
   medInputHalf: { flex: 1 },

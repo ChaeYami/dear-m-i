@@ -36,8 +36,9 @@ export const sizes = {
   radius: {
     sm: 4,
     md: 8,
-    lg: 12,
-    xl: 16,
+    lg: 16,
+    xl: 20,
+    xxl: 28,
     full: 9999,
   },
 
@@ -57,10 +58,13 @@ export const sizes = {
   },
 
   /** 탭 바 높이 */
-  tabBarHeight: 60,
+  tabBarHeight: 64,
 
   /** 헤더 높이 */
   headerHeight: 56,
+
+  /** 플로팅 탭바 하단 여백 보상 */
+  tabBarSafeBottom: 96,
 } as const;
 
 export type Sizes = typeof sizes;

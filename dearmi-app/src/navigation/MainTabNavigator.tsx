@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
@@ -25,21 +25,13 @@ export type MainTabParamList = {
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-/** 탭 플레이스홀더 (각 feature 화면 구현 후 교체) */
-const Placeholder = (label: string): React.FC => () => (
-  <View style={styles.placeholder}>
-    <Text style={styles.text}>{label} 구현 예정</Text>
-  </View>
-);
-
-/** 프리미엄 전용 기능 잠금 화면 */
 const PremiumGate: React.FC = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { t } = useTranslation();
 
   return (
     <View style={styles.gateContainer}>
-      <Text style={styles.gateLockIcon}>🔒</Text>
+      <Ionicons name="lock-closed" size={48} color={colors.textDisabled} />
       <Text style={styles.gateTitle}>{t('premium_gate_title')}</Text>
       <Text style={styles.gateDesc}>{t('premium_gate_desc')}</Text>
       <TouchableOpacity
@@ -53,7 +45,6 @@ const PremiumGate: React.FC = () => {
   );
 };
 
-/** Prescription 탭: FREE 플랜이면 PremiumGate, 아니면 실제 화면 */
 const PrescriptionTabWrapper: React.FC = () => {
   const plan = useAuthStore((s) => s.user?.plan);
 
@@ -80,20 +71,45 @@ export const MainTabNavigator: React.FC = () => {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.text.disabled,
+        tabBarInactiveTintColor: colors.textDisabled,
         tabBarStyle: {
+          position: 'absolute' as const,
+          bottom: 24,
+          left: 20,
+          right: 20,
           height: sizes.tabBarHeight,
-          borderTopColor: colors.border,
-          backgroundColor: colors.surface,
+          borderRadius: 32,
+          backgroundColor: 'rgba(255, 255, 255, 0.85)',
+          borderWidth: 1,
+          borderColor: colors.glassBorder,
+          borderTopWidth: 1,
+          borderTopColor: colors.glassBorder,
+          elevation: 0,
+          ...Platform.select({
+            ios: {
+              shadowColor: colors.glassShadow,
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 1,
+              shadowRadius: 24,
+            },
+          }),
         },
         tabBarLabelStyle: {
-          fontSize: sizes.font.xs,
+          fontSize: 10,
           fontWeight: sizes.fontWeight.medium,
-          marginBottom: 4,
+          marginBottom: 6,
         },
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarIconStyle: {
+          marginTop: 6,
+        },
+        tabBarIcon: ({ focused, color }) => {
           const icons = TAB_ICONS[route.name] ?? TAB_ICONS.Schedule;
-          return <Ionicons name={focused ? icons.focused : icons.unfocused} size={size} color={color} />;
+          return (
+            <View style={styles.tabIconWrap}>
+              {focused && <View style={styles.tabDot} />}
+              <Ionicons name={focused ? icons.focused : icons.unfocused} size={focused ? 24 : 22} color={color} />
+            </View>
+          );
         },
       })}
     >
@@ -111,13 +127,16 @@ export const MainTabNavigator: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  placeholder: {
-    flex: 1,
+  tabIconWrap: {
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.background,
   },
-  text: { color: colors.text.secondary },
+  tabDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.primary,
+    marginBottom: 2,
+  },
   // PremiumGate
   gateContainer: {
     flex: 1,
@@ -126,20 +145,17 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     paddingHorizontal: sizes.spacing.xl,
   },
-  gateLockIcon: {
-    fontSize: 48,
-    marginBottom: sizes.spacing.lg,
-  },
   gateTitle: {
     fontSize: sizes.font.xl,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
+    marginTop: sizes.spacing.lg,
     marginBottom: sizes.spacing.md,
     textAlign: 'center',
   },
   gateDesc: {
     fontSize: sizes.font.md,
-    color: colors.text.secondary,
+    color: colors.textSub,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: sizes.spacing.xl,
@@ -148,13 +164,13 @@ const styles = StyleSheet.create({
     height: sizes.buttonHeight.lg,
     paddingHorizontal: sizes.spacing.xxl,
     borderRadius: sizes.radius.lg,
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   upgradeBtnTxt: {
     fontSize: sizes.font.md,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.onPrimary,
+    color: colors.textInverse,
   },
 });

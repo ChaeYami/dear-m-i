@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { colors, sizes } from '@/constants';
@@ -106,7 +107,7 @@ export const PrepNoteFormScreen: React.FC = () => {
                   ? `${selectedSchedule.hospitalName} · ${formatDate(selectedSchedule.scheduledAt)}`
                   : '일정 선택 (선택 사항)'}
               </Text>
-              <Text style={styles.dropdownArrow}>{showSchedulePicker ? '▲' : '▼'}</Text>
+              <Text style={styles.dropdownArrow}><Ionicons name={showSchedulePicker ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textSub} /></Text>
             </TouchableOpacity>
 
             {showSchedulePicker && (
@@ -156,7 +157,7 @@ export const PrepNoteFormScreen: React.FC = () => {
           <TextInput
             style={styles.textArea}
             placeholder="진료 전 궁금한 점, 증상, 질문 등을 자유롭게 적어 두세요."
-            placeholderTextColor={colors.text.disabled}
+            placeholderTextColor={colors.textDisabled}
             value={content}
             onChangeText={setContent}
             multiline
@@ -180,13 +181,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: sizes.spacing.lg,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
   },
-  headerCancel: { fontSize: sizes.font.md, color: colors.text.secondary },
+  headerCancel: { fontSize: sizes.font.md, color: colors.textSub },
   headerTitle: {
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   headerSave: {
     fontSize: sizes.font.md,
@@ -199,7 +200,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: sizes.font.sm,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.text.secondary,
+    color: colors.textSub,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -210,18 +211,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.md,
   },
-  scheduleName: { fontSize: sizes.font.md, color: colors.text.primary, flex: 1 },
-  schedulePlaceholder: { fontSize: sizes.font.md, color: colors.text.disabled, flex: 1 },
-  dropdownArrow: { fontSize: sizes.font.xs, color: colors.text.secondary },
+  scheduleName: { fontSize: sizes.font.md, color: colors.text, flex: 1 },
+  schedulePlaceholder: { fontSize: sizes.font.md, color: colors.textDisabled, flex: 1 },
+  dropdownArrow: { fontSize: sizes.font.xs, color: colors.textSub },
   dropdown: {
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: sizes.radius.md,
     overflow: 'hidden',
   },
@@ -229,25 +230,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   dropdownItemSelected: { backgroundColor: colors.primary + '10' },
-  dropdownItemText: { fontSize: sizes.font.md, color: colors.text.primary },
+  dropdownItemText: { fontSize: sizes.font.md, color: colors.text },
   dropdownItemTextSelected: { color: colors.primary, fontWeight: sizes.fontWeight.semibold },
-  dropdownItemDate: { fontSize: sizes.font.sm, color: colors.text.secondary },
+  dropdownItemDate: { fontSize: sizes.font.sm, color: colors.textSub },
   textArea: {
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
     paddingTop: sizes.spacing.md,
     paddingBottom: sizes.spacing.md,
     fontSize: sizes.font.md,
-    color: colors.text.primary,
+    color: colors.text,
     minHeight: 180,
     lineHeight: 22,
   },

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { colors, sizes } from '@/constants';
 
@@ -44,7 +45,6 @@ export const TriggerTagSelector: React.FC<TriggerTagSelectorProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* 프리셋 태그 */}
       <View style={styles.tagGrid}>
         {PRESET_TAGS.map((tag) => {
           const isSelected = selectedTags.includes(tag);
@@ -63,12 +63,11 @@ export const TriggerTagSelector: React.FC<TriggerTagSelectorProps> = ({
         })}
       </View>
 
-      {/* 커스텀 태그 입력 */}
       <View style={styles.customRow}>
         <TextInput
           style={styles.customInput}
           placeholder={t('custom_input')}
-          placeholderTextColor={colors.text.disabled}
+          placeholderTextColor={colors.textDisabled}
           value={customInput}
           onChangeText={setCustomInput}
           onSubmitEditing={addCustomTag}
@@ -85,7 +84,6 @@ export const TriggerTagSelector: React.FC<TriggerTagSelectorProps> = ({
         </TouchableOpacity>
       </View>
 
-      {/* 커스텀 태그 칩 표시 */}
       {selectedTags.filter(isCustomTag).length > 0 && (
         <View style={styles.customTags}>
           {selectedTags.filter(isCustomTag).map((tag) => (
@@ -96,7 +94,7 @@ export const TriggerTagSelector: React.FC<TriggerTagSelectorProps> = ({
               activeOpacity={0.75}
             >
               <Text style={styles.customChipText}>{tag}</Text>
-              <Text style={styles.customChipRemove}>x</Text>
+              <Ionicons name="close-circle" size={14} color={colors.secondary} />
             </TouchableOpacity>
           ))}
         </View>
@@ -118,15 +116,15 @@ const styles = StyleSheet.create({
     borderRadius: sizes.radius.full,
     backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
   },
   chipSelected: {
-    backgroundColor: colors.primary + '15',
+    backgroundColor: colors.primaryLight + '25',
     borderColor: colors.primary,
   },
   chipText: {
     fontSize: sizes.font.sm,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
   chipTextSelected: {
     color: colors.primary,
@@ -138,14 +136,14 @@ const styles = StyleSheet.create({
   },
   customInput: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSolid,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.sm,
     fontSize: sizes.font.md,
-    color: colors.text.primary,
+    color: colors.text,
   },
   addBtn: {
     backgroundColor: colors.primary,
@@ -155,7 +153,7 @@ const styles = StyleSheet.create({
   },
   addBtnDisabled: { opacity: 0.4 },
   addBtnText: {
-    color: colors.text.onPrimary,
+    color: colors.textInverse,
     fontSize: sizes.font.sm,
     fontWeight: sizes.fontWeight.semibold,
   },
@@ -167,7 +165,7 @@ const styles = StyleSheet.create({
   customChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.secondary + '15',
+    backgroundColor: colors.secondaryLight + '25',
     paddingHorizontal: sizes.spacing.sm,
     paddingVertical: 4,
     borderRadius: sizes.radius.full,
@@ -177,10 +175,5 @@ const styles = StyleSheet.create({
     fontSize: sizes.font.xs,
     color: colors.secondary,
     fontWeight: sizes.fontWeight.medium,
-  },
-  customChipRemove: {
-    fontSize: sizes.font.sm,
-    color: colors.secondary,
-    fontWeight: sizes.fontWeight.bold,
   },
 });

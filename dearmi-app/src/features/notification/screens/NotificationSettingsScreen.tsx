@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   SafeAreaView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { colors, sizes } from '@/constants';
 import {
@@ -37,8 +38,8 @@ const SettingRow: React.FC<{
       value={value}
       onValueChange={onToggle}
       disabled={disabled}
-      trackColor={{ false: colors.border, true: colors.primary + '80' }}
-      thumbColor={value ? colors.primary : colors.text.disabled}
+      trackColor={{ false: colors.divider, true: colors.primary + '80' }}
+      thumbColor={value ? colors.primary : colors.textDisabled}
     />
   </View>
 );
@@ -69,7 +70,7 @@ export const NotificationSettingsScreen: React.FC = () => {
       {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <Text style={styles.backBtn}>‹  뒤로</Text>
+          <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>알림 설정</Text>
         <View style={{ width: 48 }} />
@@ -127,7 +128,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: sizes.spacing.lg,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
   },
   backBtn: {
     fontSize: sizes.font.md,
@@ -140,20 +141,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg },
   section: {
     backgroundColor: colors.surface,
     borderRadius: sizes.radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     overflow: 'hidden',
   },
   sectionTitle: {
     fontSize: sizes.font.xs,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.secondary,
+    color: colors.textSub,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     paddingHorizontal: sizes.spacing.lg,
@@ -172,19 +173,19 @@ const styles = StyleSheet.create({
   rowLabel: {
     fontSize: sizes.font.md,
     fontWeight: sizes.fontWeight.medium,
-    color: colors.text.primary,
+    color: colors.text,
   },
-  labelDisabled: { color: colors.text.secondary },
+  labelDisabled: { color: colors.textSub },
   rowDescription: {
     fontSize: sizes.font.xs,
-    color: colors.text.secondary,
+    color: colors.textSub,
     lineHeight: 16,
   },
   divider: {
     height: 1,
-    backgroundColor: colors.border,
+    backgroundColor: colors.divider,
     marginHorizontal: sizes.spacing.lg,
   },
   loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  errorText: { fontSize: sizes.font.md, color: colors.text.secondary },
+  errorText: { fontSize: sizes.font.md, color: colors.textSub },
 });

@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   SectionList,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { CompositeNavigationProp } from '@react-navigation/native';
@@ -55,7 +56,7 @@ export const CheckinHistoryScreen: React.FC = () => {
       {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <Text style={styles.backBtn}>{'<  '}{t('common:back')}</Text>
+          <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('history_title')}</Text>
         <View style={{ width: 48 }} />
@@ -148,7 +149,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: sizes.spacing.lg,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
   },
   backBtn: {
     fontSize: sizes.font.md,
@@ -161,7 +162,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   freeBanner: {
     backgroundColor: colors.warningLight,
@@ -191,12 +192,12 @@ const styles = StyleSheet.create({
     paddingVertical: sizes.spacing.sm,
     backgroundColor: colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
   },
   sectionDate: {
     fontSize: sizes.font.sm,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   card: {
     backgroundColor: colors.surface,
@@ -206,7 +207,7 @@ const styles = StyleSheet.create({
     padding: sizes.spacing.md,
     gap: sizes.spacing.sm,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
   },
   cardTop: {
     flexDirection: 'row',
@@ -247,7 +248,7 @@ const styles = StyleSheet.create({
   },
   memo: {
     fontSize: sizes.font.sm,
-    color: colors.text.secondary,
+    color: colors.textSub,
     lineHeight: 20,
   },
   metaRow: {
@@ -256,7 +257,7 @@ const styles = StyleSheet.create({
   },
   metaItem: {
     fontSize: sizes.font.xs,
-    color: colors.text.disabled,
+    color: colors.textDisabled,
   },
   emptyWrap: {
     flex: 1,
@@ -268,7 +269,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
-  emptySubText: { fontSize: sizes.font.sm, color: colors.text.disabled },
+  emptySubText: { fontSize: sizes.font.sm, color: colors.textDisabled },
 });

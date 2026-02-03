@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { colors, sizes } from '@/constants';
@@ -102,7 +103,7 @@ export const SearchScreen: React.FC = () => {
       {/* 헤더 검색창 */}
       <View style={styles.header}>
         <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Ionicons name="search-outline" size={16} color={colors.textDisabled} />
           <TextInput
             ref={inputRef}
             style={styles.searchInput}
@@ -110,13 +111,13 @@ export const SearchScreen: React.FC = () => {
             onChangeText={setKeyword}
             onSubmitEditing={() => handleSearch(keyword)}
             placeholder="진료 기록, 준비 메모 검색"
-            placeholderTextColor={colors.text.disabled}
+            placeholderTextColor={colors.textDisabled}
             returnKeyType="search"
             autoFocus
           />
           {keyword.length > 0 && (
             <TouchableOpacity onPress={handleClear} hitSlop={8}>
-              <Text style={styles.clearBtn}>✕</Text>
+              <Ionicons name="close" size={16} color={colors.textDisabled} />
             </TouchableOpacity>
           )}
         </View>
@@ -225,11 +226,11 @@ export const SearchScreen: React.FC = () => {
             {recentSearches.map((k) => (
               <View key={k} style={styles.recentItem}>
                 <TouchableOpacity style={styles.recentKeyword} onPress={() => handleSearch(k)}>
-                  <Text style={styles.recentIcon}>🔍</Text>
+                  <Ionicons name="search-outline" size={13} color={colors.textDisabled} />
                   <Text style={styles.recentText}>{k}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => handleRemoveRecent(k)} hitSlop={8}>
-                  <Text style={styles.recentRemove}>✕</Text>
+                  <Ionicons name="close" size={13} color={colors.textDisabled} />
                 </TouchableOpacity>
               </View>
             ))}
@@ -256,7 +257,7 @@ const styles = StyleSheet.create({
     gap: sizes.spacing.sm,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
   },
   searchBar: {
     flex: 1,
@@ -265,7 +266,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderRadius: sizes.radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     paddingHorizontal: sizes.spacing.md,
     height: 40,
     gap: sizes.spacing.sm,
@@ -274,16 +275,16 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: sizes.font.md,
-    color: colors.text.primary,
+    color: colors.text,
     padding: 0,
   },
   clearBtn: {
     fontSize: 13,
-    color: colors.text.disabled,
+    color: colors.textDisabled,
     fontWeight: sizes.fontWeight.bold,
   },
   cancelBtn: { paddingVertical: sizes.spacing.xs },
-  cancelText: { fontSize: sizes.font.md, color: colors.text.secondary },
+  cancelText: { fontSize: sizes.font.md, color: colors.textSub },
   content: { padding: sizes.spacing.lg, paddingBottom: 40 },
   freeBanner: {
     backgroundColor: colors.primary + '10',
@@ -300,7 +301,7 @@ const styles = StyleSheet.create({
   freeBannerText: {
     flex: 1,
     fontSize: sizes.font.xs,
-    color: colors.text.secondary,
+    color: colors.textSub,
     lineHeight: 18,
   },
   freeBannerLink: {
@@ -310,7 +311,7 @@ const styles = StyleSheet.create({
   },
   spinner: { marginTop: sizes.spacing.xl },
   emptyWrap: { marginTop: sizes.spacing.xxl, alignItems: 'center' },
-  emptyText: { fontSize: sizes.font.md, color: colors.text.secondary },
+  emptyText: { fontSize: sizes.font.md, color: colors.textSub },
   recentSection: { gap: sizes.spacing.xs },
   recentHeader: {
     flexDirection: 'row',
@@ -321,15 +322,15 @@ const styles = StyleSheet.create({
   recentTitle: {
     fontSize: sizes.font.sm,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
-  recentClearAll: { fontSize: sizes.font.xs, color: colors.text.disabled },
+  recentClearAll: { fontSize: sizes.font.xs, color: colors.textDisabled },
   recentItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: sizes.spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
   },
   recentKeyword: {
     flex: 1,
@@ -337,11 +338,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: sizes.spacing.sm,
   },
-  recentIcon: { fontSize: 13, color: colors.text.disabled },
-  recentText: { fontSize: sizes.font.md, color: colors.text.primary },
+  recentIcon: { fontSize: 13, color: colors.textDisabled },
+  recentText: { fontSize: sizes.font.md, color: colors.text },
   recentRemove: {
     fontSize: 13,
-    color: colors.text.disabled,
+    color: colors.textDisabled,
     paddingHorizontal: sizes.spacing.xs,
   },
 });

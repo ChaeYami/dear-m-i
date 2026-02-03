@@ -10,6 +10,7 @@ import {
   SafeAreaView,
   Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { colors, sizes } from '@/constants';
 import { EmotionSlider } from '@/shared/components/EmotionSlider';
@@ -67,7 +68,6 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onClose} hitSlop={12}>
           <Text style={styles.headerCancel}>{t('common:cancel')}</Text>
@@ -85,19 +85,16 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* 감정 점수 */}
         <View style={styles.field}>
           <Text style={styles.fieldLabel}>{t('emotion_score')}</Text>
           <EmotionSlider value={emotionScore} onChange={setEmotionScore} />
         </View>
 
-        {/* 트리거 태그 */}
         <View style={styles.field}>
           <Text style={styles.fieldLabel}>{t('trigger_label')}</Text>
           <TriggerTagSelector selectedTags={triggerTags} onChangeTags={setTriggerTags} />
         </View>
 
-        {/* 메모 */}
         <View style={styles.field}>
           <View style={styles.fieldLabelRow}>
             <Text style={styles.fieldLabel}>{t('memo_label')}</Text>
@@ -110,7 +107,7 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
           <TextInput
             style={[styles.textArea, memo.length > (memoLimit ?? Infinity) && styles.textAreaError]}
             placeholder={t('memo_placeholder')}
-            placeholderTextColor={colors.text.disabled}
+            placeholderTextColor={colors.textDisabled}
             value={memo}
             onChangeText={setMemo}
             multiline
@@ -119,7 +116,6 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
           />
         </View>
 
-        {/* 수면 시간 */}
         <View style={styles.field}>
           <Text style={styles.fieldLabel}>{t('sleep_label')}</Text>
           <TouchableOpacity
@@ -128,7 +124,11 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
             activeOpacity={0.8}
           >
             <Text style={styles.sleepValue}>{t('sleep_unit', { hours: sleepHours })}</Text>
-            <Text style={styles.dropdownArrow}>{showSleepPicker ? '▲' : '▼'}</Text>
+            <Ionicons
+              name={showSleepPicker ? 'chevron-up' : 'chevron-down'}
+              size={16}
+              color={colors.textSub}
+            />
           </TouchableOpacity>
           {showSleepPicker && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sleepGrid}>
@@ -150,13 +150,12 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
           )}
         </View>
 
-        {/* 복약 여부 */}
         <View style={styles.medRow}>
           <Text style={styles.fieldLabel}>{t('medication_toggle')}</Text>
           <Switch
             value={tookMedication}
             onValueChange={setTookMedication}
-            trackColor={{ false: colors.disabled, true: colors.primary + '60' }}
+            trackColor={{ false: colors.disabled, true: colors.primaryLight }}
             thumbColor={tookMedication ? colors.primary : '#f4f3f4'}
           />
         </View>
@@ -173,16 +172,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: sizes.spacing.lg,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSolid,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
   },
   headerTitle: {
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
-  headerCancel: { fontSize: sizes.font.md, color: colors.text.secondary },
+  headerCancel: { fontSize: sizes.font.md, color: colors.textSub },
   headerSave: {
     fontSize: sizes.font.md,
     fontWeight: sizes.fontWeight.semibold,
@@ -195,20 +194,20 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: sizes.font.sm,
     fontWeight: sizes.fontWeight.medium,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
-  charCount: { fontSize: sizes.font.xs, color: colors.text.disabled },
+  charCount: { fontSize: sizes.font.xs, color: colors.textDisabled },
   charCountOver: { color: colors.error, fontWeight: sizes.fontWeight.semibold },
   textArea: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSolid,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
     paddingTop: sizes.spacing.md,
     paddingBottom: sizes.spacing.md,
     fontSize: sizes.font.md,
-    color: colors.text.primary,
+    color: colors.text,
     minHeight: 100,
     lineHeight: 22,
   },
@@ -217,15 +216,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSolid,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.md,
   },
-  sleepValue: { fontSize: sizes.font.md, color: colors.text.primary },
-  dropdownArrow: { fontSize: sizes.font.xs, color: colors.text.secondary },
+  sleepValue: { fontSize: sizes.font.md, color: colors.text },
   sleepGrid: {
     maxHeight: 44,
   },
@@ -235,16 +233,16 @@ const styles = StyleSheet.create({
     borderRadius: sizes.radius.full,
     backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     marginRight: sizes.spacing.xs,
   },
   sleepChipSelected: {
-    backgroundColor: colors.primary + '15',
+    backgroundColor: colors.primaryLight + '25',
     borderColor: colors.primary,
   },
   sleepChipText: {
     fontSize: sizes.font.sm,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
   sleepChipTextSelected: {
     color: colors.primary,
@@ -254,10 +252,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSolid,
     borderRadius: sizes.radius.md,
     padding: sizes.spacing.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
   },
 });

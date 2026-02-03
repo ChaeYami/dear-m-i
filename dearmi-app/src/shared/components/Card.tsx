@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, ViewStyle, Platform } from 'react-native';
 import { colors, sizes } from '@/constants';
 
 interface CardProps {
@@ -13,7 +13,7 @@ export const Card: React.FC<CardProps> = ({ children, onPress, style }) => {
     return (
       <TouchableOpacity
         onPress={onPress}
-        activeOpacity={0.7}
+        activeOpacity={0.8}
         style={[styles.card, style]}
       >
         {children}
@@ -26,13 +26,21 @@ export const Card: React.FC<CardProps> = ({ children, onPress, style }) => {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: sizes.radius.lg,
+    backgroundColor: colors.surfaceSolid,
+    borderRadius: sizes.radius.xl,
     padding: sizes.spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.glassShadow,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 1,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
 });

@@ -5,21 +5,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   Platform,
-  Image,
   SafeAreaView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { colors, sizes } from '@/constants';
 import { useLogin } from '@/features/auth/hooks/useLogin';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 
-/**
- * 소셜 로그인 화면
- * - Google OAuth2 (iOS + Android)
- * - Apple Sign In (iOS 전용 — App Store 가이드라인 준수)
- * - expo-web-browser로 백엔드 OAuth 엔드포인트 열기
- * - 딥링크 dearmi://auth?access_token=...&refresh_token=... 파싱
- */
 export const LoginScreen: React.FC = () => {
   const { t } = useTranslation('auth');
   const { loginWithGoogle, loginWithApple, loginWithDev, isLoading, error, clearError } = useLogin();
@@ -38,7 +31,6 @@ export const LoginScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* 헤더 영역 */}
       <View style={styles.header}>
         <View style={styles.logoCircle}>
           <Text style={styles.logoText}>M</Text>
@@ -47,7 +39,6 @@ export const LoginScreen: React.FC = () => {
         <Text style={styles.tagline}>{t('app_tagline')}</Text>
       </View>
 
-      {/* 버튼 영역 */}
       <View style={styles.buttonArea}>
         {error && (
           <View style={styles.errorBox}>
@@ -55,19 +46,17 @@ export const LoginScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Google 로그인 */}
         <TouchableOpacity
           style={styles.socialButton}
           onPress={loginWithGoogle}
           activeOpacity={0.85}
         >
           <View style={styles.socialIconPlaceholder}>
-            <Text style={styles.socialIconText}>G</Text>
+            <Ionicons name="logo-google" size={20} color="#4285F4" />
           </View>
           <Text style={styles.socialButtonText}>{t('continue_google')}</Text>
         </TouchableOpacity>
 
-        {/* Apple 로그인 (iOS 전용) */}
         {Platform.OS === 'ios' && (
           <TouchableOpacity
             style={[styles.socialButton, styles.appleButton]}
@@ -75,7 +64,7 @@ export const LoginScreen: React.FC = () => {
             activeOpacity={0.85}
           >
             <View style={styles.socialIconPlaceholder}>
-              <Text style={[styles.socialIconText, styles.appleIconText]}></Text>
+              <Ionicons name="logo-apple" size={20} color={colors.textInverse} />
             </View>
             <Text style={[styles.socialButtonText, styles.appleButtonText]}>
               {t('continue_apple')}
@@ -84,7 +73,6 @@ export const LoginScreen: React.FC = () => {
         )}
       </View>
 
-      {/* Dev 로그인 (개발 빌드에서만 표시) */}
       {isDev && (
         <TouchableOpacity
           style={styles.devButton}
@@ -95,7 +83,6 @@ export const LoginScreen: React.FC = () => {
         </TouchableOpacity>
       )}
 
-      {/* 하단 약관 */}
       <Text style={styles.terms}>{t('terms_agreement')}</Text>
     </SafeAreaView>
   );
@@ -117,7 +104,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: sizes.spacing.md,
@@ -125,24 +112,24 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 40,
     fontWeight: '700',
-    color: colors.text.onPrimary,
+    color: colors.textInverse,
   },
   appName: {
     fontSize: sizes.font.xxxl,
     fontWeight: '700',
-    color: colors.text.primary,
+    color: colors.text,
     marginBottom: sizes.spacing.xs,
   },
   tagline: {
     fontSize: sizes.font.md,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
   buttonArea: {
     gap: sizes.spacing.md,
   },
   errorBox: {
     backgroundColor: colors.errorLight,
-    borderRadius: sizes.spacing.sm,
+    borderRadius: sizes.radius.md,
     padding: sizes.spacing.md,
     marginBottom: sizes.spacing.sm,
   },
@@ -154,17 +141,17 @@ const styles = StyleSheet.create({
   socialButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSolid,
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: sizes.spacing.sm,
+    borderColor: colors.divider,
+    borderRadius: sizes.radius.lg,
     paddingVertical: sizes.spacing.md,
     paddingHorizontal: sizes.spacing.lg,
     gap: sizes.spacing.md,
   },
   appleButton: {
-    backgroundColor: colors.text.primary,
-    borderColor: colors.text.primary,
+    backgroundColor: '#1A1825',
+    borderColor: 'transparent',
   },
   socialIconPlaceholder: {
     width: 24,
@@ -172,24 +159,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  socialIconText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.primary,
-  },
-  appleIconText: {
-    color: colors.text.onPrimary,
-    fontSize: 18,
-  },
   socialButtonText: {
     flex: 1,
     textAlign: 'center',
     fontSize: sizes.font.md,
     fontWeight: '600',
-    color: colors.text.primary,
+    color: colors.text,
   },
   appleButtonText: {
-    color: colors.text.onPrimary,
+    color: colors.textInverse,
   },
   devButton: {
     borderWidth: 1,
@@ -206,7 +184,7 @@ const styles = StyleSheet.create({
   },
   terms: {
     fontSize: sizes.font.xs,
-    color: colors.text.disabled,
+    color: colors.textDisabled,
     textAlign: 'center',
     lineHeight: 18,
   },

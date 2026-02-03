@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { colors, sizes } from '@/constants';
@@ -104,7 +105,6 @@ export const RecordFormScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
           <Text style={styles.headerCancel}>취소</Text>
@@ -118,7 +118,6 @@ export const RecordFormScreen: React.FC = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        {/* 이번 주 체크인 요약 */}
         {checkinSummary && checkinSummary.totalCheckins > 0 && (
           <View style={styles.summarySection}>
             <TouchableOpacity
@@ -129,7 +128,11 @@ export const RecordFormScreen: React.FC = () => {
               <Text style={styles.summaryToggleText}>
                 이번 주 체크인 요약 ({checkinSummary.totalCheckins}일)
               </Text>
-              <Text style={styles.summaryToggleArrow}>{showCheckinSummary ? '▲' : '▼'}</Text>
+              <Ionicons
+                name={showCheckinSummary ? 'chevron-up' : 'chevron-down'}
+                size={16}
+                color={colors.secondary}
+              />
             </TouchableOpacity>
             {showCheckinSummary && (
               <View style={styles.summaryCard}>
@@ -173,7 +176,6 @@ export const RecordFormScreen: React.FC = () => {
           </View>
         )}
 
-        {/* 일정 연결 (선택) */}
         <View style={styles.field}>
           <Text style={styles.fieldLabel}>연결 일정 (선택)</Text>
           <TouchableOpacity
@@ -186,7 +188,11 @@ export const RecordFormScreen: React.FC = () => {
                 ? `${selectedSchedule.hospitalName} · ${formatDate(selectedSchedule.scheduledAt)}`
                 : '일정 선택 (선택 사항)'}
             </Text>
-            <Text style={styles.dropdownArrow}>{showSchedulePicker ? '▲' : '▼'}</Text>
+            <Ionicons
+              name={showSchedulePicker ? 'chevron-up' : 'chevron-down'}
+              size={16}
+              color={colors.textSub}
+            />
           </TouchableOpacity>
 
           {showSchedulePicker && (
@@ -227,7 +233,6 @@ export const RecordFormScreen: React.FC = () => {
           )}
         </View>
 
-        {/* 진료 준비 메모 참고 (연결 일정에 메모가 있을 때만 표시) */}
         {selectedScheduleId && prepNotes.length > 0 && (
           <View style={styles.prepNoteSection}>
             <TouchableOpacity
@@ -235,10 +240,17 @@ export const RecordFormScreen: React.FC = () => {
               onPress={() => setShowPrepNotes((v) => !v)}
               activeOpacity={0.8}
             >
-              <Text style={styles.prepNoteToggleText}>
-                📝 진료 준비 메모 참고 ({prepNotes.length}개)
-              </Text>
-              <Text style={styles.prepNoteToggleArrow}>{showPrepNotes ? '▲' : '▼'}</Text>
+              <View style={styles.prepNoteToggleLeft}>
+                <Ionicons name="create-outline" size={16} color={colors.primary} />
+                <Text style={styles.prepNoteToggleText}>
+                  진료 준비 메모 참고 ({prepNotes.length}개)
+                </Text>
+              </View>
+              <Ionicons
+                name={showPrepNotes ? 'chevron-up' : 'chevron-down'}
+                size={16}
+                color={colors.primary}
+              />
             </TouchableOpacity>
             {showPrepNotes &&
               prepNotes.map((note) => (
@@ -249,13 +261,11 @@ export const RecordFormScreen: React.FC = () => {
           </View>
         )}
 
-        {/* 감정 점수 */}
         <View style={styles.field}>
           <Text style={styles.fieldLabel}>오늘 컨디션</Text>
           <EmotionSlider value={emotionScore} onChange={setEmotionScore} />
         </View>
 
-        {/* 내용 */}
         <View style={styles.field}>
           <View style={styles.fieldLabelRow}>
             <Text style={styles.fieldLabel}>
@@ -276,7 +286,7 @@ export const RecordFormScreen: React.FC = () => {
           <TextInput
             style={[styles.textArea, content.length > (contentLimit ?? Infinity) && styles.textAreaError]}
             placeholder="진료 내용, 의사 선생님 말씀, 느낀 점 등을 자유롭게 기록하세요"
-            placeholderTextColor={colors.text.disabled}
+            placeholderTextColor={colors.textDisabled}
             value={content}
             onChangeText={setContent}
             multiline
@@ -285,14 +295,13 @@ export const RecordFormScreen: React.FC = () => {
           />
         </View>
 
-        {/* 태그 */}
         <View style={styles.field}>
           <Text style={styles.fieldLabel}>태그 (선택)</Text>
           <View style={styles.tagInputRow}>
             <TextInput
               style={styles.tagInput}
               placeholder="#우울감, #수면장애…"
-              placeholderTextColor={colors.text.disabled}
+              placeholderTextColor={colors.textDisabled}
               value={tagInput}
               onChangeText={setTagInput}
               onSubmitEditing={handleAddTag}
@@ -313,7 +322,7 @@ export const RecordFormScreen: React.FC = () => {
                   activeOpacity={0.75}
                 >
                   <Text style={styles.tagChipText}>#{tag}</Text>
-                  <Text style={styles.tagChipRemove}>×</Text>
+                  <Ionicons name="close-circle" size={14} color={colors.primary} />
                 </TouchableOpacity>
               ))}
             </View>
@@ -337,16 +346,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: sizes.spacing.lg,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   headerTitle: {
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
-  headerCancel: { fontSize: sizes.font.md, color: colors.text.secondary },
+  headerCancel: { fontSize: sizes.font.md, color: colors.textSub },
   headerSave: {
     fontSize: sizes.font.md,
     fontWeight: sizes.fontWeight.semibold,
@@ -359,29 +365,28 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: sizes.font.sm,
     fontWeight: sizes.fontWeight.medium,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
   required: { color: colors.error },
-  charCount: { fontSize: sizes.font.xs, color: colors.text.disabled },
+  charCount: { fontSize: sizes.font.xs, color: colors.textDisabled },
   charCountOver: { color: colors.error, fontWeight: sizes.fontWeight.semibold },
   scheduleSelector: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSolid,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.md,
   },
-  scheduleName: { fontSize: sizes.font.md, color: colors.text.primary, flex: 1 },
-  schedulePlaceholder: { fontSize: sizes.font.md, color: colors.text.disabled, flex: 1 },
-  dropdownArrow: { fontSize: sizes.font.xs, color: colors.text.secondary },
+  scheduleName: { fontSize: sizes.font.md, color: colors.text, flex: 1 },
+  schedulePlaceholder: { fontSize: sizes.font.md, color: colors.textDisabled, flex: 1 },
   dropdown: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSolid,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: sizes.radius.md,
     overflow: 'hidden',
   },
@@ -389,25 +394,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  dropdownItemSelected: { backgroundColor: colors.primary + '10' },
-  dropdownItemText: { fontSize: sizes.font.md, color: colors.text.primary },
+  dropdownItemSelected: { backgroundColor: colors.primaryLight + '15' },
+  dropdownItemText: { fontSize: sizes.font.md, color: colors.text },
   dropdownItemTextSelected: { color: colors.primary, fontWeight: sizes.fontWeight.semibold },
-  dropdownItemDate: { fontSize: sizes.font.sm, color: colors.text.secondary },
+  dropdownItemDate: { fontSize: sizes.font.sm, color: colors.textSub },
   textArea: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSolid,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
     paddingTop: sizes.spacing.md,
     paddingBottom: sizes.spacing.md,
     fontSize: sizes.font.md,
-    color: colors.text.primary,
+    color: colors.text,
     minHeight: 140,
     lineHeight: 22,
   },
@@ -415,14 +420,14 @@ const styles = StyleSheet.create({
   tagInputRow: { flexDirection: 'row', gap: sizes.spacing.sm },
   tagInput: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSolid,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.sm,
     fontSize: sizes.font.md,
-    color: colors.text.primary,
+    color: colors.text,
   },
   tagAddBtn: {
     backgroundColor: colors.primary,
@@ -431,7 +436,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tagAddBtnText: {
-    color: colors.text.onPrimary,
+    color: colors.textInverse,
     fontSize: sizes.font.sm,
     fontWeight: sizes.fontWeight.semibold,
   },
@@ -439,7 +444,7 @@ const styles = StyleSheet.create({
   tagChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.primary + '15',
+    backgroundColor: colors.primaryLight + '25',
     paddingHorizontal: sizes.spacing.sm,
     paddingVertical: 4,
     borderRadius: sizes.radius.full,
@@ -450,39 +455,29 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: sizes.fontWeight.medium,
   },
-  tagChipRemove: {
-    fontSize: sizes.font.sm,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.bold,
-  },
-  // 체크인 요약
   summarySection: { gap: sizes.spacing.sm },
   summaryToggle: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: colors.secondary + '10',
+    backgroundColor: colors.secondaryLight + '20',
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.sm,
     borderWidth: 1,
-    borderColor: colors.secondary + '30',
+    borderColor: colors.secondaryLight,
   },
   summaryToggleText: {
     fontSize: sizes.font.sm,
     color: colors.secondary,
     fontWeight: sizes.fontWeight.semibold,
   },
-  summaryToggleArrow: {
-    fontSize: sizes.font.xs,
-    color: colors.secondary,
-  },
   summaryCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSolid,
     borderRadius: sizes.radius.md,
     padding: sizes.spacing.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     gap: sizes.spacing.sm,
   },
   summaryRow: {
@@ -492,47 +487,47 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: sizes.font.sm,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
   summaryValue: {
     fontSize: sizes.font.sm,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.text.primary,
+    color: colors.text,
   },
-  // 준비 메모 참고
   prepNoteSection: { gap: sizes.spacing.sm },
   prepNoteToggle: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: colors.primary + '10',
+    backgroundColor: colors.primaryLight + '15',
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.sm,
     borderWidth: 1,
-    borderColor: colors.primary + '30',
+    borderColor: colors.primaryLight,
+  },
+  prepNoteToggleLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sizes.spacing.xs,
   },
   prepNoteToggleText: {
     fontSize: sizes.font.sm,
     color: colors.primary,
     fontWeight: sizes.fontWeight.semibold,
   },
-  prepNoteToggleArrow: {
-    fontSize: sizes.font.xs,
-    color: colors.primary,
-  },
   prepNoteCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSolid,
     borderRadius: sizes.radius.md,
     padding: sizes.spacing.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderLeftWidth: 3,
     borderLeftColor: colors.primary,
   },
   prepNoteContent: {
     fontSize: sizes.font.sm,
-    color: colors.text.secondary,
+    color: colors.textSub,
     lineHeight: 20,
   },
 });

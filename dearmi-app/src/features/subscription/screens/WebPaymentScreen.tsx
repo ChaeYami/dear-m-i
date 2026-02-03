@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: sizes.font.md,
-    color: colors.text.secondary,
+    color: colors.textSub,
     textAlign: 'center',
     lineHeight: 22,
   },
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
   retryBtnText: {
     fontSize: sizes.font.md,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.onPrimary,
+    color: colors.textInverse,
   },
   closeBtn: {
     height: 40,
@@ -261,6 +261,6 @@ const styles = StyleSheet.create({
   },
   closeBtnText: {
     fontSize: sizes.font.sm,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
 });

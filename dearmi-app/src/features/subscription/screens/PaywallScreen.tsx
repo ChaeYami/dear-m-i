@@ -9,6 +9,7 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { colors, sizes } from '@/constants';
@@ -18,12 +19,12 @@ import type { RootStackParamList } from '@/navigation/RootNavigator';
 type PlanOption = 'monthly' | 'yearly';
 
 const FEATURES = [
-  { icon: '📋', text: '처방전 OCR 자동 인식' },
-  { icon: '💊', text: '약품 효능·주의사항 상세 정보' },
-  { icon: '🔔', text: '복약 일정 자동 생성' },
-  { icon: '📅', text: '전체 상담 기록 무제한 조회' },
-  { icon: '📄', text: 'PDF 진료 기록 내보내기' },
-  { icon: '📝', text: '상담 기록 무제한 작성' },
+  { icon: 'document-text-outline', text: '처방전 OCR 자동 인식' },
+  { icon: 'medical-outline', text: '약품 효능·주의사항 상세 정보' },
+  { icon: 'notifications-outline', text: '복약 일정 자동 생성' },
+  { icon: 'calendar-outline', text: '전체 상담 기록 무제한 조회' },
+  { icon: 'document-outline', text: 'PDF 진료 기록 내보내기' },
+  { icon: 'create-outline', text: '상담 기록 무제한 작성' },
 ];
 
 export const PaywallScreen: React.FC = () => {
@@ -52,7 +53,7 @@ export const PaywallScreen: React.FC = () => {
         onPress={() => navigation.goBack()}
         hitSlop={12}
       >
-        <Text style={styles.closeTxt}>✕</Text>
+        <Ionicons name="close" size={22} color={colors.textSub} />
       </TouchableOpacity>
 
       <ScrollView
@@ -73,7 +74,7 @@ export const PaywallScreen: React.FC = () => {
         <View style={styles.featureList}>
           {FEATURES.map((f) => (
             <View key={f.text} style={styles.featureRow}>
-              <Text style={styles.featureIcon}>{f.icon}</Text>
+              <Ionicons name={f.icon as any} size={18} color={colors.primary} />
               <Text style={styles.featureTxt}>{f.text}</Text>
             </View>
           ))}
@@ -127,7 +128,7 @@ export const PaywallScreen: React.FC = () => {
           activeOpacity={0.85}
         >
           {isPurchasing ? (
-            <ActivityIndicator color={colors.text.onPrimary} />
+            <ActivityIndicator color={colors.textInverse} />
           ) : (
             <Text style={styles.purchaseBtnText}>
               {selected === 'monthly' ? '월간 구독 시작하기' : '연간 구독 시작하기'}
@@ -142,7 +143,7 @@ export const PaywallScreen: React.FC = () => {
           activeOpacity={0.7}
         >
           {isRestoring ? (
-            <ActivityIndicator size="small" color={colors.text.secondary} />
+            <ActivityIndicator size="small" color={colors.textSub} />
           ) : (
             <Text style={styles.restoreBtnText}>구매 복원하기</Text>
           )}
@@ -177,7 +178,7 @@ export const PaywallScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   closeBtn: { alignSelf: 'flex-end', padding: sizes.spacing.lg },
-  closeTxt: { fontSize: sizes.font.lg, color: colors.text.secondary },
+  closeTxt: { fontSize: sizes.font.lg, color: colors.textSub },
   content: { paddingHorizontal: sizes.spacing.xl, paddingBottom: sizes.spacing.xl },
   headerSection: { alignItems: 'center', marginBottom: sizes.spacing.xl },
   badge: {
@@ -190,13 +191,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: sizes.font.xxxl,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
     marginBottom: sizes.spacing.sm,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: sizes.font.md,
-    color: colors.text.secondary,
+    color: colors.textSub,
     textAlign: 'center',
     lineHeight: 22,
   },
@@ -209,12 +210,12 @@ const styles = StyleSheet.create({
   },
   featureRow: { flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.md },
   featureIcon: { fontSize: 18, width: 24, textAlign: 'center' },
-  featureTxt: { fontSize: sizes.font.md, color: colors.text.primary, flex: 1 },
+  featureTxt: { fontSize: sizes.font.md, color: colors.text, flex: 1 },
   planRow: { flexDirection: 'row', gap: sizes.spacing.md },
   planCard: {
     flex: 1,
     borderWidth: 2,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: sizes.radius.lg,
     padding: sizes.spacing.md,
     alignItems: 'center',
@@ -236,24 +237,24 @@ const styles = StyleSheet.create({
   saveBadgeText: {
     fontSize: sizes.font.xs,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.onPrimary,
+    color: colors.textInverse,
   },
   planLabel: {
     fontSize: sizes.font.sm,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.text.secondary,
+    color: colors.textSub,
     marginTop: sizes.spacing.sm,
   },
   planLabelSelected: { color: colors.primary },
   planPrice: {
     fontSize: sizes.font.xl,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.primary,
+    color: colors.text,
   },
   planPriceSelected: { color: colors.primary },
   planUnit: {
     fontSize: sizes.font.xs,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
   planUnitSelected: { color: colors.primary },
   footer: {
@@ -262,7 +263,7 @@ const styles = StyleSheet.create({
     paddingTop: sizes.spacing.md,
     gap: sizes.spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: colors.divider,
   },
   purchaseBtn: {
     height: sizes.buttonHeight.lg,
@@ -275,7 +276,7 @@ const styles = StyleSheet.create({
   purchaseBtnText: {
     fontSize: sizes.font.md,
     fontWeight: sizes.fontWeight.bold,
-    color: colors.text.onPrimary,
+    color: colors.textInverse,
   },
   restoreBtn: {
     height: 40,
@@ -284,7 +285,7 @@ const styles = StyleSheet.create({
   },
   restoreBtnText: {
     fontSize: sizes.font.sm,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
   webPayBtn: {
     height: sizes.buttonHeight.md,
@@ -302,7 +303,7 @@ const styles = StyleSheet.create({
   },
   legalText: {
     fontSize: 10,
-    color: colors.text.disabled,
+    color: colors.textDisabled,
     textAlign: 'center',
     lineHeight: 14,
     marginTop: sizes.spacing.xs,

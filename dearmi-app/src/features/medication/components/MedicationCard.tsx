@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: sizes.radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     overflow: 'hidden',
     marginBottom: sizes.spacing.md,
   },
@@ -102,6 +102,6 @@ const styles = StyleSheet.create({
   },
   slotTime: {
     fontSize: sizes.font.sm,
-    color: colors.text.secondary,
+    color: colors.textSub,
   },
 });
