@@ -52,4 +52,11 @@ export const QUERY_KEYS = {
   prescriptions: () => ['prescriptions'] as const,
   prescription: (id: number) => ['prescription', id] as const,
   medicationDetail: (id: number) => ['medication', id] as const,
+
+  // 복약 관리
+  todayMedication: () => ['todayMedication'] as const,
+  medicationLogs: (startDate?: string, endDate?: string) =>
+    ['medicationLogs', startDate, endDate] as const,
+  medicationStats: (startDate?: string, endDate?: string) =>
+    ['medicationStats', startDate, endDate] as const,
 } as const;

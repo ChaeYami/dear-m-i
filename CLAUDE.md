@@ -9,11 +9,11 @@
 
 ```
 dearmi/
-├── CLAUDE.md         ← 항상 읽힘
-├── backend/          Spring Boot 3
-│   └── CLAUDE.md
-└── dearmi-app/       React Native (Expo)
-    └── CLAUDE.md
+├── CLAUDE.md          ← 항상 읽힘 (공통 원칙)
+├── backend/           Spring Boot 3
+│   └── CLAUDE.md      ← 백엔드 세부 규칙
+└── dearmi-app/        React Native (Expo)
+    └── CLAUDE.md      ← 앱 세부 규칙
 ```
 
 ---
@@ -23,41 +23,65 @@ dearmi/
 | 영역 | 기술 |
 |---|---|
 | 앱 | React Native (Expo SDK 51+) |
-| 앱 상태 | Zustand (클라이언트) + React Query (서버) |
+| 앱 상태 | Zustand ^5 (클라이언트) + React Query ^5 (서버) |
 | 앱 로컬 저장 | react-native-mmkv + expo-secure-store |
-| 앱 다국어 | i18next + expo-localization |
-| 앱 결제 | react-native-iap (iOS IAP + Android Play Billing) |
+| 앱 다국어 | i18next + expo-localization (미설치) |
+| 앱 결제 | react-native-iap (미설치 — iOS IAP + Android Play Billing) |
 | 백엔드 | Spring Boot 3 + JPA + QueryDSL + Flyway |
 | 인증 | Spring Security OAuth2 (Google/Apple) + JWT |
 | DB | PostgreSQL 15 (AWS RDS) |
 | 파일 저장 | AWS S3 (Presigned URL) |
 | 푸시 알림 | Firebase FCM (이것만 Firebase 사용) |
 | OCR | Claude Vision API — 백엔드에서만 호출 |
-| 약품 정보 | e약은요 Open API (DrbEasyDrugInfoService) |
+| 약품 정보 | e약은요 Open API (30일 DB 캐시) |
 | 웹 결제 | 토스페이먼츠 (Android + 웹) |
 | 배포 | AWS ECS Fargate + RDS + S3 |
 | 시크릿 관리 | AWS Secrets Manager (운영) / .env (로컬) |
 
 ---
 
-## 구현 완료 현황
+## 구현 현황
 
-| 기능 | 상태 | 비고 |
-|---|---|---|
-| DB 스키마 + 도메인 레이어 | ✅ | Flyway 마이그레이션 완료 |
-| OAuth2 + JWT 인증 | ✅ | Google/Apple, Refresh Token Rotation |
-| 병원 일정 CRUD | ✅ | `GET/POST/PUT/DELETE /api/v1/schedules` |
-| 상담 기록 CRUD | ✅ | AES-256-GCM 암호화, 타임라인 페이지네이션 |
-| 처방전 OCR | ✅ | S3 업로드 → Claude Vision → 비동기 처리 |
-| 약학정보원 API 연동 | ✅ | e약은요, 30일 DB 캐시, OCR 완료 후 자동 조회 |
-| 약품 상세 조회 | ✅ | `GET /api/v1/medications/{id}` |
-| 처방전 앱 UI | ✅ | 업로드 → OCR 결과 확인 플로우 |
-| 복약 일정/로그 | 🔲 | 미구현 |
-| 하루 메모 | 🔲 | 미구현 |
-| 감정 체크인 | 🔲 | 미구현 |
-| 결제 / 구독 | 🔲 | 미구현 |
-| 알림 | 🔲 | 미구현 |
-| PDF 내보내기 | 🔲 | 미구현 |
+### 백엔드 (완료)
+
+| 도메인 | UseCase / 엔드포인트 |
+|---|---|
+| Auth | Login, Logout, TokenRefresh, GetCurrentUser |
+| Schedule | CRUD + GetMonthly — `/api/v1/schedules` |
+| Record | CRUD + Timeline(커서 페이징) — `/api/v1/records` |
+| Prescription | GenerateUploadUrl, Create(OCR 비동기), GetDetail, UpdateMedications |
+| Medication | GetDetail(e약은요) — `/api/v1/medications/{id}` |
+| MedicationSchedule | CRUD + Today + History + Stats + Check — `/api/v1/medication-schedules` |
+| Notification | GetSettings, UpdateSettings, UpdateFcmToken — `/api/v1/notifications` |
+
+DB 마이그레이션: V1(초기 스키마) → V2(복약 타임슬롯) → V3(알림·체크인·복약 컬럼)
+
+### 앱 화면 (완료)
+
+| Feature | 화면 |
+|---|---|
+| auth | LoginScreen (Google/Apple OAuth2) |
+| schedule | ScheduleTab, ScheduleDetail, ScheduleForm |
+| record | RecordTab (타임라인), RecordForm |
+| prescription | PrescriptionTab (아코디언), PrescriptionUpload, OcrResult |
+| medication | MedicationDetail (약품 상세) |
+| notification | NotificationSettingsScreen |
+| mypage | MyPageScreen (placeholder) |
+| subscription | PaywallScreen (skeleton) |
+
+### 미구현
+
+| 기능 | 비고 |
+|---|---|
+| CheckinTab (하루 메모) | 백엔드 API + 앱 화면 |
+| 감정 그래프 | react-native-chart-kit |
+| 결제 / 구독 | react-native-iap 설치 필요 |
+| PDF 내보내기 | export_jobs 테이블 |
+| 데이터 백업/복원 | 프리미엄 |
+| PremiumGate 컴포넌트 | `shared/components/PremiumGate.tsx` |
+| 앱 버전 체크 | `GET /api/v1/app/version` (RootNavigator 미적용) |
+| 생체인증 | expo-local-authentication |
+| 앱 위젯 | iOS / Android |
 
 ---
 
@@ -89,9 +113,9 @@ dearmi/
 
 | 삭제 대상 | 연관 데이터 처리 |
 |---|---|
-| `hospital_schedules` 삭제 | `counseling_records.schedule_id = NULL` / `prescriptions.schedule_id = NULL` / `prep_notes.schedule_id = NULL` (데이터 유지, 연결만 해제) |
-| `prescriptions` 삭제 | `prescription_medications` CASCADE 삭제 + S3 이미지 삭제 예약 |
-| `medication_schedules` 삭제 | `medication_logs` CASCADE 삭제 |
+| `hospital_schedules` | `counseling_records.schedule_id = NULL` / `prescriptions.schedule_id = NULL` / `prep_notes.schedule_id = NULL` |
+| `prescriptions` | `prescription_medications` CASCADE 삭제 + S3 이미지 삭제 예약 |
+| `medication_schedules` | `medication_logs` CASCADE 삭제 |
 | 회원 탈퇴 | `refresh_tokens` 즉시 삭제 + 소프트딜리트 + 30일 후 배치 하드딜리트 + S3 삭제 |
 
 ### ⑥ 탈퇴 후 토큰 즉시 무효화
@@ -135,94 +159,6 @@ export_jobs, app_versions
 
 ---
 
-## 미확정 / v2.0 이후 (지금 구현하지 말 것)
-
-- AI 상담 준비 리포트 (v2.0 연기)
-- OpenFDA 글로벌 약품 정보 (v1.1)
-- Stripe 글로벌 웹 결제 (v1.1)
-- 반복 일정 (v1.1)
-
----
-
-## 프로젝트 구조 (클린 아키텍처)
-
-```
-com.dearmi.backend/
-├── presentation/       # 외부 입출력 (Controller, DTO, Mapper)
-├── application/        # 비즈니스 유스케이스 (UseCase interface + impl, Port)
-├── domain/             # 핵심 도메인 (Entity, DomainService, Repository interface)
-├── infrastructure/     # 기술 구현 (JPA impl, External API, Config, Batch, Scheduler)
-└── common/             # 공통 유틸 (ApiResponse, GlobalExceptionHandler, BaseTimeEntity)
-```
-
----
-
-## 클린 아키텍처 레이어 규칙
-
-### 의존성 방향 (단방향, 안쪽만 의존 가능)
-```
-presentation → application → domain
-infrastructure → application → domain
-```
-
-### Domain 레이어
-- Spring 프레임워크 의존성 **절대 금지**: `@Repository`, `@Service`, `@Component` 등
-- 허용: JPA 어노테이션 (`@Entity`, `@Column`), Jakarta 표준 어노테이션
-- Repository는 **interface만** 선언, 구현은 `infrastructure/persistence/` 에서
-
-### Application 레이어
-- UseCase는 반드시 **interface + impl 분리**
-  - 예: `CreateCounselingRecordUseCase` (interface) + `CreateCounselingRecordUseCaseImpl` (impl)
-- Port interface 정의: 외부 의존성을 추상화 (`StoragePort`, `PrescriptionOcrPort`, `DrugInfoPort`)
-
-### Presentation 레이어
-- Controller는 **UseCase interface만 호출** (impl 직접 참조 금지)
-- Domain Entity를 Response로 직접 반환 금지 → DTO 변환 필수
-- 모든 응답은 `ApiResponse<T>` 래퍼 사용
-
-### Infrastructure 레이어
-- **외부 API 클라이언트는 반드시 `infrastructure/external/` 하위에만** 위치
-- Domain Repository interface를 구현하는 JPA 구현체는 `infrastructure/persistence/` 에
-- AWS S3, 외부 서비스 등 모든 외부 통신은 `external/` 패키지에서만
-
----
-
-## 보안 원칙
-
-### API 키 / 시크릿 하드코딩 절대 금지
-- DB 패스워드, JWT Secret, AWS Key 등 **모든 민감 정보는 환경변수로 주입**
-- 로컬: `backend/.env` (gitignored) — `cp .env.example .env` 후 값 채우기
-- 운영: 환경변수 (`${DB_PASSWORD}`, `${JWT_SECRET}` 등) / AWS Secrets Manager
-
-### 잘못된 예 (절대 금지)
-```java
-// ❌ 하드코딩 금지
-String secretKey = "my-super-secret-key-12345";
-String awsAccessKey = "AKIAIOSFODNN7EXAMPLE";
-```
-
-### 올바른 예
-```java
-// ✅ 환경변수 또는 설정 파일에서 주입
-@Value("${jwt.secret}")
-private String secretKey;
-```
-
----
-
-## 타인 리소스 접근 시 404 반환 규칙
-
-보안상 권한 없는 리소스와 존재하지 않는 리소스를 구분하지 않음:
-
-```java
-// ✅ 올바른 처리: findByIdAndUserId 사용 — 없거나 타인 소유면 모두 404
-Prescription p = prescriptionRepository
-        .findByIdAndUserIdAndDeletedAtIsNull(id, userId)
-        .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
-```
-
----
-
 ## API 응답 형식
 
 ```json
@@ -235,20 +171,9 @@ Prescription p = prescriptionRepository
 
 ---
 
-## DB 마이그레이션 규칙
+## v2.0 이후 (지금 구현하지 말 것)
 
-- **`spring.jpa.hibernate.ddl-auto=validate`** (create, create-drop, update 절대 금지)
-- 스키마 변경은 반드시 `src/main/resources/db/migration/V{N}__{설명}.sql` 파일로 관리
-- 마이그레이션 파일은 한번 배포 후 **절대 수정 금지** (새 버전 파일 추가)
-
----
-
-## 패키지별 역할 요약
-
-| 패키지 | 역할 | 허용 의존성 |
-|--------|------|------------|
-| `presentation` | HTTP 요청/응답, DTO 변환 | application (UseCase interface) |
-| `application` | 유스케이스 오케스트레이션 | domain |
-| `domain` | 핵심 비즈니스 규칙 | 없음 (최내부) |
-| `infrastructure` | 기술 구현, 외부 연동 | application, domain |
-| `common` | 공통 유틸리티 | 없음 |
+- AI 상담 준비 리포트 (v2.0 연기)
+- OpenFDA 글로벌 약품 정보 (v1.1)
+- Stripe 글로벌 웹 결제 (v1.1)
+- 반복 일정 (v1.1)

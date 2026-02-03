@@ -90,13 +90,14 @@ if (hasToken) await authApi.getMe(); // 실패 시 자동 logout()
 ## 플랜 분기 UI
 
 ```tsx
-// PremiumGate 컴포넌트 — 미구현, 추후 shared/components/PremiumGate.tsx 추가 예정
 // 현재는 authStore user.plan으로 직접 분기
 const isPremium = user?.plan === 'PREMIUM';
 
 // 글자수 제한: 상담 기록 200자 (RecordFormScreen), 하루 메모 100자 (미구현)
 // 조회 기간: RecordTab 2개월 이전 흐림 처리 (미구현)
 // OCR: PREMIUM만 업로드 가능 (PrescriptionUploadScreen에서 검사)
+// 복약 이력: FREE 30일 강제 (MedicationHistoryScreen 배너 표시, 백엔드에서도 강제)
+// 처방전 탭: FREE 플랜이면 PremiumGate 표시 (MainTabNavigator.PrescriptionTabWrapper)
 ```
 
 ---
@@ -107,6 +108,7 @@ const isPremium = user?.plan === 'PREMIUM';
 // iOS: App Store IAP만 (웹 결제 버튼 절대 표시 금지)
 // Android: Play Billing + 토스페이먼츠 웹 결제 병행
 // react-native-iap — 미설치, 결제 기능 구현 시 추가
+// PaywallScreen — RootNavigator에 모달로 등록 (Paywall 라우트)
 ```
 
 ---
@@ -115,6 +117,8 @@ const isPremium = user?.plan === 'PREMIUM';
 
 ```
 RootNavigator (src/navigation/RootNavigator.tsx)
+│   ref: navigationRef (src/navigation/navigationRef.ts)
+│   Paywall: PaywallScreen (modal)
 ├── AuthNavigator
 │   └── LoginScreen          Google/Apple OAuth2 로그인
 └── MainTabNavigator
@@ -125,12 +129,17 @@ RootNavigator (src/navigation/RootNavigator.tsx)
     ├── Record → RecordNavigator
     │   ├── RecordTab        SectionList 타임라인 (record | prescription 혼합)
     │   └── RecordForm       감정 슬라이더, 내용, 태그, 일정 연결
-    ├── Prescription → PrescriptionNavigator
+    ├── Prescription → PrescriptionNavigator  (FREE: PremiumGate)
     │   ├── PrescriptionTab    아코디언 카드 목록 (무한 스크롤)
     │   ├── PrescriptionUpload 이미지 선택 → S3 업로드 → OCR 요청
     │   ├── OcrResult          폴링(2s) → COMPLETED/FAILED 분기 → 약품 편집
     │   └── MedicationDetail   약품명·효능·주의사항(스켈레톤)
-    └── MyPage → placeholder (미구현)
+    └── MyPage → MyPageNavigator
+        ├── MyPageTab          프로필 + 메뉴 목록 (복약관리/알림설정/로그아웃)
+        ├── MedicationHome     오늘 복약 현황 (완료율 바 + 시간대별 카드) + FAB
+        ├── MedicationForm     복약 일정 등록 (슬롯 토글/타임피커/날짜/투약일수)
+        ├── MedicationHistory  날짜별 이력 (FREE 30일 배너)
+        └── NotificationSettings  전체/D-1/D-0 알림 토글
 ```
 
 ### 크로스탭 네비게이션
@@ -138,6 +147,11 @@ RootNavigator (src/navigation/RootNavigator.tsx)
 // ScheduleDetail → RecordForm (scheduleId 전달)
 const tabNav = navigation.getParent()?.getParent();
 tabNav?.navigate('Record', { screen: 'RecordForm', params: { scheduleId } });
+
+// 알림 탭 → ScheduleDetail 딥링크 (백그라운드/종료 상태)
+// RootNavigator.navigateToScheduleDetail(data) → navigationRef.current?.navigate('Main', {
+//   screen: 'Schedule', params: { screen: 'ScheduleDetail', params: { scheduleId } }
+// })
 ```
 
 ---
@@ -152,22 +166,36 @@ tabNav?.navigate('Record', { screen: 'RecordForm', params: { scheduleId } });
 | `LoadingSpinner` | fullscreen 또는 인라인 |
 | `OfflineBanner` | 네트워크 오프라인 배너 |
 | `EmotionSlider` | 1–10 탭 슬라이더 (red≤3 / amber≤6 / green≤10), `getEmotionColor(score)` export |
+| `InAppNotificationBanner` | 포그라운드 알림 슬라이드인 배너 (3초 자동 해제) |
 
 ---
 
 ## 쿼리 키 (`src/constants/cacheKeys.ts` — QUERY_KEYS)
 
 ```typescript
-monthlySchedules(year, month)   // 월별 일정
-schedule(id)                    // 일정 상세
-timeline()                      // 상담+처방 혼합 타임라인 (커서 페이징)
-records()                       // 상담 기록 목록
-record(id)                      // 상담 기록 상세
-recentSchedules()               // RecordForm 드롭다운용 최근 일정
-prescriptions()                 // 처방전 목록
-prescription(id)                // 처방전 상세 (OCR 폴링에도 사용)
-medicationDetail(id)            // 약품 상세 (e약은요)
+monthlySchedules(year, month)          // 월별 일정
+schedule(id)                           // 일정 상세
+timeline()                             // 상담+처방 혼합 타임라인 (커서 페이징)
+records()                              // 상담 기록 목록
+record(id)                             // 상담 기록 상세
+recentSchedules()                      // RecordForm 드롭다운용 최근 일정
+prescriptions()                        // 처방전 목록
+prescription(id)                       // 처방전 상세 (OCR 폴링에도 사용)
+medicationDetail(id)                   // 약품 상세 (e약은요, prescription-medications)
+todayMedication()                      // 오늘 복약 현황
+medicationLogs(startDate?, endDate?)   // 복약 이력
+medicationStats(startDate?, endDate?)  // 복약 완료율 통계
 ```
+
+---
+
+## 공통 훅 (`src/shared/hooks/`)
+
+| 훅 | 용도 |
+|---|---|
+| `useNetworkStatus` | 네트워크 오프라인 감지 |
+| `useAuthGuard` | 인증 필요 화면 가드 |
+| `useFcmSetup` | FCM 권한 요청 + 토큰 등록 (MainTabNavigator에서 호출) |
 
 ---
 
@@ -176,7 +204,7 @@ medicationDetail(id)            // 약품 상세 (e약은요)
 ```
 # 설치됨
 expo-web-browser                          OAuth2 (WebBrowser.openAuthSessionAsync)
-@react-native-community/datetimepicker    일정 날짜/시간 선택
+@react-native-community/datetimepicker    일정/복약 날짜/시간 선택
 react-native-calendars                    ScheduleTab CalendarList
 expo-image-picker                         처방전 촬영
 expo-secure-store                         토큰 저장
@@ -184,6 +212,8 @@ react-native-mmkv                         캐시
 @react-native-community/netinfo          오프라인 감지
 @tanstack/react-query ^5                  서버 상태 관리
 zustand ^5                               클라이언트 상태
+expo-notifications ^55                    FCM 푸시 알림
+expo-device ^55                           실기기 여부 확인 (FCM)
 
 # 미설치 (기능 구현 시 추가)
 react-native-iap                          결제 (iOS IAP + Android Play Billing)
@@ -200,12 +230,11 @@ react-native-android-widget              Android 위젯
 
 | 기능 | 비고 |
 |---|---|
-| MyPageTab | 프로필, 로그아웃, 구독 관리 |
 | CheckinTab | 하루 메모 모아보기 |
 | PremiumGate 컴포넌트 | `shared/components/PremiumGate.tsx` — 자물쇠 + PaywallScreen |
-| PaywallScreen | 구독 결제 화면 (react-native-iap 필요) |
+| PaywallScreen | 구독 결제 화면 (react-native-iap 필요) — RootNavigator에 Paywall 라우트 등록됨 |
 | RecordTab 기간 제한 UI | FREE: 2개월 이전 흐림 처리 |
 | 감정 그래프 | react-native-chart-kit |
 | 생체인증 | expo-local-authentication |
-| 복약 일정 / 복약 로그 | medication_schedules, medication_logs |
+| 복약 일정 수정 | MedicationFormScreen에 scheduleId 파라미터 전달 → PUT /medication-schedules/{id} |
 | 앱 위젯 | iOS / Android |

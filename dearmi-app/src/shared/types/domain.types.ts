@@ -146,3 +146,103 @@ export interface DailyCheckin {
   memo?: string;
   createdAt: string;
 }
+
+// ─── 복약 관리 ────────────────────────────────────────────────────────────────
+
+export type TimeSlotType = 'MORNING' | 'AFTERNOON' | 'EVENING' | 'BEDTIME';
+export type MedicationLogStatus = 'TAKEN' | 'SKIPPED' | 'MISSED';
+
+/** 오늘 복약 현황 — 시간대별 상태 */
+export interface MedicationSlot {
+  timeSlot: TimeSlotType;
+  notifyTime?: string; // "HH:mm:ss" | null
+  status: MedicationLogStatus | null;
+  logId: string | null;
+}
+
+/** 오늘 복약 일정 항목 (일정 + 슬롯 목록) */
+export interface TodayMedicationSchedule {
+  scheduleId: string; // UUID
+  drugName: string;
+  dosage?: string;
+  timesPerDay?: number;
+  startDate?: string;
+  endDate?: string;
+  slots: MedicationSlot[];
+}
+
+/** GET /api/v1/medication-schedules 응답 */
+export interface TodayMedication {
+  schedules: TodayMedicationSchedule[];
+}
+
+/** 복약 일정 (등록/수정 후 반환) */
+export interface MedicationSchedule {
+  id: string; // UUID
+  prescriptionMedicationId?: string;
+  drugName: string;
+  dosage?: string;
+  timesPerDay?: number;
+  startDate?: string;
+  endDate?: string;
+  morning: boolean;
+  afternoon: boolean;
+  evening: boolean;
+  bedtime: boolean;
+  morningTime?: string;
+  afternoonTime?: string;
+  eveningTime?: string;
+  bedtimeTime?: string;
+}
+
+/** POST /api/v1/medication-schedules 요청 */
+export interface CreateMedicationScheduleRequest {
+  prescriptionMedicationId?: string;
+  drugName?: string;
+  dosage?: string;
+  timesPerDay?: number;
+  startDate?: string;  // YYYY-MM-DD
+  endDate?: string;
+  morning: boolean;
+  afternoon: boolean;
+  evening: boolean;
+  bedtime: boolean;
+  morningTime?: string; // "HH:mm:ss"
+  afternoonTime?: string;
+  eveningTime?: string;
+  bedtimeTime?: string;
+}
+
+/** POST /api/v1/medication-schedules/{id}/logs 요청 */
+export interface CheckMedicationRequest {
+  logDate: string; // YYYY-MM-DD
+  timeSlot: TimeSlotType;
+  status: 'TAKEN' | 'SKIPPED';
+}
+
+/** 복약 로그 항목 */
+export interface MedicationLogItem {
+  logId: string;
+  scheduleId: string;
+  logDate: string; // YYYY-MM-DD
+  timeSlot: TimeSlotType;
+  status: MedicationLogStatus;
+  takenAt?: string;
+}
+
+/** GET /api/v1/medication-schedules/logs 응답 */
+export interface MedicationHistory {
+  startDate: string;
+  endDate: string;
+  logs: MedicationLogItem[];
+}
+
+/** GET /api/v1/medication-schedules/stats 응답 */
+export interface MedicationStats {
+  startDate: string;
+  endDate: string;
+  totalLogs: number;
+  takenCount: number;
+  skippedCount: number;
+  completionRate: number;
+}

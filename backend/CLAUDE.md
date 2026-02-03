@@ -117,6 +117,17 @@ POST /prescriptions → S3 업로드 확인 → prescription 저장 → OcrProce
 - `PrescriptionMedication.drugInfoFetchedAt == null` → `MedicationDetailResponse.drugInfoPending = true`
 - 앱이 폴링 또는 재조회로 처리
 
+### 복약 일정 시간대 (TimeSlot)
+- `MedicationSchedule`: `morning/afternoon/evening/bedtime` (Boolean) + `morningTime/afternoonTime/eveningTime/bedtimeTime` (LocalTime)
+- `MedicationLog`: `logDate` (LocalDate) + `timeSlot` (VARCHAR) — UNIQUE(scheduleId, logDate, timeSlot)로 중복 방지
+- UPSERT 기준 키: `(medicationScheduleId, logDate, timeSlot)` → `findByMedicationScheduleIdAndLogDateAndTimeSlot` 사용
+
+### 알림 스케줄러 (NotificationScheduler)
+- **병원 D-1/D-0**: 매일 오전 9시 — `notification_settings.day_before/day_of` 체크
+- **체크인 리마인더**: 매분 실행 — `checkin_time == now()` + 오늘 `daily_checkins` 없는 유저만 발송
+- **복약 알림**: 매분 실행 — 각 slot_time == now() + 오늘 해당 슬롯 로그 없는 경우만 발송
+- 유저별 `checkin_time` 커스텀 가능 (기본 21:00), `med_enabled`/`checkin_enabled` 플래그로 개별 제어
+
 ---
 
 ## S3
@@ -135,7 +146,7 @@ POST /prescriptions → S3 업로드 확인 → prescription 저장 → OcrProce
 |---|---|---|
 | Claude Vision (OCR) | `infrastructure/external/claude/` | ✅ |
 | e약은요 | `infrastructure/external/druginfo/` | ✅ |
-| Firebase FCM | `infrastructure/external/fcm/` | 🔲 |
+| Firebase FCM | `infrastructure/external/fcm/` | ✅ |
 | AWS S3 | `infrastructure/external/s3/` | ✅ |
 | 토스페이먼츠 | `infrastructure/external/payment/` | 🔲 |
 | Apple/Google IAP 검증 | `infrastructure/external/payment/` | 🔲 |
@@ -149,7 +160,7 @@ POST /prescriptions → S3 업로드 확인 → prescription 저장 → OcrProce
 | `HardDeleteBatchJob` | 매일 새벽 2시 | 탈퇴 30일 후 하드딜리트 + S3 삭제 | 🔲 |
 | `SubscriptionExpireJob` | 매일 새벽 1시 | 만료 PREMIUM → FREE | 🔲 |
 | `PaymentsTempCleanJob` | 매시간 | 30분 경과 payments_temp 삭제 | 🔲 |
-| `NotificationScheduler` | 매일 오전 9시 | D-1/D-0 FCM 알림 | 🔲 |
+| `NotificationScheduler` | 오전 9시 (병원) / 매분 (체크인·복약) | D-1/D-0 병원 알림 + 체크인 리마인더 + 복약 알림 | ✅ |
 
 ---
 

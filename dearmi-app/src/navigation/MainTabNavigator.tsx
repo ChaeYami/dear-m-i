@@ -7,6 +7,7 @@ import { colors, sizes } from '@/constants';
 import { ScheduleNavigator } from './ScheduleNavigator';
 import { RecordNavigator } from './RecordNavigator';
 import { PrescriptionNavigator } from './PrescriptionNavigator';
+import { MyPageNavigator } from './MyPageNavigator';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { useFcmSetup } from '@/shared/hooks/useFcmSetup';
 import type { RootStackParamList } from './RootNavigator';
@@ -89,7 +90,7 @@ export const MainTabNavigator: React.FC = () => {
       />
       <Tab.Screen name="Record" component={RecordNavigator} options={{ title: '기록' }} />
       <Tab.Screen name="Prescription" component={PrescriptionTabWrapper} options={{ title: '처방전' }} />
-      <Tab.Screen name="MyPage" component={Placeholder('마이페이지')} options={{ title: '마이' }} />
+      <Tab.Screen name="MyPage" component={MyPageNavigator} options={{ title: '마이' }} />
     </Tab.Navigator>
   );
 };
