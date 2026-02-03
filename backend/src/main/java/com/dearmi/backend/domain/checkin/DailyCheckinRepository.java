@@ -14,4 +14,7 @@ public interface DailyCheckinRepository {
     Optional<DailyCheckin> findByUserIdAndCheckedAt(UUID userId, LocalDate checkedAt);
 
     List<DailyCheckin> findByUserIdAndDeletedAtIsNullAndCheckedAtAfterOrderByCheckedAtDesc(UUID userId, LocalDate after);
+
+    /** 오늘 체크인 여부 (알림 중복 방지) */
+    boolean existsByUserIdAndCheckedAt(UUID userId, LocalDate checkedAt);
 }

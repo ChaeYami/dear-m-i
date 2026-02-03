@@ -4,6 +4,7 @@ import com.dearmi.backend.common.entity.BaseTimestampEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalTime;
 import java.util.UUID;
 
 @Entity
@@ -34,9 +35,30 @@ public class NotificationSetting extends BaseTimestampEntity {
     @Builder.Default
     private Boolean dayOf = true;
 
+    @Column(name = "checkin_enabled", nullable = false)
+    @Builder.Default
+    private Boolean checkinEnabled = true;
+
+    @Column(name = "checkin_time")
+    @Builder.Default
+    private LocalTime checkinTime = LocalTime.of(21, 0);
+
+    @Column(name = "med_enabled", nullable = false)
+    @Builder.Default
+    private Boolean medEnabled = true;
+
     public void update(Boolean enabled, Boolean dayBefore, Boolean dayOf) {
         this.enabled = enabled;
         this.dayBefore = dayBefore;
         this.dayOf = dayOf;
+    }
+
+    public void updateCheckinSettings(Boolean checkinEnabled, LocalTime checkinTime) {
+        this.checkinEnabled = checkinEnabled;
+        this.checkinTime = checkinTime;
+    }
+
+    public void updateMedSettings(Boolean medEnabled) {
+        this.medEnabled = medEnabled;
     }
 }

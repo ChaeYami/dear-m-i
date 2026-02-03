@@ -5,6 +5,7 @@ import com.dearmi.backend.domain.notification.NotificationSettingRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,5 +29,10 @@ public class NotificationSettingRepositoryImpl implements NotificationSettingRep
     @Override
     public List<NotificationSetting> findEnabledSettings() {
         return jpa.findEnabledSettings();
+    }
+
+    @Override
+    public List<NotificationSetting> findCheckinEnabledByCheckinTime(LocalTime time) {
+        return jpa.findCheckinEnabledByCheckinTime(time);
     }
 }

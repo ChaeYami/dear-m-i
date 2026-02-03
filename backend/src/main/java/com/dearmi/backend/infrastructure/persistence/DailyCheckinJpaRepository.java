@@ -15,4 +15,6 @@ public interface DailyCheckinJpaRepository extends JpaRepository<DailyCheckin, U
     Optional<DailyCheckin> findByUserIdAndCheckedAt(UUID userId, LocalDate checkedAt);
 
     List<DailyCheckin> findByUserIdAndDeletedAtIsNullAndCheckedAtAfterOrderByCheckedAtDesc(UUID userId, LocalDate after);
+
+    boolean existsByUserIdAndCheckedAt(UUID userId, LocalDate checkedAt);
 }

@@ -11,6 +11,7 @@ import { MainTabNavigator } from './MainTabNavigator';
 import { InAppNotificationBanner } from '@/shared/components/InAppNotificationBanner';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import { OfflineBanner } from '@/shared/components/OfflineBanner';
+import { PaywallScreen } from '@/features/subscription/screens/PaywallScreen';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { authApi } from '@/features/auth/api';
 import axiosInstance from '@/shared/api/axiosInstance';
@@ -30,6 +31,7 @@ Notifications.setNotificationHandler({
 export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
+  Paywall: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -175,6 +177,11 @@ export const RootNavigator: React.FC = () => {
         ) : (
           <Stack.Screen name="Auth" component={AuthNavigator} />
         )}
+        <Stack.Screen
+          name="Paywall"
+          component={PaywallScreen}
+          options={{ presentation: 'modal' } as any}
+        />
       </Stack.Navigator>
 
       {/* 포그라운드 인앱 알림 배너 */}

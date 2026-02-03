@@ -4,6 +4,7 @@ import com.dearmi.backend.common.entity.BaseTimestampEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -26,8 +27,16 @@ public class MedicationLog extends BaseTimestampEntity {
     @Column(name = "user_id", nullable = false, columnDefinition = "uuid")
     private UUID userId;
 
-    @Column(name = "taken_at", nullable = false)
+    @Column(name = "taken_at")
     private LocalDateTime takenAt;
+
+    @Column(name = "log_date", nullable = false)
+    @Builder.Default
+    private LocalDate logDate = LocalDate.now();
+
+    @Column(name = "time_slot", length = 20, nullable = false)
+    @Builder.Default
+    private String timeSlot = TimeSlot.MORNING.name();
 
     @Column(length = 20, nullable = false)
     @Builder.Default

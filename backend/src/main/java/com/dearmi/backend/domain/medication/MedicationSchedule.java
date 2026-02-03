@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.UUID;
 
 @Entity
@@ -26,6 +27,9 @@ public class MedicationSchedule extends BaseTimeEntity {
     @Column(name = "prescription_id", columnDefinition = "uuid")
     private UUID prescriptionId;
 
+    @Column(name = "prescription_medication_id", columnDefinition = "uuid")
+    private UUID prescriptionMedicationId;
+
     @Column(name = "drug_name", length = 200, nullable = false)
     private String drugName;
 
@@ -40,6 +44,36 @@ public class MedicationSchedule extends BaseTimeEntity {
 
     @Column(name = "end_date")
     private LocalDate endDate;
+
+    // 시간대별 복약 활성화 여부
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean morning = false;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean afternoon = false;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean evening = false;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean bedtime = false;
+
+    // 시간대별 복약 시각
+    @Column(name = "morning_time")
+    private LocalTime morningTime;
+
+    @Column(name = "afternoon_time")
+    private LocalTime afternoonTime;
+
+    @Column(name = "evening_time")
+    private LocalTime eveningTime;
+
+    @Column(name = "bedtime_time")
+    private LocalTime bedtimeTime;
 
     public void update(String drugName, String dosage, Short timesPerDay, LocalDate startDate, LocalDate endDate) {
         this.drugName = drugName;
