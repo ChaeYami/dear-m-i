@@ -32,6 +32,11 @@ public class MedicationScheduleRepositoryImpl implements MedicationScheduleRepos
     }
 
     @Override
+    public List<MedicationSchedule> findActiveForDateAndUserId(LocalDate date, UUID userId) {
+        return jpa.findActiveForDateAndUserId(date, userId);
+    }
+
+    @Override
     public List<MedicationSchedule> findActiveForDate(LocalDate date) {
         return jpa.findActiveForDate(date);
     }

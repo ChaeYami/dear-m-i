@@ -41,4 +41,10 @@ public class MedicationLog extends BaseTimestampEntity {
     @Column(length = 20, nullable = false)
     @Builder.Default
     private String status = MedicationLogStatus.TAKEN.name();
+
+    /** UPSERT용 상태 업데이트 */
+    public void updateStatus(MedicationLogStatus newStatus) {
+        this.status = newStatus.name();
+        this.takenAt = (newStatus == MedicationLogStatus.TAKEN) ? LocalDateTime.now() : null;
+    }
 }

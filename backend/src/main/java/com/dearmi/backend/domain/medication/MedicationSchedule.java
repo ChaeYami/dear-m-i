@@ -75,11 +75,24 @@ public class MedicationSchedule extends BaseTimeEntity {
     @Column(name = "bedtime_time")
     private LocalTime bedtimeTime;
 
-    public void update(String drugName, String dosage, Short timesPerDay, LocalDate startDate, LocalDate endDate) {
+    public void update(
+            String drugName, String dosage, Short timesPerDay,
+            LocalDate startDate, LocalDate endDate,
+            Boolean morning, Boolean afternoon, Boolean evening, Boolean bedtime,
+            LocalTime morningTime, LocalTime afternoonTime, LocalTime eveningTime, LocalTime bedtimeTime
+    ) {
         this.drugName = drugName;
         this.dosage = dosage;
         this.timesPerDay = timesPerDay;
         this.startDate = startDate;
         this.endDate = endDate;
+        this.morning = morning != null && morning;
+        this.afternoon = afternoon != null && afternoon;
+        this.evening = evening != null && evening;
+        this.bedtime = bedtime != null && bedtime;
+        this.morningTime = morningTime;
+        this.afternoonTime = afternoonTime;
+        this.eveningTime = eveningTime;
+        this.bedtimeTime = bedtimeTime;
     }
 }

@@ -6,8 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -22,8 +22,36 @@ public class MedicationLogRepositoryImpl implements MedicationLogRepository {
     }
 
     @Override
-    public List<MedicationLog> findByUserIdAndTakenAtAfterOrderByTakenAtDesc(UUID userId, LocalDateTime after) {
-        return jpa.findByUserIdAndTakenAtAfterOrderByTakenAtDesc(userId, after);
+    public Optional<MedicationLog> findByMedicationScheduleIdAndLogDateAndTimeSlot(
+            UUID medicationScheduleId, LocalDate logDate, String timeSlot) {
+        return jpa.findByMedicationScheduleIdAndLogDateAndTimeSlot(medicationScheduleId, logDate, timeSlot);
+    }
+
+    @Override
+    public List<MedicationLog> findByMedicationScheduleIdAndLogDate(UUID medicationScheduleId, LocalDate logDate) {
+        return jpa.findByMedicationScheduleIdAndLogDate(medicationScheduleId, logDate);
+    }
+
+    @Override
+    public List<MedicationLog> findByUserIdAndLogDateBetweenOrderByLogDateDesc(
+            UUID userId, LocalDate startDate, LocalDate endDate) {
+        return jpa.findByUserIdAndLogDateBetweenOrderByLogDateDesc(userId, startDate, endDate);
+    }
+
+    @Override
+    public long countByUserIdAndLogDateBetweenAndStatus(
+            UUID userId, LocalDate startDate, LocalDate endDate, String status) {
+        return jpa.countByUserIdAndLogDateBetweenAndStatus(userId, startDate, endDate, status);
+    }
+
+    @Override
+    public long countByUserIdAndLogDateBetween(UUID userId, LocalDate startDate, LocalDate endDate) {
+        return jpa.countByUserIdAndLogDateBetween(userId, startDate, endDate);
+    }
+
+    @Override
+    public void deleteByMedicationScheduleId(UUID medicationScheduleId) {
+        jpa.deleteByMedicationScheduleId(medicationScheduleId);
     }
 
     @Override
@@ -32,7 +60,8 @@ public class MedicationLogRepositoryImpl implements MedicationLogRepository {
     }
 
     @Override
-    public boolean existsByMedicationScheduleIdAndLogDateAndTimeSlot(UUID medicationScheduleId, LocalDate logDate, String timeSlot) {
+    public boolean existsByMedicationScheduleIdAndLogDateAndTimeSlot(
+            UUID medicationScheduleId, LocalDate logDate, String timeSlot) {
         return jpa.existsByMedicationScheduleIdAndLogDateAndTimeSlot(medicationScheduleId, logDate, timeSlot);
     }
 }
