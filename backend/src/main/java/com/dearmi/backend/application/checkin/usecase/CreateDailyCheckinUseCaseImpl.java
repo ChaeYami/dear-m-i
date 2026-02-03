@@ -31,8 +31,7 @@ public class CreateDailyCheckinUseCaseImpl implements CreateDailyCheckinUseCase 
                     .map(s -> s.isPremium())
                     .orElse(false);
             if (!isPremium) {
-                throw new CustomException(ErrorCode.CONTENT_LIMIT_EXCEEDED,
-                        "무료 플랜에서는 하루 메모를 100자까지만 작성할 수 있습니다.");
+                throw new CustomException(ErrorCode.CONTENT_LIMIT_EXCEEDED, FREE_MEMO_MAX_LENGTH);
             }
         }
 

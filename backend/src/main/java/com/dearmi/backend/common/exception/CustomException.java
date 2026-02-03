@@ -14,6 +14,12 @@ public class CustomException extends RuntimeException {
     /** 에러 코드 식별자 (예: "RESOURCE_001") */
     private final String errorCode;
 
+    /** MessageSource 메시지 키 */
+    private final String messageKey;
+
+    /** MessageSource 메시지 인자 (예: 글자수 제한 값) */
+    private final Object[] messageArgs;
+
     /** HTTP 응답 상태코드 */
     private final HttpStatus httpStatus;
 
@@ -23,6 +29,8 @@ public class CustomException extends RuntimeException {
     public CustomException(ErrorCode errorCode) {
         super(errorCode.getMessage());
         this.errorCode = errorCode.getCode();
+        this.messageKey = errorCode.getMessageKey();
+        this.messageArgs = null;
         this.httpStatus = errorCode.getHttpStatus();
     }
 
@@ -33,6 +41,20 @@ public class CustomException extends RuntimeException {
     public CustomException(ErrorCode errorCode, String customMessage) {
         super(customMessage);
         this.errorCode = errorCode.getCode();
+        this.messageKey = errorCode.getMessageKey();
+        this.messageArgs = null;
+        this.httpStatus = errorCode.getHttpStatus();
+    }
+
+    /**
+     * ErrorCode + MessageSource 인자로 예외 생성
+     * (다국어 메시지에 동적 값을 포함할 때 사용)
+     */
+    public CustomException(ErrorCode errorCode, Object... messageArgs) {
+        super(errorCode.getMessage());
+        this.errorCode = errorCode.getCode();
+        this.messageKey = errorCode.getMessageKey();
+        this.messageArgs = messageArgs;
         this.httpStatus = errorCode.getHttpStatus();
     }
 }

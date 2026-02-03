@@ -15,8 +15,10 @@ import com.dearmi.backend.domain.user.UserRepository;
 import com.dearmi.backend.infrastructure.external.fcm.FcmService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -25,6 +27,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -47,6 +50,7 @@ public class NotificationScheduler {
     private final PrepNoteRepository prepNoteRepository;
     private final UserRepository userRepository;
     private final FcmService fcmService;
+    private final MessageSource messageSource;
 
     // ──────────────────────────────────────────────────────────────────────────
     // 병원 일정 알림 (매일 오전 9시)
@@ -84,10 +88,12 @@ public class NotificationScheduler {
             if (userOpt.isEmpty()) continue;
             User user = userOpt.get();
 
+            Locale locale = toLocale(user.getPreferredLocale());
             fcmService.sendNotification(
                     user.getFcmToken(),
-                    "내일 " + schedule.getHospitalName() + " 예약이 있어요",
-                    "잊지 말고 준비하세요!",
+                    messageSource.getMessage("notification.schedule.day.before.title",
+                            new Object[]{schedule.getHospitalName()}, locale),
+                    messageSource.getMessage("notification.schedule.day.before.body", null, locale),
                     Map.of("scheduleId", schedule.getId().toString(), "type", "DAY_BEFORE")
             );
         }
@@ -115,15 +121,18 @@ public class NotificationScheduler {
             if (userOpt.isEmpty()) continue;
             User user = userOpt.get();
 
+            Locale locale = toLocale(user.getPreferredLocale());
             String timeStr = schedule.getScheduledAt().format(TIME_FMT);
             boolean hasPrepNotes = prepNoteRepository.existsByScheduleIdAndDeletedAtIsNull(schedule.getId());
-            String body = timeStr + "에 예약되어 있습니다"
-                    + (hasPrepNotes ? "\n오늘 상담 준비 메모가 있어요" : "");
+            String bodyKey = hasPrepNotes
+                    ? "notification.schedule.day.of.body.with.prep"
+                    : "notification.schedule.day.of.body";
 
             fcmService.sendNotification(
                     user.getFcmToken(),
-                    "오늘 " + schedule.getHospitalName() + " 예약이 있어요",
-                    body,
+                    messageSource.getMessage("notification.schedule.day.of.title",
+                            new Object[]{schedule.getHospitalName()}, locale),
+                    messageSource.getMessage(bodyKey, new Object[]{timeStr}, locale),
                     Map.of("scheduleId", schedule.getId().toString(), "type", "DAY_OF")
             );
         }
@@ -151,10 +160,11 @@ public class NotificationScheduler {
             if (userOpt.isEmpty()) continue;
             User user = userOpt.get();
 
+            Locale locale = toLocale(user.getPreferredLocale());
             fcmService.sendNotification(
                     user.getFcmToken(),
-                    "오늘 하루는 어땠나요?",
-                    "감정을 기록하고 하루를 마무리해보세요",
+                    messageSource.getMessage("notification.checkin.reminder.title", null, locale),
+                    messageSource.getMessage("notification.checkin.reminder.body", null, locale),
                     Map.of("type", "CHECKIN")
             );
         }
@@ -200,15 +210,24 @@ public class NotificationScheduler {
 
         log.debug("복약 알림 발송: userId={}, drug={}, slot={}", schedule.getUserId(), schedule.getDrugName(), slot);
 
+        Locale locale = toLocale(user.getPreferredLocale());
         fcmService.sendNotification(
                 user.getFcmToken(),
-                schedule.getDrugName() + " 복약 시간입니다",
-                "지금 복약할 시간이에요",
+                messageSource.getMessage("notification.medication.reminder.title",
+                        new Object[]{schedule.getDrugName()}, locale),
+                messageSource.getMessage("notification.medication.reminder.body", null, locale),
                 Map.of(
                         "scheduleId", schedule.getId().toString(),
                         "timeSlot",   slot.name(),
                         "type",       "MEDICATION"
                 )
         );
+    }
+
+    private Locale toLocale(String preferredLocale) {
+        if (StringUtils.hasText(preferredLocale) && preferredLocale.startsWith("ko")) {
+            return Locale.KOREAN;
+        }
+        return Locale.ENGLISH;
     }
 }

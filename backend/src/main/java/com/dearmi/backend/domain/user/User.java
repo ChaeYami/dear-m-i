@@ -34,11 +34,19 @@ public class User extends BaseTimeEntity {
     @Column(name = "fcm_token", length = 500)
     private String fcmToken;
 
+    @Builder.Default
+    @Column(name = "preferred_locale", length = 5)
+    private String preferredLocale = "ko";
+
     public void updateFcmToken(String fcmToken) {
         this.fcmToken = fcmToken;
     }
 
     public void updateName(String name) {
         this.name = name;
+    }
+
+    public void updatePreferredLocale(String preferredLocale) {
+        this.preferredLocale = preferredLocale;
     }
 }

@@ -29,8 +29,7 @@ public class CreateRecordUseCaseImpl implements CreateRecordUseCase {
                     .map(s -> s.isPremium())
                     .orElse(false);
             if (!isPremium) {
-                throw new CustomException(ErrorCode.CONTENT_LIMIT_EXCEEDED,
-                        "무료 플랜에서는 상담 기록 내용을 200자까지만 작성할 수 있습니다.");
+                throw new CustomException(ErrorCode.CONTENT_LIMIT_EXCEEDED, FREE_CONTENT_MAX_LENGTH);
             }
         }
 
