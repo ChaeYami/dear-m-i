@@ -5,6 +5,7 @@ import { colors, sizes } from '@/constants';
 import { ScheduleNavigator } from './ScheduleNavigator';
 import { RecordNavigator } from './RecordNavigator';
 import { PrescriptionNavigator } from './PrescriptionNavigator';
+import { useFcmSetup } from '@/shared/hooks/useFcmSetup';
 
 export type MainTabParamList = {
   Schedule: undefined;
@@ -23,6 +24,8 @@ const Placeholder = (label: string): React.FC => () => (
 );
 
 export const MainTabNavigator: React.FC = () => {
+  useFcmSetup();
+
   return (
     <Tab.Navigator
       screenOptions={{
