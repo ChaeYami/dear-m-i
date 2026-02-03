@@ -26,7 +26,9 @@ public class PaymentsTempCleanJob {
     @Transactional
     public void cleanStalePendingPayments() {
         LocalDateTime threshold = LocalDateTime.now().minusMinutes(STALE_THRESHOLD_MINUTES);
-        paymentTempRepository.deleteByCreatedAtBefore(threshold);
-        log.debug("[PaymentsTempCleanJob] {}분 이전 payments_temp 정리 완료", STALE_THRESHOLD_MINUTES);
+        // PENDING 상태 만료 건만 삭제 — COMPLETED 건은 webhook 처리용으로 유지
+        paymentTempRepository.findStalePendingPayments(threshold)
+                .forEach(paymentTempRepository::delete);
+        log.debug("[PaymentsTempCleanJob] PENDING 상태 만료 payments_temp 정리 완료");
     }
 }

@@ -25,16 +25,20 @@ public class PaymentTemp extends BaseTimestampEntity {
     @Column(name = "payment_key", length = 200)
     private String paymentKey;
 
-    @Column(name = "order_id", length = 200)
+    @Column(name = "order_id", length = 200, unique = true)
     private String orderId;
 
     private Integer amount;
+
+    @Column(name = "plan_type", length = 20)
+    private String planType;
 
     @Column(length = 20, nullable = false)
     @Builder.Default
     private String status = PaymentStatus.PENDING.name();
 
-    public void complete() {
+    public void complete(String paymentKey) {
+        this.paymentKey = paymentKey;
         this.status = PaymentStatus.COMPLETED.name();
     }
 
