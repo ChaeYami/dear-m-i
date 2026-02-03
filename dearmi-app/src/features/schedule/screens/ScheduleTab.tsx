@@ -9,7 +9,7 @@ import {
   Pressable,
   SafeAreaView,
 } from 'react-native';
-import { CalendarList } from 'react-native-calendars';
+import { Calendar } from 'react-native-calendars';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { colors, sizes } from '@/constants';
@@ -84,11 +84,11 @@ export const ScheduleTab: React.FC = () => {
     setSelectedDate((prev) => (prev === day.dateString ? null : day.dateString));
   };
 
-  const handleMonthChange = (months: Array<{ year: number; month: number }>) => {
-    if (months.length > 0) {
-      setVisibleYear(months[0].year);
-      setVisibleMonth(months[0].month);
-    }
+  const currentMonth = `${visibleYear}-${String(visibleMonth).padStart(2, '0')}-01`;
+
+  const handleMonthChange = (month: { year: number; month: number }) => {
+    setVisibleYear(month.year);
+    setVisibleMonth(month.month);
   };
 
   const translateY = slideAnim.interpolate({
@@ -107,15 +107,14 @@ export const ScheduleTab: React.FC = () => {
       </View>
 
       {/* 캘린더 */}
-      <CalendarList
-        current={today.toISOString().split('T')[0]}
+      <Calendar
+        key={currentMonth}
+        current={currentMonth}
         markedDates={markedDates}
         markingType="multi-dot"
         onDayPress={handleDayPress}
-        onVisibleMonthsChange={handleMonthChange}
-        pastScrollRange={12}
-        futureScrollRange={12}
-        showScrollIndicator={false}
+        onMonthChange={handleMonthChange}
+        enableSwipeMonths
         theme={calendarTheme}
         style={styles.calendar}
       />
@@ -198,9 +197,43 @@ const calendarTheme = {
   dotColor: colors.primary,
   monthTextColor: colors.text.primary,
   arrowColor: colors.primary,
-  textMonthFontWeight: '700' as const,
-  textDayFontSize: sizes.font.sm,
+  textSectionTitleColor: colors.text.secondary,
   textMonthFontSize: sizes.font.lg,
+  textMonthFontWeight: '700' as const,
+  textDayHeaderFontSize: sizes.font.sm,
+  textDayHeaderFontWeight: '600' as const,
+  textDayFontSize: sizes.font.md,
+  textDayFontWeight: '400' as const,
+  'stylesheet.calendar.header': {
+    header: {
+      flexDirection: 'row' as const,
+      justifyContent: 'space-between' as const,
+      alignItems: 'center' as const,
+      paddingHorizontal: 10,
+      paddingVertical: 12,
+    },
+    dayTextAtIndex0: { color: colors.error },
+    dayTextAtIndex6: { color: colors.primary },
+  },
+  'stylesheet.day.basic': {
+    base: {
+      width: 36,
+      height: 36,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+    },
+    text: {
+      fontSize: sizes.font.md,
+      color: colors.text.primary,
+    },
+    todayText: {
+      color: colors.primary,
+      fontWeight: '700' as const,
+    },
+    selectedText: {
+      color: colors.text.onPrimary,
+    },
+  },
 };
 
 const styles = StyleSheet.create({
@@ -226,7 +259,7 @@ const styles = StyleSheet.create({
     fontWeight: sizes.fontWeight.medium,
   },
   calendar: {
-    flex: 1,
+    paddingBottom: sizes.spacing.sm,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,

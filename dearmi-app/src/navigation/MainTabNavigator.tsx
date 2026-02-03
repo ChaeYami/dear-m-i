@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
@@ -62,13 +63,21 @@ const PrescriptionTabWrapper: React.FC = () => {
   return <PrescriptionNavigator />;
 };
 
+const TAB_ICONS: Record<string, { focused: keyof typeof Ionicons.glyphMap; unfocused: keyof typeof Ionicons.glyphMap }> = {
+  Schedule:     { focused: 'calendar',         unfocused: 'calendar-outline' },
+  Record:       { focused: 'document-text',    unfocused: 'document-text-outline' },
+  Checkin:      { focused: 'heart',            unfocused: 'heart-outline' },
+  Prescription: { focused: 'medkit',           unfocused: 'medkit-outline' },
+  MyPage:       { focused: 'person',           unfocused: 'person-outline' },
+};
+
 export const MainTabNavigator: React.FC = () => {
   useFcmSetup();
   const { t } = useTranslation();
 
   return (
     <Tab.Navigator
-      screenOptions={{
+      screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.text.disabled,
@@ -82,7 +91,11 @@ export const MainTabNavigator: React.FC = () => {
           fontWeight: sizes.fontWeight.medium,
           marginBottom: 4,
         },
-      }}
+        tabBarIcon: ({ focused, color, size }) => {
+          const icons = TAB_ICONS[route.name] ?? TAB_ICONS.Schedule;
+          return <Ionicons name={focused ? icons.focused : icons.unfocused} size={size} color={color} />;
+        },
+      })}
     >
       <Tab.Screen
         name="Schedule"

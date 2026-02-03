@@ -163,8 +163,8 @@ POST /prescriptions → S3 업로드 확인 → prescription 저장 → OcrProce
 | e약은요 | `infrastructure/external/druginfo/` | ✅ |
 | Firebase FCM | `infrastructure/external/fcm/` | ✅ |
 | AWS S3 | `infrastructure/external/s3/` | ✅ |
-| 토스페이먼츠 | `infrastructure/external/payment/` | 🔲 |
-| Apple/Google IAP 검증 | `infrastructure/external/payment/` | 🔲 |
+| 토스페이먼츠 | `infrastructure/external/payment/` | ✅ |
+| Apple/Google IAP 검증 | `infrastructure/external/payment/` | ✅ |
 
 ---
 
