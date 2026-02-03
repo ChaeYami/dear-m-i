@@ -10,8 +10,10 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
 import { colors, sizes } from '@/constants';
 import { useSubscription } from '@/features/subscription/hooks/useSubscription';
+import type { RootStackParamList } from '@/navigation/RootNavigator';
 
 type PlanOption = 'monthly' | 'yearly';
 
@@ -25,7 +27,7 @@ const FEATURES = [
 ];
 
 export const PaywallScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const [selected, setSelected] = useState<PlanOption>('yearly');
   const {
     purchaseMonthly,
@@ -145,6 +147,21 @@ export const PaywallScreen: React.FC = () => {
             <Text style={styles.restoreBtnText}>구매 복원하기</Text>
           )}
         </TouchableOpacity>
+
+        {Platform.OS === 'android' && (
+          <TouchableOpacity
+            style={styles.webPayBtn}
+            onPress={() =>
+              navigation.navigate('WebPayment', {
+                planType: selected === 'monthly' ? 'MONTHLY' : 'YEARLY',
+              })
+            }
+            disabled={isBusy}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.webPayBtnText}>토스페이먼츠로 결제하기</Text>
+          </TouchableOpacity>
+        )}
 
         {Platform.OS === 'ios' && (
           <Text style={styles.legalText}>
@@ -268,6 +285,20 @@ const styles = StyleSheet.create({
   restoreBtnText: {
     fontSize: sizes.font.sm,
     color: colors.text.secondary,
+  },
+  webPayBtn: {
+    height: sizes.buttonHeight.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: sizes.radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  webPayBtnText: {
+    fontSize: sizes.font.md,
+    fontWeight: sizes.fontWeight.semibold,
+    color: colors.primary,
   },
   legalText: {
     fontSize: 10,
