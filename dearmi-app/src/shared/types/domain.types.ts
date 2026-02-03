@@ -140,11 +140,45 @@ export interface SavePrescriptionRequest {
 
 /** 감정 체크인 */
 export interface DailyCheckin {
-  id: number;
-  date: string;
+  id: string;
+  checkedAt: string; // YYYY-MM-DD
   emotionScore: number;
+  triggerTags?: string[];
   memo?: string;
+  sleepHours?: number;
+  tookMedication?: boolean;
   createdAt: string;
+  updatedAt: string;
+}
+
+/** 오늘 체크인 상태 */
+export interface TodayCheckinResponse {
+  checkedIn: boolean;
+  checkin: DailyCheckin | null;
+}
+
+/** 체크인 이력 응답 */
+export interface CheckinHistoryResponse {
+  content: DailyCheckin[];
+  isLimited: boolean;
+}
+
+/** 체크인 생성/수정 요청 */
+export interface CreateCheckinRequest {
+  emotionScore: number;
+  triggerTags?: string[];
+  memo?: string;
+  sleepHours?: number;
+  tookMedication?: boolean;
+}
+
+/** 7일 체크인 요약 */
+export interface CheckinSummary {
+  averageEmotionScore: number | null;
+  averageSleepHours: number | null;
+  medicationRate: number | null;
+  topTriggerTags: string[];
+  totalCheckins: number;
 }
 
 // ─── 복약 관리 ────────────────────────────────────────────────────────────────

@@ -6,6 +6,7 @@ import type { StackNavigationProp } from '@react-navigation/stack';
 import { colors, sizes } from '@/constants';
 import { ScheduleNavigator } from './ScheduleNavigator';
 import { RecordNavigator } from './RecordNavigator';
+import { CheckinNavigator } from './CheckinNavigator';
 import { PrescriptionNavigator } from './PrescriptionNavigator';
 import { MyPageNavigator } from './MyPageNavigator';
 import { useAuthStore } from '@/features/auth/store/authStore';
@@ -15,6 +16,7 @@ import type { RootStackParamList } from './RootNavigator';
 export type MainTabParamList = {
   Schedule: undefined;
   Record: undefined;
+  Checkin: undefined;
   Prescription: undefined;
   MyPage: undefined;
 };
@@ -89,6 +91,7 @@ export const MainTabNavigator: React.FC = () => {
         options={{ title: '일정' }}
       />
       <Tab.Screen name="Record" component={RecordNavigator} options={{ title: '기록' }} />
+      <Tab.Screen name="Checkin" component={CheckinNavigator} options={{ title: '하루메모' }} />
       <Tab.Screen name="Prescription" component={PrescriptionTabWrapper} options={{ title: '처방전' }} />
       <Tab.Screen name="MyPage" component={MyPageNavigator} options={{ title: '마이' }} />
     </Tab.Navigator>

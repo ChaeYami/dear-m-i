@@ -63,6 +63,12 @@ export const QUERY_KEYS = {
   prepNotes: () => ['prepNotes'] as const,
   prepNotesBySchedule: (scheduleId: string) => ['prepNotes', scheduleId] as const,
 
+  // 하루 메모 (체크인)
+  todayCheckin: () => ['todayCheckin'] as const,
+  checkinHistory: (startDate?: string, endDate?: string) =>
+    ['checkinHistory', startDate, endDate] as const,
+  checkinSummary: () => ['checkinSummary'] as const,
+
   // 복약 관리
   todayMedication: () => ['todayMedication'] as const,
   medicationLogs: (startDate?: string, endDate?: string) =>

@@ -15,6 +15,8 @@ import { colors, sizes } from '@/constants';
 import { EmotionSlider } from '@/shared/components/EmotionSlider';
 import { useCreateRecord, useUpdateRecord, useRecordDetail, useRecentSchedules } from '@/features/record/hooks/useRecord';
 import { usePrepNotesBySchedule } from '@/features/prepnote/hooks/usePrepNote';
+import { useCheckinSummary } from '@/features/checkin/hooks/useCheckin';
+import { getEmotionColor } from '@/shared/components/EmotionSlider';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import type { RecordStackParamList } from '@/navigation/RecordNavigator';
@@ -52,6 +54,9 @@ export const RecordFormScreen: React.FC = () => {
   const [tagInput, setTagInput] = useState('');
   const [showSchedulePicker, setShowSchedulePicker] = useState(false);
   const [showPrepNotes, setShowPrepNotes] = useState(false);
+  const [showCheckinSummary, setShowCheckinSummary] = useState(false);
+
+  const { data: checkinSummary } = useCheckinSummary();
 
   const { data: prepNotes = [] } = usePrepNotesBySchedule(
     selectedScheduleId ? String(selectedScheduleId) : undefined
@@ -113,6 +118,61 @@ export const RecordFormScreen: React.FC = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        {/* 이번 주 체크인 요약 */}
+        {checkinSummary && checkinSummary.totalCheckins > 0 && (
+          <View style={styles.summarySection}>
+            <TouchableOpacity
+              style={styles.summaryToggle}
+              onPress={() => setShowCheckinSummary((v) => !v)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.summaryToggleText}>
+                이번 주 체크인 요약 ({checkinSummary.totalCheckins}일)
+              </Text>
+              <Text style={styles.summaryToggleArrow}>{showCheckinSummary ? '▲' : '▼'}</Text>
+            </TouchableOpacity>
+            {showCheckinSummary && (
+              <View style={styles.summaryCard}>
+                {checkinSummary.averageEmotionScore != null && (
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryLabel}>평균 감정</Text>
+                    <Text
+                      style={[
+                        styles.summaryValue,
+                        { color: getEmotionColor(Math.round(checkinSummary.averageEmotionScore)) },
+                      ]}
+                    >
+                      {checkinSummary.averageEmotionScore.toFixed(1)}점
+                    </Text>
+                  </View>
+                )}
+                {checkinSummary.averageSleepHours != null && (
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryLabel}>평균 수면</Text>
+                    <Text style={styles.summaryValue}>
+                      {checkinSummary.averageSleepHours.toFixed(1)}시간
+                    </Text>
+                  </View>
+                )}
+                {checkinSummary.medicationRate != null && (
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryLabel}>복약률</Text>
+                    <Text style={styles.summaryValue}>{checkinSummary.medicationRate}%</Text>
+                  </View>
+                )}
+                {checkinSummary.topTriggerTags.length > 0 && (
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryLabel}>주요 트리거</Text>
+                    <Text style={styles.summaryValue}>
+                      {checkinSummary.topTriggerTags.join(', ')}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
+        )}
+
         {/* 일정 연결 (선택) */}
         <View style={styles.field}>
           <Text style={styles.fieldLabel}>연결 일정 (선택)</Text>
@@ -394,6 +454,50 @@ const styles = StyleSheet.create({
     fontSize: sizes.font.sm,
     color: colors.primary,
     fontWeight: sizes.fontWeight.bold,
+  },
+  // 체크인 요약
+  summarySection: { gap: sizes.spacing.sm },
+  summaryToggle: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.secondary + '10',
+    borderRadius: sizes.radius.md,
+    paddingHorizontal: sizes.spacing.md,
+    paddingVertical: sizes.spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.secondary + '30',
+  },
+  summaryToggleText: {
+    fontSize: sizes.font.sm,
+    color: colors.secondary,
+    fontWeight: sizes.fontWeight.semibold,
+  },
+  summaryToggleArrow: {
+    fontSize: sizes.font.xs,
+    color: colors.secondary,
+  },
+  summaryCard: {
+    backgroundColor: colors.surface,
+    borderRadius: sizes.radius.md,
+    padding: sizes.spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: sizes.spacing.sm,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  summaryLabel: {
+    fontSize: sizes.font.sm,
+    color: colors.text.secondary,
+  },
+  summaryValue: {
+    fontSize: sizes.font.sm,
+    fontWeight: sizes.fontWeight.semibold,
+    color: colors.text.primary,
   },
   // 준비 메모 참고
   prepNoteSection: { gap: sizes.spacing.sm },
