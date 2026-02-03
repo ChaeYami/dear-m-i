@@ -1,0 +1,1857 @@
+openapi: 3.0.3
+info:
+  title: DearMI API
+  version: 1.0.0
+  description: Dear Me + I — 멘탈 케어 진료 기록 앱 백엔드 API
+
+servers:
+  - url: http://localhost:8080
+    description: Local
+  - url: https://api.dearmi.app
+    description: Production
+
+security:
+  - Bearer: []
+
+components:
+  securitySchemes:
+    Bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT Access Token — Authorization: Bearer {token}"
+
+  schemas:
+    # ── 공통 ──────────────────────────────────────────
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+        errorCode:
+          type: string
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        errorCode:
+          type: string
+          example: RESOURCE_001
+        message:
+          type: string
+          example: 요청한 리소스를 찾을 수 없습니다.
+
+    # ── Auth ──────────────────────────────────────────
+    TokenRefreshRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+
+    AuthTokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+
+    UserResponse:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        email:
+          type: string
+        name:
+          type: string
+
+    # ── Schedule ─────────────────────────────────────
+    CreateScheduleRequest:
+      type: object
+      required: [hospitalName, scheduledAt]
+      properties:
+        hospitalName:
+          type: string
+        scheduledAt:
+          type: string
+          format: date-time
+        memo:
+          type: string
+
+    UpdateScheduleRequest:
+      type: object
+      required: [hospitalName, scheduledAt]
+      properties:
+        hospitalName:
+          type: string
+        scheduledAt:
+          type: string
+          format: date-time
+        memo:
+          type: string
+
+    ScheduleResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        hospitalName:
+          type: string
+        scheduledAt:
+          type: string
+          format: date-time
+        memo:
+          type: string
+        status:
+          type: string
+          enum: [SCHEDULED, COMPLETED, CANCELLED]
+        hasCounselingRecord:
+          type: boolean
+
+    # ── Record ───────────────────────────────────────
+    CreateRecordRequest:
+      type: object
+      properties:
+        scheduleId:
+          type: string
+          format: uuid
+        emotionScore:
+          type: integer
+          minimum: 1
+          maximum: 10
+        content:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+    UpdateRecordRequest:
+      type: object
+      properties:
+        emotionScore:
+          type: integer
+          minimum: 1
+          maximum: 10
+        content:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+    RecordResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        scheduleId:
+          type: string
+          format: uuid
+        emotionScore:
+          type: integer
+        content:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    RecordSummaryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        scheduleId:
+          type: string
+          format: uuid
+        emotionScore:
+          type: integer
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    RecordTimelineResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecordSummaryResponse'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        isLimited:
+          type: boolean
+
+    # ── Checkin ───────────────────────────────────────
+    CreateCheckinRequest:
+      type: object
+      required: [emotionScore]
+      properties:
+        emotionScore:
+          type: integer
+          minimum: 1
+          maximum: 10
+        triggerTags:
+          type: array
+          items:
+            type: string
+        memo:
+          type: string
+        sleepHours:
+          type: number
+          minimum: 0
+          maximum: 24
+        tookMedication:
+          type: boolean
+
+    CheckinResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        checkedAt:
+          type: string
+          format: date
+        emotionScore:
+          type: integer
+        triggerTags:
+          type: array
+          items:
+            type: string
+        memo:
+          type: string
+        sleepHours:
+          type: number
+        tookMedication:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CheckinHistoryResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/CheckinResponse'
+        isLimited:
+          type: boolean
+
+    CheckinSummaryResponse:
+      type: object
+      properties:
+        averageEmotionScore:
+          type: number
+        averageSleepHours:
+          type: number
+        medicationRate:
+          type: integer
+          description: 퍼센트 (0-100)
+        topTriggerTags:
+          type: array
+          items:
+            type: string
+        totalCheckins:
+          type: integer
+
+    TodayCheckinResponse:
+      type: object
+      properties:
+        checkedIn:
+          type: boolean
+        checkin:
+          $ref: '#/components/schemas/CheckinResponse'
+
+    # ── Prescription ─────────────────────────────────
+    PresignedUrlRequest:
+      type: object
+      required: [fileName, contentType]
+      properties:
+        fileName:
+          type: string
+        contentType:
+          type: string
+
+    PresignedUrlResponse:
+      type: object
+      properties:
+        s3Key:
+          type: string
+        uploadUrl:
+          type: string
+
+    CreatePrescriptionRequest:
+      type: object
+      required: [s3Key]
+      properties:
+        s3Key:
+          type: string
+        scheduleId:
+          type: string
+          format: uuid
+        prescribedAt:
+          type: string
+          format: date
+
+    CreatePrescriptionResponse:
+      type: object
+      properties:
+        prescriptionId:
+          type: string
+          format: uuid
+
+    MedicationItemResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        drugName:
+          type: string
+        dosage:
+          type: string
+        directions:
+          type: string
+        days:
+          type: integer
+
+    PrescriptionDetailResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        scheduleId:
+          type: string
+          format: uuid
+        ocrStatus:
+          type: string
+          enum: [PENDING, PROCESSING, COMPLETED, FAILED]
+        prescribedAt:
+          type: string
+          format: date
+        medications:
+          type: array
+          items:
+            $ref: '#/components/schemas/MedicationItemResponse'
+        imageUrl:
+          type: string
+
+    UpdateMedicationsRequest:
+      type: object
+      required: [medications]
+      properties:
+        medications:
+          type: array
+          items:
+            type: object
+            properties:
+              drugName:
+                type: string
+              dosage:
+                type: string
+              directions:
+                type: string
+              days:
+                type: integer
+
+    # ── Medication Detail ────────────────────────────
+    MedicationDetailResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        drugName:
+          type: string
+        dosage:
+          type: string
+        directions:
+          type: string
+        days:
+          type: integer
+        drugEffect:
+          type: string
+        drugCaution:
+          type: string
+        manufacturer:
+          type: string
+        drugInfoPending:
+          type: boolean
+        drugInfoMessage:
+          type: string
+
+    # ── Medication Schedule ──────────────────────────
+    CreateMedicationScheduleRequest:
+      type: object
+      properties:
+        prescriptionMedicationId:
+          type: string
+          format: uuid
+        drugName:
+          type: string
+        dosage:
+          type: string
+        timesPerDay:
+          type: integer
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        morning:
+          type: boolean
+        afternoon:
+          type: boolean
+        evening:
+          type: boolean
+        bedtime:
+          type: boolean
+        morningTime:
+          type: string
+          format: time
+          example: "08:00:00"
+        afternoonTime:
+          type: string
+          format: time
+          example: "13:00:00"
+        eveningTime:
+          type: string
+          format: time
+          example: "18:00:00"
+        bedtimeTime:
+          type: string
+          format: time
+          example: "22:00:00"
+
+    UpdateMedicationScheduleRequest:
+      type: object
+      required: [drugName]
+      properties:
+        drugName:
+          type: string
+        dosage:
+          type: string
+        timesPerDay:
+          type: integer
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        morning:
+          type: boolean
+        afternoon:
+          type: boolean
+        evening:
+          type: boolean
+        bedtime:
+          type: boolean
+        morningTime:
+          type: string
+          format: time
+        afternoonTime:
+          type: string
+          format: time
+        eveningTime:
+          type: string
+          format: time
+        bedtimeTime:
+          type: string
+          format: time
+
+    MedicationScheduleResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        prescriptionMedicationId:
+          type: string
+          format: uuid
+        drugName:
+          type: string
+        dosage:
+          type: string
+        timesPerDay:
+          type: integer
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        morning:
+          type: boolean
+        afternoon:
+          type: boolean
+        evening:
+          type: boolean
+        bedtime:
+          type: boolean
+        morningTime:
+          type: string
+          format: time
+        afternoonTime:
+          type: string
+          format: time
+        eveningTime:
+          type: string
+          format: time
+        bedtimeTime:
+          type: string
+          format: time
+
+    CheckMedicationRequest:
+      type: object
+      required: [logDate, timeSlot, status]
+      properties:
+        logDate:
+          type: string
+          format: date
+        timeSlot:
+          type: string
+          enum: [MORNING, AFTERNOON, EVENING, BEDTIME]
+        status:
+          type: string
+          enum: [TAKEN, SKIPPED]
+
+    MedicationLogResponse:
+      type: object
+      properties:
+        logId:
+          type: string
+          format: uuid
+        scheduleId:
+          type: string
+          format: uuid
+        logDate:
+          type: string
+          format: date
+        timeSlot:
+          type: string
+          enum: [MORNING, AFTERNOON, EVENING, BEDTIME]
+        status:
+          type: string
+          enum: [TAKEN, SKIPPED, MISSED]
+        takenAt:
+          type: string
+          format: date-time
+
+    TodayMedicationResponse:
+      type: object
+      properties:
+        schedules:
+          type: array
+          items:
+            type: object
+            properties:
+              scheduleId:
+                type: string
+                format: uuid
+              drugName:
+                type: string
+              dosage:
+                type: string
+              timesPerDay:
+                type: integer
+              startDate:
+                type: string
+                format: date
+              endDate:
+                type: string
+                format: date
+              slots:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    timeSlot:
+                      type: string
+                      enum: [MORNING, AFTERNOON, EVENING, BEDTIME]
+                    notifyTime:
+                      type: string
+                      format: time
+                    status:
+                      type: string
+                      enum: [TAKEN, SKIPPED, MISSED]
+                      nullable: true
+                    logId:
+                      type: string
+                      format: uuid
+                      nullable: true
+
+    MedicationHistoryResponse:
+      type: object
+      properties:
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/MedicationLogResponse'
+
+    MedicationStatsResponse:
+      type: object
+      properties:
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        totalLogs:
+          type: integer
+          format: int64
+        takenCount:
+          type: integer
+          format: int64
+        skippedCount:
+          type: integer
+          format: int64
+        completionRate:
+          type: number
+          format: double
+
+    # ── Notification ─────────────────────────────────
+    FcmTokenRequest:
+      type: object
+      required: [fcmToken]
+      properties:
+        fcmToken:
+          type: string
+
+    UpdateSettingRequest:
+      type: object
+      required: [enabled, dayBefore, dayOf]
+      properties:
+        enabled:
+          type: boolean
+        dayBefore:
+          type: boolean
+        dayOf:
+          type: boolean
+
+    NotificationSettingResponse:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        dayBefore:
+          type: boolean
+        dayOf:
+          type: boolean
+
+    # ── PrepNote ─────────────────────────────────────
+    CreatePrepNoteRequest:
+      type: object
+      required: [content]
+      properties:
+        scheduleId:
+          type: string
+          format: uuid
+        content:
+          type: string
+          maxLength: 2000
+
+    UpdatePrepNoteRequest:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          maxLength: 2000
+
+    PrepNoteResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        scheduleId:
+          type: string
+          format: uuid
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # ── Search ───────────────────────────────────────
+    SearchResponse:
+      type: object
+      properties:
+        records:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              scheduleId:
+                type: string
+                format: uuid
+              emotionScore:
+                type: integer
+              content:
+                type: string
+              tags:
+                type: array
+                items:
+                  type: string
+              createdAt:
+                type: string
+                format: date-time
+        recordTotal:
+          type: integer
+          format: int64
+        checkins:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              checkedAt:
+                type: string
+                format: date
+              emotionScore:
+                type: integer
+              memo:
+                type: string
+              createdAt:
+                type: string
+                format: date-time
+        checkinTotal:
+          type: integer
+          format: int64
+        prepNotes:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              scheduleId:
+                type: string
+                format: uuid
+              content:
+                type: string
+              createdAt:
+                type: string
+                format: date-time
+        prepNoteTotal:
+          type: integer
+          format: int64
+
+    # ── Subscription ─────────────────────────────────
+    VerifyIapRequest:
+      type: object
+      required: [originalTransactionId]
+      properties:
+        originalTransactionId:
+          type: string
+        receiptData:
+          type: string
+
+    SubscriptionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        plan:
+          type: string
+          enum: [FREE, PREMIUM]
+        paymentProvider:
+          type: string
+          enum: [APP_STORE, PLAY_STORE, TOSS]
+        startedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        autoRenew:
+          type: boolean
+
+    # ── Payment ──────────────────────────────────────
+    PreparePaymentRequest:
+      type: object
+      required: [planType]
+      properties:
+        planType:
+          type: string
+          enum: [MONTHLY, YEARLY]
+
+    PreparePaymentResponse:
+      type: object
+      properties:
+        orderId:
+          type: string
+        amount:
+          type: integer
+        customerName:
+          type: string
+        customerEmail:
+          type: string
+
+    ConfirmPaymentRequest:
+      type: object
+      required: [orderId, paymentKey, amount]
+      properties:
+        orderId:
+          type: string
+        paymentKey:
+          type: string
+        amount:
+          type: integer
+          minimum: 1
+
+    ConfirmPaymentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        plan:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+
+# ═══════════════════════════════════════════════════════
+# Paths
+# ═══════════════════════════════════════════════════════
+paths:
+  # ── Auth ────────────────────────────────────────────
+  /api/v1/auth/refresh:
+    post:
+      tags: [auth]
+      summary: 토큰 갱신
+      description: Refresh Token으로 새 Access/Refresh Token 발급 (Rotation)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/AuthTokenResponse'
+
+  /api/v1/auth/logout:
+    post:
+      tags: [auth]
+      summary: 로그아웃
+      description: refresh_tokens에서 해당 userId 토큰 삭제
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/auth/me:
+    get:
+      tags: [auth]
+      summary: 현재 사용자 정보
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/UserResponse'
+
+  # ── Schedule ────────────────────────────────────────
+  /api/v1/schedules:
+    get:
+      tags: [schedule]
+      summary: 월별 일정 목록
+      parameters:
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 2000
+            maximum: 2100
+        - name: month
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ScheduleResponse'
+    post:
+      tags: [schedule]
+      summary: 일정 생성
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateScheduleRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/ScheduleResponse'
+
+  /api/v1/schedules/{id}:
+    get:
+      tags: [schedule]
+      summary: 일정 상세
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/ScheduleResponse'
+    put:
+      tags: [schedule]
+      summary: 일정 수정
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateScheduleRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/ScheduleResponse'
+    delete:
+      tags: [schedule]
+      summary: 일정 삭제 (소프트 삭제 + 연관 데이터 SET NULL)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+
+  # ── Record ──────────────────────────────────────────
+  /api/v1/records:
+    get:
+      tags: [record]
+      summary: 타임라인 (페이지네이션)
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/RecordTimelineResponse'
+    post:
+      tags: [record]
+      summary: 상담 기록 생성
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRecordRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/RecordResponse'
+
+  /api/v1/records/{recordId}:
+    get:
+      tags: [record]
+      summary: 상담 기록 상세
+      parameters:
+        - name: recordId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/RecordResponse'
+    put:
+      tags: [record]
+      summary: 상담 기록 수정
+      parameters:
+        - name: recordId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRecordRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/RecordResponse'
+    delete:
+      tags: [record]
+      summary: 상담 기록 삭제
+      parameters:
+        - name: recordId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+
+  # ── Checkin ─────────────────────────────────────────
+  /api/v1/checkins:
+    post:
+      tags: [checkin]
+      summary: 오늘 체크인 등록/수정 (UPSERT)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCheckinRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/CheckinResponse'
+    get:
+      tags: [checkin]
+      summary: 체크인 목록 (FREE 30일 강제)
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/CheckinHistoryResponse'
+
+  /api/v1/checkins/summary:
+    get:
+      tags: [checkin]
+      summary: 최근 7일 체크인 요약
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/CheckinSummaryResponse'
+
+  /api/v1/checkins/today:
+    get:
+      tags: [checkin]
+      summary: 오늘 체크인 여부 + 내용
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/TodayCheckinResponse'
+
+  # ── Prescription ────────────────────────────────────
+  /api/v1/prescriptions/presigned-url:
+    post:
+      tags: [prescription]
+      summary: S3 업로드용 Presigned URL 발급
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PresignedUrlRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/PresignedUrlResponse'
+
+  /api/v1/prescriptions:
+    post:
+      tags: [prescription]
+      summary: 처방전 저장 + 비동기 OCR 시작
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePrescriptionRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/CreatePrescriptionResponse'
+
+  /api/v1/prescriptions/{id}:
+    get:
+      tags: [prescription]
+      summary: 처방전 상세 (OCR 상태 폴링용)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/PrescriptionDetailResponse'
+
+  /api/v1/prescriptions/{id}/medications:
+    put:
+      tags: [prescription]
+      summary: 약품 목록 수동 수정 (전체 교체)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMedicationsRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/PrescriptionDetailResponse'
+
+  # ── Medication Detail ───────────────────────────────
+  /api/v1/medications/{id}:
+    get:
+      tags: [medication]
+      summary: 약품 상세 + 약학정보원 데이터
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/MedicationDetailResponse'
+
+  # ── Medication Schedule ─────────────────────────────
+  /api/v1/medication-schedules:
+    get:
+      tags: [medication]
+      summary: 오늘 복약 현황
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/TodayMedicationResponse'
+    post:
+      tags: [medication]
+      summary: 복약 일정 등록
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMedicationScheduleRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/MedicationScheduleResponse'
+
+  /api/v1/medication-schedules/{id}:
+    put:
+      tags: [medication]
+      summary: 복약 일정 수정
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMedicationScheduleRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/MedicationScheduleResponse'
+    delete:
+      tags: [medication]
+      summary: 복약 일정 삭제 (logs CASCADE)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: No Content
+
+  /api/v1/medication-schedules/{id}/logs:
+    post:
+      tags: [medication]
+      summary: 복약 체크 (TAKEN/SKIPPED UPSERT)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckMedicationRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/MedicationLogResponse'
+
+  /api/v1/medication-schedules/logs:
+    get:
+      tags: [medication]
+      summary: 복약 이력 (FREE 30일 강제)
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/MedicationHistoryResponse'
+
+  /api/v1/medication-schedules/stats:
+    get:
+      tags: [medication]
+      summary: 복약 완료율 통계
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/MedicationStatsResponse'
+
+  # ── Notification ────────────────────────────────────
+  /api/v1/notifications/token:
+    post:
+      tags: [notification]
+      summary: FCM 토큰 등록/갱신
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FcmTokenRequest'
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/notifications/settings:
+    get:
+      tags: [notification]
+      summary: 알림 설정 조회
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/NotificationSettingResponse'
+    put:
+      tags: [notification]
+      summary: 알림 설정 변경
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSettingRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/NotificationSettingResponse'
+
+  # ── PrepNote ────────────────────────────────────────
+  /api/v1/prep-notes:
+    get:
+      tags: [prep-note]
+      summary: 준비 메모 목록
+      parameters:
+        - name: scheduleId
+          in: query
+          description: 일정 ID (없으면 전체)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PrepNoteResponse'
+    post:
+      tags: [prep-note]
+      summary: 준비 메모 작성
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePrepNoteRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/PrepNoteResponse'
+
+  /api/v1/prep-notes/{id}:
+    put:
+      tags: [prep-note]
+      summary: 준비 메모 수정
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePrepNoteRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/PrepNoteResponse'
+    delete:
+      tags: [prep-note]
+      summary: 준비 메모 삭제 (소프트 삭제)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+
+  # ── Search ──────────────────────────────────────────
+  /api/v1/search:
+    get:
+      tags: [search]
+      summary: 통합 검색 (상담기록·체크인·준비메모)
+      description: FREE 플랜은 최근 2개월만 검색 가능
+      parameters:
+        - name: q
+          in: query
+          description: 검색어 (빈값이면 전체)
+          schema:
+            type: string
+        - name: types
+          in: query
+          description: "콤마 구분: RECORD,CHECKIN,PREPNOTE (미지정 시 전체)"
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/SearchResponse'
+
+  # ── Subscription ────────────────────────────────────
+  /api/v1/subscriptions:
+    get:
+      tags: [subscription]
+      summary: 현재 구독 상태 조회
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/SubscriptionResponse'
+
+  /api/v1/subscriptions/verify/app-store:
+    post:
+      tags: [subscription]
+      summary: iOS IAP 영수증 검증 + PREMIUM 활성화
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyIapRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/SubscriptionResponse'
+
+  /api/v1/subscriptions/verify/play-store:
+    post:
+      tags: [subscription]
+      summary: Android 구매 검증 + PREMIUM 활성화
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyIapRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/SubscriptionResponse'
+
+  /api/v1/subscriptions/cancel:
+    delete:
+      tags: [subscription]
+      summary: 자동 갱신 해제 (만료까지 PREMIUM 유지)
+      responses:
+        '200':
+          description: OK
+
+  # ── Payment (토스페이먼츠) ──────────────────────────
+  /api/v1/payments/prepare:
+    post:
+      tags: [subscription]
+      summary: 결제 준비 (orderId 생성)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreparePaymentRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/PreparePaymentResponse'
+
+  /api/v1/payments/confirm:
+    post:
+      tags: [subscription]
+      summary: 결제 승인 + 구독 활성화
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmPaymentRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/ConfirmPaymentResponse'
+
+  /api/v1/payments/webhook:
+    post:
+      tags: [subscription]
+      summary: 토스페이먼츠 웹훅 (취소/환불)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: OK

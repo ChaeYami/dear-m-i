@@ -50,6 +50,9 @@ public class SecurityConfig {
             "/api/v1/app/version",      // 앱 버전 확인
             "/api/v1/payments/webhook", // 토스페이먼츠 웹훅 (외부 호출)
             "/actuator/health",         // 헬스체크
+            "/v3/api-docs/**",          // OpenAPI JSON
+            "/swagger-ui/**",           // Swagger UI
+            "/swagger-ui.html",         // Swagger UI entry
     };
 
     @Bean
