@@ -17,4 +17,9 @@ public interface DailyCheckinRepository {
 
     /** 오늘 체크인 여부 (알림 중복 방지) */
     boolean existsByUserIdAndCheckedAt(UUID userId, LocalDate checkedAt);
+
+    /** 통합 검색: memo LIKE (keyword null이면 전체 범위 조회) */
+    List<DailyCheckin> searchByKeyword(UUID userId, String keyword, LocalDate fromDate, int offset, int limit);
+
+    long countByKeyword(UUID userId, String keyword, LocalDate fromDate);
 }
