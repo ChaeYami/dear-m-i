@@ -2,6 +2,7 @@ package com.dearmi.backend.application.medication.usecase;
 
 import com.dearmi.backend.application.medication.dto.CreateMedicationScheduleCommand;
 import com.dearmi.backend.application.medication.dto.MedicationScheduleResult;
+import com.dearmi.backend.application.medication.service.MedicationDrugInfoService;
 import com.dearmi.backend.common.exception.CustomException;
 import com.dearmi.backend.common.exception.ErrorCode;
 import com.dearmi.backend.domain.medication.MedicationSchedule;
@@ -20,6 +21,7 @@ public class CreateMedicationScheduleUseCaseImpl implements CreateMedicationSche
     private final MedicationScheduleRepository medicationScheduleRepository;
     private final PrescriptionMedicationRepository prescriptionMedicationRepository;
     private final PrescriptionRepository prescriptionRepository;
+    private final MedicationDrugInfoService medicationDrugInfoService;
 
     @Override
     @Transactional
@@ -71,6 +73,11 @@ public class CreateMedicationScheduleUseCaseImpl implements CreateMedicationSche
                 .bedtimeTime(command.bedtimeTime())
                 .build();
 
-        return MedicationScheduleResult.from(medicationScheduleRepository.save(schedule));
+        MedicationSchedule saved = medicationScheduleRepository.save(schedule);
+
+        // 비동기로 e약은요 약품 정보 조회 → 캐시 저장
+        medicationDrugInfoService.fetchDrugInfoAsync(saved.getId());
+
+        return MedicationScheduleResult.from(saved);
     }
 }

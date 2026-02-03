@@ -3,6 +3,7 @@ package com.dearmi.backend.presentation.medication;
 import com.dearmi.backend.application.medication.dto.CheckMedicationCommand;
 import com.dearmi.backend.application.medication.dto.CreateMedicationScheduleCommand;
 import com.dearmi.backend.application.medication.dto.UpdateMedicationScheduleCommand;
+import com.dearmi.backend.application.medication.service.MedicationDrugInfoService;
 import com.dearmi.backend.application.medication.usecase.*;
 import com.dearmi.backend.common.response.ApiResponse;
 import com.dearmi.backend.infrastructure.security.AuthenticatedUserId;
@@ -28,6 +29,8 @@ public class MedicationScheduleController {
     private final CheckMedicationUseCase checkMedicationUseCase;
     private final GetMedicationHistoryUseCase getMedicationHistoryUseCase;
     private final GetMedicationStatsUseCase getMedicationStatsUseCase;
+    private final GetMedicationScheduleDrugInfoUseCase getMedicationScheduleDrugInfoUseCase;
+    private final MedicationDrugInfoService medicationDrugInfoService;
 
     /** GET /api/v1/medication-schedules — 오늘 복약 현황 (활성 일정 + 각 시간대 로그 상태) */
     @GetMapping
@@ -133,6 +136,30 @@ public class MedicationScheduleController {
     ) {
         return ApiResponse.success(
                 MedicationHistoryResponse.from(getMedicationHistoryUseCase.getHistory(userId, startDate, endDate))
+        );
+    }
+
+    /** POST /api/v1/medication-schedules/{id}/refresh-drug-info — 약품 정보 재조회 */
+    @PostMapping("/{id}/refresh-drug-info")
+    public ApiResponse<MedicationDrugInfoResponse> refreshDrugInfo(
+            @AuthenticatedUserId UUID userId,
+            @PathVariable UUID id
+    ) {
+        // 소유권 검증
+        var result = getMedicationScheduleDrugInfoUseCase.getDrugInfo(userId, id);
+        // 비동기 재조회 트리거
+        medicationDrugInfoService.fetchDrugInfoForce(id);
+        return ApiResponse.success(MedicationDrugInfoResponse.from(result));
+    }
+
+    /** GET /api/v1/medication-schedules/{id}/drug-info — 약품 상세 정보 (e약은요) */
+    @GetMapping("/{id}/drug-info")
+    public ApiResponse<MedicationDrugInfoResponse> getDrugInfo(
+            @AuthenticatedUserId UUID userId,
+            @PathVariable UUID id
+    ) {
+        return ApiResponse.success(
+                MedicationDrugInfoResponse.from(getMedicationScheduleDrugInfoUseCase.getDrugInfo(userId, id))
         );
     }
 

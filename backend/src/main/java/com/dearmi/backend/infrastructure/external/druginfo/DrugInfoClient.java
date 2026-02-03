@@ -10,17 +10,20 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * 의약품개요정보(e약은요) 서비스 클라이언트
- * API: DrbEasyDrugInfoService / getDrbEasyDrugList
- * 문서: https://apis.data.go.kr/1471000/DrbEasyDrugInfoService
+ * 의약품 제품 허가정보 API (DrugPrdtPrmsnInfoService07)
+ * - 전문의약품 포함 4만건+ 커버리지
+ * - EE_DOC_DATA(효능), NB_DOC_DATA(주의사항) XML → 텍스트 추출
  */
 @Slf4j
 @Component
 public class DrugInfoClient implements DrugInfoPort {
 
-    private static final String OPERATION = "/getDrbEasyDrugList";
+    private static final String BASE_URL = "https://apis.data.go.kr/1471000/DrugPrdtPrmsnInfoService07";
+    private static final String DETAIL_OP = "/getDrugPrdtPrmsnDtlInq06";
 
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
@@ -29,10 +32,9 @@ public class DrugInfoClient implements DrugInfoPort {
     public DrugInfoClient(
             WebClient.Builder webClientBuilder,
             ObjectMapper objectMapper,
-            @Value("${drug-info.api-url}") String apiUrl,
             @Value("${drug-info.api-key}") String serviceKey
     ) {
-        this.webClient = webClientBuilder.baseUrl(apiUrl).build();
+        this.webClient = webClientBuilder.baseUrl(BASE_URL).build();
         this.objectMapper = objectMapper;
         this.serviceKey = serviceKey;
     }
@@ -40,10 +42,9 @@ public class DrugInfoClient implements DrugInfoPort {
     @Override
     public Optional<DrugInfoDto> searchByName(String drugName) {
         try {
-            // 공공데이터포털 ServiceKey는 이미 URL 인코딩된 형태로 발급 → 이중 인코딩 방지를 위해 raw URL 조합
-            String uri = OPERATION
-                    + "?itemName=" + encode(drugName)
-                    + "&ServiceKey=" + serviceKey
+            String uri = DETAIL_OP
+                    + "?serviceKey=" + encode(serviceKey)
+                    + "&item_name=" + encode(drugName)
                     + "&type=json&numOfRows=1";
 
             String body = webClient.get()
@@ -53,9 +54,8 @@ public class DrugInfoClient implements DrugInfoPort {
                     .block();
 
             return parseResponse(body, drugName);
-
         } catch (Exception e) {
-            log.warn("약학정보원 API 호출 실패: drugName={}, error={}", drugName, e.getMessage());
+            log.warn("허가정보 API 호출 실패: drugName={}, error={}", drugName, e.getMessage());
             return Optional.empty();
         }
     }
@@ -64,17 +64,16 @@ public class DrugInfoClient implements DrugInfoPort {
         try {
             JsonNode root = objectMapper.readTree(body);
 
-            // 결과코드 확인
             String resultCode = root.path("header").path("resultCode").asText();
             if (!"00".equals(resultCode)) {
-                log.warn("약학정보원 API 오류 응답: resultCode={}", resultCode);
+                log.warn("허가정보 API 오류: resultCode={}", resultCode);
                 return Optional.empty();
             }
 
-            JsonNode items = root.path("body").path("items");
-            if (items.isMissingNode() || items.isNull()) return Optional.empty();
+            int totalCount = root.path("body").path("totalCount").asInt(0);
+            if (totalCount == 0) return Optional.empty();
 
-            // items 는 배열 또는 {item:[...]} 구조일 수 있음
+            JsonNode items = root.path("body").path("items");
             JsonNode item;
             if (items.isArray()) {
                 if (items.isEmpty()) return Optional.empty();
@@ -87,22 +86,102 @@ public class DrugInfoClient implements DrugInfoPort {
 
             if (item == null || item.isNull()) return Optional.empty();
 
-            // 응답 필드 매핑 (DrbEasyDrugInfoService 스펙)
-            String itemName   = text(item, "itemName");    // 제품명
-            String effect     = text(item, "efcyQesitm");  // 문항1(효능)
-            String caution    = mergeText(                  // 문항3(주의경고) + 문항4(주의사항) 합산
-                                  text(item, "atpnWarnQesitm"),
-                                  text(item, "atpnQesitm")
-                               );
-            String mfr        = text(item, "entpName");    // 업체명
+            String itemName = text(item, "ITEM_NAME");
+            String entpName = text(item, "ENTP_NAME");
+            String itemSeq = text(item, "ITEM_SEQ");
+            String effect = extractXmlText(text(item, "EE_DOC_DATA"), 0);
+            String usage = extractXmlText(text(item, "UD_DOC_DATA"), 0);
+            // 주의사항: 1~3번 항목만 (경고, 투여금기, 신중투여)
+            String caution = extractXmlText(text(item, "NB_DOC_DATA"), 3);
 
-            String drugName = (itemName != null) ? itemName : queryName;
-            return Optional.of(new DrugInfoDto(drugName, effect, caution, mfr));
-
+            String drugNameResult = (itemName != null) ? itemName : queryName;
+            log.info("약품 정보 조회 성공: {} (itemSeq={})", drugNameResult, itemSeq);
+            return Optional.of(new DrugInfoDto(drugNameResult, effect, usage, caution, entpName, itemSeq));
         } catch (Exception e) {
-            log.warn("약학정보원 응답 파싱 실패: {}", e.getMessage());
+            log.warn("허가정보 응답 파싱 실패: {}", e.getMessage());
             return Optional.empty();
         }
+    }
+
+    /**
+     * 허가정보 DOC XML에서 구조화된 텍스트 추출.
+     * ARTICLE title을 섹션 헤더로, PARAGRAPH 내용을 본문으로 추출.
+     * 결과: "## 1. 경고\n내용\n내용\n\n## 2. 다음 환자에는..." 형식
+     */
+    /**
+     * @param maxArticles 0이면 제한 없음, 양수면 해당 개수까지만 추출
+     */
+    private String extractXmlText(String xml, int maxArticles) {
+        if (xml == null || xml.isBlank()) return null;
+
+        StringBuilder sb = new StringBuilder();
+        int articleCount = 0;
+
+        Pattern articlePattern = Pattern.compile(
+                "<ARTICLE\\s+title=\"([^\"]*)\"[^>]*/?>([\\s\\S]*?)(?=<ARTICLE|</SECTION|</DOC|$)");
+        Matcher articleMatcher = articlePattern.matcher(xml);
+
+        while (articleMatcher.find()) {
+            if (maxArticles > 0 && articleCount >= maxArticles) break;
+
+            String title = articleMatcher.group(1).strip();
+            String body = articleMatcher.group(2);
+
+            if (isDocHeader(title)) continue;
+            articleCount++;
+
+            // ARTICLE 제목 추가
+            if (!title.isEmpty()) {
+                if (sb.length() > 0) sb.append("\n\n");
+                sb.append("## ").append(title);
+            }
+
+            // PARAGRAPH 내용 추출 (CDATA 포함)
+            if (body != null) {
+                Pattern paraPattern = Pattern.compile("<PARAGRAPH[^>]*>(.*?)</PARAGRAPH>", Pattern.DOTALL);
+                Matcher paraMatcher = paraPattern.matcher(body);
+                while (paraMatcher.find()) {
+                    String content = paraMatcher.group(1);
+                    // CDATA 제거
+                    content = content.replaceAll("<!\\[CDATA\\[(.*?)]]>", "$1");
+                    // HTML 태그 제거
+                    content = content.replaceAll("<[^>]+>", "");
+                    // HTML 엔티티 디코드
+                    content = content.replace("&amp;", "&").replace("&lt;", "<")
+                            .replace("&gt;", ">").replace("&nbsp;", " ");
+                    content = content.strip();
+                    if (!content.isEmpty()) {
+                        sb.append("\n").append(content);
+                    }
+                }
+            }
+        }
+
+        // ARTICLE이 없는 경우 PARAGRAPH만 추출
+        if (sb.length() == 0) {
+            Pattern paraOnly = Pattern.compile("<PARAGRAPH[^>]*>(.*?)</PARAGRAPH>", Pattern.DOTALL);
+            Matcher paraOnlyMatcher = paraOnly.matcher(xml);
+            while (paraOnlyMatcher.find()) {
+                String content = paraOnlyMatcher.group(1)
+                        .replaceAll("<!\\[CDATA\\[(.*?)]]>", "$1")
+                        .replaceAll("<[^>]+>", "")
+                        .replace("&amp;", "&").replace("&lt;", "<")
+                        .replace("&gt;", ">").replace("&nbsp;", " ")
+                        .strip();
+                if (!content.isEmpty()) {
+                    if (sb.length() > 0) sb.append("\n");
+                    sb.append(content);
+                }
+            }
+        }
+
+        return sb.length() > 0 ? sb.toString() : null;
+    }
+
+    private boolean isDocHeader(String title) {
+        return title.equals("효능효과") || title.equals("용법용량")
+                || title.equals("사용상의주의사항") || title.equals("주의사항")
+                || title.equals("사용상 주의사항");
     }
 
     private String text(JsonNode node, String field) {
@@ -110,14 +189,6 @@ public class DrugInfoClient implements DrugInfoPort {
         if (f == null || f.isNull()) return null;
         String v = f.asText().strip();
         return v.isEmpty() ? null : v;
-    }
-
-    /** 두 텍스트를 합산. 둘 다 null이면 null 반환 */
-    private String mergeText(String a, String b) {
-        if (a == null && b == null) return null;
-        if (a == null) return b;
-        if (b == null) return a;
-        return a + "\n" + b;
     }
 
     private String encode(String value) {

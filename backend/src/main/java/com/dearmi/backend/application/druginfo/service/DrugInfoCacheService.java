@@ -39,8 +39,10 @@ public class DrugInfoCacheService {
             return Optional.of(new DrugInfoDto(
                     med.getDrugName(),
                     med.getDrugEffect(),
+                    null,
                     med.getDrugCaution(),
-                    med.getManufacturer()
+                    med.getManufacturer(),
+                    null
             ));
         }
 

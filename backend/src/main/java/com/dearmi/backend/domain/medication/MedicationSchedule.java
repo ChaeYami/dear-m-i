@@ -62,6 +62,26 @@ public class MedicationSchedule extends BaseTimeEntity {
     @Builder.Default
     private Boolean bedtime = false;
 
+    // 약품 상세 정보 (e약은요 캐시)
+    @Column(name = "drug_effect", columnDefinition = "text")
+    private String drugEffect;
+
+    @Column(name = "drug_usage", columnDefinition = "text")
+    private String drugUsage;
+
+    @Column(name = "drug_caution", columnDefinition = "text")
+    private String drugCaution;
+
+    @Column(length = 200)
+    private String manufacturer;
+
+    /** 품목기준코드 — 약학정보원 상세 링크용 */
+    @Column(name = "item_seq", length = 20)
+    private String itemSeq;
+
+    @Column(name = "drug_info_fetched_at")
+    private java.time.LocalDateTime drugInfoFetchedAt;
+
     // 시간대별 복약 시각
     @Column(name = "morning_time")
     private LocalTime morningTime;
@@ -74,6 +94,15 @@ public class MedicationSchedule extends BaseTimeEntity {
 
     @Column(name = "bedtime_time")
     private LocalTime bedtimeTime;
+
+    public void updateDrugInfo(String drugEffect, String drugUsage, String drugCaution, String manufacturer, String itemSeq) {
+        this.drugEffect = drugEffect;
+        this.drugUsage = drugUsage;
+        this.drugCaution = drugCaution;
+        this.itemSeq = itemSeq;
+        this.manufacturer = manufacturer;
+        this.drugInfoFetchedAt = java.time.LocalDateTime.now();
+    }
 
     public void update(
             String drugName, String dosage, Short timesPerDay,

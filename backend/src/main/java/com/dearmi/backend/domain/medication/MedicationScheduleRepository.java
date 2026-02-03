@@ -9,6 +9,8 @@ public interface MedicationScheduleRepository {
 
     MedicationSchedule save(MedicationSchedule schedule);
 
+    Optional<MedicationSchedule> findById(UUID id);
+
     Optional<MedicationSchedule> findByIdAndUserIdAndDeletedAtIsNull(UUID id, UUID userId);
 
     List<MedicationSchedule> findByUserIdAndDeletedAtIsNull(UUID userId);

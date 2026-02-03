@@ -22,6 +22,11 @@ public class MedicationScheduleRepositoryImpl implements MedicationScheduleRepos
     }
 
     @Override
+    public Optional<MedicationSchedule> findById(UUID id) {
+        return jpa.findById(id);
+    }
+
+    @Override
     public Optional<MedicationSchedule> findByIdAndUserIdAndDeletedAtIsNull(UUID id, UUID userId) {
         return jpa.findByIdAndUserIdAndDeletedAtIsNull(id, userId);
     }
