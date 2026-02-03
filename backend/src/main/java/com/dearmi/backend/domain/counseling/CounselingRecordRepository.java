@@ -24,6 +24,12 @@ public interface CounselingRecordRepository {
     /** 타임라인 전체 카운트 */
     long countByUserIdAndDeletedAtIsNull(UUID userId);
 
+    /** FREE 플랜 2개월 제한: 날짜 필터 + 페이지네이션 */
+    List<CounselingRecord> findByUserIdAndDeletedAtIsNullAndCreatedAtAfterOrderByCreatedAtDesc(
+            UUID userId, LocalDateTime after, int offset, int limit);
+
+    long countByUserIdAndDeletedAtIsNullAndCreatedAtAfter(UUID userId, LocalDateTime after);
+
     /** hospital_schedules 소프트 딜리트 시 연결 해제 (⑤ 원칙) */
     void detachSchedule(UUID scheduleId);
 

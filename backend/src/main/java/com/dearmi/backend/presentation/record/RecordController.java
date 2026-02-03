@@ -1,8 +1,7 @@
 package com.dearmi.backend.presentation.record;
 
 import com.dearmi.backend.application.record.dto.CreateRecordCommand;
-import com.dearmi.backend.application.record.dto.PageResult;
-import com.dearmi.backend.application.record.dto.RecordSummaryResult;
+import com.dearmi.backend.application.record.dto.RecordTimelineResult;
 import com.dearmi.backend.application.record.dto.UpdateRecordCommand;
 import com.dearmi.backend.application.record.usecase.CreateRecordUseCase;
 import com.dearmi.backend.application.record.usecase.DeleteRecordUseCase;
@@ -10,11 +9,10 @@ import com.dearmi.backend.application.record.usecase.GetRecordDetailUseCase;
 import com.dearmi.backend.application.record.usecase.GetRecordTimelineUseCase;
 import com.dearmi.backend.application.record.usecase.UpdateRecordUseCase;
 import com.dearmi.backend.common.response.ApiResponse;
-import com.dearmi.backend.common.response.PageResponse;
 import com.dearmi.backend.infrastructure.security.AuthenticatedUserId;
 import com.dearmi.backend.presentation.record.dto.CreateRecordRequest;
 import com.dearmi.backend.presentation.record.dto.RecordResponse;
-import com.dearmi.backend.presentation.record.dto.RecordSummaryResponse;
+import com.dearmi.backend.presentation.record.dto.RecordTimelineResponse;
 import com.dearmi.backend.presentation.record.dto.UpdateRecordRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -38,20 +36,13 @@ public class RecordController {
 
     /** GET /api/v1/records?page=0&size=20 — 타임라인 (createdAt DESC, 페이지네이션) */
     @GetMapping
-    public ApiResponse<PageResponse<RecordSummaryResponse>> getTimeline(
+    public ApiResponse<RecordTimelineResponse> getTimeline(
             @AuthenticatedUserId UUID userId,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     ) {
-        PageResult<RecordSummaryResult> result = getRecordTimelineUseCase.getTimeline(userId, page, size);
-        PageResponse<RecordSummaryResponse> response = new PageResponse<>(
-                result.content().stream().map(RecordSummaryResponse::from).toList(),
-                result.page(),
-                result.size(),
-                result.totalElements(),
-                result.totalPages()
-        );
-        return ApiResponse.success(response);
+        RecordTimelineResult result = getRecordTimelineUseCase.getTimeline(userId, page, size);
+        return ApiResponse.success(RecordTimelineResponse.from(result));
     }
 
     /** POST /api/v1/records */

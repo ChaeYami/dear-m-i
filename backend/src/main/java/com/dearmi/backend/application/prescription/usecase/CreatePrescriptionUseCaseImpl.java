@@ -4,6 +4,8 @@ import com.dearmi.backend.application.prescription.dto.CreatePrescriptionCommand
 import com.dearmi.backend.application.prescription.service.OcrProcessorService;
 import com.dearmi.backend.domain.prescription.Prescription;
 import com.dearmi.backend.domain.prescription.PrescriptionRepository;
+import com.dearmi.backend.domain.subscription.SubscriptionPlan;
+import com.dearmi.backend.infrastructure.security.PlanRequired;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,7 @@ public class CreatePrescriptionUseCaseImpl implements CreatePrescriptionUseCase 
     private final OcrProcessorService ocrProcessorService;
 
     @Override
+    @PlanRequired(SubscriptionPlan.PREMIUM)
     @Transactional
     public UUID create(CreatePrescriptionCommand command) {
         Prescription prescription = Prescription.builder()

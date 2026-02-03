@@ -7,6 +7,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+
 @Entity
 @Table(name = "subscriptions")
 @Getter
@@ -33,18 +34,44 @@ public class Subscription extends BaseTimestampEntity {
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 
+    @Column(name = "payment_provider", length = 20)
+    private String paymentProvider;
+
+    @Column(name = "original_transaction_id", length = 500)
+    private String originalTransactionId;
+
+    @Column(name = "auto_renew", nullable = false)
+    @Builder.Default
+    private Boolean autoRenew = true;
+
     public boolean isPremium() {
         return SubscriptionPlan.PREMIUM.name().equals(this.plan);
     }
 
-    public void upgradeToPremium(LocalDateTime startedAt, LocalDateTime expiresAt) {
+    public void activatePremium(PaymentProvider provider, String transactionId, LocalDateTime expiresAt) {
         this.plan = SubscriptionPlan.PREMIUM.name();
-        this.startedAt = startedAt;
+        this.paymentProvider = provider.name();
+        this.originalTransactionId = transactionId;
+        this.startedAt = LocalDateTime.now();
         this.expiresAt = expiresAt;
+        this.autoRenew = true;
+    }
+
+    public void cancelAutoRenew() {
+        this.autoRenew = false;
     }
 
     public void expireToFree() {
         this.plan = SubscriptionPlan.FREE.name();
         this.expiresAt = null;
+        this.autoRenew = false;
+    }
+
+    /** @deprecated 구독 활성화는 activatePremium(provider, transactionId, expiresAt) 사용 */
+    @Deprecated
+    public void upgradeToPremium(LocalDateTime startedAt, LocalDateTime expiresAt) {
+        this.plan = SubscriptionPlan.PREMIUM.name();
+        this.startedAt = startedAt;
+        this.expiresAt = expiresAt;
     }
 }

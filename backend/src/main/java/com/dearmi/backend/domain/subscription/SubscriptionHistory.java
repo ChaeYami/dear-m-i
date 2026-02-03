@@ -37,7 +37,28 @@ public class SubscriptionHistory {
     @Column(name = "payment_method", length = 50)
     private String paymentMethod;
 
+    /** SUBSCRIBED | RENEWED | CANCELLED | EXPIRED */
+    @Column(name = "event", length = 50)
+    private String event;
+
+    @Column(name = "payment_provider", length = 20)
+    private String paymentProvider;
+
+    private Integer amount;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    public static SubscriptionHistory ofEvent(UUID userId, SubscriptionEventType eventType,
+                                              String plan, PaymentProvider provider, Integer amount) {
+        return SubscriptionHistory.builder()
+                .userId(userId)
+                .plan(plan)
+                .startedAt(LocalDateTime.now())
+                .event(eventType.name())
+                .paymentProvider(provider != null ? provider.name() : null)
+                .amount(amount)
+                .build();
+    }
 }

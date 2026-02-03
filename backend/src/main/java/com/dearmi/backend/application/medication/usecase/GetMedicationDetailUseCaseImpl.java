@@ -6,6 +6,8 @@ import com.dearmi.backend.common.exception.ErrorCode;
 import com.dearmi.backend.domain.prescription.PrescriptionMedication;
 import com.dearmi.backend.domain.prescription.PrescriptionMedicationRepository;
 import com.dearmi.backend.domain.prescription.PrescriptionRepository;
+import com.dearmi.backend.domain.subscription.SubscriptionPlan;
+import com.dearmi.backend.infrastructure.security.PlanRequired;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +22,7 @@ public class GetMedicationDetailUseCaseImpl implements GetMedicationDetailUseCas
     private final PrescriptionRepository prescriptionRepository;
 
     @Override
+    @PlanRequired(SubscriptionPlan.PREMIUM)
     @Transactional(readOnly = true)
     public MedicationDetailResult getDetail(UUID userId, UUID medicationId) {
         PrescriptionMedication medication = prescriptionMedicationRepository

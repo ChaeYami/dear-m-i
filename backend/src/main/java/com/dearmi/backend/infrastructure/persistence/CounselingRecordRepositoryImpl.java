@@ -66,6 +66,30 @@ public class CounselingRecordRepositoryImpl implements CounselingRecordRepositor
     }
 
     @Override
+    public List<CounselingRecord> findByUserIdAndDeletedAtIsNullAndCreatedAtAfterOrderByCreatedAtDesc(
+            UUID userId, LocalDateTime after, int offset, int limit) {
+        QCounselingRecord cr = QCounselingRecord.counselingRecord;
+        return queryFactory
+                .selectFrom(cr)
+                .where(cr.userId.eq(userId), cr.deletedAt.isNull(), cr.createdAt.after(after))
+                .orderBy(cr.createdAt.desc())
+                .offset(offset)
+                .limit(limit)
+                .fetch();
+    }
+
+    @Override
+    public long countByUserIdAndDeletedAtIsNullAndCreatedAtAfter(UUID userId, LocalDateTime after) {
+        QCounselingRecord cr = QCounselingRecord.counselingRecord;
+        Long count = queryFactory
+                .select(cr.count())
+                .from(cr)
+                .where(cr.userId.eq(userId), cr.deletedAt.isNull(), cr.createdAt.after(after))
+                .fetchOne();
+        return count != null ? count : 0L;
+    }
+
+    @Override
     public void detachSchedule(UUID scheduleId) {
         jpa.detachSchedule(scheduleId);
     }
