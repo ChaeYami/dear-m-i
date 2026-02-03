@@ -64,9 +64,9 @@ DB 마이그레이션: V1(초기 스키마) → V2(복약 타임슬롯) → V3(�
 | schedule | ScheduleTab, ScheduleDetail, ScheduleForm |
 | record | RecordTab (타임라인), RecordForm |
 | prescription | PrescriptionTab (아코디언), PrescriptionUpload, OcrResult |
-| medication | MedicationDetail (약품 상세) |
+| medication | MedicationDetail (약품 상세), MedicationHome, MedicationForm, MedicationHistory |
 | notification | NotificationSettingsScreen |
-| mypage | MyPageScreen (placeholder) |
+| mypage | MyPageScreen (프로필 + 메뉴), MyPageNavigator |
 | subscription | PaywallScreen (skeleton) |
 
 ### 미구현
@@ -76,6 +76,7 @@ DB 마이그레이션: V1(초기 스키마) → V2(복약 타임슬롯) → V3(�
 | CheckinTab (하루 메모) | 백엔드 API + 앱 화면 |
 | 감정 그래프 | react-native-chart-kit |
 | 결제 / 구독 | react-native-iap 설치 필요 |
+| 복약 일정 수정 | MedicationFormScreen scheduleId 파라미터 전달 |
 | PDF 내보내기 | export_jobs 테이블 |
 | 데이터 백업/복원 | 프리미엄 |
 | PremiumGate 컴포넌트 | `shared/components/PremiumGate.tsx` |

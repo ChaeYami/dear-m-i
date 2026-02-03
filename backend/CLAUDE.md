@@ -124,9 +124,24 @@ POST /prescriptions → S3 업로드 확인 → prescription 저장 → OcrProce
 
 ### 알림 스케줄러 (NotificationScheduler)
 - **병원 D-1/D-0**: 매일 오전 9시 — `notification_settings.day_before/day_of` 체크
+  - D-0 본문에 `prep_notes` 존재 여부 포함 (`existsByScheduleIdAndDeletedAtIsNull`)
 - **체크인 리마인더**: 매분 실행 — `checkin_time == now()` + 오늘 `daily_checkins` 없는 유저만 발송
 - **복약 알림**: 매분 실행 — 각 slot_time == now() + 오늘 해당 슬롯 로그 없는 경우만 발송
 - 유저별 `checkin_time` 커스텀 가능 (기본 21:00), `med_enabled`/`checkin_enabled` 플래그로 개별 제어
+
+### 진료 준비 메모 (PrepNote)
+- `prep_notes` 테이블. `schedule_id` nullable (일정 미연결 메모 허용)
+- 생성 시 `scheduleId != null`이면 `hospitalScheduleRepository.findByIdAndUserIdAndDeletedAtIsNull` 으로 소유권 검증 (④ 원칙)
+- `hospital_schedules` 소프트 삭제 시 `schedule_id = NULL` SET — `PrepNoteRepository.detachSchedule()` 호출 (⑤ 원칙)
+- 엔드포인트: `GET /api/v1/prep-notes?scheduleId=`, `POST`, `PUT /{id}`, `DELETE /{id}`
+
+### 통합 검색 (SearchUseCase)
+- `GET /api/v1/search?q=&types=record,checkin,prepnote&page=&size=`
+- **플랜 분기**: FREE → 2개월 cutoff, PREMIUM → 전체 기간
+- **CounselingRecord**: content가 AES-256-GCM 암호화 → DB LIKE 불가
+  → 날짜 범위만 DB 필터, 이후 인메모리 `String.contains()` + tags 매칭
+- **DailyCheckin / PrepNote**: QueryDSL `containsIgnoreCase` — `searchByKeyword` / `countByKeyword`
+- 응답: 도메인별 결과 리스트 + 각 total 카운트 (별도 페이지네이션)
 
 ---
 

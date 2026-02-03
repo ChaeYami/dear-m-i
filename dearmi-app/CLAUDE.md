@@ -98,6 +98,7 @@ const isPremium = user?.plan === 'PREMIUM';
 // OCR: PREMIUM만 업로드 가능 (PrescriptionUploadScreen에서 검사)
 // 복약 이력: FREE 30일 강제 (MedicationHistoryScreen 배너 표시, 백엔드에서도 강제)
 // 처방전 탭: FREE 플랜이면 PremiumGate 표시 (MainTabNavigator.PrescriptionTabWrapper)
+// 검색: FREE 2개월 이내만 (백엔드 강제 + SearchScreen 배너 안내)
 ```
 
 ---
@@ -119,25 +120,31 @@ const isPremium = user?.plan === 'PREMIUM';
 RootNavigator (src/navigation/RootNavigator.tsx)
 │   ref: navigationRef (src/navigation/navigationRef.ts)
 │   Paywall: PaywallScreen (modal)
+│   Search: SearchScreen (modal)
 ├── AuthNavigator
 │   └── LoginScreen          Google/Apple OAuth2 로그인
 └── MainTabNavigator
     ├── Schedule → ScheduleNavigator
-    │   ├── ScheduleTab      CalendarList + 슬라이드업 시트 + FAB
-    │   ├── ScheduleDetail   상세 보기, 수정/삭제, 상담 기록 연결
-    │   └── ScheduleForm     생성/수정 폼 (DateTimePicker)
+    │   ├── ScheduleTab      CalendarList + 슬라이드업 시트 + FAB + 준비 메모 버튼
+    │   ├── ScheduleDetail   상세 보기, 수정/삭제, 상담 기록 연결, 준비 메모 섹션
+    │   ├── ScheduleForm     생성/수정 폼 (DateTimePicker)
+    │   ├── PrepNoteList     전체 준비 메모 목록 (일정별 섹션 + 일정 없음)
+    │   └── PrepNoteForm     준비 메모 등록/수정 (내용 + 일정 연결)
     ├── Record → RecordNavigator
     │   ├── RecordTab        SectionList 타임라인 (record | prescription 혼합)
     │   └── RecordForm       감정 슬라이더, 내용, 태그, 일정 연결
+    │                        (연결 일정에 준비 메모 있으면 접기/펼치기 참고 섹션)
     ├── Prescription → PrescriptionNavigator  (FREE: PremiumGate)
     │   ├── PrescriptionTab    아코디언 카드 목록 (무한 스크롤)
     │   ├── PrescriptionUpload 이미지 선택 → S3 업로드 → OCR 요청
     │   ├── OcrResult          폴링(2s) → COMPLETED/FAILED 분기 → 약품 편집
+    │   │                      저장 후 복약 알림 설정 다이얼로그 → MedicationForm 연동
     │   └── MedicationDetail   약품명·효능·주의사항(스켈레톤)
     └── MyPage → MyPageNavigator
-        ├── MyPageTab          프로필 + 메뉴 목록 (복약관리/알림설정/로그아웃)
+        ├── MyPageTab          프로필 + 메뉴 목록 (복약관리/알림설정/로그아웃) + 검색 아이콘
         ├── MedicationHome     오늘 복약 현황 (완료율 바 + 시간대별 카드) + FAB
-        ├── MedicationForm     복약 일정 등록 (슬롯 토글/타임피커/날짜/투약일수)
+        ├── MedicationForm     복약 일정 등록/수정
+        │                      OCR 흐름: isFromOcr=true → 진행 배너 + '다음 약품' 버튼
         ├── MedicationHistory  날짜별 이력 (FREE 30일 배너)
         └── NotificationSettings  전체/D-1/D-0 알림 토글
 ```
@@ -148,10 +155,32 @@ RootNavigator (src/navigation/RootNavigator.tsx)
 const tabNav = navigation.getParent()?.getParent();
 tabNav?.navigate('Record', { screen: 'RecordForm', params: { scheduleId } });
 
+// OcrResult → MedicationForm (OCR 흐름, drugName/dosage/totalDays/remainingMeds 전달)
+const tabNav = navigation.getParent()?.getParent();
+tabNav?.navigate('MyPage', {
+  screen: 'MedicationForm',
+  params: { drugName, dosage, totalDays, isFromOcr: true, remainingMeds },
+});
+
 // 알림 탭 → ScheduleDetail 딥링크 (백그라운드/종료 상태)
 // RootNavigator.navigateToScheduleDetail(data) → navigationRef.current?.navigate('Main', {
 //   screen: 'Schedule', params: { screen: 'ScheduleDetail', params: { scheduleId } }
 // })
+
+// Search 모달 → RecordForm / PrepNoteForm 딥링크
+// navigation.goBack() + setTimeout(() => navigationRef.current?.navigate('Main', { ... }), 300)
+```
+
+### OCR → 복약 일정 연동 흐름
+```
+OcrResultScreen 저장
+  → Alert('복약 알림을 설정할까요?')
+  → '설정하기': 첫 번째 약품으로 MedicationForm 이동 (cross-tab)
+     MedicationForm (isFromOcr=true)
+       → 저장 버튼: 저장 후 goBack
+       → '다음: {약품명} →' 버튼: 저장 후 navigation.replace(다음 약품)
+       → 마지막 약품이면 '다음' 버튼 미표시
+  → '나중에': PrescriptionTab으로 이동
 ```
 
 ---
@@ -178,13 +207,16 @@ schedule(id)                           // 일정 상세
 timeline()                             // 상담+처방 혼합 타임라인 (커서 페이징)
 records()                              // 상담 기록 목록
 record(id)                             // 상담 기록 상세
-recentSchedules()                      // RecordForm 드롭다운용 최근 일정
+recentSchedules()                      // RecordForm / PrepNoteForm 드롭다운용 최근 일정
 prescriptions()                        // 처방전 목록
 prescription(id)                       // 처방전 상세 (OCR 폴링에도 사용)
 medicationDetail(id)                   // 약품 상세 (e약은요, prescription-medications)
 todayMedication()                      // 오늘 복약 현황
 medicationLogs(startDate?, endDate?)   // 복약 이력
 medicationStats(startDate?, endDate?)  // 복약 완료율 통계
+prepNotes()                            // 전체 준비 메모
+prepNotesBySchedule(scheduleId)        // 일정별 준비 메모
+search(keyword)                        // 통합 검색 결과
 ```
 
 ---
@@ -208,7 +240,7 @@ expo-web-browser                          OAuth2 (WebBrowser.openAuthSessionAsyn
 react-native-calendars                    ScheduleTab CalendarList
 expo-image-picker                         처방전 촬영
 expo-secure-store                         토큰 저장
-react-native-mmkv                         캐시
+react-native-mmkv                         캐시 (CacheService) + 최근 검색어 저장
 @react-native-community/netinfo          오프라인 감지
 @tanstack/react-query ^5                  서버 상태 관리
 zustand ^5                               클라이언트 상태
@@ -230,7 +262,7 @@ react-native-android-widget              Android 위젯
 
 | 기능 | 비고 |
 |---|---|
-| CheckinTab | 하루 메모 모아보기 |
+| CheckinTab | 하루 메모 모아보기 (검색 결과에서 탭 시 화면 없음) |
 | PremiumGate 컴포넌트 | `shared/components/PremiumGate.tsx` — 자물쇠 + PaywallScreen |
 | PaywallScreen | 구독 결제 화면 (react-native-iap 필요) — RootNavigator에 Paywall 라우트 등록됨 |
 | RecordTab 기간 제한 UI | FREE: 2개월 이전 흐림 처리 |
