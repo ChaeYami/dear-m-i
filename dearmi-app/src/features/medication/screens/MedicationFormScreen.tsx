@@ -44,24 +44,33 @@ const addDays = (d: Date, n: number) => {
 
 export const MedicationFormScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
-  const { prescriptionMedicationId } = useRoute<Route>().params ?? {};
+  const params = useRoute<Route>().params ?? {};
+  const {
+    prescriptionMedicationId,
+    drugName: drugNameParam,
+    dosage: dosageParam,
+    totalDays: totalDaysParam,
+    isFromOcr,
+    remainingMeds,
+  } = params;
 
-  // pre-fill (prescriptionMedicationId 있을 때만)
+  // API pre-fill — prescriptionMedicationId 있을 때만 (직접 파라미터 없을 때)
   const { data: prefill } = useMedicationDetail(
-    prescriptionMedicationId ? Number(prescriptionMedicationId) : 0
+    prescriptionMedicationId && !drugNameParam ? Number(prescriptionMedicationId) : 0
   );
 
   const { mutate: create, isPending } = useCreateMedicationSchedule();
 
-  const [drugName, setDrugName] = useState('');
-  const [dosage, setDosage] = useState('');
-  const [durationDays, setDurationDays] = useState('');
+  const [drugName, setDrugName] = useState(drugNameParam ?? '');
+  const [dosage, setDosage] = useState(dosageParam ?? '');
+  const [durationDays, setDurationDays] = useState(
+    totalDaysParam !== undefined ? String(totalDaysParam) : ''
+  );
 
   const [activeSlots, setActiveSlots] = useState<Record<TimeSlotType, boolean>>({
     MORNING: true, AFTERNOON: false, EVENING: false, BEDTIME: false,
   });
 
-  // 각 시간대별 Date 상태 (피커용)
   const makeDefaultDate = (timeStr: string) => {
     const [h, m] = timeStr.split(':').map(Number);
     const d = new Date();
@@ -79,18 +88,19 @@ export const MedicationFormScreen: React.FC = () => {
   const [startDate, setStartDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  // pre-fill 적용
+  // API pre-fill 적용 (직접 파라미터 없을 때만)
   useEffect(() => {
-    if (prefill) {
+    if (prefill && !drugNameParam) {
       if (prefill.medicationName) setDrugName(prefill.medicationName);
       if (prefill.dosage) setDosage(prefill.dosage);
       if (prefill.durationDays) setDurationDays(String(prefill.durationDays));
     }
   }, [prefill]);
 
-  const endDate = durationDays && !isNaN(Number(durationDays))
-    ? addDays(startDate, Number(durationDays) - 1)
-    : null;
+  const endDate =
+    durationDays && !isNaN(Number(durationDays))
+      ? addDays(startDate, Number(durationDays) - 1)
+      : null;
 
   const handleDateChange = (_: DateTimePickerEvent, date?: Date) => {
     if (Platform.OS === 'android') setShowDatePicker(false);
@@ -105,36 +115,58 @@ export const MedicationFormScreen: React.FC = () => {
   const toggleSlot = (slot: TimeSlotType) =>
     setActiveSlots((prev) => ({ ...prev, [slot]: !prev[slot] }));
 
-  const handleSave = () => {
+  const buildPayload = () => ({
+    prescriptionMedicationId: prescriptionMedicationId
+      ? String(prescriptionMedicationId)
+      : undefined,
+    drugName: drugName.trim(),
+    dosage: dosage.trim() || undefined,
+    startDate: toLocalDateStr(startDate),
+    endDate: endDate ? toLocalDateStr(endDate) : undefined,
+    morning: activeSlots.MORNING,
+    afternoon: activeSlots.AFTERNOON,
+    evening: activeSlots.EVENING,
+    bedtime: activeSlots.BEDTIME,
+    morningTime: activeSlots.MORNING ? toTimeStr(slotTimes.MORNING) : undefined,
+    afternoonTime: activeSlots.AFTERNOON ? toTimeStr(slotTimes.AFTERNOON) : undefined,
+    eveningTime: activeSlots.EVENING ? toTimeStr(slotTimes.EVENING) : undefined,
+    bedtimeTime: activeSlots.BEDTIME ? toTimeStr(slotTimes.BEDTIME) : undefined,
+  });
+
+  const validate = (): boolean => {
     if (!drugName.trim()) {
       Alert.alert('필수 입력', '약품명을 입력해 주세요.');
-      return;
+      return false;
     }
     if (!Object.values(activeSlots).some(Boolean)) {
       Alert.alert('시간대 선택', '복약 시간대를 하나 이상 선택해 주세요.');
-      return;
+      return false;
     }
+    return true;
+  };
 
-    create(
-      {
-        prescriptionMedicationId: prescriptionMedicationId
-          ? String(prescriptionMedicationId)
-          : undefined,
-        drugName: drugName.trim(),
-        dosage: dosage.trim() || undefined,
-        startDate: toLocalDateStr(startDate),
-        endDate: endDate ? toLocalDateStr(endDate) : undefined,
-        morning: activeSlots.MORNING,
-        afternoon: activeSlots.AFTERNOON,
-        evening: activeSlots.EVENING,
-        bedtime: activeSlots.BEDTIME,
-        morningTime: activeSlots.MORNING ? toTimeStr(slotTimes.MORNING) : undefined,
-        afternoonTime: activeSlots.AFTERNOON ? toTimeStr(slotTimes.AFTERNOON) : undefined,
-        eveningTime: activeSlots.EVENING ? toTimeStr(slotTimes.EVENING) : undefined,
-        bedtimeTime: activeSlots.BEDTIME ? toTimeStr(slotTimes.BEDTIME) : undefined,
+  const handleSave = () => {
+    if (!validate()) return;
+    create(buildPayload(), { onSuccess: () => navigation.goBack() });
+  };
+
+  /** OCR 흐름: 저장 후 다음 약품으로 이동 */
+  const handleSaveAndNext = () => {
+    if (!validate()) return;
+    if (!remainingMeds || remainingMeds.length === 0) return;
+
+    create(buildPayload(), {
+      onSuccess: () => {
+        const [next, ...rest] = remainingMeds;
+        navigation.replace('MedicationForm', {
+          drugName: next.drugName,
+          dosage: next.dosage,
+          totalDays: next.totalDays,
+          isFromOcr: true,
+          remainingMeds: rest,
+        });
       },
-      { onSuccess: () => navigation.goBack() }
-    );
+    });
   };
 
   const formatDateDisplay = (d: Date) =>
@@ -143,6 +175,9 @@ export const MedicationFormScreen: React.FC = () => {
   const formatTimeDisplay = (d: Date) =>
     `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 
+  const nextMed = remainingMeds?.[0];
+  const showNextButton = isFromOcr && nextMed;
+
   return (
     <SafeAreaView style={styles.container}>
       {/* 헤더 */}
@@ -150,7 +185,9 @@ export const MedicationFormScreen: React.FC = () => {
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
           <Text style={styles.headerCancel}>취소</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>복약 일정 등록</Text>
+        <Text style={styles.headerTitle}>
+          {isFromOcr ? '복약 알림 설정' : '복약 일정 등록'}
+        </Text>
         <TouchableOpacity onPress={handleSave} disabled={isPending} hitSlop={12}>
           <Text style={[styles.headerSave, isPending && styles.headerSaveDisabled]}>
             {isPending ? '저장 중…' : '저장'}
@@ -158,7 +195,23 @@ export const MedicationFormScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      {/* OCR 진행 배너 */}
+      {isFromOcr && (
+        <View style={styles.ocrBanner}>
+          <Text style={styles.ocrBannerText}>
+            💊 {drugName || drugNameParam || '약품'}
+            {remainingMeds && remainingMeds.length > 0
+              ? ` 외 ${remainingMeds.length}개`
+              : ''}
+            의 복약 시간을 설정해 주세요.
+          </Text>
+        </View>
+      )}
+
+      <ScrollView
+        contentContainerStyle={[styles.content, showNextButton && styles.contentWithNext]}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* 약품명 */}
         <View style={styles.field}>
           <Text style={styles.label}>약품명 *</Text>
@@ -222,10 +275,7 @@ export const MedicationFormScreen: React.FC = () => {
         {/* 시작일 */}
         <View style={styles.field}>
           <Text style={styles.label}>시작일</Text>
-          <TouchableOpacity
-            style={styles.dateBtn}
-            onPress={() => setShowDatePicker(true)}
-          >
+          <TouchableOpacity style={styles.dateBtn} onPress={() => setShowDatePicker(true)}>
             <Text style={styles.dateBtnText}>{formatDateDisplay(startDate)}</Text>
           </TouchableOpacity>
           {showDatePicker && (
@@ -233,17 +283,11 @@ export const MedicationFormScreen: React.FC = () => {
               value={startDate}
               mode="date"
               display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={(e, d) => {
-                if (Platform.OS === 'android') setShowDatePicker(false);
-                if (d) setStartDate(d);
-              }}
+              onChange={handleDateChange}
             />
           )}
           {Platform.OS === 'ios' && showDatePicker && (
-            <TouchableOpacity
-              style={styles.doneBtn}
-              onPress={() => setShowDatePicker(false)}
-            >
+            <TouchableOpacity style={styles.doneBtn} onPress={() => setShowDatePicker(false)}>
               <Text style={styles.doneBtnText}>완료</Text>
             </TouchableOpacity>
           )}
@@ -261,12 +305,26 @@ export const MedicationFormScreen: React.FC = () => {
             placeholderTextColor={colors.text.disabled}
           />
           {endDate && (
-            <Text style={styles.endDateHint}>
-              종료일: {formatDateDisplay(endDate)}
-            </Text>
+            <Text style={styles.endDateHint}>종료일: {formatDateDisplay(endDate)}</Text>
           )}
         </View>
       </ScrollView>
+
+      {/* 다음 약품 버튼 (OCR 흐름) */}
+      {showNextButton && (
+        <View style={styles.nextBtnWrap}>
+          <TouchableOpacity
+            style={[styles.nextBtn, isPending && styles.nextBtnDisabled]}
+            onPress={handleSaveAndNext}
+            disabled={isPending}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.nextBtnText}>
+              {isPending ? '저장 중…' : `다음: ${nextMed.drugName} 설정하기 →`}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -283,10 +341,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  headerCancel: {
-    fontSize: sizes.font.md,
-    color: colors.text.secondary,
-  },
+  headerCancel: { fontSize: sizes.font.md, color: colors.text.secondary },
   headerTitle: {
     fontSize: sizes.font.lg,
     fontWeight: sizes.fontWeight.bold,
@@ -298,7 +353,20 @@ const styles = StyleSheet.create({
     fontWeight: sizes.fontWeight.semibold,
   },
   headerSaveDisabled: { opacity: 0.4 },
+  ocrBanner: {
+    backgroundColor: colors.primary + '10',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.primary + '25',
+    paddingHorizontal: sizes.spacing.lg,
+    paddingVertical: sizes.spacing.sm,
+  },
+  ocrBannerText: {
+    fontSize: sizes.font.sm,
+    color: colors.primary,
+    fontWeight: sizes.fontWeight.medium,
+  },
   content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg },
+  contentWithNext: { paddingBottom: 100 },
   field: { gap: sizes.spacing.sm },
   label: {
     fontSize: sizes.font.sm,
@@ -323,15 +391,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: sizes.spacing.xs,
   },
-  slotLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: sizes.spacing.sm,
-  },
-  slotLabel: {
-    fontSize: sizes.font.md,
-    color: colors.text.primary,
-  },
+  slotLeft: { flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.sm },
+  slotLabel: { fontSize: sizes.font.md, color: colors.text.primary },
   timePill: {
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: 6,
@@ -354,14 +415,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: sizes.spacing.md,
     justifyContent: 'center',
   },
-  dateBtnText: {
-    fontSize: sizes.font.md,
-    color: colors.text.primary,
-  },
-  doneBtn: {
-    alignItems: 'flex-end',
-    paddingVertical: sizes.spacing.xs,
-  },
+  dateBtnText: { fontSize: sizes.font.md, color: colors.text.primary },
+  doneBtn: { alignItems: 'flex-end', paddingVertical: sizes.spacing.xs },
   doneBtnText: {
     fontSize: sizes.font.md,
     color: colors.primary,
@@ -371,5 +426,30 @@ const styles = StyleSheet.create({
     fontSize: sizes.font.xs,
     color: colors.text.secondary,
     marginTop: 2,
+  },
+  // 다음 약품 버튼
+  nextBtnWrap: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: sizes.spacing.lg,
+    paddingBottom: sizes.spacing.xl,
+    backgroundColor: colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  nextBtn: {
+    height: sizes.buttonHeight.lg,
+    backgroundColor: colors.secondary,
+    borderRadius: sizes.radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nextBtnDisabled: { opacity: 0.5 },
+  nextBtnText: {
+    fontSize: sizes.font.md,
+    fontWeight: sizes.fontWeight.bold,
+    color: colors.text.onPrimary,
   },
 });

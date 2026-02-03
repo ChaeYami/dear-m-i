@@ -179,13 +179,51 @@ export const OcrResultScreen: React.FC = () => {
           })),
         },
       },
-      {
-        onSuccess: () => {
-          Alert.alert('저장 완료', '처방전이 저장되었습니다.', [
-            { text: '확인', onPress: () => navigation.navigate('PrescriptionTab') },
-          ]);
+      { onSuccess: showMedicationSetupDialog }
+    );
+  };
+
+  const showMedicationSetupDialog = () => {
+    const validMeds = medications
+      .filter((m) => m.medicationName.trim())
+      .map((m) => ({
+        drugName: m.medicationName.trim(),
+        dosage: m.dosage.trim() || undefined,
+        totalDays: m.durationDays ? Number(m.durationDays) : undefined,
+      }));
+
+    Alert.alert(
+      '복약 알림을 설정할까요?',
+      '처방 약품으로 복약 알림을 설정하면\n약 먹는 시간을 놓치지 않아요.',
+      [
+        {
+          text: '나중에',
+          style: 'cancel',
+          onPress: () => navigation.navigate('PrescriptionTab'),
         },
-      }
+        {
+          text: '설정하기',
+          onPress: () => {
+            if (validMeds.length === 0) {
+              navigation.navigate('PrescriptionTab');
+              return;
+            }
+            const [first, ...rest] = validMeds;
+            // PrescriptionNavigator → MainTabNavigator → MyPage tab
+            const tabNav = navigation.getParent()?.getParent() as any;
+            tabNav?.navigate('MyPage', {
+              screen: 'MedicationForm',
+              params: {
+                drugName: first.drugName,
+                dosage: first.dosage,
+                totalDays: first.totalDays,
+                isFromOcr: true,
+                remainingMeds: rest,
+              },
+            });
+          },
+        },
+      ]
     );
   };
 
