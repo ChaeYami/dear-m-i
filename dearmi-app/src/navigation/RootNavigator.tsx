@@ -107,12 +107,16 @@ export const RootNavigator: React.FC = () => {
   const initializeApp = async () => {
     try {
       await checkAppVersion();
+    } catch (e) {
+      if ((e as Error).message === 'force_update') return;
+      // 버전 체크 실패(404 등)는 무시하고 앱 진행
+    }
+    try {
       const hasToken = await restoreTokens();
       if (hasToken) {
         await validateTokenAndFetchUser();
       }
-    } catch (e) {
-      if ((e as Error).message === 'force_update') return;
+    } catch {
       await restoreTokens();
     } finally {
       setIsLoading(false);

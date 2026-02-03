@@ -3,12 +3,13 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
+  
   Alert,
   Platform,
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { colors, sizes } from '@/constants';

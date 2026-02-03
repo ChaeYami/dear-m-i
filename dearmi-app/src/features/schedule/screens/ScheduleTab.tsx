@@ -7,8 +7,9 @@ import {
   FlatList,
   Animated,
   Pressable,
-  SafeAreaView,
+  
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Calendar } from 'react-native-calendars';
 import { useNavigation } from '@react-navigation/native';

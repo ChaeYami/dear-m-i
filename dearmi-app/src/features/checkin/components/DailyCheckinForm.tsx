@@ -7,9 +7,11 @@ import {
   Switch,
   ScrollView,
   StyleSheet,
-  SafeAreaView,
+  
   Alert,
+  ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { colors, sizes } from '@/constants';
@@ -20,7 +22,6 @@ import { useAuthStore } from '@/features/auth/store/authStore';
 import type { DailyCheckin } from '@/shared/types/domain.types';
 
 const FREE_MEMO_LIMIT = 100;
-const SLEEP_OPTIONS = Array.from({ length: 25 }, (_, i) => i * 0.5); // 0, 0.5, 1.0 ... 12.0
 
 interface DailyCheckinFormProps {
   existingCheckin?: DailyCheckin | null;
@@ -39,17 +40,25 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
   const [emotionScore, setEmotionScore] = useState(existingCheckin?.emotionScore ?? 5);
   const [triggerTags, setTriggerTags] = useState<string[]>(existingCheckin?.triggerTags ?? []);
   const [memo, setMemo] = useState(existingCheckin?.memo ?? '');
-  const [sleepHours, setSleepHours] = useState<number>(existingCheckin?.sleepHours ?? 7);
+  const [sleepInput, setSleepInput] = useState(String(existingCheckin?.sleepHours ?? 7));
   const [tookMedication, setTookMedication] = useState(existingCheckin?.tookMedication ?? false);
-  const [showSleepPicker, setShowSleepPicker] = useState(false);
 
   const { mutate: saveCheckin, isPending } = useCreateCheckin();
+
+  const parseSleepHours = (): number => {
+    const parsed = parseFloat(sleepInput);
+    if (isNaN(parsed) || parsed < 0) return 0;
+    if (parsed > 24) return 24;
+    return Math.round(parsed * 2) / 2; // 0.5 단위로 반올림
+  };
 
   const handleSave = () => {
     if (memoLimit && memo.length > memoLimit) {
       Alert.alert(t('common:char_limit_exceeded'), t('common:char_limit_message', { limit: memoLimit }));
       return;
     }
+
+    const sleepHours = parseSleepHours();
 
     saveCheckin(
       {
@@ -66,18 +75,20 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
     );
   };
 
+  const adjustSleep = (delta: number) => {
+    const current = parseSleepHours();
+    const next = Math.max(0, Math.min(24, current + delta));
+    setSleepInput(String(next));
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={onClose} hitSlop={12}>
-          <Text style={styles.headerCancel}>{t('common:cancel')}</Text>
+        <TouchableOpacity onPress={onClose} hitSlop={12} style={styles.headerBackBtn}>
+          <Ionicons name="close" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('form_title')}</Text>
-        <TouchableOpacity onPress={handleSave} disabled={isPending} hitSlop={12}>
-          <Text style={[styles.headerSave, isPending && styles.headerSaveDisabled]}>
-            {isPending ? t('common:saving') : t('common:save')}
-          </Text>
-        </TouchableOpacity>
+        <View style={{ width: 48 }} />
       </View>
 
       <ScrollView
@@ -116,40 +127,42 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
           />
         </View>
 
+        {/* 수면 시간 — 직접 입력 + 스테퍼 */}
         <View style={styles.field}>
           <Text style={styles.fieldLabel}>{t('sleep_label')}</Text>
-          <TouchableOpacity
-            style={styles.sleepSelector}
-            onPress={() => setShowSleepPicker((v) => !v)}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.sleepValue}>{t('sleep_unit', { hours: sleepHours })}</Text>
-            <Ionicons
-              name={showSleepPicker ? 'chevron-up' : 'chevron-down'}
-              size={16}
-              color={colors.textSub}
-            />
-          </TouchableOpacity>
-          {showSleepPicker && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sleepGrid}>
-              {SLEEP_OPTIONS.map((h) => (
-                <TouchableOpacity
-                  key={h}
-                  style={[styles.sleepChip, h === sleepHours && styles.sleepChipSelected]}
-                  onPress={() => {
-                    setSleepHours(h);
-                    setShowSleepPicker(false);
-                  }}
-                >
-                  <Text style={[styles.sleepChipText, h === sleepHours && styles.sleepChipTextSelected]}>
-                    {h}h
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          )}
+          <View style={styles.sleepRow}>
+            <TouchableOpacity
+              style={styles.sleepStepperBtn}
+              onPress={() => adjustSleep(-0.5)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="remove" size={20} color={colors.primary} />
+            </TouchableOpacity>
+
+            <View style={styles.sleepInputWrap}>
+              <TextInput
+                style={styles.sleepInput}
+                value={sleepInput}
+                onChangeText={setSleepInput}
+                keyboardType="decimal-pad"
+                selectTextOnFocus
+                returnKeyType="done"
+                onBlur={() => setSleepInput(String(parseSleepHours()))}
+              />
+              <Text style={styles.sleepUnit}>시간</Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.sleepStepperBtn}
+              onPress={() => adjustSleep(0.5)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="add" size={20} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
         </View>
 
+        {/* 복약 여부 */}
         <View style={styles.medRow}>
           <Text style={styles.fieldLabel}>{t('medication_toggle')}</Text>
           <Switch
@@ -160,6 +173,24 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
           />
         </View>
       </ScrollView>
+
+      {/* 하단 등록 버튼 */}
+      <View style={styles.bottomBar}>
+        <TouchableOpacity
+          style={[styles.saveBtn, isPending && styles.saveBtnDisabled]}
+          onPress={handleSave}
+          disabled={isPending}
+          activeOpacity={0.85}
+        >
+          {isPending ? (
+            <ActivityIndicator color={colors.textInverse} />
+          ) : (
+            <Text style={styles.saveBtnText}>
+              {existingCheckin ? t('common:save') : t('write_today')}
+            </Text>
+          )}
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
@@ -181,14 +212,8 @@ const styles = StyleSheet.create({
     fontWeight: sizes.fontWeight.bold,
     color: colors.text,
   },
-  headerCancel: { fontSize: sizes.font.md, color: colors.textSub },
-  headerSave: {
-    fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.primary,
-  },
-  headerSaveDisabled: { opacity: 0.4 },
-  content: { padding: sizes.spacing.lg, gap: sizes.spacing.xl, paddingBottom: 40 },
+  headerBackBtn: { padding: sizes.spacing.xs },
+  content: { padding: sizes.spacing.lg, gap: sizes.spacing.xl, paddingBottom: 120 },
   field: { gap: sizes.spacing.sm },
   fieldLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   fieldLabel: {
@@ -212,42 +237,48 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   textAreaError: { borderColor: colors.error },
-  sleepSelector: {
+  // 수면 시간 — 스테퍼 + 직접 입력
+  sleepRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: sizes.spacing.md,
+  },
+  sleepStepperBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.primaryLight + '25',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.primaryLight,
+  },
+  sleepInputWrap: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: colors.surfaceSolid,
     borderWidth: 1,
     borderColor: colors.divider,
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
-    paddingVertical: sizes.spacing.md,
+    height: 48,
+    gap: sizes.spacing.xs,
   },
-  sleepValue: { fontSize: sizes.font.md, color: colors.text },
-  sleepGrid: {
-    maxHeight: 44,
+  sleepInput: {
+    fontSize: sizes.font.xl,
+    fontWeight: sizes.fontWeight.bold,
+    color: colors.text,
+    textAlign: 'center',
+    minWidth: 50,
+    padding: 0,
   },
-  sleepChip: {
-    paddingHorizontal: sizes.spacing.md,
-    paddingVertical: sizes.spacing.sm,
-    borderRadius: sizes.radius.full,
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    marginRight: sizes.spacing.xs,
-  },
-  sleepChipSelected: {
-    backgroundColor: colors.primaryLight + '25',
-    borderColor: colors.primary,
-  },
-  sleepChipText: {
-    fontSize: sizes.font.sm,
+  sleepUnit: {
+    fontSize: sizes.font.md,
     color: colors.textSub,
   },
-  sleepChipTextSelected: {
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.semibold,
-  },
+  // 복약 여부
   medRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -257,5 +288,26 @@ const styles = StyleSheet.create({
     padding: sizes.spacing.md,
     borderWidth: 1,
     borderColor: colors.divider,
+  },
+  // 하단 등록 버튼
+  bottomBar: {
+    padding: sizes.spacing.lg,
+    paddingBottom: sizes.spacing.xl,
+    backgroundColor: colors.surfaceSolid,
+    borderTopWidth: 1,
+    borderTopColor: colors.divider,
+  },
+  saveBtn: {
+    height: sizes.buttonHeight.lg,
+    backgroundColor: colors.primary,
+    borderRadius: sizes.radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveBtnDisabled: { opacity: 0.6 },
+  saveBtnText: {
+    fontSize: sizes.font.md,
+    fontWeight: sizes.fontWeight.bold,
+    color: colors.textInverse,
   },
 });
