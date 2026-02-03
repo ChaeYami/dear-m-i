@@ -64,4 +64,9 @@ public class HospitalScheduleRepositoryImpl implements HospitalScheduleRepositor
     public void delete(HospitalSchedule schedule) {
         jpa.delete(schedule);
     }
+
+    @Override
+    public List<HospitalSchedule> findByScheduledAtBetweenAndDeletedAtIsNull(LocalDateTime from, LocalDateTime to) {
+        return jpa.findByScheduledAtBetweenAndDeletedAtIsNull(from, to);
+    }
 }

@@ -70,6 +70,9 @@ dependencies {
     // WebClient (약학정보원 API 연동)
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
+    // Firebase Admin SDK (FCM 푸시 알림)
+    implementation 'com.google.firebase:firebase-admin:9.3.0'
+
     // Bucket4j (Rate Limiting)
     implementation 'com.bucket4j:bucket4j-core:8.10.1'
 

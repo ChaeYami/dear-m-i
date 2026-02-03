@@ -65,6 +65,10 @@ claude:
 encryption:
   key: ${ENCRYPTION_KEY}
 
+# FCM (로컬 테스트용 플레이스홀더 — 실제 서비스 계정 JSON으로 교체)
+fcm:
+  service-account-key: ${FCM_SERVICE_ACCOUNT_KEY:REPLACE_ME_FCM_SERVICE_ACCOUNT_KEY_JSON}
+
 # JWT
 jwt:
   secret: ${JWT_SECRET}

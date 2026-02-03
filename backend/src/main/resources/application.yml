@@ -85,6 +85,10 @@ claude:
 encryption:
   key: ${ENCRYPTION_KEY}
 
+# FCM 설정 (서비스 계정 JSON 문자열)
+fcm:
+  service-account-key: ${FCM_SERVICE_ACCOUNT_KEY}
+
 # 로깅 기본 설정
 logging:
   level:
