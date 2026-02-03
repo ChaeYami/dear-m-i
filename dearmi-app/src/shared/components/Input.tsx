@@ -3,6 +3,7 @@ import {
   TextInput,
   View,
   Text,
+  TouchableOpacity,
   StyleSheet,
   TextInputProps,
   ViewStyle,
@@ -15,42 +16,77 @@ interface InputProps extends TextInputProps {
   containerStyle?: ViewStyle;
 }
 
-/**
- * 공통 텍스트 입력 컴포넌트
- * - label: 상단 레이블
- * - errorMessage: 하단 에러 메시지
- * - forwardRef로 외부에서 ref 접근 가능
- */
 export const Input = forwardRef<TextInput, InputProps>(
-  ({ label, errorMessage, containerStyle, style, onFocus, onBlur, ...rest }, ref) => {
+  (
+    {
+      label,
+      errorMessage,
+      containerStyle,
+      style,
+      onFocus,
+      onBlur,
+      secureTextEntry,
+      multiline,
+      ...rest
+    },
+    ref,
+  ) => {
     const [isFocused, setIsFocused] = useState(false);
+    const [secureVisible, setSecureVisible] = useState(false);
+
+    const isSecure = secureTextEntry && !secureVisible;
 
     return (
       <View style={[styles.container, containerStyle]}>
         {label && <Text style={styles.label}>{label}</Text>}
-        <TextInput
-          ref={ref}
+
+        <View
           style={[
-            styles.input,
-            isFocused && styles.inputFocused,
-            errorMessage ? styles.inputError : undefined,
-            style,
+            styles.inputWrapper,
+            multiline && styles.inputWrapperMultiline,
+            isFocused && styles.wrapperFocused,
+            errorMessage ? styles.wrapperError : undefined,
           ]}
-          placeholderTextColor={colors.text.disabled}
-          onFocus={(e) => {
-            setIsFocused(true);
-            onFocus?.(e);
-          }}
-          onBlur={(e) => {
-            setIsFocused(false);
-            onBlur?.(e);
-          }}
-          {...rest}
-        />
+        >
+          <TextInput
+            ref={ref}
+            style={[
+              styles.input,
+              multiline && styles.inputMultiline,
+              style,
+            ]}
+            placeholderTextColor={colors.text.disabled}
+            secureTextEntry={isSecure}
+            multiline={multiline}
+            textAlignVertical={multiline ? 'top' : 'center'}
+            onFocus={(e) => {
+              setIsFocused(true);
+              onFocus?.(e);
+            }}
+            onBlur={(e) => {
+              setIsFocused(false);
+              onBlur?.(e);
+            }}
+            {...rest}
+          />
+
+          {secureTextEntry && (
+            <TouchableOpacity
+              onPress={() => setSecureVisible((v) => !v)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              style={styles.toggleButton}
+            >
+              <Text style={styles.toggleText}>
+                {secureVisible ? '숨기기' : '보기'}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
         {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
       </View>
     );
-  }
+  },
 );
 
 Input.displayName = 'Input';
@@ -65,21 +101,43 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     marginBottom: sizes.spacing.xs,
   },
-  input: {
-    height: 48,
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: sizes.radius.md,
+    backgroundColor: colors.surface,
+    height: 48,
+  },
+  inputWrapperMultiline: {
+    height: 120,
+    alignItems: 'flex-start',
+  },
+  wrapperFocused: {
+    borderColor: colors.primary,
+  },
+  wrapperError: {
+    borderColor: colors.error,
+  },
+  input: {
+    flex: 1,
     paddingHorizontal: sizes.spacing.md,
     fontSize: sizes.font.md,
     color: colors.text.primary,
-    backgroundColor: colors.surface,
+    height: '100%',
   },
-  inputFocused: {
-    borderColor: colors.primary,
+  inputMultiline: {
+    paddingTop: sizes.spacing.sm,
+    paddingBottom: sizes.spacing.sm,
   },
-  inputError: {
-    borderColor: colors.error,
+  toggleButton: {
+    paddingHorizontal: sizes.spacing.sm,
+  },
+  toggleText: {
+    fontSize: sizes.font.sm,
+    color: colors.primary,
+    fontWeight: sizes.fontWeight.medium,
   },
   errorText: {
     fontSize: sizes.font.xs,
