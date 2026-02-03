@@ -25,11 +25,14 @@ const FREE_MEMO_LIMIT = 100;
 
 interface DailyCheckinFormProps {
   existingCheckin?: DailyCheckin | null;
+  /** 기록할 날짜 (YYYY-MM-DD). 생략 시 오늘 */
+  targetDate?: string;
   onClose: () => void;
 }
 
 export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
   existingCheckin,
+  targetDate,
   onClose,
 }) => {
   const { t } = useTranslation('checkin');
@@ -67,6 +70,7 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
         memo: memo.trim() || undefined,
         sleepHours,
         tookMedication,
+        checkedAt: targetDate,
       },
       {
         onSuccess: () => onClose(),

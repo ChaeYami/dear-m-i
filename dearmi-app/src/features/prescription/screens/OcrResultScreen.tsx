@@ -230,9 +230,9 @@ export const OcrResultScreen: React.FC = () => {
               return;
             }
             const [first, ...rest] = validMeds;
-            // PrescriptionNavigator → MainTabNavigator → MyPage tab
+            // PrescriptionNavigator → MainTabNavigator → Medication tab
             const tabNav = navigation.getParent()?.getParent() as any;
-            tabNav?.navigate('MyPage', {
+            tabNav?.navigate('Medication', {
               screen: 'MedicationForm',
               params: {
                 drugName: first.drugName,
@@ -331,9 +331,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: sizes.spacing.lg,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
   },
   backBtn: { fontSize: sizes.font.md, color: colors.primary, fontWeight: sizes.fontWeight.medium },
   headerTitle: {

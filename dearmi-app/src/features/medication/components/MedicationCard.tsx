@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, sizes } from '@/constants';
 import { TimeSlotRow } from './TimeSlotRow';
 import type { TimeSlotType, MedicationLogStatus } from '@/shared/types/domain.types';
@@ -17,6 +18,11 @@ interface Props {
   timeSlot: TimeSlotType;
   items: SlotItem[];
   pendingScheduleIds: Set<string>;
+  isEditMode?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (scheduleId: string) => void;
+  onDrugPress: (scheduleId: string, drugName: string) => void;
+  onDelete: (scheduleId: string, drugName: string) => void;
   onTaken: (scheduleId: string) => void;
   onSkipped: (scheduleId: string) => void;
 }
@@ -44,6 +50,11 @@ export const MedicationCard: React.FC<Props> = ({
   timeSlot,
   items,
   pendingScheduleIds,
+  isEditMode,
+  selectedIds,
+  onToggleSelect,
+  onDrugPress,
+  onDelete,
   onTaken,
   onSkipped,
 }) => {
@@ -64,15 +75,33 @@ export const MedicationCard: React.FC<Props> = ({
 
       {/* 약품 행 목록 */}
       {items.map((item) => (
-        <TimeSlotRow
-          key={item.scheduleId}
-          drugName={item.drugName}
-          dosage={item.dosage}
-          status={item.status}
-          isPending={pendingScheduleIds.has(item.scheduleId)}
-          onTaken={() => onTaken(item.scheduleId)}
-          onSkipped={() => onSkipped(item.scheduleId)}
-        />
+        <View key={item.scheduleId} style={styles.rowWrap}>
+          {isEditMode && (
+            <TouchableOpacity
+              style={styles.checkbox}
+              onPress={() => onToggleSelect?.(item.scheduleId)}
+              hitSlop={8}
+            >
+              <Ionicons
+                name={selectedIds?.has(item.scheduleId) ? 'checkbox' : 'square-outline'}
+                size={22}
+                color={selectedIds?.has(item.scheduleId) ? colors.primary : colors.textDisabled}
+              />
+            </TouchableOpacity>
+          )}
+          <View style={styles.rowContent}>
+            <TimeSlotRow
+              drugName={item.drugName}
+              dosage={item.dosage}
+              status={item.status}
+              isPending={pendingScheduleIds.has(item.scheduleId)}
+              onDrugPress={() => isEditMode ? onToggleSelect?.(item.scheduleId) : onDrugPress(item.scheduleId, item.drugName)}
+              onDelete={() => onDelete(item.scheduleId, item.drugName)}
+              onTaken={() => onTaken(item.scheduleId)}
+              onSkipped={() => onSkipped(item.scheduleId)}
+            />
+          </View>
+        </View>
       ))}
     </View>
   );
@@ -103,5 +132,17 @@ const styles = StyleSheet.create({
   slotTime: {
     fontSize: sizes.font.sm,
     color: colors.textSub,
+  },
+  rowWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkbox: {
+    paddingLeft: sizes.spacing.md,
+    paddingRight: sizes.spacing.xs,
+    paddingVertical: sizes.spacing.sm,
+  },
+  rowContent: {
+    flex: 1,
   },
 });

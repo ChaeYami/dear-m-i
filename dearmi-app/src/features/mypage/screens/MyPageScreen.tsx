@@ -118,17 +118,6 @@ export const MyPageScreen: React.FC = () => {
         )}
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('section_health')}</Text>
-          <View style={styles.card}>
-            <MenuItem
-              icon="medical-outline"
-              label={t('menu_medication')}
-              onPress={() => navigation.navigate('MedicationHome')}
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('section_settings')}</Text>
           <View style={styles.card}>
             <MenuItem

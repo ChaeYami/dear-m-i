@@ -19,11 +19,11 @@ import type { StackNavigationProp } from '@react-navigation/stack';
 import { colors, sizes } from '@/constants';
 import { useCreateMedicationSchedule } from '@/features/medication/hooks/useMedication';
 import { useMedicationDetail } from '@/features/prescription/hooks/usePrescription';
-import type { MyPageStackParamList } from '@/navigation/MyPageNavigator';
+import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
 import type { TimeSlotType } from '@/shared/types/domain.types';
 
-type Nav = StackNavigationProp<MyPageStackParamList, 'MedicationForm'>;
-type Route = RouteProp<MyPageStackParamList, 'MedicationForm'>;
+type Nav = StackNavigationProp<MedicationStackParamList, 'MedicationForm'>;
+type Route = RouteProp<MedicationStackParamList, 'MedicationForm'>;
 
 const TIME_SLOTS: Array<{ key: TimeSlotType; label: string; defaultTime: string }> = [
   { key: 'MORNING', label: '아침', defaultTime: '08:00' },

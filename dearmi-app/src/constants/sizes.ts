@@ -63,8 +63,8 @@ export const sizes = {
   /** 헤더 높이 */
   headerHeight: 56,
 
-  /** 플로팅 탭바 하단 여백 보상 */
-  tabBarSafeBottom: 96,
+  /** 플로팅 탭바 하단 여백 보상 (bottom 32 + height 64 + gap 8) */
+  tabBarSafeBottom: 104,
 } as const;
 
 export type Sizes = typeof sizes;

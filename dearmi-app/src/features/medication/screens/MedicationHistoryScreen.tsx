@@ -16,12 +16,12 @@ import { colors, sizes } from '@/constants';
 import { useMedicationHistory } from '@/features/medication/hooks/useMedication';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
-import type { MyPageStackParamList } from '@/navigation/MyPageNavigator';
+import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
 import type { MedicationLogItem, TimeSlotType, MedicationLogStatus } from '@/shared/types/domain.types';
 
 type Nav = CompositeNavigationProp<
-  StackNavigationProp<MyPageStackParamList, 'MedicationHistory'>,
+  StackNavigationProp<MedicationStackParamList, 'MedicationHistory'>,
   StackNavigationProp<RootStackParamList>
 >;
 
@@ -144,9 +144,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: sizes.spacing.lg,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
   },
   backBtn: {
     fontSize: sizes.font.md,

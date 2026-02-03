@@ -6,11 +6,12 @@ import {
   TouchableOpacity,
   Image,
   Alert,
-  
+  Platform,
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
@@ -29,6 +30,8 @@ export const PrescriptionUploadScreen: React.FC = () => {
   const isPremium = user?.plan === 'PREMIUM';
 
   const [imageAsset, setImageAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
+  const [prescribedDate, setPrescribedDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [uploadStep, setUploadStep] = useState<UploadStep>('idle');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [errorMsg, setErrorMsg] = useState('');
@@ -108,10 +111,10 @@ export const PrescriptionUploadScreen: React.FC = () => {
 
       // Step 3: 백엔드에 처방전 등록
       setUploadStep('saving');
-      const today = new Date().toISOString().split('T')[0];
+      const dateStr = `${prescribedDate.getFullYear()}-${String(prescribedDate.getMonth() + 1).padStart(2, '0')}-${String(prescribedDate.getDate()).padStart(2, '0')}`;
       const { data: createRes } = await prescriptionApi.createPrescription({
         s3Key,
-        prescribedAt: today,
+        prescribedAt: dateStr,
       });
 
       if (!createRes.success || !createRes.data) {
@@ -209,6 +212,42 @@ export const PrescriptionUploadScreen: React.FC = () => {
           </TouchableOpacity>
         )}
 
+        {/* 처방 날짜 선택 */}
+        <View style={styles.dateField}>
+          <Text style={styles.dateLabel}>처방 날짜</Text>
+          <TouchableOpacity
+            style={styles.dateSelector}
+            onPress={() => setShowDatePicker(true)}
+            disabled={isUploading}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="calendar-outline" size={18} color={colors.primary} />
+            <Text style={styles.dateText}>
+              {`${prescribedDate.getFullYear()}년 ${prescribedDate.getMonth() + 1}월 ${prescribedDate.getDate()}일`}
+            </Text>
+          </TouchableOpacity>
+          {showDatePicker && (
+            <DateTimePicker
+              value={prescribedDate}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              maximumDate={new Date()}
+              onChange={(_: DateTimePickerEvent, date?: Date) => {
+                if (Platform.OS === 'android') setShowDatePicker(false);
+                if (date) setPrescribedDate(date);
+              }}
+            />
+          )}
+          {Platform.OS === 'ios' && showDatePicker && (
+            <TouchableOpacity
+              style={styles.dateDoneBtn}
+              onPress={() => setShowDatePicker(false)}
+            >
+              <Text style={styles.dateDoneText}>완료</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
         {/* 진행 상태 */}
         {renderProgress()}
 
@@ -247,9 +286,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: sizes.spacing.lg,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
   },
   backBtn: { fontSize: sizes.font.md, color: colors.primary, fontWeight: sizes.fontWeight.medium },
   headerTitle: {
@@ -284,6 +320,36 @@ const styles = StyleSheet.create({
   },
   imagePlaceholderSub: { fontSize: sizes.font.sm, color: colors.textDisabled },
   reSelectBtn: { alignSelf: 'center' },
+  dateField: { gap: sizes.spacing.sm },
+  dateLabel: {
+    fontSize: sizes.font.sm,
+    fontWeight: sizes.fontWeight.medium,
+    color: colors.textSub,
+  },
+  dateSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sizes.spacing.sm,
+    backgroundColor: colors.surfaceSolid,
+    borderWidth: 1,
+    borderColor: colors.divider,
+    borderRadius: sizes.radius.md,
+    paddingHorizontal: sizes.spacing.md,
+    paddingVertical: sizes.spacing.md,
+  },
+  dateText: {
+    fontSize: sizes.font.md,
+    color: colors.text,
+  },
+  dateDoneBtn: {
+    alignItems: 'flex-end',
+    paddingVertical: sizes.spacing.xs,
+  },
+  dateDoneText: {
+    fontSize: sizes.font.md,
+    fontWeight: sizes.fontWeight.semibold,
+    color: colors.primary,
+  },
   reSelectText: {
     fontSize: sizes.font.sm,
     color: colors.primary,

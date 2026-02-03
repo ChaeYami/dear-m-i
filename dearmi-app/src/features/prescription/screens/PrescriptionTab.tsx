@@ -167,7 +167,11 @@ export const PrescriptionTab: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>처방전</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
+          <Ionicons name="chevron-back" size={24} color={colors.primary} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>처방 목록</Text>
+        <View style={{ width: 24 }} />
       </View>
 
       <FlatList
@@ -225,10 +229,13 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   header: {
     height: sizes.headerHeight,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: sizes.spacing.lg,
   },
   headerTitle: {
+    flex: 1,
+    textAlign: 'center',
     fontSize: sizes.font.xl,
     fontWeight: sizes.fontWeight.bold,
     color: colors.text,

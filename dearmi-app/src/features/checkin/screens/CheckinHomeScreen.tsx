@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  
   ScrollView,
+  FlatList,
   Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,23 +17,68 @@ import { colors, sizes } from '@/constants';
 import { getEmotionColor, useEmotionLabel } from '@/shared/components/EmotionSlider';
 import { EmotionGraph } from '@/features/checkin/components/EmotionGraph';
 import { DailyCheckinForm } from '@/features/checkin/components/DailyCheckinForm';
-import { useTodayCheckin } from '@/features/checkin/hooks/useCheckin';
+import { useCheckinHistory } from '@/features/checkin/hooks/useCheckin';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import type { CheckinStackParamList } from '@/navigation/CheckinNavigator';
+import type { DailyCheckin } from '@/shared/types/domain.types';
 
 type Nav = StackNavigationProp<CheckinStackParamList, 'CheckinHome'>;
+
+/** 로컬 날짜를 YYYY-MM-DD 문자열로 */
+const toLocalDateStr = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+const getTodayStr = () => toLocalDateStr(new Date());
+
+// 오늘이 첫번째, 과거로 스크롤 (역순)
+const generateDates = (days: number): string[] => {
+  const dates: string[] = [];
+  const today = new Date();
+  for (let i = 0; i < days; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    dates.push(toLocalDateStr(d));
+  }
+  return dates;
+};
+
+const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
+
+const formatDateLabel = (dateStr: string) => {
+  const [, mo, da] = dateStr.split('-');
+  return `${Number(mo)}월 ${Number(da)}일`;
+};
 
 export const CheckinHomeScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const { t } = useTranslation('checkin');
   const emotionLabel = useEmotionLabel();
-  const { data: todayData, isLoading } = useTodayCheckin();
+
+  const todayStr = getTodayStr();
+  const dates = useMemo(() => generateDates(30), []);
+  const [selectedDate, setSelectedDate] = useState(todayStr);
   const [showForm, setShowForm] = useState(false);
+  const dateListRef = useRef<FlatList>(null);
+
+  // 30일 이력 가져오기
+  const startDate = dates[0];
+  const { data: history, isLoading } = useCheckinHistory(startDate, todayStr);
+
+  // 날짜별 체크인 맵
+  const checkinMap = useMemo(() => {
+    const map = new Map<string, DailyCheckin>();
+    if (history?.content) {
+      history.content.forEach((c) => map.set(c.checkedAt, c));
+    }
+    return map;
+  }, [history]);
+
+  const selectedCheckin = checkinMap.get(selectedDate) ?? null;
+  const isToday = selectedDate === todayStr;
+
+  // inverted FlatList — 오늘이 자동으로 왼쪽에 표시됨
 
   if (isLoading) return <LoadingSpinner fullscreen />;
-
-  const checkin = todayData?.checkin;
-  const checkedIn = todayData?.checkedIn ?? false;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -42,57 +87,99 @@ export const CheckinHomeScreen: React.FC = () => {
         <Text style={styles.headerTitle}>{t('title')}</Text>
       </View>
 
+      {/* 날짜 스크롤 바 */}
+      <FlatList
+        ref={dateListRef}
+        data={dates}
+        horizontal
+        inverted
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item) => item}
+        contentContainerStyle={styles.dateBar}
+        renderItem={({ item }) => {
+          const d = new Date(item);
+          const dayName = DAY_NAMES[d.getDay()];
+          const dayNum = d.getDate();
+          const isSelected = item === selectedDate;
+          const hasCheckin = checkinMap.has(item);
+          const isSunday = d.getDay() === 0;
+
+          return (
+            <View style={styles.dateCol}>
+              <Text style={[
+                styles.dateDayName,
+                isSunday && styles.dateSunday,
+              ]}>
+                {dayName}
+              </Text>
+              <TouchableOpacity
+                style={[
+                  styles.dateItem,
+                  hasCheckin && !isSelected && styles.dateItemHasCheckin,
+                  isSelected && styles.dateItemSelected,
+                ]}
+                onPress={() => setSelectedDate(item)}
+                activeOpacity={0.7}
+              >
+                <Text style={[
+                  styles.dateDayNum,
+                  isSelected && styles.dateDayNumSelected,
+                ]}>
+                  {dayNum}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          );
+        }}
+      />
+
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* 오늘 체크인 카드 */}
-        <View style={styles.todayCard}>
-          {!checkedIn ? (
+        {/* 선택된 날짜 라벨 */}
+        <Text style={styles.selectedDateLabel}>
+          {isToday ? '오늘' : formatDateLabel(selectedDate)}
+        </Text>
+
+        {/* 체크인 카드 */}
+        <View style={styles.checkinCard}>
+          {!selectedCheckin ? (
             <>
-              <Text style={styles.todayPrompt}>{t('today_question')}</Text>
-              <Text style={styles.todaySubPrompt}>{t('today_sub')}</Text>
+              <Ionicons name="create-outline" size={36} color={colors.textDisabled} />
+              <Text style={styles.emptyText}>기록이 없어요</Text>
               <TouchableOpacity
                 style={styles.writeBtn}
                 onPress={() => setShowForm(true)}
                 activeOpacity={0.85}
               >
-                <Text style={styles.writeBtnText}>{t('write_today')}</Text>
+                <Text style={styles.writeBtnText}>
+                  {isToday ? t('write_today') : `${formatDateLabel(selectedDate)} 기록하기`}
+                </Text>
               </TouchableOpacity>
             </>
           ) : (
             <>
-              <View style={styles.todayHeader}>
-                <Text style={styles.todayDateLabel}>{t('today')}</Text>
+              <View style={styles.cardTop}>
+                <View style={styles.scoreRow}>
+                  <View
+                    style={[styles.scoreBadge, { backgroundColor: getEmotionColor(selectedCheckin.emotionScore) }]}
+                  >
+                    <Text style={styles.scoreBadgeText}>{selectedCheckin.emotionScore}</Text>
+                  </View>
+                  <Text style={[styles.scoreLabel, { color: getEmotionColor(selectedCheckin.emotionScore) }]}>
+                    {emotionLabel(selectedCheckin.emotionScore)}
+                  </Text>
+                </View>
                 <TouchableOpacity onPress={() => setShowForm(true)} hitSlop={12}>
-                  <Text style={styles.editBtn}>{t('common:edit')}</Text>
+                  <Ionicons name="create-outline" size={20} color={colors.primary} />
                 </TouchableOpacity>
               </View>
 
-              {/* 감정 점수 */}
-              <View style={styles.scoreRow}>
-                <View
-                  style={[
-                    styles.scoreBadge,
-                    { backgroundColor: getEmotionColor(checkin!.emotionScore) },
-                  ]}
-                >
-                  <Text style={styles.scoreBadgeText}>{checkin!.emotionScore}</Text>
-                </View>
-                <Text
-                  style={[
-                    styles.scoreLabel,
-                    { color: getEmotionColor(checkin!.emotionScore) },
-                  ]}
-                >
-                  {emotionLabel(checkin!.emotionScore)}
-                </Text>
-              </View>
-
               {/* 트리거 태그 */}
-              {checkin!.triggerTags && checkin!.triggerTags.length > 0 && (
+              {selectedCheckin.triggerTags && selectedCheckin.triggerTags.length > 0 && (
                 <View style={styles.tagRow}>
-                  {checkin!.triggerTags.map((tag) => (
+                  {selectedCheckin.triggerTags.map((tag) => (
                     <View key={tag} style={styles.tag}>
                       <Text style={styles.tagText}>{tag}</Text>
                     </View>
@@ -100,22 +187,26 @@ export const CheckinHomeScreen: React.FC = () => {
                 </View>
               )}
 
-              {/* 메모 미리보기 */}
-              {checkin!.memo && (
-                <Text style={styles.memoPreview} numberOfLines={2}>
-                  {checkin!.memo}
-                </Text>
+              {/* 메모 */}
+              {selectedCheckin.memo && (
+                <Text style={styles.memoText}>{selectedCheckin.memo}</Text>
               )}
 
               {/* 수면 + 복약 */}
               <View style={styles.metaRow}>
-                {checkin!.sleepHours != null && (
-                  <Text style={styles.metaItem}>{t('sleep_short')} {checkin!.sleepHours}h</Text>
+                {selectedCheckin.sleepHours != null && (
+                  <View style={styles.metaChip}>
+                    <Ionicons name="moon-outline" size={14} color={colors.textSub} />
+                    <Text style={styles.metaText}>{selectedCheckin.sleepHours}시간</Text>
+                  </View>
                 )}
-                {checkin!.tookMedication != null && (
-                  <Text style={styles.metaItem}>
-                    {t('med_label')} {checkin!.tookMedication ? t('took_medication') : t('not_took_medication')}
-                  </Text>
+                {selectedCheckin.tookMedication != null && (
+                  <View style={styles.metaChip}>
+                    <Ionicons name="medical-outline" size={14} color={colors.textSub} />
+                    <Text style={styles.metaText}>
+                      {selectedCheckin.tookMedication ? '복용 완료' : '미복용'}
+                    </Text>
+                  </View>
                 )}
               </View>
             </>
@@ -141,7 +232,11 @@ export const CheckinHomeScreen: React.FC = () => {
 
       {/* 체크인 폼 모달 */}
       <Modal visible={showForm} animationType="slide" presentationStyle="pageSheet">
-        <DailyCheckinForm existingCheckin={checkin} onClose={() => setShowForm(false)} />
+        <DailyCheckinForm
+          existingCheckin={selectedCheckin}
+          targetDate={selectedDate}
+          onClose={() => setShowForm(false)}
+        />
       </Modal>
     </SafeAreaView>
   );
@@ -153,39 +248,84 @@ const styles = StyleSheet.create({
     height: sizes.headerHeight,
     justifyContent: 'center',
     paddingHorizontal: sizes.spacing.lg,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
   },
   headerTitle: {
     fontSize: sizes.font.xl,
     fontWeight: sizes.fontWeight.bold,
     color: colors.text,
   },
-  content: {
-    padding: sizes.spacing.lg,
-    gap: sizes.spacing.lg,
-    paddingBottom: 40,
+  // 날짜 바
+  dateBar: {
+    paddingHorizontal: sizes.spacing.md,
+    paddingBottom: sizes.spacing.xs,
+    gap: sizes.spacing.sm,
   },
-  // 오늘 카드
-  todayCard: {
-    backgroundColor: colors.surface,
-    borderRadius: sizes.radius.lg,
-    padding: sizes.spacing.lg,
-    gap: sizes.spacing.md,
+  dateItem: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.divider,
   },
-  todayPrompt: {
-    fontSize: sizes.font.xl,
+  dateItemHasCheckin: {
+    borderColor: colors.primary,
+  },
+  dateItemSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  dateCol: {
+    alignItems: 'center',
+    gap: 3,
+  },
+  dateDayName: {
+    fontSize: 10,
+    fontWeight: sizes.fontWeight.medium,
+    color: colors.textSub,
+  },
+  dateSunday: {
+    color: colors.error,
+  },
+  dateDayNum: {
+    fontSize: sizes.font.md,
     fontWeight: sizes.fontWeight.bold,
     color: colors.text,
-    textAlign: 'center',
   },
-  todaySubPrompt: {
+  dateDayNumSelected: {
+    color: colors.textInverse,
+  },
+  // 내용
+  content: {
+    paddingHorizontal: sizes.spacing.lg,
+    paddingTop: sizes.spacing.xs,
+    gap: sizes.spacing.md,
+    paddingBottom: sizes.tabBarSafeBottom + 16,
+  },
+  selectedDateLabel: {
     fontSize: sizes.font.sm,
+    fontWeight: sizes.fontWeight.semibold,
+    color: colors.textSub,
+  },
+  // 체크인 카드
+  checkinCard: {
+    backgroundColor: colors.surfaceSolid,
+    borderRadius: sizes.radius.xl,
+    padding: sizes.spacing.lg,
+    gap: sizes.spacing.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.divider,
+  },
+  emptyText: {
+    fontSize: sizes.font.md,
+    fontWeight: sizes.fontWeight.semibold,
     color: colors.textSub,
     textAlign: 'center',
   },
   writeBtn: {
+    width: '100%',
     height: sizes.buttonHeight.md,
     backgroundColor: colors.primary,
     borderRadius: sizes.radius.lg,
@@ -198,20 +338,11 @@ const styles = StyleSheet.create({
     fontWeight: sizes.fontWeight.bold,
     color: colors.textInverse,
   },
-  todayHeader: {
+  cardTop: {
+    width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  todayDateLabel: {
-    fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.textSub,
-  },
-  editBtn: {
-    fontSize: sizes.font.sm,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.semibold,
   },
   scoreRow: {
     flexDirection: 'row',
@@ -219,9 +350,9 @@ const styles = StyleSheet.create({
     gap: sizes.spacing.sm,
   },
   scoreBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -232,36 +363,49 @@ const styles = StyleSheet.create({
   },
   scoreLabel: {
     fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.semibold,
+    fontWeight: sizes.fontWeight.bold,
   },
   tagRow: {
+    width: '100%',
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: sizes.spacing.xs,
   },
   tag: {
     paddingHorizontal: sizes.spacing.sm,
-    paddingVertical: 3,
+    paddingVertical: 4,
     borderRadius: sizes.radius.full,
-    backgroundColor: colors.primary + '12',
+    backgroundColor: colors.primaryLight + '20',
   },
   tagText: {
     fontSize: sizes.font.xs,
     color: colors.primary,
     fontWeight: sizes.fontWeight.medium,
   },
-  memoPreview: {
-    fontSize: sizes.font.sm,
-    color: colors.textSub,
-    lineHeight: 20,
+  memoText: {
+    width: '100%',
+    fontSize: sizes.font.md,
+    color: colors.text,
+    lineHeight: 22,
   },
   metaRow: {
+    width: '100%',
     flexDirection: 'row',
-    gap: sizes.spacing.md,
+    gap: sizes.spacing.sm,
   },
-  metaItem: {
+  metaChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sizes.spacing.xs,
+    backgroundColor: colors.background,
+    paddingHorizontal: sizes.spacing.sm,
+    paddingVertical: sizes.spacing.xs,
+    borderRadius: sizes.radius.full,
+  },
+  metaText: {
     fontSize: sizes.font.xs,
-    color: colors.textDisabled,
+    color: colors.textSub,
+    fontWeight: sizes.fontWeight.medium,
   },
   // 섹션
   section: {
@@ -272,22 +416,20 @@ const styles = StyleSheet.create({
     fontWeight: sizes.fontWeight.bold,
     color: colors.text,
   },
-  // 전체 기록 보기
+  // 전체 기록
   historyLink: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSolid,
     borderRadius: sizes.radius.lg,
     padding: sizes.spacing.md,
+    borderWidth: 1,
+    borderColor: colors.divider,
   },
   historyLinkText: {
     fontSize: sizes.font.md,
     fontWeight: sizes.fontWeight.semibold,
-    color: colors.primary,
-  },
-  historyArrow: {
-    fontSize: sizes.font.md,
     color: colors.primary,
   },
 });

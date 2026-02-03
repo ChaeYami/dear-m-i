@@ -1,13 +1,10 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  FlatList,
-  Animated,
-  Pressable,
-  
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,42 +17,48 @@ import type { ScheduleStackParamList } from '@/navigation/ScheduleNavigator';
 import type { HospitalSchedule } from '@/shared/types/domain.types';
 
 type Nav = StackNavigationProp<ScheduleStackParamList, 'ScheduleTab'>;
-
-const BOTTOM_SHEET_HEIGHT = 340;
+type ViewMode = 'monthly' | 'weekly';
 
 const toDateString = (iso: string) => iso.split('T')[0];
 
 const formatTime = (iso: string) => {
   const d = new Date(iso);
-  const h = d.getHours().toString().padStart(2, '0');
-  const m = d.getMinutes().toString().padStart(2, '0');
-  return `${h}:${m}`;
+  return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
 };
 
-const formatDate = (dateStr: string) => {
-  const [y, mo, d] = dateStr.split('-');
-  return `${y}년 ${Number(mo)}월 ${Number(d)}일`;
+const formatDateFull = (dateStr: string) => {
+  const [, mo, d] = dateStr.split('-');
+  return `${Number(mo)}월 ${Number(d)}일`;
+};
+
+const getWeekDates = (baseDate: Date): string[] => {
+  const day = baseDate.getDay();
+  const start = new Date(baseDate);
+  start.setDate(start.getDate() - day);
+  const dates: string[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start);
+    d.setDate(d.getDate() + i);
+    dates.push(d.toISOString().split('T')[0]);
+  }
+  return dates;
+};
+
+const getTodayString = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
 export const ScheduleTab: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const today = new Date();
+  const todayStr = getTodayString();
+  const [viewMode, setViewMode] = useState<ViewMode>('monthly');
   const [visibleYear, setVisibleYear] = useState(today.getFullYear());
   const [visibleMonth, setVisibleMonth] = useState(today.getMonth() + 1);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string>(todayStr);
 
   const { data: schedules = [] } = useMonthlySchedules(visibleYear, visibleMonth);
-
-  const slideAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.spring(slideAnim, {
-      toValue: selectedDate ? 1 : 0,
-      useNativeDriver: true,
-      tension: 65,
-      friction: 11,
-    }).start();
-  }, [selectedDate]);
 
   const markedDates = useMemo(() => {
     const marks: Record<string, any> = {};
@@ -66,6 +69,20 @@ export const ScheduleTab: React.FC = () => {
         dots: [{ key: 'schedule', color: colors.primary }],
       };
     });
+    // 오늘 하이라이트
+    if (!marks[todayStr]) {
+      marks[todayStr] = {};
+    }
+    if (selectedDate !== todayStr) {
+      marks[todayStr] = {
+        ...marks[todayStr],
+        customStyles: {
+          container: { backgroundColor: colors.primaryLight + '30', borderRadius: 18 },
+          text: { color: colors.primary, fontWeight: '700' },
+        },
+      };
+    }
+    // 선택된 날
     if (selectedDate) {
       marks[selectedDate] = {
         ...(marks[selectedDate] ?? {}),
@@ -74,96 +91,142 @@ export const ScheduleTab: React.FC = () => {
       };
     }
     return marks;
-  }, [schedules, selectedDate]);
+  }, [schedules, selectedDate, todayStr]);
 
-  const selectedSchedules = useMemo(
-    () => (selectedDate ? schedules.filter((s) => toDateString(s.scheduledAt) === selectedDate) : []),
-    [schedules, selectedDate]
-  );
+  const displaySchedules = useMemo(() => {
+    if (viewMode === 'weekly') {
+      const weekDates = getWeekDates(new Date(selectedDate));
+      return schedules
+        .filter((s) => weekDates.includes(toDateString(s.scheduledAt)))
+        .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt));
+    }
+    return [...schedules].sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt));
+  }, [schedules, viewMode, selectedDate]);
+
+  const groupedSchedules = useMemo(() => {
+    const map = new Map<string, HospitalSchedule[]>();
+    displaySchedules.forEach((s) => {
+      const d = toDateString(s.scheduledAt);
+      if (!map.has(d)) map.set(d, []);
+      map.get(d)!.push(s);
+    });
+    return Array.from(map.entries()).map(([date, items]) => ({ date, items }));
+  }, [displaySchedules]);
 
   const handleDayPress = (day: { dateString: string }) => {
-    setSelectedDate((prev) => (prev === day.dateString ? null : day.dateString));
+    setSelectedDate(day.dateString);
+
+    // 해당 날짜 일정 확인
+    const daySchedules = schedules.filter((s) => toDateString(s.scheduledAt) === day.dateString);
+    if (daySchedules.length === 1) {
+      // 일정 1개 → 바로 상세보기
+      navigation.navigate('ScheduleDetail', { scheduleId: daySchedules[0].id });
+    } else if (daySchedules.length === 0) {
+      // 일정 없음 → 해당 날짜로 등록 화면
+      navigation.navigate('ScheduleForm', { defaultDate: day.dateString });
+    }
+    // 2개 이상이면 아래 목록에서 선택
   };
+
+  const goToToday = useCallback(() => {
+    const now = new Date();
+    setVisibleYear(now.getFullYear());
+    setVisibleMonth(now.getMonth() + 1);
+    setSelectedDate(getTodayString());
+  }, []);
 
   const currentMonth = `${visibleYear}-${String(visibleMonth).padStart(2, '0')}-01`;
-
-  const handleMonthChange = (month: { year: number; month: number }) => {
-    setVisibleYear(month.year);
-    setVisibleMonth(month.month);
-  };
-
-  const translateY = slideAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [BOTTOM_SHEET_HEIGHT, 0],
-  });
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>일정</Text>
+        <View style={styles.headerRight}>
+          <TouchableOpacity style={styles.todayBtn} onPress={goToToday} hitSlop={8}>
+            <Text style={styles.todayBtnText}>오늘</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.prepNoteBtn}
+            onPress={() => navigation.navigate('PrepNoteList')}
+            hitSlop={8}
+          >
+            <Ionicons name="create-outline" size={16} color={colors.textInverse} />
+            <Text style={styles.prepNoteBtnText}>준비 메모</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={styles.viewToggle}>
         <TouchableOpacity
-          style={styles.headerNoteBtnWrap}
-          onPress={() => navigation.navigate('PrepNoteList')}
-          hitSlop={8}
+          style={[styles.toggleBtn, viewMode === 'monthly' && styles.toggleBtnActive]}
+          onPress={() => setViewMode('monthly')}
         >
-          <Ionicons name="create-outline" size={18} color={colors.primary} />
-          <Text style={styles.headerNoteBtn}>준비 메모</Text>
+          <Text style={[styles.toggleBtnText, viewMode === 'monthly' && styles.toggleBtnTextActive]}>
+            월간
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.toggleBtn, viewMode === 'weekly' && styles.toggleBtnActive]}
+          onPress={() => setViewMode('weekly')}
+        >
+          <Text style={[styles.toggleBtnText, viewMode === 'weekly' && styles.toggleBtnTextActive]}>
+            주간
+          </Text>
         </TouchableOpacity>
       </View>
 
-      <Calendar
-        key={currentMonth}
-        current={currentMonth}
-        markedDates={markedDates}
-        markingType="multi-dot"
-        onDayPress={handleDayPress}
-        onMonthChange={handleMonthChange}
-        enableSwipeMonths
-        theme={calendarTheme}
-        style={styles.calendar}
-      />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <Calendar
+          key={currentMonth}
+          current={currentMonth}
+          markedDates={markedDates}
+          markingType="multi-dot"
+          onDayPress={handleDayPress}
+          onMonthChange={(month) => {
+            setVisibleYear(month.year);
+            setVisibleMonth(month.month);
+          }}
+          enableSwipeMonths
+          theme={calendarTheme}
+          style={styles.calendar}
+        />
 
-      {selectedDate && (
-        <Pressable style={styles.overlay} onPress={() => setSelectedDate(null)} />
-      )}
-      <Animated.View
-        style={[styles.bottomSheet, { transform: [{ translateY }] }]}
-        pointerEvents={selectedDate ? 'auto' : 'none'}
-      >
-        <View style={styles.sheetHandle} />
-        <Text style={styles.sheetTitle}>
-          {selectedDate ? formatDate(selectedDate) : ''}
-        </Text>
-        {selectedSchedules.length === 0 ? (
-          <View style={styles.emptyWrap}>
-            <Text style={styles.emptyText}>이 날 일정이 없어요</Text>
-            <TouchableOpacity
-              style={styles.addInSheetBtn}
-              onPress={() =>
-                navigation.navigate('ScheduleForm', { defaultDate: selectedDate ?? undefined })
-              }
-            >
-              <Text style={styles.addInSheetText}>+ 일정 추가</Text>
-            </TouchableOpacity>
+        <View style={styles.scheduleList}>
+          <View style={styles.listHeader}>
+            <Text style={styles.listTitle}>
+              {viewMode === 'monthly'
+                ? `${visibleMonth}월 일정`
+                : `${formatDateFull(selectedDate)} 주간`}
+            </Text>
+            <Text style={styles.listCount}>{displaySchedules.length}건</Text>
           </View>
-        ) : (
-          <FlatList
-            data={selectedSchedules}
-            keyExtractor={(item) => String(item.id)}
-            renderItem={({ item }) => (
-              <ScheduleListItem
-                schedule={item}
-                onPress={() => navigation.navigate('ScheduleDetail', { scheduleId: item.id })}
-              />
-            )}
-            contentContainerStyle={styles.listContent}
-          />
-        )}
-      </Animated.View>
+
+          {groupedSchedules.length === 0 ? (
+            <View style={styles.emptyWrap}>
+              <Ionicons name="calendar-outline" size={36} color={colors.textDisabled} />
+              <Text style={styles.emptyText}>일정이 없어요</Text>
+            </View>
+          ) : (
+            groupedSchedules.map(({ date, items }) => (
+              <View key={date}>
+                <Text style={styles.dateLabel}>{formatDateFull(date)}</Text>
+                {items.map((item) => (
+                  <ScheduleListItem
+                    key={item.id}
+                    schedule={item}
+                    isToday={date === todayStr}
+                    onPress={() => navigation.navigate('ScheduleDetail', { scheduleId: item.id })}
+                  />
+                ))}
+              </View>
+            ))
+          )}
+        </View>
+      </ScrollView>
 
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => navigation.navigate('ScheduleForm', { defaultDate: selectedDate ?? undefined })}
+        onPress={() => navigation.navigate('ScheduleForm', { defaultDate: selectedDate })}
         activeOpacity={0.85}
       >
         <Ionicons name="add" size={28} color={colors.textInverse} />
@@ -174,10 +237,15 @@ export const ScheduleTab: React.FC = () => {
 
 const ScheduleListItem: React.FC<{
   schedule: HospitalSchedule;
+  isToday: boolean;
   onPress: () => void;
-}> = ({ schedule, onPress }) => (
-  <TouchableOpacity style={styles.listItem} onPress={onPress} activeOpacity={0.75}>
-    <View style={styles.listItemDot} />
+}> = ({ schedule, isToday, onPress }) => (
+  <TouchableOpacity
+    style={[styles.listItem, isToday && styles.listItemToday]}
+    onPress={onPress}
+    activeOpacity={0.75}
+  >
+    <View style={[styles.listItemDot, isToday && styles.listItemDotToday]} />
     <View style={styles.listItemBody}>
       <Text style={styles.listItemHospital}>{schedule.hospitalName}</Text>
       {schedule.doctorName && (
@@ -185,6 +253,7 @@ const ScheduleListItem: React.FC<{
       )}
     </View>
     <Text style={styles.listItemTime}>{formatTime(schedule.scheduledAt)}</Text>
+    <Ionicons name="chevron-forward" size={16} color={colors.textDisabled} />
   </TouchableOpacity>
 );
 
@@ -194,6 +263,7 @@ const calendarTheme = {
   selectedDayBackgroundColor: colors.primary,
   selectedDayTextColor: colors.textInverse,
   todayTextColor: colors.primary,
+  todayBackgroundColor: colors.primaryLight + '30',
   dayTextColor: colors.text,
   textDisabledColor: colors.textDisabled,
   dotColor: colors.primary,
@@ -217,25 +287,6 @@ const calendarTheme = {
     dayTextAtIndex0: { color: colors.error },
     dayTextAtIndex6: { color: colors.primary },
   },
-  'stylesheet.day.basic': {
-    base: {
-      width: 36,
-      height: 36,
-      alignItems: 'center' as const,
-      justifyContent: 'center' as const,
-    },
-    text: {
-      fontSize: sizes.font.md,
-      color: colors.text,
-    },
-    todayText: {
-      color: colors.primary,
-      fontWeight: '700' as const,
-    },
-    selectedText: {
-      color: colors.textInverse,
-    },
-  },
 };
 
 const styles = StyleSheet.create({
@@ -252,84 +303,122 @@ const styles = StyleSheet.create({
     fontWeight: sizes.fontWeight.bold,
     color: colors.text,
   },
-  headerNoteBtnWrap: {
+  headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: sizes.spacing.sm,
   },
-  headerNoteBtn: {
-    fontSize: sizes.font.sm,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.medium,
-  },
-  calendar: {
-    paddingBottom: sizes.spacing.sm,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.2)',
-    zIndex: 10,
-  },
-  bottomSheet: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: BOTTOM_SHEET_HEIGHT,
-    backgroundColor: colors.surfaceSolid,
-    borderTopLeftRadius: sizes.radius.xl,
-    borderTopRightRadius: sizes.radius.xl,
-    zIndex: 11,
-    paddingHorizontal: sizes.spacing.lg,
-    paddingTop: sizes.spacing.sm,
-    shadowColor: colors.glassShadow,
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 1,
-    shadowRadius: 16,
-    elevation: 12,
-  },
-  sheetHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.disabled,
-    alignSelf: 'center',
-    marginBottom: sizes.spacing.md,
-  },
-  sheetTitle: {
-    fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
-    marginBottom: sizes.spacing.md,
-  },
-  emptyWrap: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: sizes.spacing.md,
-  },
-  emptyText: { fontSize: sizes.font.md, color: colors.textSub },
-  addInSheetBtn: {
-    paddingVertical: sizes.spacing.sm,
-    paddingHorizontal: sizes.spacing.lg,
+  todayBtn: {
+    paddingHorizontal: sizes.spacing.md,
+    paddingVertical: sizes.spacing.xs,
     borderRadius: sizes.radius.full,
     borderWidth: 1,
     borderColor: colors.primary,
   },
-  addInSheetText: { fontSize: sizes.font.sm, color: colors.primary, fontWeight: sizes.fontWeight.semibold },
-  listContent: { paddingBottom: sizes.spacing.lg },
+  todayBtnText: {
+    fontSize: sizes.font.sm,
+    color: colors.primary,
+    fontWeight: sizes.fontWeight.semibold,
+  },
+  prepNoteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.primary,
+    paddingHorizontal: sizes.spacing.md,
+    paddingVertical: sizes.spacing.xs + 2,
+    borderRadius: sizes.radius.full,
+  },
+  prepNoteBtnText: {
+    fontSize: sizes.font.sm,
+    color: colors.textInverse,
+    fontWeight: sizes.fontWeight.semibold,
+  },
+  viewToggle: {
+    flexDirection: 'row',
+    marginHorizontal: sizes.spacing.lg,
+    marginBottom: sizes.spacing.sm,
+    backgroundColor: colors.disabled,
+    borderRadius: sizes.radius.full,
+    padding: 2,
+  },
+  toggleBtn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: sizes.spacing.xs + 2,
+    borderRadius: sizes.radius.full,
+  },
+  toggleBtnActive: {
+    backgroundColor: colors.surfaceSolid,
+    shadowColor: colors.glassShadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  toggleBtnText: {
+    fontSize: sizes.font.sm,
+    color: colors.textSub,
+    fontWeight: sizes.fontWeight.medium,
+  },
+  toggleBtnTextActive: {
+    color: colors.primary,
+    fontWeight: sizes.fontWeight.bold,
+  },
+  scrollContent: {
+    paddingBottom: sizes.tabBarSafeBottom + 80,
+  },
+  calendar: {
+    paddingBottom: sizes.spacing.sm,
+  },
+  scheduleList: {
+    paddingHorizontal: sizes.spacing.lg,
+    gap: sizes.spacing.sm,
+  },
+  listHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: sizes.spacing.sm,
+  },
+  listTitle: {
+    fontSize: sizes.font.md,
+    fontWeight: sizes.fontWeight.bold,
+    color: colors.text,
+  },
+  listCount: {
+    fontSize: sizes.font.sm,
+    color: colors.textSub,
+  },
+  dateLabel: {
+    fontSize: sizes.font.xs,
+    fontWeight: sizes.fontWeight.semibold,
+    color: colors.textSub,
+    marginTop: sizes.spacing.sm,
+    marginBottom: sizes.spacing.xs,
+  },
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: sizes.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
+    backgroundColor: colors.surfaceSolid,
+    borderRadius: sizes.radius.lg,
+    padding: sizes.spacing.md,
+    marginBottom: sizes.spacing.sm,
     gap: sizes.spacing.md,
+    borderWidth: 1,
+    borderColor: colors.divider,
+  },
+  listItemToday: {
+    borderColor: colors.primaryLight,
+    backgroundColor: colors.primaryLight + '08',
   },
   listItemDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
+    backgroundColor: colors.textDisabled,
+  },
+  listItemDotToday: {
     backgroundColor: colors.primary,
   },
   listItemBody: { flex: 1 },
@@ -347,6 +436,15 @@ const styles = StyleSheet.create({
     fontSize: sizes.font.sm,
     color: colors.textSub,
     fontWeight: sizes.fontWeight.medium,
+  },
+  emptyWrap: {
+    alignItems: 'center',
+    paddingVertical: sizes.spacing.xxl,
+    gap: sizes.spacing.sm,
+  },
+  emptyText: {
+    fontSize: sizes.font.md,
+    color: colors.textSub,
   },
   fab: {
     position: 'absolute',

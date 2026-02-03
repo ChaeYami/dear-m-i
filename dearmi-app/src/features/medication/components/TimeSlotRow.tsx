@@ -9,6 +9,8 @@ interface Props {
   dosage?: string;
   status: MedicationLogStatus | null;
   isPending?: boolean;
+  onDrugPress: () => void;
+  onDelete: () => void;
   onTaken: () => void;
   onSkipped: () => void;
 }
@@ -18,6 +20,8 @@ export const TimeSlotRow: React.FC<Props> = ({
   dosage,
   status,
   isPending,
+  onDrugPress,
+  onDelete,
   onTaken,
   onSkipped,
 }) => {
@@ -26,10 +30,13 @@ export const TimeSlotRow: React.FC<Props> = ({
 
   return (
     <View style={styles.row}>
-      <View style={styles.info}>
-        <Text style={styles.drugName} numberOfLines={1}>{drugName}</Text>
+      <TouchableOpacity style={styles.info} onPress={onDrugPress} onLongPress={onDelete} activeOpacity={0.7}>
+        <View style={styles.drugNameRow}>
+          <Text style={styles.drugName} numberOfLines={1}>{drugName}</Text>
+          <Ionicons name="chevron-forward" size={14} color={colors.textDisabled} />
+        </View>
         {dosage ? <Text style={styles.dosage}>{dosage}</Text> : null}
-      </View>
+      </TouchableOpacity>
 
       {isPending ? (
         <ActivityIndicator size="small" color={colors.primary} />
@@ -72,6 +79,11 @@ const styles = StyleSheet.create({
     gap: sizes.spacing.sm,
   },
   info: { flex: 1 },
+  drugNameRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 4,
+  },
   drugName: {
     fontSize: sizes.font.md,
     fontWeight: sizes.fontWeight.medium,

@@ -6,11 +6,13 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  
+  Image,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { colors, sizes } from '@/constants';
@@ -21,6 +23,7 @@ import { useCheckinSummary } from '@/features/checkin/hooks/useCheckin';
 import { getEmotionColor } from '@/shared/components/EmotionSlider';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
+import { prescriptionApi } from '@/features/prescription/api';
 import type { RecordStackParamList } from '@/navigation/RecordNavigator';
 
 type Nav = StackNavigationProp<RecordStackParamList, 'RecordForm'>;
@@ -58,11 +61,59 @@ export const RecordFormScreen: React.FC = () => {
   const [showPrepNotes, setShowPrepNotes] = useState(false);
   const [showCheckinSummary, setShowCheckinSummary] = useState(false);
 
+  // 처방전 첨부
+  const [rxImage, setRxImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
+  const [rxUploading, setRxUploading] = useState(false);
+  const [rxDone, setRxDone] = useState(false);
+
   const { data: checkinSummary } = useCheckinSummary();
 
   const { data: prepNotes = [] } = usePrepNotesBySchedule(
     selectedScheduleId ? String(selectedScheduleId) : undefined
   );
+
+  // ─── 처방전 첨부 ─────────────────────────────────────────────
+  const pickRxImage = async () => {
+    Alert.alert('처방전 사진', '', [
+      {
+        text: '카메라로 촬영',
+        onPress: async () => {
+          const { status } = await ImagePicker.requestCameraPermissionsAsync();
+          if (status !== 'granted') { Alert.alert('권한 필요', '카메라 접근 권한이 필요합니다.'); return; }
+          const r = await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.85 });
+          if (!r.canceled && r.assets.length > 0) setRxImage(r.assets[0]);
+        },
+      },
+      {
+        text: '갤러리에서 선택',
+        onPress: async () => {
+          const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+          if (status !== 'granted') { Alert.alert('권한 필요', '갤러리 접근 권한이 필요합니다.'); return; }
+          const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.85 });
+          if (!r.canceled && r.assets.length > 0) setRxImage(r.assets[0]);
+        },
+      },
+      { text: '취소', style: 'cancel' },
+    ]);
+  };
+
+  const uploadRx = async () => {
+    if (!rxImage || !isPremium) return;
+    setRxUploading(true);
+    try {
+      const { data: presignedRes } = await prescriptionApi.getPresignedUrl();
+      if (!presignedRes.success || !presignedRes.data) throw new Error('업로드 URL 발급 실패');
+      const { s3Key, uploadUrl } = presignedRes.data;
+      await prescriptionApi.uploadToS3(uploadUrl, rxImage.uri, rxImage.mimeType ?? 'image/jpeg', () => {});
+      const today = new Date().toISOString().split('T')[0];
+      await prescriptionApi.createPrescription({ s3Key, prescribedAt: today });
+      setRxDone(true);
+    } catch (e) {
+      Alert.alert('처방전 업로드 실패', e instanceof Error ? e.message : '다시 시도해 주세요.');
+    } finally {
+      setRxUploading(false);
+    }
+  };
 
   const handleAddTag = () => {
     const trimmed = tagInput.trim().replace(/^#/, '');
@@ -329,6 +380,48 @@ export const RecordFormScreen: React.FC = () => {
             </View>
           )}
         </View>
+
+        {/* 처방전 첨부 (프리미엄) */}
+        {isPremium && (
+          <View style={styles.field}>
+            <Text style={styles.fieldLabel}>처방전 첨부 (선택)</Text>
+            {rxDone ? (
+              <View style={styles.rxDoneBox}>
+                <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+                <Text style={styles.rxDoneText}>처방전이 등록되었습니다. OCR 분석이 진행됩니다.</Text>
+              </View>
+            ) : rxImage ? (
+              <View style={styles.rxPreviewWrap}>
+                <Image source={{ uri: rxImage.uri }} style={styles.rxPreview} resizeMode="cover" />
+                <View style={styles.rxActions}>
+                  <TouchableOpacity style={styles.rxChangeBtn} onPress={pickRxImage} disabled={rxUploading}>
+                    <Text style={styles.rxChangeBtnText}>다시 선택</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.rxUploadBtn, rxUploading && styles.rxUploadBtnDisabled]}
+                    onPress={uploadRx}
+                    disabled={rxUploading}
+                  >
+                    {rxUploading ? (
+                      <ActivityIndicator size="small" color={colors.textInverse} />
+                    ) : (
+                      <>
+                        <Ionicons name="cloud-upload-outline" size={16} color={colors.textInverse} />
+                        <Text style={styles.rxUploadBtnText}>업로드 및 OCR</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
+              <TouchableOpacity style={styles.rxAddBtn} onPress={pickRxImage} activeOpacity={0.8}>
+                <Ionicons name="camera-outline" size={24} color={colors.primary} />
+                <Text style={styles.rxAddBtnText}>처방전 사진 첨부</Text>
+                <Text style={styles.rxAddBtnSub}>촬영 또는 갤러리에서 선택</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -530,5 +623,84 @@ const styles = StyleSheet.create({
     fontSize: sizes.font.sm,
     color: colors.textSub,
     lineHeight: 20,
+  },
+  // 처방전 첨부
+  rxAddBtn: {
+    alignItems: 'center',
+    gap: sizes.spacing.xs,
+    paddingVertical: sizes.spacing.xl,
+    borderRadius: sizes.radius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.divider,
+    borderStyle: 'dashed',
+    backgroundColor: colors.surfaceSolid,
+  },
+  rxAddBtnText: {
+    fontSize: sizes.font.md,
+    fontWeight: sizes.fontWeight.semibold,
+    color: colors.primary,
+  },
+  rxAddBtnSub: {
+    fontSize: sizes.font.xs,
+    color: colors.textDisabled,
+  },
+  rxPreviewWrap: {
+    borderRadius: sizes.radius.lg,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.divider,
+  },
+  rxPreview: {
+    width: '100%',
+    height: 180,
+  },
+  rxActions: {
+    flexDirection: 'row',
+    gap: sizes.spacing.sm,
+    padding: sizes.spacing.sm,
+    backgroundColor: colors.surfaceSolid,
+  },
+  rxChangeBtn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: sizes.spacing.sm,
+    borderRadius: sizes.radius.md,
+    borderWidth: 1,
+    borderColor: colors.divider,
+  },
+  rxChangeBtnText: {
+    fontSize: sizes.font.sm,
+    color: colors.textSub,
+    fontWeight: sizes.fontWeight.medium,
+  },
+  rxUploadBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: sizes.spacing.xs,
+    paddingVertical: sizes.spacing.sm,
+    borderRadius: sizes.radius.md,
+    backgroundColor: colors.primary,
+  },
+  rxUploadBtnDisabled: { opacity: 0.6 },
+  rxUploadBtnText: {
+    fontSize: sizes.font.sm,
+    color: colors.textInverse,
+    fontWeight: sizes.fontWeight.semibold,
+  },
+  rxDoneBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sizes.spacing.sm,
+    backgroundColor: colors.successLight,
+    borderRadius: sizes.radius.md,
+    padding: sizes.spacing.md,
+  },
+  rxDoneText: {
+    flex: 1,
+    fontSize: sizes.font.sm,
+    color: colors.success,
+    fontWeight: sizes.fontWeight.medium,
   },
 });

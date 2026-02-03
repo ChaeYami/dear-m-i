@@ -5,20 +5,20 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { colors, sizes } from '@/constants';
-import { useTodayMedication, useCheckMedication } from '@/features/medication/hooks/useMedication';
+import { useTodayMedication, useCheckMedication, useDeleteMedicationSchedule } from '@/features/medication/hooks/useMedication';
 import { MedicationCard, type SlotItem } from '@/features/medication/components/MedicationCard';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
-import type { MyPageStackParamList } from '@/navigation/MyPageNavigator';
+import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
 import type { TimeSlotType } from '@/shared/types/domain.types';
 
-type Nav = StackNavigationProp<MyPageStackParamList, 'MedicationHome'>;
+type Nav = StackNavigationProp<MedicationStackParamList, 'MedicationHome'>;
 
 const TIME_SLOTS: TimeSlotType[] = ['MORNING', 'AFTERNOON', 'EVENING', 'BEDTIME'];
 
@@ -31,9 +31,42 @@ export const MedicationHomeScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const { data, isLoading } = useTodayMedication();
   const { mutate: checkMedication, isPending: isChecking } = useCheckMedication();
+  const { mutate: deleteMedicationSchedule } = useDeleteMedicationSchedule();
 
-  // 현재 요청 중인 scheduleId 추적 (버튼 비활성화용)
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleSelect = (scheduleId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(scheduleId) ? next.delete(scheduleId) : next.add(scheduleId);
+      return next;
+    });
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.size === 0) return;
+    Alert.alert('복약 일정 삭제', `${selectedIds.size}개 약품을 삭제할까요?`, [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: () => {
+          selectedIds.forEach((id) => deleteMedicationSchedule(id));
+          setSelectedIds(new Set());
+          setIsEditMode(false);
+        },
+      },
+    ]);
+  };
+
+  const handleDelete = (scheduleId: string, drugName: string) => {
+    Alert.alert('복약 일정 삭제', `'${drugName}'을(를) 삭제할까요?`, [
+      { text: '취소', style: 'cancel' },
+      { text: '삭제', style: 'destructive', onPress: () => deleteMedicationSchedule(scheduleId) },
+    ]);
+  };
 
   const handleCheck = (scheduleId: string, status: 'TAKEN' | 'SKIPPED', timeSlot: TimeSlotType) => {
     setPendingIds((prev) => new Set(prev).add(scheduleId));
@@ -63,6 +96,17 @@ export const MedicationHomeScreen: React.FC = () => {
     return groups;
   }, [data]);
 
+  // 전체 scheduleId 목록 (편집 모드용)
+  const allScheduleIds = useMemo(() => {
+    const ids: string[] = [];
+    for (const slot of TIME_SLOTS) {
+      for (const item of slotGroups[slot]) {
+        if (!ids.includes(item.scheduleId)) ids.push(item.scheduleId);
+      }
+    }
+    return ids;
+  }, [slotGroups]);
+
   // 완료율 계산
   const { totalSlots, takenSlots } = useMemo(() => {
     let total = 0;
@@ -88,12 +132,58 @@ export const MedicationHomeScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       {/* 헤더 */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <Ionicons name="chevron-back" size={24} color={colors.primary} />
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>복약 관리</Text>
-        <View style={{ width: 48 }} />
+        {hasAnySlots ? (
+          <TouchableOpacity
+            onPress={() => {
+              if (isEditMode) {
+                setIsEditMode(false);
+                setSelectedIds(new Set());
+              } else {
+                setIsEditMode(true);
+              }
+            }}
+            hitSlop={8}
+          >
+            <Text style={styles.editBtn}>{isEditMode ? '완료' : '편집'}</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 48 }} />
+        )}
       </View>
+
+      {/* 편집 모드: 전체 선택 + 삭제 바 */}
+      {isEditMode && (
+        <View style={styles.editBar}>
+          <TouchableOpacity
+            style={styles.selectAllBtn}
+            onPress={() => {
+              if (selectedIds.size === allScheduleIds.length) {
+                setSelectedIds(new Set());
+              } else {
+                setSelectedIds(new Set(allScheduleIds));
+              }
+            }}
+          >
+            <Ionicons
+              name={selectedIds.size === allScheduleIds.length ? 'checkbox' : 'square-outline'}
+              size={20}
+              color={colors.primary}
+            />
+            <Text style={styles.selectAllText}>전체 선택</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.deleteSelectedBtn, selectedIds.size === 0 && styles.deleteSelectedBtnDisabled]}
+            onPress={handleDeleteSelected}
+            disabled={selectedIds.size === 0}
+          >
+            <Ionicons name="trash-outline" size={16} color={selectedIds.size > 0 ? colors.error : colors.textDisabled} />
+            <Text style={[styles.deleteSelectedText, selectedIds.size === 0 && styles.deleteSelectedTextDisabled]}>
+              삭제 ({selectedIds.size})
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <ScrollView contentContainerStyle={styles.content}>
         {/* 완료율 카드 */}
@@ -128,6 +218,13 @@ export const MedicationHomeScreen: React.FC = () => {
                 timeSlot={slot}
                 items={slotGroups[slot]}
                 pendingScheduleIds={pendingIds}
+                isEditMode={isEditMode}
+                selectedIds={selectedIds}
+                onToggleSelect={toggleSelect}
+                onDrugPress={(scheduleId, drugName) =>
+                  navigation.navigate('MedicationScheduleDetail', { scheduleId, drugName })
+                }
+                onDelete={(scheduleId, drugName) => handleDelete(scheduleId, drugName)}
                 onTaken={(scheduleId) => handleCheck(scheduleId, 'TAKEN', slot)}
                 onSkipped={(scheduleId) => handleCheck(scheduleId, 'SKIPPED', slot)}
               />
@@ -164,9 +261,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: sizes.spacing.lg,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
   },
   backBtn: {
     fontSize: sizes.font.md,
@@ -181,7 +275,7 @@ const styles = StyleSheet.create({
     fontWeight: sizes.fontWeight.bold,
     color: colors.text,
   },
-  content: { padding: sizes.spacing.lg, paddingBottom: 100, gap: sizes.spacing.md },
+  content: { padding: sizes.spacing.lg, paddingBottom: sizes.tabBarSafeBottom + 80, gap: sizes.spacing.md },
   summaryCard: {
     backgroundColor: colors.surface,
     borderRadius: sizes.radius.lg,
@@ -250,17 +344,64 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: sizes.fontWeight.medium,
   },
+  editBtn: {
+    fontSize: sizes.font.md,
+    color: colors.primary,
+    fontWeight: sizes.fontWeight.semibold,
+    minWidth: 48,
+    textAlign: 'right' as const,
+  },
+  editBar: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'space-between' as const,
+    paddingHorizontal: sizes.spacing.lg,
+    paddingVertical: sizes.spacing.sm,
+    backgroundColor: colors.surfaceSolid,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
+  },
+  selectAllBtn: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: sizes.spacing.sm,
+  },
+  selectAllText: {
+    fontSize: sizes.font.sm,
+    color: colors.text,
+    fontWeight: sizes.fontWeight.medium,
+  },
+  deleteSelectedBtn: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: sizes.spacing.xs,
+    paddingHorizontal: sizes.spacing.md,
+    paddingVertical: sizes.spacing.sm,
+    borderRadius: sizes.radius.md,
+    backgroundColor: colors.errorLight,
+  },
+  deleteSelectedBtnDisabled: {
+    backgroundColor: colors.disabled,
+  },
+  deleteSelectedText: {
+    fontSize: sizes.font.sm,
+    color: colors.error,
+    fontWeight: sizes.fontWeight.semibold,
+  },
+  deleteSelectedTextDisabled: {
+    color: colors.textDisabled,
+  },
   fab: {
     position: 'absolute',
-    bottom: sizes.spacing.xl,
+    bottom: sizes.tabBarSafeBottom + sizes.spacing.md,
     right: sizes.spacing.xl,
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.secondary,
+    shadowColor: colors.glassShadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 8,

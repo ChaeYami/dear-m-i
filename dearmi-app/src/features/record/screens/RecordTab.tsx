@@ -144,6 +144,14 @@ export const RecordTab: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>진료 기록</Text>
+        <TouchableOpacity
+          style={styles.prescriptionBtn}
+          onPress={() => navigation.navigate('PrescriptionList' as any)}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="medkit-outline" size={16} color={colors.textInverse} />
+          <Text style={styles.prescriptionBtnText}>처방 목록</Text>
+        </TouchableOpacity>
       </View>
 
       {!isPremium && (
@@ -212,8 +220,24 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   header: {
     height: sizes.headerHeight,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: sizes.spacing.lg,
+  },
+  prescriptionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.primary,
+    paddingHorizontal: sizes.spacing.md,
+    paddingVertical: sizes.spacing.xs + 2,
+    borderRadius: sizes.radius.full,
+  },
+  prescriptionBtnText: {
+    fontSize: sizes.font.sm,
+    color: colors.textInverse,
+    fontWeight: sizes.fontWeight.semibold,
   },
   headerTitle: {
     fontSize: sizes.font.xl,
