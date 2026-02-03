@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useNetworkStatus } from '@/shared/hooks/useNetworkStatus';
 import { colors, sizes } from '@/constants';
 
@@ -11,13 +12,14 @@ import { colors, sizes } from '@/constants';
  */
 export const OfflineBanner: React.FC = () => {
   const { isOffline } = useNetworkStatus();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
   if (!isOffline) return null;
 
   return (
     <View style={[styles.banner, { paddingTop: insets.top + sizes.spacing.sm }]}>
-      <Text style={styles.text}>인터넷 연결이 없습니다. 일부 기능이 제한될 수 있어요.</Text>
+      <Text style={styles.text}>{t('offline')}</Text>
     </View>
   );
 };

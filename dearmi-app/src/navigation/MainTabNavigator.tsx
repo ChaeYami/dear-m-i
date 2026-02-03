@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { colors, sizes } from '@/constants';
 import { ScheduleNavigator } from './ScheduleNavigator';
 import { RecordNavigator } from './RecordNavigator';
@@ -33,22 +34,19 @@ const Placeholder = (label: string): React.FC => () => (
 /** 프리미엄 전용 기능 잠금 화면 */
 const PremiumGate: React.FC = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const { t } = useTranslation();
 
   return (
     <View style={styles.gateContainer}>
       <Text style={styles.gateLockIcon}>🔒</Text>
-      <Text style={styles.gateTitle}>프리미엄 전용 기능</Text>
-      <Text style={styles.gateDesc}>
-        처방전 OCR 자동 인식, 약품 정보 조회,{'\n'}
-        복약 일정 관리 등 다양한 기능을{'\n'}
-        프리미엄 플랜에서 이용할 수 있어요.
-      </Text>
+      <Text style={styles.gateTitle}>{t('premium_gate_title')}</Text>
+      <Text style={styles.gateDesc}>{t('premium_gate_desc')}</Text>
       <TouchableOpacity
         style={styles.upgradeBtn}
         onPress={() => navigation.navigate('Paywall')}
         activeOpacity={0.85}
       >
-        <Text style={styles.upgradeBtnTxt}>업그레이드</Text>
+        <Text style={styles.upgradeBtnTxt}>{t('upgrade')}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -66,6 +64,7 @@ const PrescriptionTabWrapper: React.FC = () => {
 
 export const MainTabNavigator: React.FC = () => {
   useFcmSetup();
+  const { t } = useTranslation();
 
   return (
     <Tab.Navigator
@@ -88,12 +87,12 @@ export const MainTabNavigator: React.FC = () => {
       <Tab.Screen
         name="Schedule"
         component={ScheduleNavigator}
-        options={{ title: '일정' }}
+        options={{ title: t('tab_schedule') }}
       />
-      <Tab.Screen name="Record" component={RecordNavigator} options={{ title: '기록' }} />
-      <Tab.Screen name="Checkin" component={CheckinNavigator} options={{ title: '하루메모' }} />
-      <Tab.Screen name="Prescription" component={PrescriptionTabWrapper} options={{ title: '처방전' }} />
-      <Tab.Screen name="MyPage" component={MyPageNavigator} options={{ title: '마이' }} />
+      <Tab.Screen name="Record" component={RecordNavigator} options={{ title: t('tab_record') }} />
+      <Tab.Screen name="Checkin" component={CheckinNavigator} options={{ title: t('tab_checkin') }} />
+      <Tab.Screen name="Prescription" component={PrescriptionTabWrapper} options={{ title: t('tab_prescription') }} />
+      <Tab.Screen name="MyPage" component={MyPageNavigator} options={{ title: t('tab_mypage') }} />
     </Tab.Navigator>
   );
 };

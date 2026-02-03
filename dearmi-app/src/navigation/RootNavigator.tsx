@@ -5,6 +5,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 
+import { useTranslation } from 'react-i18next';
 import { navigationRef } from './navigationRef';
 import { AuthNavigator } from './AuthNavigator';
 import { MainTabNavigator } from './MainTabNavigator';
@@ -57,6 +58,7 @@ export const RootNavigator: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isForceUpdateBlocked, setIsForceUpdateBlocked] = useState(false);
   const [activeNotification, setActiveNotification] = useState<Notifications.Notification | null>(null);
+  const { t } = useTranslation();
   const { isAuthenticated, restoreTokens, setUser, logout } = useAuthStore();
   const { fetchSubscription } = useSubscriptionStore();
 
@@ -151,18 +153,18 @@ export const RootNavigator: React.FC = () => {
       setIsLoading(false);
 
       Alert.alert(
-        '업데이트 필요',
-        updateMessage || '최신 버전으로 업데이트해 주세요.',
+        t('update_required'),
+        updateMessage || t('update_message'),
         [
           {
-            text: '업데이트',
+            text: t('update'),
             onPress: () => {
               Linking.openURL(storeUrl);
               setTimeout(() => {
                 Alert.alert(
-                  '업데이트 필요',
-                  updateMessage || '최신 버전으로 업데이트해 주세요.',
-                  [{ text: '업데이트', onPress: () => Linking.openURL(storeUrl) }],
+                  t('update_required'),
+                  updateMessage || t('update_message'),
+                  [{ text: t('update'), onPress: () => Linking.openURL(storeUrl) }],
                   { cancelable: false }
                 );
               }, 1000);

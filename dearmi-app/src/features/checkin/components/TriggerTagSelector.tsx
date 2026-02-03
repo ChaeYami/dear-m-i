@@ -1,18 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { colors, sizes } from '@/constants';
-
-const PRESET_TAGS = [
-  // 대인 관계
-  '가족 갈등', '친구 문제', '직장 관계', '연인 문제', '외로움',
-  // 업무·학업
-  '업무 스트레스', '학업 압박', '번아웃',
-  // 신체
-  '수면 부족', '피로', '신체 통증',
-  // 기타
-  '날씨', '경제적 걱정',
-  '특별한 이유 없음',
-];
 
 interface TriggerTagSelectorProps {
   selectedTags: string[];
@@ -23,7 +12,17 @@ export const TriggerTagSelector: React.FC<TriggerTagSelectorProps> = ({
   selectedTags,
   onChangeTags,
 }) => {
+  const { t } = useTranslation('checkin');
   const [customInput, setCustomInput] = useState('');
+
+  const PRESET_TAGS = useMemo(() => [
+    t('trigger_tags.family'), t('trigger_tags.friends'), t('trigger_tags.work_relations'),
+    t('trigger_tags.partner'), t('trigger_tags.loneliness'),
+    t('trigger_tags.work_stress'), t('trigger_tags.academic'), t('trigger_tags.burnout'),
+    t('trigger_tags.sleep_lack'), t('trigger_tags.fatigue'), t('trigger_tags.pain'),
+    t('trigger_tags.weather'), t('trigger_tags.financial'),
+    t('trigger_tags.none'),
+  ], [t]);
 
   const toggleTag = (tag: string) => {
     if (selectedTags.includes(tag)) {
@@ -68,7 +67,7 @@ export const TriggerTagSelector: React.FC<TriggerTagSelectorProps> = ({
       <View style={styles.customRow}>
         <TextInput
           style={styles.customInput}
-          placeholder="직접 입력"
+          placeholder={t('custom_input')}
           placeholderTextColor={colors.text.disabled}
           value={customInput}
           onChangeText={setCustomInput}
@@ -82,7 +81,7 @@ export const TriggerTagSelector: React.FC<TriggerTagSelectorProps> = ({
           onPress={addCustomTag}
           disabled={!customInput.trim()}
         >
-          <Text style={styles.addBtnText}>추가</Text>
+          <Text style={styles.addBtnText}>{t('common:add')}</Text>
         </TouchableOpacity>
       </View>
 

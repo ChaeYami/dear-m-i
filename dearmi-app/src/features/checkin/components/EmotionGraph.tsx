@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
+import { useTranslation } from 'react-i18next';
 import { colors, sizes } from '@/constants';
 import { getEmotionColor } from '@/shared/components/EmotionSlider';
 import { useCheckinHistory } from '@/features/checkin/hooks/useCheckin';
@@ -10,11 +11,11 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 
 type Period = '7d' | '1m' | '3m' | 'all';
 
-const PERIOD_LABELS: Record<Period, string> = {
-  '7d': '7일',
-  '1m': '1개월',
-  '3m': '3개월',
-  all: '전체',
+const PERIOD_KEYS: Record<Period, string> = {
+  '7d': 'period_7d',
+  '1m': 'period_1m',
+  '3m': 'period_3m',
+  all: 'period_all',
 };
 
 const getStartDate = (period: Period): string | undefined => {
@@ -32,6 +33,7 @@ const formatLabel = (dateStr: string) => {
 };
 
 export const EmotionGraph: React.FC = () => {
+  const { t } = useTranslation('checkin');
   const plan = useAuthStore((s) => s.user?.plan);
   const isPremium = plan === 'PREMIUM';
   const [period, setPeriod] = useState<Period>('7d');
@@ -62,8 +64,8 @@ export const EmotionGraph: React.FC = () => {
   if (sorted.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>아직 기록이 없어요</Text>
-        <Text style={styles.emptySubText}>체크인을 시작하면 감정 그래프가 나타납니다</Text>
+        <Text style={styles.emptyText}>{t('graph_empty')}</Text>
+        <Text style={styles.emptySubText}>{t('graph_empty_desc')}</Text>
       </View>
     );
   }
@@ -89,7 +91,7 @@ export const EmotionGraph: React.FC = () => {
                   locked && styles.periodBtnTextLocked,
                 ]}
               >
-                {PERIOD_LABELS[p]}
+                {t(PERIOD_KEYS[p])}
                 {locked ? ' 🔒' : ''}
               </Text>
             </TouchableOpacity>
@@ -137,9 +139,9 @@ export const EmotionGraph: React.FC = () => {
       <View style={styles.avgRow}>
         <View style={[styles.avgDot, { backgroundColor: avgColor }]} />
         <Text style={styles.avgText}>
-          평균 {avgScore.toFixed(1)}점
+          {t('avg_score', { score: avgScore.toFixed(1) })}
         </Text>
-        <Text style={styles.avgCount}>{sorted.length}일 기록</Text>
+        <Text style={styles.avgCount}>{t('days_recorded', { count: sorted.length })}</Text>
       </View>
     </View>
   );

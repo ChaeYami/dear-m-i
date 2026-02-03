@@ -10,8 +10,9 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { colors, sizes } from '@/constants';
-import { getEmotionColor, getEmotionLabel } from '@/shared/components/EmotionSlider';
+import { getEmotionColor, useEmotionLabel } from '@/shared/components/EmotionSlider';
 import { EmotionGraph } from '@/features/checkin/components/EmotionGraph';
 import { DailyCheckinForm } from '@/features/checkin/components/DailyCheckinForm';
 import { useTodayCheckin } from '@/features/checkin/hooks/useCheckin';
@@ -22,6 +23,8 @@ type Nav = StackNavigationProp<CheckinStackParamList, 'CheckinHome'>;
 
 export const CheckinHomeScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
+  const { t } = useTranslation('checkin');
+  const emotionLabel = useEmotionLabel();
   const { data: todayData, isLoading } = useTodayCheckin();
   const [showForm, setShowForm] = useState(false);
 
@@ -34,7 +37,7 @@ export const CheckinHomeScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       {/* 헤더 */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>하루 메모</Text>
+        <Text style={styles.headerTitle}>{t('title')}</Text>
       </View>
 
       <ScrollView
@@ -45,22 +48,22 @@ export const CheckinHomeScreen: React.FC = () => {
         <View style={styles.todayCard}>
           {!checkedIn ? (
             <>
-              <Text style={styles.todayPrompt}>오늘 기분은 어때요?</Text>
-              <Text style={styles.todaySubPrompt}>하루를 기록하고 패턴을 확인해 보세요</Text>
+              <Text style={styles.todayPrompt}>{t('today_question')}</Text>
+              <Text style={styles.todaySubPrompt}>{t('today_sub')}</Text>
               <TouchableOpacity
                 style={styles.writeBtn}
                 onPress={() => setShowForm(true)}
                 activeOpacity={0.85}
               >
-                <Text style={styles.writeBtnText}>오늘의 기분 기록하기</Text>
+                <Text style={styles.writeBtnText}>{t('write_today')}</Text>
               </TouchableOpacity>
             </>
           ) : (
             <>
               <View style={styles.todayHeader}>
-                <Text style={styles.todayDateLabel}>오늘</Text>
+                <Text style={styles.todayDateLabel}>{t('today')}</Text>
                 <TouchableOpacity onPress={() => setShowForm(true)} hitSlop={12}>
-                  <Text style={styles.editBtn}>수정</Text>
+                  <Text style={styles.editBtn}>{t('common:edit')}</Text>
                 </TouchableOpacity>
               </View>
 
@@ -80,7 +83,7 @@ export const CheckinHomeScreen: React.FC = () => {
                     { color: getEmotionColor(checkin!.emotionScore) },
                   ]}
                 >
-                  {getEmotionLabel(checkin!.emotionScore)}
+                  {emotionLabel(checkin!.emotionScore)}
                 </Text>
               </View>
 
@@ -105,11 +108,11 @@ export const CheckinHomeScreen: React.FC = () => {
               {/* 수면 + 복약 */}
               <View style={styles.metaRow}>
                 {checkin!.sleepHours != null && (
-                  <Text style={styles.metaItem}>수면 {checkin!.sleepHours}h</Text>
+                  <Text style={styles.metaItem}>{t('sleep_short')} {checkin!.sleepHours}h</Text>
                 )}
                 {checkin!.tookMedication != null && (
                   <Text style={styles.metaItem}>
-                    약 {checkin!.tookMedication ? '복용' : '미복용'}
+                    {t('med_label')} {checkin!.tookMedication ? t('took_medication') : t('not_took_medication')}
                   </Text>
                 )}
               </View>
@@ -119,7 +122,7 @@ export const CheckinHomeScreen: React.FC = () => {
 
         {/* 감정 그래프 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>감정 추이</Text>
+          <Text style={styles.sectionTitle}>{t('emotion_trend')}</Text>
           <EmotionGraph />
         </View>
 
@@ -129,7 +132,7 @@ export const CheckinHomeScreen: React.FC = () => {
           onPress={() => navigation.navigate('CheckinHistory')}
           activeOpacity={0.7}
         >
-          <Text style={styles.historyLinkText}>전체 기록 보기</Text>
+          <Text style={styles.historyLinkText}>{t('view_all')}</Text>
           <Text style={styles.historyArrow}>{' >'}</Text>
         </TouchableOpacity>
       </ScrollView>

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useNavigation, CompositeNavigationProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { colors, sizes } from '@/constants';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { useSubscriptionStore } from '@/features/subscription/store/subscriptionStore';
@@ -43,20 +44,21 @@ const MenuItem: React.FC<MenuItemProps> = ({ icon, label, onPress, badge }) => (
 
 export const MyPageScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
+  const { t } = useTranslation('settings');
   const { user, logout } = useAuthStore();
   const { plan, expiresAt } = useSubscriptionStore();
 
   const handleLogout = () => {
-    Alert.alert('로그아웃', '로그아웃 하시겠습니까?', [
-      { text: '취소', style: 'cancel' },
-      { text: '로그아웃', style: 'destructive', onPress: () => logout() },
+    Alert.alert(t('auth:logout'), t('auth:logout_confirm'), [
+      { text: t('common:cancel'), style: 'cancel' },
+      { text: t('auth:logout'), style: 'destructive', onPress: () => logout() },
     ]);
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>마이페이지</Text>
+        <Text style={styles.headerTitle}>{t('mypage_title')}</Text>
         <TouchableOpacity onPress={() => navigation.navigate('Search')} hitSlop={8}>
           <Text style={styles.headerSearchIcon}>🔍</Text>
         </TouchableOpacity>
@@ -71,12 +73,12 @@ export const MyPageScreen: React.FC = () => {
             </Text>
           </View>
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{user?.name ?? '사용자'}</Text>
+            <Text style={styles.profileName}>{user?.name ?? t('user_default')}</Text>
             <Text style={styles.profileEmail}>{user?.email ?? ''}</Text>
           </View>
           <View style={[styles.planBadge, user?.plan === 'PREMIUM' && styles.planBadgePremium]}>
             <Text style={[styles.planBadgeText, user?.plan === 'PREMIUM' && styles.planBadgeTextPremium]}>
-              {user?.plan === 'PREMIUM' ? '프리미엄' : '무료'}
+              {user?.plan === 'PREMIUM' ? t('premium_badge') : t('free_badge')}
             </Text>
           </View>
         </View>
@@ -90,10 +92,10 @@ export const MyPageScreen: React.FC = () => {
           >
             <View style={styles.subCardLeft}>
               <Text style={styles.subCardBadge}>PREMIUM</Text>
-              <Text style={styles.subCardTitle}>프리미엄 구독 중</Text>
+              <Text style={styles.subCardTitle}>{t('premium_subscribing')}</Text>
               {expiresAt && (
                 <Text style={styles.subCardDesc}>
-                  {new Date(expiresAt).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })} 갱신
+                  {new Date(expiresAt).toLocaleDateString()} {t('renew_date')}
                 </Text>
               )}
             </View>
@@ -107,8 +109,8 @@ export const MyPageScreen: React.FC = () => {
           >
             <View style={styles.subCardLeft}>
               <Text style={styles.subCardBadgeGray}>FREE</Text>
-              <Text style={styles.subCardTitle}>프리미엄으로 업그레이드</Text>
-              <Text style={styles.subCardDesc}>OCR, 약품 정보, 전체 기록 이용</Text>
+              <Text style={styles.subCardTitle}>{t('upgrade_cta')}</Text>
+              <Text style={styles.subCardDesc}>{t('upgrade_features')}</Text>
             </View>
             <Text style={styles.subCardArrow}>›</Text>
           </TouchableOpacity>
@@ -116,11 +118,11 @@ export const MyPageScreen: React.FC = () => {
 
         {/* 기능 메뉴 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>건강 관리</Text>
+          <Text style={styles.sectionTitle}>{t('section_health')}</Text>
           <View style={styles.card}>
             <MenuItem
               icon="💊"
-              label="복약 관리"
+              label={t('menu_medication')}
               onPress={() => navigation.navigate('MedicationHome')}
             />
           </View>
@@ -128,23 +130,28 @@ export const MyPageScreen: React.FC = () => {
 
         {/* 설정 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>설정</Text>
+          <Text style={styles.sectionTitle}>{t('section_settings')}</Text>
           <View style={styles.card}>
             <MenuItem
               icon="🔔"
-              label="알림 설정"
+              label={t('menu_notification')}
               onPress={() => navigation.navigate('NotificationSettings')}
+            />
+            <MenuItem
+              icon="🌐"
+              label={t('menu_language')}
+              onPress={() => navigation.navigate('LanguageSettings')}
             />
           </View>
         </View>
 
         {/* 계정 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>계정</Text>
+          <Text style={styles.sectionTitle}>{t('section_account')}</Text>
           <View style={styles.card}>
             <TouchableOpacity style={styles.menuItem} onPress={handleLogout} activeOpacity={0.7}>
               <Text style={styles.menuIcon}>🚪</Text>
-              <Text style={[styles.menuLabel, styles.menuLabelDanger]}>로그아웃</Text>
+              <Text style={[styles.menuLabel, styles.menuLabelDanger]}>{t('auth:logout')}</Text>
             </TouchableOpacity>
           </View>
         </View>

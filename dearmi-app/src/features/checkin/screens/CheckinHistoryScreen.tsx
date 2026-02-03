@@ -10,8 +10,10 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { CompositeNavigationProp } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { colors, sizes } from '@/constants';
-import { getEmotionColor, getEmotionLabel } from '@/shared/components/EmotionSlider';
+import { getEmotionColor, useEmotionLabel } from '@/shared/components/EmotionSlider';
+import { formatDate } from '@/shared/utils/dateUtils';
 import { useCheckinHistory } from '@/features/checkin/hooks/useCheckin';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
@@ -29,13 +31,10 @@ interface Section {
   data: DailyCheckin[];
 }
 
-const formatSectionDate = (dateStr: string) => {
-  const d = new Date(dateStr);
-  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
-};
-
 export const CheckinHistoryScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
+  const { t, i18n } = useTranslation('checkin');
+  const emotionLabel = useEmotionLabel();
   const plan = useAuthStore((s) => s.user?.plan);
   const isFree = plan === 'FREE' || !plan;
 
@@ -44,7 +43,7 @@ export const CheckinHistoryScreen: React.FC = () => {
   const sections = useMemo<Section[]>(() => {
     if (!history?.content) return [];
     return history.content.map((checkin) => ({
-      title: formatSectionDate(checkin.checkedAt),
+      title: formatDate(checkin.checkedAt, i18n.language),
       data: [checkin],
     }));
   }, [history]);
@@ -56,9 +55,9 @@ export const CheckinHistoryScreen: React.FC = () => {
       {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <Text style={styles.backBtn}>{'<  뒤로'}</Text>
+          <Text style={styles.backBtn}>{'<  '}{t('common:back')}</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>전체 기록</Text>
+        <Text style={styles.headerTitle}>{t('history_title')}</Text>
         <View style={{ width: 48 }} />
       </View>
 
@@ -66,10 +65,10 @@ export const CheckinHistoryScreen: React.FC = () => {
       {isFree && (
         <View style={styles.freeBanner}>
           <Text style={styles.freeBannerText}>
-            무료 플랜은 최근 30일 기록만 조회됩니다.
+            {t('free_limit_banner')}
           </Text>
           <TouchableOpacity onPress={() => navigation.navigate('Paywall')} hitSlop={8}>
-            <Text style={styles.freeBannerUpgrade}>업그레이드</Text>
+            <Text style={styles.freeBannerUpgrade}>{t('common:upgrade')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -94,7 +93,7 @@ export const CheckinHistoryScreen: React.FC = () => {
                 <Text style={styles.scoreBadgeText}>{item.emotionScore}</Text>
               </View>
               <Text style={[styles.scoreLabel, { color: getEmotionColor(item.emotionScore) }]}>
-                {getEmotionLabel(item.emotionScore)}
+                {emotionLabel(item.emotionScore)}
               </Text>
             </View>
 
@@ -119,11 +118,11 @@ export const CheckinHistoryScreen: React.FC = () => {
             {/* 수면 + 복약 */}
             <View style={styles.metaRow}>
               {item.sleepHours != null && (
-                <Text style={styles.metaItem}>수면 {item.sleepHours}h</Text>
+                <Text style={styles.metaItem}>{t('sleep_short')} {item.sleepHours}h</Text>
               )}
               {item.tookMedication != null && (
                 <Text style={styles.metaItem}>
-                  약 {item.tookMedication ? '복용' : '미복용'}
+                  {t('med_label')} {item.tookMedication ? t('took_medication') : t('not_took_medication')}
                 </Text>
               )}
             </View>
@@ -131,8 +130,8 @@ export const CheckinHistoryScreen: React.FC = () => {
         )}
         ListEmptyComponent={
           <View style={styles.emptyWrap}>
-            <Text style={styles.emptyText}>아직 기록이 없어요</Text>
-            <Text style={styles.emptySubText}>홈에서 오늘의 기분을 기록해 보세요</Text>
+            <Text style={styles.emptyText}>{t('empty_title')}</Text>
+            <Text style={styles.emptySubText}>{t('empty_desc')}</Text>
           </View>
         }
       />

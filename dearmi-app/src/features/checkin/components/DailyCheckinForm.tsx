@@ -10,6 +10,7 @@ import {
   SafeAreaView,
   Alert,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { colors, sizes } from '@/constants';
 import { EmotionSlider } from '@/shared/components/EmotionSlider';
 import { TriggerTagSelector } from '@/features/checkin/components/TriggerTagSelector';
@@ -29,6 +30,7 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
   existingCheckin,
   onClose,
 }) => {
+  const { t } = useTranslation('checkin');
   const user = useAuthStore((s) => s.user);
   const isPremium = user?.plan === 'PREMIUM';
   const memoLimit = isPremium ? undefined : FREE_MEMO_LIMIT;
@@ -44,7 +46,7 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
 
   const handleSave = () => {
     if (memoLimit && memo.length > memoLimit) {
-      Alert.alert('글자 수 초과', `무료 플랜은 ${memoLimit}자까지 입력할 수 있습니다.`);
+      Alert.alert(t('common:char_limit_exceeded'), t('common:char_limit_message', { limit: memoLimit }));
       return;
     }
 
@@ -58,7 +60,7 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
       },
       {
         onSuccess: () => onClose(),
-        onError: () => Alert.alert('저장 실패', '잠시 후 다시 시도해 주세요.'),
+        onError: () => Alert.alert(t('common:save_failed'), t('common:try_again_later')),
       }
     );
   };
@@ -68,12 +70,12 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
       {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onClose} hitSlop={12}>
-          <Text style={styles.headerCancel}>취소</Text>
+          <Text style={styles.headerCancel}>{t('common:cancel')}</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>오늘의 기분</Text>
+        <Text style={styles.headerTitle}>{t('form_title')}</Text>
         <TouchableOpacity onPress={handleSave} disabled={isPending} hitSlop={12}>
           <Text style={[styles.headerSave, isPending && styles.headerSaveDisabled]}>
-            {isPending ? '저장 중...' : '저장'}
+            {isPending ? t('common:saving') : t('common:save')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -85,20 +87,20 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
       >
         {/* 감정 점수 */}
         <View style={styles.field}>
-          <Text style={styles.fieldLabel}>감정 점수</Text>
+          <Text style={styles.fieldLabel}>{t('emotion_score')}</Text>
           <EmotionSlider value={emotionScore} onChange={setEmotionScore} />
         </View>
 
         {/* 트리거 태그 */}
         <View style={styles.field}>
-          <Text style={styles.fieldLabel}>오늘 기분에 영향을 준 것</Text>
+          <Text style={styles.fieldLabel}>{t('trigger_label')}</Text>
           <TriggerTagSelector selectedTags={triggerTags} onChangeTags={setTriggerTags} />
         </View>
 
         {/* 메모 */}
         <View style={styles.field}>
           <View style={styles.fieldLabelRow}>
-            <Text style={styles.fieldLabel}>메모 (선택)</Text>
+            <Text style={styles.fieldLabel}>{t('memo_label')}</Text>
             {memoLimit && (
               <Text style={[styles.charCount, memo.length > memoLimit && styles.charCountOver]}>
                 {memo.length}/{memoLimit}
@@ -107,7 +109,7 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
           </View>
           <TextInput
             style={[styles.textArea, memo.length > (memoLimit ?? Infinity) && styles.textAreaError]}
-            placeholder="오늘 하루를 자유롭게 기록하세요"
+            placeholder={t('memo_placeholder')}
             placeholderTextColor={colors.text.disabled}
             value={memo}
             onChangeText={setMemo}
@@ -119,13 +121,13 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
 
         {/* 수면 시간 */}
         <View style={styles.field}>
-          <Text style={styles.fieldLabel}>수면 시간</Text>
+          <Text style={styles.fieldLabel}>{t('sleep_label')}</Text>
           <TouchableOpacity
             style={styles.sleepSelector}
             onPress={() => setShowSleepPicker((v) => !v)}
             activeOpacity={0.8}
           >
-            <Text style={styles.sleepValue}>{sleepHours}시간</Text>
+            <Text style={styles.sleepValue}>{t('sleep_unit', { hours: sleepHours })}</Text>
             <Text style={styles.dropdownArrow}>{showSleepPicker ? '▲' : '▼'}</Text>
           </TouchableOpacity>
           {showSleepPicker && (
@@ -150,7 +152,7 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
 
         {/* 복약 여부 */}
         <View style={styles.medRow}>
-          <Text style={styles.fieldLabel}>오늘 약 복용 여부</Text>
+          <Text style={styles.fieldLabel}>{t('medication_toggle')}</Text>
           <Switch
             value={tookMedication}
             onValueChange={setTookMedication}

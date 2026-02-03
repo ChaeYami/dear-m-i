@@ -7,6 +7,7 @@ import { MedicationFormScreen } from '@/features/medication/screens/MedicationFo
 import { MedicationHistoryScreen } from '@/features/medication/screens/MedicationHistoryScreen';
 import { NotificationSettingsScreen } from '@/features/notification/screens/NotificationSettingsScreen';
 import { SubscriptionManageScreen } from '@/features/subscription/screens/SubscriptionManageScreen';
+import { LanguageSettingsScreen } from '@/features/mypage/screens/LanguageSettingsScreen';
 
 /** OCR 흐름에서 전달되는 약품 항목 */
 export interface OcrMedicationItem {
@@ -31,6 +32,7 @@ export type MyPageStackParamList = {
   } | undefined;
   MedicationHistory: undefined;
   NotificationSettings: undefined;
+  LanguageSettings: undefined;
   SubscriptionManage: undefined;
 };
 
@@ -48,6 +50,7 @@ export const MyPageNavigator: React.FC = () => (
     <Stack.Screen name="MedicationForm" component={MedicationFormScreen} />
     <Stack.Screen name="MedicationHistory" component={MedicationHistoryScreen} />
     <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
+    <Stack.Screen name="LanguageSettings" component={LanguageSettingsScreen} />
     <Stack.Screen name="SubscriptionManage" component={SubscriptionManageScreen} />
   </Stack.Navigator>
 );

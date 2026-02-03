@@ -8,6 +8,7 @@ import {
   Image,
   SafeAreaView,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { colors, sizes } from '@/constants';
 import { useLogin } from '@/features/auth/hooks/useLogin';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
@@ -20,6 +21,7 @@ import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
  * - 딥링크 dearmi://auth?access_token=...&refresh_token=... 파싱
  */
 export const LoginScreen: React.FC = () => {
+  const { t } = useTranslation('auth');
   const { loginWithGoogle, loginWithApple, isLoading, error, clearError } = useLogin();
 
   useEffect(() => {
@@ -41,7 +43,7 @@ export const LoginScreen: React.FC = () => {
           <Text style={styles.logoText}>M</Text>
         </View>
         <Text style={styles.appName}>Dear Mi</Text>
-        <Text style={styles.tagline}>나의 마음 진료 기록</Text>
+        <Text style={styles.tagline}>{t('app_tagline')}</Text>
       </View>
 
       {/* 버튼 영역 */}
@@ -61,7 +63,7 @@ export const LoginScreen: React.FC = () => {
           <View style={styles.socialIconPlaceholder}>
             <Text style={styles.socialIconText}>G</Text>
           </View>
-          <Text style={styles.socialButtonText}>Google로 계속하기</Text>
+          <Text style={styles.socialButtonText}>{t('continue_google')}</Text>
         </TouchableOpacity>
 
         {/* Apple 로그인 (iOS 전용) */}
@@ -75,16 +77,14 @@ export const LoginScreen: React.FC = () => {
               <Text style={[styles.socialIconText, styles.appleIconText]}></Text>
             </View>
             <Text style={[styles.socialButtonText, styles.appleButtonText]}>
-              Apple로 계속하기
+              {t('continue_apple')}
             </Text>
           </TouchableOpacity>
         )}
       </View>
 
       {/* 하단 약관 */}
-      <Text style={styles.terms}>
-        계속 진행하면 서비스 이용약관 및{'\n'}개인정보 처리방침에 동의하는 것으로 간주됩니다.
-      </Text>
+      <Text style={styles.terms}>{t('terms_agreement')}</Text>
     </SafeAreaView>
   );
 };
