@@ -61,9 +61,34 @@ export const useLogin = () => {
     }
   };
 
+  const loginWithDev = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { data } = await authApi.devLogin('test@test.com', '테스트유저');
+
+      if (!data.success || !data.data) {
+        throw new Error('Dev 로그인 실패');
+      }
+
+      await setTokens(data.data.accessToken, data.data.refreshToken);
+
+      const meRes = await authApi.getMe();
+      if (meRes.data.success && meRes.data.data) {
+        setUser(meRes.data.data);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Dev 로그인 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     loginWithGoogle: () => loginWithProvider('google'),
     loginWithApple: () => loginWithProvider('apple'),
+    loginWithDev,
     isLoading,
     error,
     clearError: () => setError(null),

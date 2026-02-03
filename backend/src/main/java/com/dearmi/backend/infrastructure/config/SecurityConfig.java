@@ -49,6 +49,7 @@ public class SecurityConfig {
             "/api/v1/auth/refresh",     // Refresh Token으로 새 토큰 발급
             "/api/v1/app/version",      // 앱 버전 확인
             "/api/v1/payments/webhook", // 토스페이먼츠 웹훅 (외부 호출)
+            "/api/v1/dev/**",           // 로컬 개발 전용 (DevAuthController)
             "/actuator/health",         // 헬스체크
             "/v3/api-docs/**",          // OpenAPI JSON
             "/swagger-ui/**",           // Swagger UI

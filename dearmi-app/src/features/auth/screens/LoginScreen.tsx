@@ -22,7 +22,8 @@ import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
  */
 export const LoginScreen: React.FC = () => {
   const { t } = useTranslation('auth');
-  const { loginWithGoogle, loginWithApple, isLoading, error, clearError } = useLogin();
+  const { loginWithGoogle, loginWithApple, loginWithDev, isLoading, error, clearError } = useLogin();
+  const isDev = __DEV__;
 
   useEffect(() => {
     if (error) {
@@ -82,6 +83,17 @@ export const LoginScreen: React.FC = () => {
           </TouchableOpacity>
         )}
       </View>
+
+      {/* Dev 로그인 (개발 빌드에서만 표시) */}
+      {isDev && (
+        <TouchableOpacity
+          style={styles.devButton}
+          onPress={loginWithDev}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.devButtonText}>Dev Login (test@test.com)</Text>
+        </TouchableOpacity>
+      )}
 
       {/* 하단 약관 */}
       <Text style={styles.terms}>{t('terms_agreement')}</Text>
@@ -178,6 +190,19 @@ const styles = StyleSheet.create({
   },
   appleButtonText: {
     color: colors.text.onPrimary,
+  },
+  devButton: {
+    borderWidth: 1,
+    borderColor: colors.warning,
+    borderRadius: sizes.radius.md,
+    borderStyle: 'dashed' as const,
+    paddingVertical: sizes.spacing.sm,
+    alignItems: 'center' as const,
+  },
+  devButtonText: {
+    fontSize: sizes.font.sm,
+    color: colors.warning,
+    fontWeight: sizes.fontWeight.medium,
   },
   terms: {
     fontSize: sizes.font.xs,
