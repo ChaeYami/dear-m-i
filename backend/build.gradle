@@ -67,6 +67,9 @@ dependencies {
     // AOP (AuditLogAspect, @Async proxy)
     implementation 'org.springframework.boot:spring-boot-starter-aop'
 
+    // WebClient (약학정보원 API 연동)
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
     // Bucket4j (Rate Limiting)
     implementation 'com.bucket4j:bucket4j-core:8.10.1'
 
@@ -100,4 +103,24 @@ clean {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+// .env 파일을 읽어 bootRun 환경변수로 주입
+bootRun {
+    doFirst {
+        def envFile = file('.env')
+        if (envFile.exists()) {
+            envFile.readLines().each { line ->
+                def trimmed = line.trim()
+                if (trimmed && !trimmed.startsWith('#')) {
+                    def idx = trimmed.indexOf('=')
+                    if (idx > 0) {
+                        def key = trimmed.substring(0, idx).trim()
+                        def value = trimmed.substring(idx + 1).trim()
+                        environment(key, value)
+                    }
+                }
+            }
+        }
+    }
 }

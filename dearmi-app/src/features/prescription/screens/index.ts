@@ -1,1 +1,3 @@
-// barrel export
+export * from './PrescriptionTab';
+export * from './PrescriptionUploadScreen';
+export * from './OcrResultScreen';

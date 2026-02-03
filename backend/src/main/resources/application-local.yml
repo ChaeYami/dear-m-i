@@ -1,27 +1,24 @@
 # ============================================================
 # Local 개발 환경 설정
-# ⚠️ 이 파일은 Git에 커밋되어도 되지만 실제 운영 정보는 절대 포함 금지
+# 민감한 값은 모두 .env 파일에서 환경변수로 주입 (Git 커밋 금지)
+# .env 파일이 없다면: cp .env.example .env 후 값 채우기
 # ============================================================
 spring:
-  # OAuth2 로컬 플레이스홀더 — Google Cloud Console에서 발급 후 교체
-  # Google: https://console.cloud.google.com/apis/credentials
-  # Apple: https://developer.apple.com/account/resources/identifiers
   security:
     oauth2:
       client:
         registration:
           google:
-            client-id: REPLACE_ME_GOOGLE_CLIENT_ID
-            client-secret: REPLACE_ME_GOOGLE_CLIENT_SECRET
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
           apple:
-            client-id: REPLACE_ME_APPLE_BUNDLE_ID
-            # Apple client-secret은 단순 문자열이 아닌 JWT (ES256 서명)
-            # 참고: https://developer.apple.com/documentation/accountorganizationaldatasharing/creating-a-client-secret
-            client-secret: REPLACE_ME_APPLE_CLIENT_SECRET_JWT
+            client-id: ${APPLE_CLIENT_ID}
+            client-secret: ${APPLE_CLIENT_SECRET}
+
   datasource:
-    url: jdbc:postgresql://localhost:5432/dearmidb
-    username: postgres
-    password: local1234
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 5
@@ -33,11 +30,10 @@ spring:
       hibernate:
         format_sql: true
 
-  # Flyway 로컬 설정
   flyway:
-    url: jdbc:postgresql://localhost:5432/dearmidb
-    user: postgres
-    password: local1234
+    url: ${DB_URL}
+    user: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
 
 # 로컬 환경 상세 로깅
 logging:
@@ -46,26 +42,31 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.orm.jdbc.bind: TRACE
 
-# AWS (로컬 테스트용 플레이스홀더 - 실제 값 없이 앱 기동 가능, S3 호출 시에는 실패)
+# AWS (로컬 테스트용 — S3 호출 시 실제 키 필요)
 aws:
   s3:
-    bucket: dearmi-dev-bucket
-    region: ap-northeast-2
+    bucket: ${AWS_S3_BUCKET}
+    region: ${AWS_REGION:ap-northeast-2}
   credentials:
-    access-key: REPLACE_ME_AWS_ACCESS_KEY
-    secret-key: REPLACE_ME_AWS_SECRET_KEY
+    access-key: ${AWS_ACCESS_KEY}
+    secret-key: ${AWS_SECRET_KEY}
 
-# Claude API (로컬 테스트용 플레이스홀더)
+# 약학정보원 API
+drug-info:
+  api-key: ${DRUG_INFO_API_KEY}
+  api-url: https://apis.data.go.kr/1471000/DrbEasyDrugInfoService
+
+# Claude API
 claude:
-  api-key: REPLACE_ME_CLAUDE_API_KEY
+  api-key: ${CLAUDE_API_KEY}
   api-url: https://api.anthropic.com/v1/messages
 
-# 암호화 키 (로컬 테스트용 - 운영에서는 AWS Secrets Manager로 주입)
+# 암호화 키
 encryption:
-  key: local-dev-encryption-key-for-testing-only
+  key: ${ENCRYPTION_KEY}
 
-# JWT 설정 (로컬 테스트용 - 운영에서는 환경변수로 주입)
+# JWT
 jwt:
-  secret: local-dev-secret-key-must-be-at-least-256-bits-long-for-hs256
+  secret: ${JWT_SECRET}
   access-token-expiry-ms: 3600000    # 1시간
   refresh-token-expiry-ms: 604800000 # 7일

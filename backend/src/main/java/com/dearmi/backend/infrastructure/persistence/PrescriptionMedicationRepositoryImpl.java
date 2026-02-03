@@ -5,6 +5,7 @@ import com.dearmi.backend.domain.prescription.PrescriptionMedicationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,5 +34,10 @@ public class PrescriptionMedicationRepositoryImpl implements PrescriptionMedicat
     @Override
     public void deleteByPrescriptionId(UUID prescriptionId) {
         jpa.deleteByPrescriptionId(prescriptionId);
+    }
+
+    @Override
+    public Optional<PrescriptionMedication> findCachedByDrugName(String drugName, LocalDateTime threshold) {
+        return jpa.findCachedByDrugName(drugName, threshold);
     }
 }

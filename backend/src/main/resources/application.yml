@@ -71,6 +71,11 @@ aws:
     access-key: ${AWS_ACCESS_KEY}
     secret-key: ${AWS_SECRET_KEY}
 
+# 약학정보원 e약은요 API
+drug-info:
+  api-key: ${DRUG_INFO_API_KEY}
+  api-url: https://apis.data.go.kr/1471000/DrbEasyDrugInfoService
+
 # Claude API 설정 (처방전 OCR)
 claude:
   api-key: ${CLAUDE_API_KEY}

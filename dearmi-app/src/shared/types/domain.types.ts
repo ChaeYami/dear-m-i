@@ -89,6 +89,9 @@ export interface TimelinePrescription {
 
 export type TimelineItem = TimelineRecord | TimelinePrescription;
 
+/** 처방전 OCR 처리 상태 */
+export type OcrStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+
 /** 처방전 */
 export interface Prescription {
   id: number;
@@ -96,6 +99,7 @@ export interface Prescription {
   imageUrl?: string;
   hospitalName?: string;
   prescribedAt?: string;
+  ocrStatus?: OcrStatus;
   medications: PrescriptionMedication[];
   createdAt: string;
   updatedAt: string;
@@ -108,6 +112,25 @@ export interface PrescriptionMedication {
   dosage?: string;
   frequency?: string;
   durationDays?: number;
+}
+
+/** 처방전 생성 요청 (S3 업로드 완료 후) */
+export interface CreatePrescriptionRequest {
+  s3Key: string;
+  prescribedAt: string; // YYYY-MM-DD
+  scheduleId?: number;
+}
+
+/** 처방전 수정 요청 (OCR 결과 확인 후 저장) */
+export interface SavePrescriptionRequest {
+  hospitalName?: string;
+  prescribedAt?: string;
+  medications: Array<{
+    medicationName: string;
+    dosage?: string;
+    frequency?: string;
+    durationDays?: number;
+  }>;
 }
 
 /** 감정 체크인 */

@@ -1,1 +1,1 @@
-// barrel export
+export * from './usePrescription';

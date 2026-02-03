@@ -1,0 +1,403 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  SafeAreaView,
+  ActivityIndicator,
+} from 'react-native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import { colors, sizes } from '@/constants';
+import {
+  usePrescriptionDetail,
+  useSavePrescription,
+} from '@/features/prescription/hooks/usePrescription';
+import type { PrescriptionStackParamList } from '@/navigation/PrescriptionNavigator';
+
+type Nav = StackNavigationProp<PrescriptionStackParamList, 'OcrResult'>;
+type Route = RouteProp<PrescriptionStackParamList, 'OcrResult'>;
+
+// ─── 편집 가능한 약품 항목 타입 ───────────────────────────────────────────────
+
+interface EditableMedication {
+  key: string; // FlatList key (id or temp key)
+  medicationName: string;
+  dosage: string;
+  frequency: string;
+  durationDays: string;
+}
+
+let tempKeyCounter = 0;
+const newMedication = (): EditableMedication => ({
+  key: `new-${++tempKeyCounter}`,
+  medicationName: '',
+  dosage: '',
+  frequency: '',
+  durationDays: '',
+});
+
+// ─── 상태별 UI ────────────────────────────────────────────────────────────────
+
+const PendingView: React.FC = () => (
+  <View style={styles.statusWrap}>
+    <ActivityIndicator size="large" color={colors.primary} />
+    <Text style={styles.statusTitle}>처방전을 분석 중입니다…</Text>
+    <Text style={styles.statusSub}>잠시만 기다려 주세요</Text>
+  </View>
+);
+
+const FailedView: React.FC<{ onManualEntry: () => void }> = ({ onManualEntry }) => (
+  <View style={styles.statusWrap}>
+    <Text style={styles.failIcon}>⚠️</Text>
+    <Text style={styles.statusTitle}>자동 인식에 실패했습니다</Text>
+    <Text style={styles.statusSub}>직접 입력해서 저장할 수 있어요</Text>
+    <TouchableOpacity style={styles.manualEntryBtn} onPress={onManualEntry} activeOpacity={0.8}>
+      <Text style={styles.manualEntryBtnText}>직접 입력하기</Text>
+    </TouchableOpacity>
+  </View>
+);
+
+// ─── 약품 편집 행 ─────────────────────────────────────────────────────────────
+
+const MedicationRow: React.FC<{
+  item: EditableMedication;
+  index: number;
+  onChange: (index: number, field: keyof EditableMedication, value: string) => void;
+  onRemove: (index: number) => void;
+}> = ({ item, index, onChange, onRemove }) => (
+  <View style={styles.medRow}>
+    <View style={styles.medRowHeader}>
+      <Text style={styles.medRowIndex}>#{index + 1}</Text>
+      <TouchableOpacity onPress={() => onRemove(index)} hitSlop={8}>
+        <Text style={styles.removeBtn}>✕</Text>
+      </TouchableOpacity>
+    </View>
+    <TextInput
+      style={styles.medInput}
+      placeholder="약품명 *"
+      placeholderTextColor={colors.text.disabled}
+      value={item.medicationName}
+      onChangeText={(v) => onChange(index, 'medicationName', v)}
+    />
+    <View style={styles.medInputRow}>
+      <TextInput
+        style={[styles.medInput, styles.medInputHalf]}
+        placeholder="용량 (예: 10mg)"
+        placeholderTextColor={colors.text.disabled}
+        value={item.dosage}
+        onChangeText={(v) => onChange(index, 'dosage', v)}
+      />
+      <TextInput
+        style={[styles.medInput, styles.medInputHalf]}
+        placeholder="용법 (예: 1일 2회)"
+        placeholderTextColor={colors.text.disabled}
+        value={item.frequency}
+        onChangeText={(v) => onChange(index, 'frequency', v)}
+      />
+    </View>
+    <TextInput
+      style={[styles.medInput, styles.medInputShort]}
+      placeholder="투약일수 (예: 7)"
+      placeholderTextColor={colors.text.disabled}
+      value={item.durationDays}
+      onChangeText={(v) => onChange(index, 'durationDays', v)}
+      keyboardType="numeric"
+    />
+  </View>
+);
+
+// ─── 메인 화면 ────────────────────────────────────────────────────────────────
+
+export const OcrResultScreen: React.FC = () => {
+  const navigation = useNavigation<Nav>();
+  const { prescriptionId } = useRoute<Route>().params;
+
+  const { data: prescription, isLoading } = usePrescriptionDetail(prescriptionId, true);
+  const { mutate: savePrescription, isPending: isSaving } = useSavePrescription();
+
+  const [hospitalName, setHospitalName] = useState('');
+  const [prescribedAt, setPrescribedAt] = useState('');
+  const [medications, setMedications] = useState<EditableMedication[]>([]);
+  const [editMode, setEditMode] = useState(false); // FAILED → 수동 입력 모드
+
+  // OCR COMPLETED 시 약품 목록 초기화
+  useEffect(() => {
+    if (prescription?.ocrStatus === 'COMPLETED') {
+      setHospitalName(prescription.hospitalName ?? '');
+      setPrescribedAt(prescription.prescribedAt ?? '');
+      setMedications(
+        prescription.medications.map((m) => ({
+          key: String(m.id),
+          medicationName: m.medicationName,
+          dosage: m.dosage ?? '',
+          frequency: m.frequency ?? '',
+          durationDays: m.durationDays !== undefined ? String(m.durationDays) : '',
+        }))
+      );
+    }
+    if (prescription?.ocrStatus === 'FAILED') {
+      setMedications([newMedication()]);
+    }
+  }, [prescription?.ocrStatus]);
+
+  const handleChangeMed = (index: number, field: keyof EditableMedication, value: string) => {
+    setMedications((prev) =>
+      prev.map((m, i) => (i === index ? { ...m, [field]: value } : m))
+    );
+  };
+
+  const handleAddMed = () => setMedications((prev) => [...prev, newMedication()]);
+
+  const handleRemoveMed = (index: number) => {
+    if (medications.length === 1) return; // 최소 1개 유지
+    setMedications((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSave = () => {
+    const invalid = medications.some((m) => !m.medicationName.trim());
+    if (invalid) {
+      Alert.alert('입력 오류', '약품명을 모두 입력해 주세요.');
+      return;
+    }
+
+    savePrescription(
+      {
+        id: prescriptionId,
+        data: {
+          hospitalName: hospitalName.trim() || undefined,
+          prescribedAt: prescribedAt || undefined,
+          medications: medications.map((m) => ({
+            medicationName: m.medicationName.trim(),
+            dosage: m.dosage.trim() || undefined,
+            frequency: m.frequency.trim() || undefined,
+            durationDays: m.durationDays ? Number(m.durationDays) : undefined,
+          })),
+        },
+      },
+      {
+        onSuccess: () => {
+          Alert.alert('저장 완료', '처방전이 저장되었습니다.', [
+            { text: '확인', onPress: () => navigation.navigate('PrescriptionTab') },
+          ]);
+        },
+      }
+    );
+  };
+
+  const ocrStatus = prescription?.ocrStatus;
+  const showEditor =
+    ocrStatus === 'COMPLETED' || ocrStatus === 'FAILED' || editMode;
+
+  return (
+    <SafeAreaView style={styles.container}>
+      {/* 헤더 */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
+          <Text style={styles.backBtn}>‹  뒤로</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>OCR 결과</Text>
+        {showEditor ? (
+          <TouchableOpacity onPress={handleSave} disabled={isSaving} hitSlop={12}>
+            <Text style={[styles.saveBtn, isSaving && styles.saveBtnDisabled]}>
+              {isSaving ? '저장 중…' : '저장'}
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 48 }} />
+        )}
+      </View>
+
+      {/* 본문 */}
+      {isLoading || ocrStatus === 'PENDING' || ocrStatus === 'PROCESSING' ? (
+        <PendingView />
+      ) : ocrStatus === 'FAILED' && !editMode ? (
+        <FailedView onManualEntry={() => setEditMode(true)} />
+      ) : (
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          {/* 기본 정보 */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>기본 정보</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="병원명 (선택)"
+              placeholderTextColor={colors.text.disabled}
+              value={hospitalName}
+              onChangeText={setHospitalName}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="처방일 (예: 2025-01-15)"
+              placeholderTextColor={colors.text.disabled}
+              value={prescribedAt}
+              onChangeText={setPrescribedAt}
+            />
+          </View>
+
+          {/* 약품 목록 */}
+          <View style={styles.section}>
+            <View style={styles.sectionTitleRow}>
+              <Text style={styles.sectionTitle}>약품 목록</Text>
+              <Text style={styles.sectionCount}>{medications.length}종</Text>
+            </View>
+
+            {medications.map((med, index) => (
+              <MedicationRow
+                key={med.key}
+                item={med}
+                index={index}
+                onChange={handleChangeMed}
+                onRemove={handleRemoveMed}
+              />
+            ))}
+
+            <TouchableOpacity style={styles.addMedBtn} onPress={handleAddMed} activeOpacity={0.8}>
+              <Text style={styles.addMedBtnText}>+ 약품 추가</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      )}
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
+  header: {
+    height: sizes.headerHeight,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: sizes.spacing.lg,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  backBtn: { fontSize: sizes.font.md, color: colors.primary, fontWeight: sizes.fontWeight.medium },
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: sizes.font.lg,
+    fontWeight: sizes.fontWeight.bold,
+    color: colors.text.primary,
+  },
+  saveBtn: {
+    fontSize: sizes.font.md,
+    fontWeight: sizes.fontWeight.semibold,
+    color: colors.primary,
+  },
+  saveBtnDisabled: { opacity: 0.4 },
+  // 상태 화면
+  statusWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: sizes.spacing.md,
+    padding: sizes.spacing.xl,
+  },
+  failIcon: { fontSize: 48 },
+  statusTitle: {
+    fontSize: sizes.font.lg,
+    fontWeight: sizes.fontWeight.bold,
+    color: colors.text.primary,
+    textAlign: 'center',
+  },
+  statusSub: {
+    fontSize: sizes.font.md,
+    color: colors.text.secondary,
+    textAlign: 'center',
+  },
+  manualEntryBtn: {
+    marginTop: sizes.spacing.sm,
+    backgroundColor: colors.primary,
+    borderRadius: sizes.radius.md,
+    paddingVertical: sizes.spacing.md,
+    paddingHorizontal: sizes.spacing.xl,
+  },
+  manualEntryBtnText: {
+    fontSize: sizes.font.md,
+    fontWeight: sizes.fontWeight.semibold,
+    color: colors.text.onPrimary,
+  },
+  // 편집기
+  content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg, paddingBottom: 40 },
+  section: { gap: sizes.spacing.md },
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.sm },
+  sectionTitle: {
+    fontSize: sizes.font.md,
+    fontWeight: sizes.fontWeight.bold,
+    color: colors.text.primary,
+  },
+  sectionCount: {
+    fontSize: sizes.font.sm,
+    color: colors.text.secondary,
+    backgroundColor: colors.border,
+    paddingHorizontal: sizes.spacing.sm,
+    paddingVertical: 2,
+    borderRadius: sizes.radius.full,
+  },
+  input: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: sizes.radius.md,
+    paddingHorizontal: sizes.spacing.md,
+    paddingVertical: sizes.spacing.md,
+    fontSize: sizes.font.md,
+    color: colors.text.primary,
+  },
+  // 약품 행
+  medRow: {
+    backgroundColor: colors.surface,
+    borderRadius: sizes.radius.lg,
+    padding: sizes.spacing.md,
+    gap: sizes.spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  medRowHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  medRowIndex: {
+    fontSize: sizes.font.sm,
+    fontWeight: sizes.fontWeight.semibold,
+    color: colors.text.secondary,
+  },
+  removeBtn: {
+    fontSize: sizes.font.md,
+    color: colors.error,
+    fontWeight: sizes.fontWeight.bold,
+    padding: 2,
+  },
+  medInput: {
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: sizes.radius.sm,
+    paddingHorizontal: sizes.spacing.sm,
+    paddingVertical: sizes.spacing.sm,
+    fontSize: sizes.font.sm,
+    color: colors.text.primary,
+  },
+  medInputRow: { flexDirection: 'row', gap: sizes.spacing.sm },
+  medInputHalf: { flex: 1 },
+  medInputShort: { width: 140 },
+  addMedBtn: {
+    borderWidth: 1.5,
+    borderColor: colors.secondary,
+    borderStyle: 'dashed',
+    borderRadius: sizes.radius.md,
+    paddingVertical: sizes.spacing.md,
+    alignItems: 'center',
+  },
+  addMedBtnText: {
+    fontSize: sizes.font.md,
+    color: colors.secondary,
+    fontWeight: sizes.fontWeight.semibold,
+  },
+});

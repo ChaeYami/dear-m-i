@@ -39,6 +39,12 @@ export interface TokenRefreshResponse {
   refreshToken: string;
 }
 
+/** S3 Presigned URL 응답 */
+export interface PresignedUrlResponse {
+  s3Key: string;
+  uploadUrl: string;
+}
+
 /** 타임라인 커서 페이지 응답 */
 export interface TimelineResponse {
   items: import('./domain.types').TimelineItem[];
