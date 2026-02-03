@@ -53,6 +53,8 @@ dearmi/
 | Medication | GetDetail(e약은요) — `/api/v1/medications/{id}` |
 | MedicationSchedule | CRUD + Today + History + Stats + Check — `/api/v1/medication-schedules` |
 | Notification | GetSettings, UpdateSettings, UpdateFcmToken — `/api/v1/notifications` |
+| PrepNote | CRUD — `GET /api/v1/prep-notes?scheduleId=`, POST, PUT /{id}, DELETE /{id} |
+| Search | 통합 검색 (Record·Checkin·PrepNote) — `GET /api/v1/search?q=&types=&page=` |
 
 DB 마이그레이션: V1(초기 스키마) → V2(복약 타임슬롯) → V3(알림·체크인·복약 컬럼)
 
@@ -61,13 +63,14 @@ DB 마이그레이션: V1(초기 스키마) → V2(복약 타임슬롯) → V3(�
 | Feature | 화면 |
 |---|---|
 | auth | LoginScreen (Google/Apple OAuth2) |
-| schedule | ScheduleTab, ScheduleDetail, ScheduleForm |
+| schedule | ScheduleTab, ScheduleDetail, ScheduleForm, PrepNoteList, PrepNoteForm |
 | record | RecordTab (타임라인), RecordForm |
 | prescription | PrescriptionTab (아코디언), PrescriptionUpload, OcrResult |
 | medication | MedicationDetail (약품 상세), MedicationHome, MedicationForm, MedicationHistory |
 | notification | NotificationSettingsScreen |
 | mypage | MyPageScreen (프로필 + 메뉴), MyPageNavigator |
 | subscription | PaywallScreen (skeleton) |
+| 공통 | SearchScreen (RootNavigator 모달) |
 
 ### 미구현
 
