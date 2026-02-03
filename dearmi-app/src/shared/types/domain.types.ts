@@ -265,3 +265,38 @@ export interface CreatePrepNoteRequest {
 export interface UpdatePrepNoteRequest {
   content: string;
 }
+
+// ─── 통합 검색 ─────────────────────────────────────────────────────────────────
+
+export interface SearchRecordItem {
+  id: string; // UUID
+  scheduleId?: string | null;
+  emotionScore?: number;
+  content: string;
+  tags?: string[];
+  createdAt: string;
+}
+
+export interface SearchCheckinItem {
+  id: string;
+  checkedAt: string; // YYYY-MM-DD
+  emotionScore?: number;
+  memo?: string;
+  createdAt: string;
+}
+
+export interface SearchPrepNoteItem {
+  id: string;
+  scheduleId?: string | null;
+  content: string;
+  createdAt: string;
+}
+
+export interface SearchResponse {
+  records: SearchRecordItem[];
+  recordTotal: number;
+  checkins: SearchCheckinItem[];
+  checkinTotal: number;
+  prepNotes: SearchPrepNoteItem[];
+  prepNoteTotal: number;
+}

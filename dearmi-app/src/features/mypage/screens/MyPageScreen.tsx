@@ -8,13 +8,17 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, CompositeNavigationProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { colors, sizes } from '@/constants';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import type { MyPageStackParamList } from '@/navigation/MyPageNavigator';
+import type { RootStackParamList } from '@/navigation/RootNavigator';
 
-type Nav = StackNavigationProp<MyPageStackParamList, 'MyPageTab'>;
+type Nav = CompositeNavigationProp<
+  StackNavigationProp<MyPageStackParamList, 'MyPageTab'>,
+  StackNavigationProp<RootStackParamList>
+>;
 
 interface MenuItemProps {
   icon: string;
@@ -51,6 +55,9 @@ export const MyPageScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>마이페이지</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Search')} hitSlop={8}>
+          <Text style={styles.headerSearchIcon}>🔍</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
@@ -115,11 +122,16 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   header: {
     height: sizes.headerHeight,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: sizes.spacing.lg,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+  },
+  headerSearchIcon: {
+    fontSize: 22,
   },
   headerTitle: {
     fontSize: sizes.font.xl,

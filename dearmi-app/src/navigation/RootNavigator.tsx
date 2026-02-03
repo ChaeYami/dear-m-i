@@ -12,6 +12,7 @@ import { InAppNotificationBanner } from '@/shared/components/InAppNotificationBa
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import { OfflineBanner } from '@/shared/components/OfflineBanner';
 import { PaywallScreen } from '@/features/subscription/screens/PaywallScreen';
+import { SearchScreen } from '@/features/search/screens/SearchScreen';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { authApi } from '@/features/auth/api';
 import axiosInstance from '@/shared/api/axiosInstance';
@@ -32,6 +33,7 @@ export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
   Paywall: undefined;
+  Search: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -180,6 +182,11 @@ export const RootNavigator: React.FC = () => {
         <Stack.Screen
           name="Paywall"
           component={PaywallScreen}
+          options={{ presentation: 'modal' } as any}
+        />
+        <Stack.Screen
+          name="Search"
+          component={SearchScreen}
           options={{ presentation: 'modal' } as any}
         />
       </Stack.Navigator>

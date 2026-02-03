@@ -23,6 +23,9 @@ export const CACHE_KEYS = {
   SCHEDULE_LIST: 'schedule_list',
   RECORD_LIST: 'record_list',
   PRESCRIPTION_LIST: 'prescription_list',
+
+  // 검색
+  RECENT_SEARCHES: 'recent_searches',
 } as const;
 
 /** React Query 쿼리 키 팩토리 */
@@ -52,6 +55,9 @@ export const QUERY_KEYS = {
   prescriptions: () => ['prescriptions'] as const,
   prescription: (id: number) => ['prescription', id] as const,
   medicationDetail: (id: number) => ['medication', id] as const,
+
+  // 통합 검색
+  search: (keyword: string) => ['search', keyword] as const,
 
   // 진료 준비 메모
   prepNotes: () => ['prepNotes'] as const,
