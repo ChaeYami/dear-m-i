@@ -1,7 +1,8 @@
 import axiosInstance from '@/shared/api/axiosInstance';
-import type { ApiResponse, PresignedUrlResponse } from '@/shared/types/api.types';
+import type { ApiResponse, PagedResponse, PresignedUrlResponse } from '@/shared/types/api.types';
 import type {
   Prescription,
+  PrescriptionMedication,
   CreatePrescriptionRequest,
   SavePrescriptionRequest,
 } from '@/shared/types/domain.types';
@@ -46,9 +47,19 @@ export const prescriptionApi = {
   createPrescription: (data: CreatePrescriptionRequest) =>
     axiosInstance.post<ApiResponse<Prescription>>('/api/v1/prescriptions', data),
 
-  /** 처방전 목록 */
+  /** 처방전 목록 (단순) */
   getPrescriptions: () =>
     axiosInstance.get<ApiResponse<Prescription[]>>('/api/v1/prescriptions'),
+
+  /** 처방전 목록 페이징 (무한 스크롤용) */
+  getPrescriptionsPaged: (page: number, size = 20) =>
+    axiosInstance.get<ApiResponse<PagedResponse<Prescription>>>('/api/v1/prescriptions', {
+      params: { page, size },
+    }),
+
+  /** 약품 상세 (e약은요 정보 포함) */
+  getMedicationDetail: (id: number) =>
+    axiosInstance.get<ApiResponse<PrescriptionMedication>>(`/api/v1/prescription-medications/${id}`),
 
   /** 처방전 상세 (OCR 상태 포함) */
   getPrescription: (id: number) =>

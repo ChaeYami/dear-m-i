@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/constants/cacheKeys';
 import { prescriptionApi } from '@/features/prescription/api';
 import type { SavePrescriptionRequest } from '@/shared/types/domain.types';
@@ -6,7 +6,7 @@ import type { SavePrescriptionRequest } from '@/shared/types/domain.types';
 const OCR_POLL_INTERVAL_MS = 2000;
 const OCR_TIMEOUT_MS = 90_000;
 
-/** 처방전 목록 */
+/** 처방전 목록 (단순, 소량일 때) */
 export const usePrescriptions = () =>
   useQuery({
     queryKey: QUERY_KEYS.prescriptions(),
@@ -14,6 +14,29 @@ export const usePrescriptions = () =>
       const { data } = await prescriptionApi.getPrescriptions();
       return data.data ?? [];
     },
+  });
+
+/** 처방전 목록 무한 스크롤 (page 기반) */
+export const usePagedPrescriptions = () =>
+  useInfiniteQuery({
+    queryKey: [...QUERY_KEYS.prescriptions(), 'paged'],
+    queryFn: async ({ pageParam }) => {
+      const { data } = await prescriptionApi.getPrescriptionsPaged(pageParam as number);
+      return data.data ?? { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0, hasNext: false };
+    },
+    initialPageParam: 0 as number,
+    getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.page + 1 : undefined),
+  });
+
+/** 약품 상세 (e약은요 정보) */
+export const useMedicationDetail = (id: number) =>
+  useQuery({
+    queryKey: QUERY_KEYS.medicationDetail(id),
+    queryFn: async () => {
+      const { data } = await prescriptionApi.getMedicationDetail(id);
+      return data.data ?? null;
+    },
+    enabled: id > 0,
   });
 
 /**

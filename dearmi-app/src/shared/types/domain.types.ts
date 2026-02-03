@@ -105,13 +105,18 @@ export interface Prescription {
   updatedAt: string;
 }
 
-/** 처방 약품 */
+/** 처방 약품 (e약은요 API 데이터 포함) */
 export interface PrescriptionMedication {
   id: number;
   medicationName: string;
+  manufacturer?: string;
   dosage?: string;
   frequency?: string;
   durationDays?: number;
+  // 약학정보원(e약은요) 비동기 조회 결과
+  drugEffect?: string;       // 효능·효과
+  drugCaution?: string;      // 주의사항
+  drugInfoFetchedAt?: string; // null이면 아직 미조회 (스켈레톤 표시)
 }
 
 /** 처방전 생성 요청 (S3 업로드 완료 후) */
