@@ -1,13 +1,14 @@
 # DearMI — Entity Relationship Diagram
 
 > V1 ~ V6 마이그레이션 기준 전체 DB 스키마
+>
+> 공통 컬럼(`created_at`, `updated_at`)은 모든 테이블에 존재하나 가독성을 위해 생략.
+> `deleted_at`은 소프트 삭제 대상 테이블만 별도 표기.
+
+## 1. 진료 도메인 (일정 · 상담 · 준비 메모)
 
 ```mermaid
 erDiagram
-
-    %% ──────────────────────────────────────────────
-    %% users (V1 + V6)
-    %% ──────────────────────────────────────────────
     users {
         UUID id PK
         VARCHAR email UK
@@ -15,81 +16,80 @@ erDiagram
         VARCHAR oauth_provider
         VARCHAR oauth_provider_id
         VARCHAR fcm_token
-        VARCHAR preferred_locale "default 'ko' (V6)"
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
+        VARCHAR preferred_locale "default ko"
         TIMESTAMP deleted_at
     }
 
-    %% ──────────────────────────────────────────────
-    %% hospital_schedules
-    %% ──────────────────────────────────────────────
     hospital_schedules {
         UUID id PK
         UUID user_id FK
         VARCHAR hospital_name
         TIMESTAMP scheduled_at
         TEXT memo
-        VARCHAR status "default 'SCHEDULED'"
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
+        VARCHAR status "SCHEDULED"
         TIMESTAMP deleted_at
     }
 
-    %% ──────────────────────────────────────────────
-    %% counseling_records
-    %% ──────────────────────────────────────────────
     counseling_records {
         UUID id PK
         UUID user_id FK
-        UUID schedule_id FK "ON DELETE SET NULL"
+        UUID schedule_id FK "SET NULL"
         SMALLINT emotion_score "1-10"
-        TEXT content "AES-256-GCM 암호화"
-        VARCHAR tags "JSON 배열"
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
+        TEXT content "AES-256-GCM"
+        VARCHAR tags "JSON array"
         TIMESTAMP deleted_at
     }
 
-    %% ──────────────────────────────────────────────
-    %% daily_checkins (V1 + V5)
-    %% ──────────────────────────────────────────────
+    prep_notes {
+        UUID id PK
+        UUID user_id FK
+        UUID schedule_id FK "SET NULL"
+        TEXT content
+        TIMESTAMP deleted_at
+    }
+
     daily_checkins {
         UUID id PK
         UUID user_id FK
-        DATE checked_at "UQ(user_id, checked_at)"
+        DATE checked_at "UQ user+date"
         SMALLINT emotion_score "1-10"
         TEXT memo
-        VARCHAR trigger_tags "V5"
-        DECIMAL sleep_hours "V5"
-        BOOLEAN took_medication "V5"
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
+        VARCHAR trigger_tags
+        DECIMAL sleep_hours
+        BOOLEAN took_medication
         TIMESTAMP deleted_at
     }
 
-    %% ──────────────────────────────────────────────
-    %% prescriptions
-    %% ──────────────────────────────────────────────
+    users ||--o{ hospital_schedules : "has"
+    users ||--o{ counseling_records : "has"
+    users ||--o{ prep_notes : "has"
+    users ||--o{ daily_checkins : "has"
+    hospital_schedules ||--o{ counseling_records : "schedule_id"
+    hospital_schedules ||--o{ prep_notes : "schedule_id"
+```
+
+## 2. 처방 · 복약 도메인
+
+```mermaid
+erDiagram
+    users {
+        UUID id PK
+    }
+
     prescriptions {
         UUID id PK
         UUID user_id FK
-        UUID schedule_id FK "ON DELETE SET NULL"
+        UUID schedule_id FK "SET NULL"
         VARCHAR s3_key
         TEXT ocr_raw_text
-        VARCHAR ocr_status "default 'PENDING'"
+        VARCHAR ocr_status "PENDING"
         DATE prescribed_at
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
         TIMESTAMP deleted_at
     }
 
-    %% ──────────────────────────────────────────────
-    %% prescription_medications
-    %% ──────────────────────────────────────────────
     prescription_medications {
         UUID id PK
-        UUID prescription_id FK "ON DELETE CASCADE"
+        UUID prescription_id FK "CASCADE"
         VARCHAR drug_name
         VARCHAR drug_code
         VARCHAR dosage
@@ -99,111 +99,85 @@ erDiagram
         TEXT drug_caution
         VARCHAR manufacturer
         TIMESTAMP drug_info_fetched_at
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
     }
 
-    %% ──────────────────────────────────────────────
-    %% medication_schedules (V1 + V2)
-    %% ──────────────────────────────────────────────
     medication_schedules {
         UUID id PK
         UUID user_id FK
-        UUID prescription_id FK "ON DELETE SET NULL"
-        UUID prescription_medication_id FK "V2, ON DELETE SET NULL"
+        UUID prescription_id FK "SET NULL"
+        UUID prescription_medication_id FK "SET NULL"
         VARCHAR drug_name
         VARCHAR dosage
         SMALLINT times_per_day
         DATE start_date
         DATE end_date
-        BOOLEAN morning "V2"
-        BOOLEAN afternoon "V2"
-        BOOLEAN evening "V2"
-        BOOLEAN bedtime "V2"
-        TIME morning_time "V2"
-        TIME afternoon_time "V2"
-        TIME evening_time "V2"
-        TIME bedtime_time "V2"
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
+        BOOLEAN morning
+        BOOLEAN afternoon
+        BOOLEAN evening
+        BOOLEAN bedtime
+        TIME morning_time
+        TIME afternoon_time
+        TIME evening_time
+        TIME bedtime_time
         TIMESTAMP deleted_at
     }
 
-    %% ──────────────────────────────────────────────
-    %% medication_logs (V1 + V2)
-    %% ──────────────────────────────────────────────
     medication_logs {
         UUID id PK
-        UUID medication_schedule_id FK "ON DELETE CASCADE"
+        UUID medication_schedule_id FK "CASCADE"
         UUID user_id FK
-        TIMESTAMP taken_at "nullable (V2)"
-        VARCHAR status "TAKEN / SKIPPED / MISSED"
-        DATE log_date "V2, UQ(schedule,date,slot)"
-        VARCHAR time_slot "V2, MORNING/AFTERNOON/EVENING/BEDTIME"
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
+        TIMESTAMP taken_at "nullable"
+        VARCHAR status "TAKEN SKIPPED MISSED"
+        DATE log_date "UQ sched+date+slot"
+        VARCHAR time_slot "MORNING etc"
     }
 
-    %% ──────────────────────────────────────────────
-    %% prep_notes
-    %% ──────────────────────────────────────────────
-    prep_notes {
+    users ||--o{ prescriptions : "has"
+    users ||--o{ medication_schedules : "has"
+    users ||--o{ medication_logs : "has"
+    prescriptions ||--o{ prescription_medications : "CASCADE"
+    prescriptions ||--o{ medication_schedules : "prescription_id"
+    prescription_medications ||--o{ medication_schedules : "pmed_id"
+    medication_schedules ||--o{ medication_logs : "CASCADE"
+```
+
+## 3. 인증 · 구독 · 결제 · 시스템
+
+```mermaid
+erDiagram
+    users {
         UUID id PK
-        UUID user_id FK
-        UUID schedule_id FK "ON DELETE SET NULL"
-        TEXT content
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
-        TIMESTAMP deleted_at
     }
 
-    %% ──────────────────────────────────────────────
-    %% notification_settings (V1 + V3)
-    %% ──────────────────────────────────────────────
+    refresh_tokens {
+        UUID id PK
+        UUID user_id FK "UK"
+        VARCHAR token_hash
+        TIMESTAMP expires_at
+    }
+
     notification_settings {
         UUID id PK
         UUID user_id FK "UK"
         BOOLEAN enabled "default true"
         BOOLEAN day_before "default true"
         BOOLEAN day_of "default true"
-        BOOLEAN checkin_enabled "V3, default true"
-        TIME checkin_time "V3, default 21:00"
-        BOOLEAN med_enabled "V3, default true"
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
+        BOOLEAN checkin_enabled "default true"
+        TIME checkin_time "default 21:00"
+        BOOLEAN med_enabled "default true"
     }
 
-    %% ──────────────────────────────────────────────
-    %% refresh_tokens
-    %% ──────────────────────────────────────────────
-    refresh_tokens {
-        UUID id PK
-        UUID user_id FK "UK"
-        VARCHAR token_hash
-        TIMESTAMP expires_at
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
-    }
-
-    %% ──────────────────────────────────────────────
-    %% subscriptions (V1 + V4)
-    %% ──────────────────────────────────────────────
     subscriptions {
         UUID id PK
         UUID user_id FK "UK"
-        VARCHAR plan "default 'FREE'"
+        VARCHAR plan "FREE or PREMIUM"
         TIMESTAMP started_at
         TIMESTAMP expires_at
-        VARCHAR payment_provider "V4"
-        VARCHAR original_transaction_id "V4"
-        BOOLEAN auto_renew "V4, default true"
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
+        VARCHAR payment_provider
+        VARCHAR original_transaction_id
+        BOOLEAN auto_renew "default true"
     }
 
-    %% ──────────────────────────────────────────────
-    %% subscription_histories (V1 + V4)
-    %% ──────────────────────────────────────────────
     subscription_histories {
         UUID id PK
         UUID user_id FK
@@ -211,15 +185,21 @@ erDiagram
         TIMESTAMP started_at
         TIMESTAMP ended_at
         VARCHAR payment_method
-        VARCHAR event "V4"
-        VARCHAR payment_provider "V4"
-        INTEGER amount "V4"
-        TIMESTAMP created_at
+        VARCHAR event
+        VARCHAR payment_provider
+        INTEGER amount
     }
 
-    %% ──────────────────────────────────────────────
-    %% audit_logs
-    %% ──────────────────────────────────────────────
+    payments_temp {
+        UUID id PK
+        UUID user_id FK
+        VARCHAR payment_key
+        VARCHAR order_id "UK"
+        INTEGER amount
+        VARCHAR status "PENDING"
+        VARCHAR plan_type
+    }
+
     audit_logs {
         UUID id PK
         UUID user_id "nullable"
@@ -227,77 +207,42 @@ erDiagram
         VARCHAR resource_type
         UUID resource_id
         VARCHAR ip_address
-        TIMESTAMP created_at
     }
 
-    %% ──────────────────────────────────────────────
-    %% payments_temp (V1 + V4)
-    %% ──────────────────────────────────────────────
-    payments_temp {
-        UUID id PK
-        UUID user_id FK
-        VARCHAR payment_key
-        VARCHAR order_id "UK (V4)"
-        INTEGER amount
-        VARCHAR status "default 'PENDING'"
-        VARCHAR plan_type "V4"
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
-    }
-
-    %% ──────────────────────────────────────────────
-    %% export_jobs
-    %% ──────────────────────────────────────────────
     export_jobs {
         UUID id PK
         UUID user_id FK
-        VARCHAR status "default 'PENDING'"
+        VARCHAR status "PENDING"
         VARCHAR s3_key
         TIMESTAMP expires_at
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
     }
 
-    %% ──────────────────────────────────────────────
-    %% app_versions (독립 테이블)
-    %% ──────────────────────────────────────────────
     app_versions {
         UUID id PK
-        VARCHAR platform "ios / android"
+        VARCHAR platform "ios android"
         VARCHAR min_version
         VARCHAR latest_version
         BOOLEAN force_update
         TEXT update_message_ko
         TEXT update_message_en
-        TIMESTAMP created_at
     }
 
-    %% ══════════════════════════════════════════════
-    %% Relationships
-    %% ══════════════════════════════════════════════
-
-    users ||--o{ hospital_schedules      : "has"
-    users ||--o{ counseling_records      : "has"
-    users ||--o{ daily_checkins          : "has"
-    users ||--o{ prescriptions           : "has"
-    users ||--o{ medication_schedules    : "has"
-    users ||--o{ medication_logs         : "has"
-    users ||--o{ prep_notes              : "has"
-    users ||--|| notification_settings   : "has (1:1)"
-    users ||--|| refresh_tokens          : "has (1:1)"
-    users ||--|| subscriptions           : "has (1:1)"
-    users ||--o{ subscription_histories  : "has"
-    users ||--o{ payments_temp           : "has"
-    users ||--o{ export_jobs             : "has"
-
-    hospital_schedules ||--o{ counseling_records  : "schedule_id (SET NULL)"
-    hospital_schedules ||--o{ prescriptions       : "schedule_id (SET NULL)"
-    hospital_schedules ||--o{ prep_notes          : "schedule_id (SET NULL)"
-
-    prescriptions ||--o{ prescription_medications : "CASCADE"
-    prescriptions ||--o{ medication_schedules     : "prescription_id (SET NULL)"
-
-    prescription_medications ||--o{ medication_schedules : "prescription_medication_id (SET NULL)"
-
-    medication_schedules ||--o{ medication_logs   : "CASCADE"
+    users ||--|| refresh_tokens : "1:1"
+    users ||--|| notification_settings : "1:1"
+    users ||--|| subscriptions : "1:1"
+    users ||--o{ subscription_histories : "has"
+    users ||--o{ payments_temp : "has"
+    users ||--o{ export_jobs : "has"
 ```
+
+## FK 삭제 정책 요약
+
+| 삭제 대상 | 연관 테이블 | 정책 |
+|---|---|---|
+| `hospital_schedules` | `counseling_records.schedule_id` | `SET NULL` |
+| `hospital_schedules` | `prescriptions.schedule_id` | `SET NULL` |
+| `hospital_schedules` | `prep_notes.schedule_id` | `SET NULL` |
+| `prescriptions` | `prescription_medications` | `CASCADE` |
+| `prescriptions` | `medication_schedules.prescription_id` | `SET NULL` |
+| `prescription_medications` | `medication_schedules.prescription_medication_id` | `SET NULL` |
+| `medication_schedules` | `medication_logs` | `CASCADE` |
