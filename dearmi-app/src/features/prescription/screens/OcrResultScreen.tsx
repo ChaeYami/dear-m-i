@@ -12,14 +12,20 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { CompositeNavigationProp } from '@react-navigation/native';
 import { colors, sizes } from '@/constants';
 import {
   usePrescriptionDetail,
   useSavePrescription,
 } from '@/features/prescription/hooks/usePrescription';
+import { useAuthStore } from '@/features/auth/store/authStore';
 import type { PrescriptionStackParamList } from '@/navigation/PrescriptionNavigator';
+import type { RootStackParamList } from '@/navigation/RootNavigator';
 
-type Nav = StackNavigationProp<PrescriptionStackParamList, 'OcrResult'>;
+type Nav = CompositeNavigationProp<
+  StackNavigationProp<PrescriptionStackParamList, 'OcrResult'>,
+  StackNavigationProp<RootStackParamList>
+>;
 type Route = RouteProp<PrescriptionStackParamList, 'OcrResult'>;
 
 // ─── 편집 가능한 약품 항목 타입 ───────────────────────────────────────────────
@@ -117,6 +123,8 @@ export const OcrResultScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const { prescriptionId } = useRoute<Route>().params;
 
+  const isPremium = useAuthStore((s) => s.user?.plan === 'PREMIUM');
+
   const { data: prescription, isLoading } = usePrescriptionDetail(prescriptionId, true);
   const { mutate: savePrescription, isPending: isSaving } = useSavePrescription();
 
@@ -159,6 +167,17 @@ export const OcrResultScreen: React.FC = () => {
   };
 
   const handleSave = () => {
+    if (!isPremium) {
+      Alert.alert(
+        '프리미엄 전용',
+        '처방전 저장은 프리미엄 플랜에서 이용할 수 있습니다.',
+        [
+          { text: '취소', style: 'cancel' },
+          { text: '업그레이드', onPress: () => navigation.navigate('Paywall') },
+        ]
+      );
+      return;
+    }
     const invalid = medications.some((m) => !m.medicationName.trim());
     if (invalid) {
       Alert.alert('입력 오류', '약품명을 모두 입력해 주세요.');

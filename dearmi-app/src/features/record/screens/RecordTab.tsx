@@ -10,14 +10,20 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { CompositeNavigationProp } from '@react-navigation/native';
 import { colors, sizes } from '@/constants';
 import { useTimeline } from '@/features/record/hooks/useRecord';
 import { getEmotionColor } from '@/shared/components/EmotionSlider';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
+import { useAuthStore } from '@/features/auth/store/authStore';
 import type { RecordStackParamList } from '@/navigation/RecordNavigator';
+import type { RootStackParamList } from '@/navigation/RootNavigator';
 import type { TimelineItem, TimelineRecord, TimelinePrescription } from '@/shared/types/domain.types';
 
-type Nav = StackNavigationProp<RecordStackParamList, 'RecordTab'>;
+type Nav = CompositeNavigationProp<
+  StackNavigationProp<RecordStackParamList, 'RecordTab'>,
+  StackNavigationProp<RootStackParamList>
+>;
 
 // ─── 날짜별 섹션 그룹핑 ──────────────────────────────────────────────────────
 
@@ -117,6 +123,7 @@ const EmotionBar: React.FC<{ score: number }> = ({ score }) => (
 
 export const RecordTab: React.FC = () => {
   const navigation = useNavigation<Nav>();
+  const isPremium = useAuthStore((s) => s.user?.plan === 'PREMIUM');
   const {
     data,
     fetchNextPage,
@@ -142,6 +149,18 @@ export const RecordTab: React.FC = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>진료 기록</Text>
       </View>
+
+      {/* FREE 플랜: 조회 기간 안내 배너 */}
+      {!isPremium && (
+        <View style={styles.freeBanner}>
+          <Text style={styles.freeBannerText}>
+            🔒 무료 플랜은 최근 2개월 기록만 조회됩니다.
+          </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Paywall')} hitSlop={8}>
+            <Text style={styles.freeBannerUpgrade}>업그레이드</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <SectionList
         sections={sections}
@@ -206,6 +225,27 @@ const styles = StyleSheet.create({
     fontSize: sizes.font.xl,
     fontWeight: sizes.fontWeight.bold,
     color: colors.text.primary,
+  },
+  freeBanner: {
+    backgroundColor: colors.warningLight,
+    paddingHorizontal: sizes.spacing.lg,
+    paddingVertical: sizes.spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.warning + '44',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  freeBannerText: {
+    fontSize: sizes.font.sm,
+    color: '#92400E',
+    flex: 1,
+  },
+  freeBannerUpgrade: {
+    fontSize: sizes.font.sm,
+    fontWeight: sizes.fontWeight.bold,
+    color: colors.primary,
+    marginLeft: sizes.spacing.sm,
   },
   listContent: { paddingBottom: 80 },
   emptyContainer: { flexGrow: 1 },

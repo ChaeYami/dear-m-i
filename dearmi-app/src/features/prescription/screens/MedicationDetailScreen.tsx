@@ -11,6 +11,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { colors, sizes } from '@/constants';
 import { useMedicationDetail } from '@/features/prescription/hooks/usePrescription';
+import { PremiumGate } from '@/shared/components/PremiumGate';
 import type { PrescriptionStackParamList } from '@/navigation/PrescriptionNavigator';
 
 type Nav = StackNavigationProp<PrescriptionStackParamList, 'MedicationDetail'>;
@@ -111,35 +112,37 @@ export const MedicationDetailScreen: React.FC = () => {
             </Section>
 
             {/* 3. 효능/효과 */}
-            <Section title="효능·효과">
-              {isDrugInfoPending ? (
-                <>
-                  <Text style={styles.fetchingText}>약품 정보를 불러오는 중입니다…</Text>
-                  <SkeletonBox height={14} style={{ marginTop: sizes.spacing.sm }} />
-                  <SkeletonBox height={14} width="85%" style={{ marginTop: sizes.spacing.sm }} />
-                  <SkeletonBox height={14} width="70%" style={{ marginTop: sizes.spacing.sm }} />
-                </>
-              ) : med.drugEffect ? (
-                <Text style={styles.bodyText}>{med.drugEffect}</Text>
-              ) : (
-                <Text style={styles.emptyFieldText}>정보 없음</Text>
-              )}
-            </Section>
+            <PremiumGate message="약품 효능·주의사항은 프리미엄 플랜에서 이용할 수 있어요">
+              <Section title="효능·효과">
+                {isDrugInfoPending ? (
+                  <>
+                    <Text style={styles.fetchingText}>약품 정보를 불러오는 중입니다…</Text>
+                    <SkeletonBox height={14} style={{ marginTop: sizes.spacing.sm }} />
+                    <SkeletonBox height={14} width="85%" style={{ marginTop: sizes.spacing.sm }} />
+                    <SkeletonBox height={14} width="70%" style={{ marginTop: sizes.spacing.sm }} />
+                  </>
+                ) : med.drugEffect ? (
+                  <Text style={styles.bodyText}>{med.drugEffect}</Text>
+                ) : (
+                  <Text style={styles.emptyFieldText}>정보 없음</Text>
+                )}
+              </Section>
 
-            {/* 4. 주의사항 — 경고 스타일 */}
-            <Section title="주의사항" warning>
-              {isDrugInfoPending ? (
-                <>
-                  <Text style={styles.fetchingText}>약품 정보를 불러오는 중입니다…</Text>
-                  <SkeletonBox height={14} style={{ marginTop: sizes.spacing.sm }} />
-                  <SkeletonBox height={14} width="90%" style={{ marginTop: sizes.spacing.sm }} />
-                </>
-              ) : med.drugCaution ? (
-                <Text style={styles.bodyText}>{med.drugCaution}</Text>
-              ) : (
-                <Text style={styles.emptyFieldText}>정보 없음</Text>
-              )}
-            </Section>
+              {/* 4. 주의사항 — 경고 스타일 */}
+              <Section title="주의사항" warning>
+                {isDrugInfoPending ? (
+                  <>
+                    <Text style={styles.fetchingText}>약품 정보를 불러오는 중입니다…</Text>
+                    <SkeletonBox height={14} style={{ marginTop: sizes.spacing.sm }} />
+                    <SkeletonBox height={14} width="90%" style={{ marginTop: sizes.spacing.sm }} />
+                  </>
+                ) : med.drugCaution ? (
+                  <Text style={styles.bodyText}>{med.drugCaution}</Text>
+                ) : (
+                  <Text style={styles.emptyFieldText}>정보 없음</Text>
+                )}
+              </Section>
+            </PremiumGate>
 
             {/* 마지막 조회 시각 */}
             {med.drugInfoFetchedAt && (

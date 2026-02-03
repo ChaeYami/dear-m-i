@@ -9,14 +9,19 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { CompositeNavigationProp } from '@react-navigation/native';
 import { colors, sizes } from '@/constants';
 import { useMedicationHistory } from '@/features/medication/hooks/useMedication';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import type { MyPageStackParamList } from '@/navigation/MyPageNavigator';
+import type { RootStackParamList } from '@/navigation/RootNavigator';
 import type { MedicationLogItem, TimeSlotType, MedicationLogStatus } from '@/shared/types/domain.types';
 
-type Nav = StackNavigationProp<MyPageStackParamList, 'MedicationHistory'>;
+type Nav = CompositeNavigationProp<
+  StackNavigationProp<MyPageStackParamList, 'MedicationHistory'>,
+  StackNavigationProp<RootStackParamList>
+>;
 
 const SLOT_LABELS: Record<TimeSlotType, string> = {
   MORNING: '아침', AFTERNOON: '점심', EVENING: '저녁', BEDTIME: '취침 전',
@@ -84,6 +89,12 @@ export const MedicationHistoryScreen: React.FC = () => {
           <Text style={styles.freeBannerText}>
             🔒 무료 플랜은 최근 30일 이력만 조회됩니다.
           </Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Paywall')}
+            hitSlop={8}
+          >
+            <Text style={styles.freeBannerUpgrade}>업그레이드</Text>
+          </TouchableOpacity>
         </View>
       )}
 
@@ -154,11 +165,20 @@ const styles = StyleSheet.create({
     paddingVertical: sizes.spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.warning + '44',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   freeBannerText: {
     fontSize: sizes.font.sm,
     color: '#92400E',
-    textAlign: 'center',
+    flex: 1,
+  },
+  freeBannerUpgrade: {
+    fontSize: sizes.font.sm,
+    fontWeight: sizes.fontWeight.bold,
+    color: colors.primary,
+    marginLeft: sizes.spacing.sm,
   },
   listContent: { paddingBottom: 40 },
   emptyContainer: { flexGrow: 1 },

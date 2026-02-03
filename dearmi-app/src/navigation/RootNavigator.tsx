@@ -14,6 +14,7 @@ import { OfflineBanner } from '@/shared/components/OfflineBanner';
 import { PaywallScreen } from '@/features/subscription/screens/PaywallScreen';
 import { SearchScreen } from '@/features/search/screens/SearchScreen';
 import { useAuthStore } from '@/features/auth/store/authStore';
+import { useSubscriptionStore } from '@/features/subscription/store/subscriptionStore';
 import { authApi } from '@/features/auth/api';
 import axiosInstance from '@/shared/api/axiosInstance';
 import type { ApiResponse, AppVersionResponse } from '@/shared/types/api.types';
@@ -55,6 +56,7 @@ export const RootNavigator: React.FC = () => {
   const [isForceUpdateBlocked, setIsForceUpdateBlocked] = useState(false);
   const [activeNotification, setActiveNotification] = useState<Notifications.Notification | null>(null);
   const { isAuthenticated, restoreTokens, setUser, logout } = useAuthStore();
+  const { fetchSubscription } = useSubscriptionStore();
 
   const notificationListener = useRef<Notifications.EventSubscription | null>(null);
   const responseListener = useRef<Notifications.EventSubscription | null>(null);
@@ -117,6 +119,12 @@ export const RootNavigator: React.FC = () => {
       const { data } = await authApi.getMe();
       if (data.success && data.data) {
         setUser(data.data);
+        // 구독 상태 초기화 (user.plan과 동기화)
+        fetchSubscription((plan) => {
+          if (data.data && data.data.plan !== plan) {
+            setUser({ ...data.data, plan });
+          }
+        });
       }
     } catch {
       await logout();

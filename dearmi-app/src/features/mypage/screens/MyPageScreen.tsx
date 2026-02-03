@@ -12,6 +12,7 @@ import { useNavigation, CompositeNavigationProp } from '@react-navigation/native
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { colors, sizes } from '@/constants';
 import { useAuthStore } from '@/features/auth/store/authStore';
+import { useSubscriptionStore } from '@/features/subscription/store/subscriptionStore';
 import type { MyPageStackParamList } from '@/navigation/MyPageNavigator';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
 
@@ -43,6 +44,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ icon, label, onPress, badge }) => (
 export const MyPageScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const { user, logout } = useAuthStore();
+  const { plan, expiresAt } = useSubscriptionStore();
 
   const handleLogout = () => {
     Alert.alert('로그아웃', '로그아웃 하시겠습니까?', [
@@ -78,6 +80,39 @@ export const MyPageScreen: React.FC = () => {
             </Text>
           </View>
         </View>
+
+        {/* 구독 상태 카드 */}
+        {plan === 'PREMIUM' ? (
+          <TouchableOpacity
+            style={[styles.subCard, styles.subCardPremium]}
+            onPress={() => navigation.navigate('SubscriptionManage')}
+            activeOpacity={0.85}
+          >
+            <View style={styles.subCardLeft}>
+              <Text style={styles.subCardBadge}>PREMIUM</Text>
+              <Text style={styles.subCardTitle}>프리미엄 구독 중</Text>
+              {expiresAt && (
+                <Text style={styles.subCardDesc}>
+                  {new Date(expiresAt).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })} 갱신
+                </Text>
+              )}
+            </View>
+            <Text style={styles.subCardArrow}>›</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.subCard}
+            onPress={() => navigation.navigate('Paywall')}
+            activeOpacity={0.85}
+          >
+            <View style={styles.subCardLeft}>
+              <Text style={styles.subCardBadgeGray}>FREE</Text>
+              <Text style={styles.subCardTitle}>프리미엄으로 업그레이드</Text>
+              <Text style={styles.subCardDesc}>OCR, 약품 정보, 전체 기록 이용</Text>
+            </View>
+            <Text style={styles.subCardArrow}>›</Text>
+          </TouchableOpacity>
+        )}
 
         {/* 기능 메뉴 */}
         <View style={styles.section}>
@@ -237,6 +272,45 @@ const styles = StyleSheet.create({
   },
   menuArrow: {
     fontSize: sizes.font.lg,
+    color: colors.text.disabled,
+  },
+  subCard: {
+    backgroundColor: colors.surface,
+    borderRadius: sizes.radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: sizes.spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  subCardPremium: {
+    borderColor: colors.primary + '55',
+    backgroundColor: colors.primary + '06',
+  },
+  subCardLeft: { flex: 1, gap: 3 },
+  subCardBadge: {
+    fontSize: sizes.font.xs,
+    fontWeight: sizes.fontWeight.bold,
+    color: colors.primary,
+    letterSpacing: 1,
+  },
+  subCardBadgeGray: {
+    fontSize: sizes.font.xs,
+    fontWeight: sizes.fontWeight.bold,
+    color: colors.text.disabled,
+    letterSpacing: 1,
+  },
+  subCardTitle: {
+    fontSize: sizes.font.md,
+    fontWeight: sizes.fontWeight.semibold,
+    color: colors.text.primary,
+  },
+  subCardDesc: {
+    fontSize: sizes.font.xs,
+    color: colors.text.secondary,
+  },
+  subCardArrow: {
+    fontSize: sizes.font.xl,
     color: colors.text.disabled,
   },
 });
