@@ -57,6 +57,6 @@ public class AuthController {
     public ResponseEntity<ApiResponse<UserResponse>> me(@AuthenticatedUserId UUID userId) {
         UserResult result = getCurrentUserUseCase.getCurrentUser(userId);
         return ResponseEntity.ok(ApiResponse.success(
-                new UserResponse(result.userId(), result.email(), result.name())));
+                new UserResponse(result.userId(), result.email(), result.name(), result.plan())));
     }
 }

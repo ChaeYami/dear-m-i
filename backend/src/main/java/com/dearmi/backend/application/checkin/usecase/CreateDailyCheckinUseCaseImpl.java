@@ -35,10 +35,15 @@ public class CreateDailyCheckinUseCaseImpl implements CreateDailyCheckinUseCase 
             }
         }
 
-        LocalDate today = LocalDate.now();
+        LocalDate targetDate = command.checkedAt() != null ? command.checkedAt() : LocalDate.now();
 
-        // UPSERT: 오늘 기록 있으면 UPDATE
-        return dailyCheckinRepository.findByUserIdAndCheckedAt(command.userId(), today)
+        // 미래 날짜 금지
+        if (targetDate.isAfter(LocalDate.now())) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "미래 날짜에는 기록할 수 없습니다.");
+        }
+
+        // UPSERT: 해당 날짜 기록 있으면 UPDATE
+        return dailyCheckinRepository.findByUserIdAndCheckedAt(command.userId(), targetDate)
                 .map(existing -> {
                     existing.update(
                             command.emotionScore(),
@@ -52,7 +57,7 @@ public class CreateDailyCheckinUseCaseImpl implements CreateDailyCheckinUseCase 
                 .orElseGet(() -> {
                     DailyCheckin checkin = DailyCheckin.builder()
                             .userId(command.userId())
-                            .checkedAt(today)
+                            .checkedAt(targetDate)
                             .emotionScore(command.emotionScore())
                             .triggerTags(command.triggerTags())
                             .memo(command.memo())

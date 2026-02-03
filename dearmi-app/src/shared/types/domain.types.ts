@@ -170,6 +170,8 @@ export interface CreateCheckinRequest {
   memo?: string;
   sleepHours?: number;
   tookMedication?: boolean;
+  /** 기록 날짜 (YYYY-MM-DD). 생략 시 서버에서 오늘 */
+  checkedAt?: string;
 }
 
 /** 7일 체크인 요약 */

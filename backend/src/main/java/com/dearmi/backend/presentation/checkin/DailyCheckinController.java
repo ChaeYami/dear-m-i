@@ -40,7 +40,8 @@ public class DailyCheckinController {
                 request.triggerTags(),
                 request.memo(),
                 request.sleepHours(),
-                request.tookMedication()
+                request.tookMedication(),
+                request.checkedAt()
         );
         return ApiResponse.success(
                 CheckinResponse.from(createDailyCheckinUseCase.createOrUpdate(command)));

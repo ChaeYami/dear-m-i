@@ -9,4 +9,4 @@ import java.util.UUID;
  * @param email  이메일
  * @param name   이름
  */
-public record UserResult(UUID userId, String email, String name) {}
+public record UserResult(UUID userId, String email, String name, String plan) {}
