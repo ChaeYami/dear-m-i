@@ -13,6 +13,10 @@ public interface DailyCheckinRepository {
 
     Optional<DailyCheckin> findByUserIdAndCheckedAt(UUID userId, LocalDate checkedAt);
 
+    /** 날짜 범위 조회 (startDate 이상, endDate 이하) */
+    List<DailyCheckin> findByUserIdAndCheckedAtBetweenOrderByCheckedAtDesc(
+            UUID userId, LocalDate startDate, LocalDate endDate);
+
     List<DailyCheckin> findByUserIdAndDeletedAtIsNullAndCheckedAtAfterOrderByCheckedAtDesc(UUID userId, LocalDate after);
 
     /** 오늘 체크인 여부 (알림 중복 방지) */

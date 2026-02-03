@@ -47,6 +47,12 @@ public class DailyCheckinRepositoryImpl implements DailyCheckinRepository {
     }
 
     @Override
+    public List<DailyCheckin> findByUserIdAndCheckedAtBetweenOrderByCheckedAtDesc(
+            UUID userId, LocalDate startDate, LocalDate endDate) {
+        return jpa.findByUserIdAndCheckedAtBetweenOrderByCheckedAtDesc(userId, startDate, endDate);
+    }
+
+    @Override
     public List<DailyCheckin> searchByKeyword(UUID userId, String keyword, LocalDate fromDate, int offset, int limit) {
         QDailyCheckin qc = QDailyCheckin.dailyCheckin;
         return queryFactory
