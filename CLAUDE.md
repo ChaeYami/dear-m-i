@@ -1,6 +1,3 @@
-# Dear Mi Backend - 개발 가이드라인
-
-
 # DearMI — Claude Code 공통 가이드
 
 > **Dear Me + I** | 멘탈 케어 진료 기록 앱  
@@ -15,7 +12,7 @@ dearmi/
 ├── CLAUDE.md         ← 항상 읽힘
 ├── backend/          Spring Boot 3
 │   └── CLAUDE.md
-└── app/              React Native (Expo)
+└── dearmi-app/       React Native (Expo)
     └── CLAUDE.md
 ```
 
@@ -36,10 +33,31 @@ dearmi/
 | 파일 저장 | AWS S3 (Presigned URL) |
 | 푸시 알림 | Firebase FCM (이것만 Firebase 사용) |
 | OCR | Claude Vision API — 백엔드에서만 호출 |
-| 약품 정보 | e약은요 Open API |
+| 약품 정보 | e약은요 Open API (DrbEasyDrugInfoService) |
 | 웹 결제 | 토스페이먼츠 (Android + 웹) |
 | 배포 | AWS ECS Fargate + RDS + S3 |
-| 시크릿 관리 | AWS Secrets Manager |
+| 시크릿 관리 | AWS Secrets Manager (운영) / .env (로컬) |
+
+---
+
+## 구현 완료 현황
+
+| 기능 | 상태 | 비고 |
+|---|---|---|
+| DB 스키마 + 도메인 레이어 | ✅ | Flyway 마이그레이션 완료 |
+| OAuth2 + JWT 인증 | ✅ | Google/Apple, Refresh Token Rotation |
+| 병원 일정 CRUD | ✅ | `GET/POST/PUT/DELETE /api/v1/schedules` |
+| 상담 기록 CRUD | ✅ | AES-256-GCM 암호화, 타임라인 페이지네이션 |
+| 처방전 OCR | ✅ | S3 업로드 → Claude Vision → 비동기 처리 |
+| 약학정보원 API 연동 | ✅ | e약은요, 30일 DB 캐시, OCR 완료 후 자동 조회 |
+| 약품 상세 조회 | ✅ | `GET /api/v1/medications/{id}` |
+| 처방전 앱 UI | ✅ | 업로드 → OCR 결과 확인 플로우 |
+| 복약 일정/로그 | 🔲 | 미구현 |
+| 하루 메모 | 🔲 | 미구현 |
+| 감정 체크인 | 🔲 | 미구현 |
+| 결제 / 구독 | 🔲 | 미구현 |
+| 알림 | 🔲 | 미구현 |
+| PDF 내보내기 | 🔲 | 미구현 |
 
 ---
 
@@ -52,9 +70,10 @@ dearmi/
 - `@Transactional`은 UseCase impl에만
 
 ### ② API 키 하드코딩 금지
-- 앱 코드(app/src/) 어디에도 API 키·시크릿 직접 작성 금지
+- 앱 코드(dearmi-app/src/) 어디에도 API 키·시크릿 직접 작성 금지
 - Claude API, 약학정보원, AWS, JWT 시크릿 → 백엔드 환경변수 또는 AWS Secrets Manager
 - 앱이 Claude API 필요 시 → 백엔드 API 호출, 백엔드가 Claude 호출
+- **로컬 개발**: `backend/.env` 파일에 관리 (gitignored). `.env.example` 참고
 
 ### ③ 앱 버전 체크는 서버에서
 - 앱 코드에 버전 비교 로직 하드코딩 금지
@@ -123,7 +142,7 @@ export_jobs, app_versions
 - Stripe 글로벌 웹 결제 (v1.1)
 - 반복 일정 (v1.1)
 
-
+---
 
 ## 프로젝트 구조 (클린 아키텍처)
 
@@ -149,12 +168,12 @@ infrastructure → application → domain
 ### Domain 레이어
 - Spring 프레임워크 의존성 **절대 금지**: `@Repository`, `@Service`, `@Component` 등
 - 허용: JPA 어노테이션 (`@Entity`, `@Column`), Jakarta 표준 어노테이션
-- Repository는 **interface만** 선언, 구현은 infrastructure/jpa/ 에서
+- Repository는 **interface만** 선언, 구현은 `infrastructure/persistence/` 에서
 
 ### Application 레이어
 - UseCase는 반드시 **interface + impl 분리**
-  - 예: `CreateLetterUseCase` (interface) + `CreateLetterUseCaseImpl` (impl)
-- Port interface 정의: 외부 의존성을 추상화
+  - 예: `CreateCounselingRecordUseCase` (interface) + `CreateCounselingRecordUseCaseImpl` (impl)
+- Port interface 정의: 외부 의존성을 추상화 (`StoragePort`, `PrescriptionOcrPort`, `DrugInfoPort`)
 
 ### Presentation 레이어
 - Controller는 **UseCase interface만 호출** (impl 직접 참조 금지)
@@ -163,7 +182,7 @@ infrastructure → application → domain
 
 ### Infrastructure 레이어
 - **외부 API 클라이언트는 반드시 `infrastructure/external/` 하위에만** 위치
-- Domain Repository interface를 구현하는 JPA 구현체는 `infrastructure/jpa/` 에
+- Domain Repository interface를 구현하는 JPA 구현체는 `infrastructure/persistence/` 에
 - AWS S3, 외부 서비스 등 모든 외부 통신은 `external/` 패키지에서만
 
 ---
@@ -172,9 +191,8 @@ infrastructure → application → domain
 
 ### API 키 / 시크릿 하드코딩 절대 금지
 - DB 패스워드, JWT Secret, AWS Key 등 **모든 민감 정보는 환경변수로 주입**
-- 로컬: `application-local.yml` (Git 커밋 가능하나 실제 운영 값 포함 금지)
-- 운영: 환경변수 (`${DB_PASSWORD}`, `${JWT_SECRET}` 등)
-- AWS Secrets Manager 활용 권장
+- 로컬: `backend/.env` (gitignored) — `cp .env.example .env` 후 값 채우기
+- 운영: 환경변수 (`${DB_PASSWORD}`, `${JWT_SECRET}` 등) / AWS Secrets Manager
 
 ### 잘못된 예 (절대 금지)
 ```java
@@ -197,18 +215,10 @@ private String secretKey;
 보안상 권한 없는 리소스와 존재하지 않는 리소스를 구분하지 않음:
 
 ```java
-// ✅ 올바른 처리: 권한 없는 타인 리소스 접근 시 404 반환
-public Letter getLetter(Long letterId, Long currentUserId) {
-    Letter letter = letterRepository.findById(letterId)
-            .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
-
-    // 타인 소유 리소스: 403 Forbidden 대신 404 Not Found 반환
-    // (리소스 존재 여부 자체를 노출하지 않음)
-    if (!letter.getOwnerId().equals(currentUserId)) {
-        throw new CustomException(ErrorCode.NOT_FOUND);
-    }
-    return letter;
-}
+// ✅ 올바른 처리: findByIdAndUserId 사용 — 없거나 타인 소유면 모두 404
+Prescription p = prescriptionRepository
+        .findByIdAndUserIdAndDeletedAtIsNull(id, userId)
+        .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 ```
 
 ---
