@@ -2,9 +2,10 @@ import axiosInstance from '@/shared/api/axiosInstance';
 import type { ApiResponse } from '@/shared/types/api.types';
 
 export interface NotificationSettings {
-  allNotificationsEnabled: boolean;
-  oneDayBeforeEnabled: boolean;
-  onDayOfEnabled: boolean;
+  enabled: boolean;
+  dayBefore: boolean;
+  dayOf: boolean;
+  medEnabled: boolean;
 }
 
 export interface RegisterTokenRequest {

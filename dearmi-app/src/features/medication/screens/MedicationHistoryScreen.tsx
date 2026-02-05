@@ -1,17 +1,19 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   SectionList,
   TouchableOpacity,
-
+  Modal,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { CompositeNavigationProp } from '@react-navigation/native';
+import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { useMedicationHistory } from '@/features/medication/hooks/useMedication';
 import { useAuthStore } from '@/features/auth/store/authStore';
@@ -55,6 +57,27 @@ export const MedicationHistoryScreen: React.FC = () => {
   };
 
   const { data: history, isLoading } = useMedicationHistory();
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [pickerDate, setPickerDate] = useState<Date>(new Date());
+
+  const toLocalDateStr = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+  const handlePickDate = (_: DateTimePickerEvent, date?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+      if (date) {
+        navigation.navigate('MedicationHome', { date: toLocalDateStr(date) });
+      }
+      return;
+    }
+    if (date) setPickerDate(date);
+  };
+
+  const confirmIosDate = () => {
+    setShowDatePicker(false);
+    navigation.navigate('MedicationHome', { date: toLocalDateStr(pickerDate) });
+  };
 
   const sections = useMemo<Section[]>(() => {
     if (!history?.logs) return [];
@@ -85,7 +108,16 @@ export const MedicationHistoryScreen: React.FC = () => {
           <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>복약 이력</Text>
-        <View style={{ width: 48 }} />
+        <TouchableOpacity
+          onPress={() => {
+            setPickerDate(new Date());
+            setShowDatePicker(true);
+          }}
+          hitSlop={12}
+          style={styles.headerRightBtn}
+        >
+          <Ionicons name="calendar-outline" size={22} color={colors.primary} />
+        </TouchableOpacity>
       </View>
 
       {/* FREE 플랜 업그레이드 배너 */}
@@ -109,12 +141,19 @@ export const MedicationHistoryScreen: React.FC = () => {
         contentContainerStyle={sections.length === 0 ? styles.emptyContainer : styles.listContent}
         stickySectionHeadersEnabled
         renderSectionHeader={({ section }) => (
-          <View style={styles.sectionHeader}>
+          <TouchableOpacity
+            style={styles.sectionHeader}
+            onPress={() => navigation.navigate('MedicationHome', { date: section.date })}
+            activeOpacity={0.7}
+          >
             <Text style={styles.sectionDate}>{section.title}</Text>
-            <Text style={styles.sectionRate}>
-              {section.takenCount}/{section.totalCount} 복용
-            </Text>
-          </View>
+            <View style={styles.sectionRight}>
+              <Text style={styles.sectionRate}>
+                {section.takenCount}/{section.totalCount} 복용
+              </Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.textSub} />
+            </View>
+          </TouchableOpacity>
         )}
         renderItem={({ item }) => {
           const statusCfg = STATUS_CONFIG[item.status];
@@ -136,6 +175,45 @@ export const MedicationHistoryScreen: React.FC = () => {
           </View>
         }
       />
+
+      {/* 날짜 선택기 (이력 없는 과거 날짜 직접 진입) */}
+      {showDatePicker && Platform.OS === 'android' && (
+        <DateTimePicker
+          value={pickerDate}
+          mode="date"
+          display="default"
+          maximumDate={new Date()}
+          onChange={handlePickDate}
+        />
+      )}
+      {Platform.OS === 'ios' && (
+        <Modal
+          visible={showDatePicker}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowDatePicker(false)}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setShowDatePicker(false)}
+          >
+            <View style={styles.modalSheet}>
+              <DateTimePicker
+                value={pickerDate}
+                mode="date"
+                display="spinner"
+                maximumDate={new Date()}
+                onChange={handlePickDate}
+                themeVariant="light"
+              />
+              <TouchableOpacity style={styles.modalConfirmBtn} onPress={confirmIosDate}>
+                <Text style={styles.modalConfirmText}>확인</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      )}
     </SafeAreaView>
   );
 };
@@ -161,6 +239,35 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
       fontSize: sizes.font.lg,
       fontFamily: fontFamily.bold,
       color: colors.text,
+    },
+    headerRightBtn: {
+      width: 48,
+      alignItems: 'flex-end',
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.4)',
+      justifyContent: 'flex-end',
+    },
+    modalSheet: {
+      backgroundColor: colors.surface,
+      paddingTop: sizes.spacing.md,
+      paddingBottom: sizes.spacing.xl,
+      borderTopLeftRadius: sizes.radius.xxl,
+      borderTopRightRadius: sizes.radius.xxl,
+      alignItems: 'center',
+    },
+    modalConfirmBtn: {
+      marginTop: sizes.spacing.md,
+      paddingVertical: sizes.spacing.md,
+      paddingHorizontal: sizes.spacing.xxl,
+      backgroundColor: colors.primary,
+      borderRadius: sizes.radius.full,
+    },
+    modalConfirmText: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.bold,
+      color: colors.textInverse,
     },
     freeBanner: {
       backgroundColor: colors.warningLight,
@@ -203,6 +310,11 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
     sectionRate: {
       fontSize: sizes.font.xs,
       color: colors.textSub,
+    },
+    sectionRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: sizes.spacing.xs,
     },
     logRow: {
       flexDirection: 'row',

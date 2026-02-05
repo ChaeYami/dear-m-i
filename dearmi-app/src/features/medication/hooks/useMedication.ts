@@ -3,12 +3,12 @@ import { QUERY_KEYS } from '@/constants/cacheKeys';
 import { medicationApi } from '@/features/medication/api/medicationApi';
 import type { CreateMedicationScheduleRequest, CheckMedicationRequest } from '@/shared/types/domain.types';
 
-/** 오늘 복약 현황 */
-export const useTodayMedication = () =>
+/** 특정 날짜(기본=오늘) 복약 현황 */
+export const useTodayMedication = (date?: string) =>
   useQuery({
-    queryKey: QUERY_KEYS.todayMedication(),
+    queryKey: QUERY_KEYS.todayMedication(date),
     queryFn: async () => {
-      const { data } = await medicationApi.getToday();
+      const { data } = await medicationApi.getToday(date);
       return data.data ?? { schedules: [] };
     },
   });
@@ -19,7 +19,7 @@ export const useCreateMedicationSchedule = () => {
   return useMutation({
     mutationFn: (req: CreateMedicationScheduleRequest) => medicationApi.create(req),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.todayMedication() });
+      queryClient.invalidateQueries({ queryKey: ['todayMedication'] });
     },
   });
 };
@@ -30,20 +30,20 @@ export const useDeleteMedicationSchedule = () => {
   return useMutation({
     mutationFn: (id: string) => medicationApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.todayMedication() });
+      queryClient.invalidateQueries({ queryKey: ['todayMedication'] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.medicationLogs() });
     },
   });
 };
 
-/** 복약 체크 (TAKEN/SKIPPED) — 낙관적 업데이트 */
+/** 복약 체크 (TAKEN/SKIPPED) */
 export const useCheckMedication = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ scheduleId, req }: { scheduleId: string; req: CheckMedicationRequest }) =>
       medicationApi.check(scheduleId, req),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.todayMedication() });
+      queryClient.invalidateQueries({ queryKey: ['todayMedication'] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.medicationLogs() });
     },
   });

@@ -33,9 +33,10 @@ export const NotificationSettingsScreen: React.FC = () => {
     const next: NotificationSettings = { ...settings, [key]: value };
 
     // 전체 알림 OFF → 하위 설정도 모두 OFF
-    if (key === 'allNotificationsEnabled' && !value) {
-      next.oneDayBeforeEnabled = false;
-      next.onDayOfEnabled = false;
+    if (key === 'enabled' && !value) {
+      next.dayBefore = false;
+      next.dayOf = false;
+      next.medEnabled = false;
     }
 
     updateSettings(next);
@@ -158,8 +159,8 @@ export const NotificationSettingsScreen: React.FC = () => {
             <SettingRow
               label="전체 알림"
               description="모든 푸시 알림을 켜거나 끕니다"
-              value={settings.allNotificationsEnabled}
-              onToggle={(v) => handleToggle('allNotificationsEnabled', v)}
+              value={settings.enabled}
+              onToggle={(v) => handleToggle('enabled', v)}
             />
           </View>
 
@@ -168,17 +169,28 @@ export const NotificationSettingsScreen: React.FC = () => {
             <SettingRow
               label="하루 전 알림"
               description="진료 예정일 하루 전 오전 9시에 알림"
-              value={settings.oneDayBeforeEnabled}
-              onToggle={(v) => handleToggle('oneDayBeforeEnabled', v)}
-              disabled={!settings.allNotificationsEnabled}
+              value={settings.dayBefore}
+              onToggle={(v) => handleToggle('dayBefore', v)}
+              disabled={!settings.enabled}
             />
             <View style={styles.divider} />
             <SettingRow
               label="당일 알림"
               description="진료 당일 오전 8시에 알림"
-              value={settings.onDayOfEnabled}
-              onToggle={(v) => handleToggle('onDayOfEnabled', v)}
-              disabled={!settings.allNotificationsEnabled}
+              value={settings.dayOf}
+              onToggle={(v) => handleToggle('dayOf', v)}
+              disabled={!settings.enabled}
+            />
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>복약 알림</Text>
+            <SettingRow
+              label="복약 시간 알림"
+              description="복약 일정에 설정한 시각에 알림"
+              value={settings.medEnabled}
+              onToggle={(v) => handleToggle('medEnabled', v)}
+              disabled={!settings.enabled}
             />
           </View>
         </ScrollView>

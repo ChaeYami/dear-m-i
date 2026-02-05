@@ -1,10 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-
+  Modal,
   SectionList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,6 +19,7 @@ import { formatDate } from '@/shared/utils/dateUtils';
 import { useCheckinHistory } from '@/features/checkin/hooks/useCheckin';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
+import { DailyCheckinForm } from '@/features/checkin/components/DailyCheckinForm';
 import type { CheckinStackParamList } from '@/navigation/CheckinNavigator';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
 import type { DailyCheckin } from '@/shared/types/domain.types';
@@ -42,6 +43,7 @@ export const CheckinHistoryScreen: React.FC = () => {
   const isFree = plan === 'FREE' || !plan;
 
   const { data: history, isLoading } = useCheckinHistory();
+  const [editingCheckin, setEditingCheckin] = useState<DailyCheckin | null>(null);
 
   const sections = useMemo<Section[]>(() => {
     if (!history?.content) return [];
@@ -118,6 +120,12 @@ export const CheckinHistoryScreen: React.FC = () => {
       borderColor: colors.divider,
     },
     cardTop: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: sizes.spacing.sm,
+    },
+    cardTopLeft: {
+      flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
       gap: sizes.spacing.sm,
@@ -219,16 +227,21 @@ export const CheckinHistoryScreen: React.FC = () => {
         )}
         renderItem={({ item }) => (
           <View style={styles.card}>
-            {/* 감정 점수 */}
+            {/* 감정 점수 + 편집 */}
             <View style={styles.cardTop}>
-              <View
-                style={[styles.scoreBadge, { backgroundColor: getEmotionColor(item.emotionScore) }]}
-              >
-                <Text style={styles.scoreBadgeText}>{item.emotionScore}</Text>
+              <View style={styles.cardTopLeft}>
+                <View
+                  style={[styles.scoreBadge, { backgroundColor: getEmotionColor(item.emotionScore) }]}
+                >
+                  <Text style={styles.scoreBadgeText}>{item.emotionScore}</Text>
+                </View>
+                <Text style={[styles.scoreLabel, { color: getEmotionColor(item.emotionScore) }]}>
+                  {emotionLabel(item.emotionScore)}
+                </Text>
               </View>
-              <Text style={[styles.scoreLabel, { color: getEmotionColor(item.emotionScore) }]}>
-                {emotionLabel(item.emotionScore)}
-              </Text>
+              <TouchableOpacity onPress={() => setEditingCheckin(item)} hitSlop={12}>
+                <Ionicons name="create-outline" size={20} color={colors.primary} />
+              </TouchableOpacity>
             </View>
 
             {/* 트리거 태그 */}
@@ -269,6 +282,22 @@ export const CheckinHistoryScreen: React.FC = () => {
           </View>
         }
       />
+
+      {/* 편집 모달 */}
+      <Modal
+        visible={editingCheckin !== null}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setEditingCheckin(null)}
+      >
+        {editingCheckin && (
+          <DailyCheckinForm
+            existingCheckin={editingCheckin}
+            targetDate={editingCheckin.checkedAt}
+            onClose={() => setEditingCheckin(null)}
+          />
+        )}
+      </Modal>
     </SafeAreaView>
   );
 };

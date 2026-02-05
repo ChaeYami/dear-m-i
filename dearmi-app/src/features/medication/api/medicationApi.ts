@@ -11,9 +11,11 @@ import type {
 } from '@/shared/types/domain.types';
 
 export const medicationApi = {
-  /** GET /api/v1/medication-schedules — 오늘 복약 현황 */
-  getToday: () =>
-    axiosInstance.get<ApiResponse<TodayMedication>>('/api/v1/medication-schedules'),
+  /** GET /api/v1/medication-schedules?date= — 특정 날짜(기본=오늘) 복약 현황 */
+  getToday: (date?: string) =>
+    axiosInstance.get<ApiResponse<TodayMedication>>('/api/v1/medication-schedules', {
+      params: date ? { date } : undefined,
+    }),
 
   /** POST /api/v1/medication-schedules — 복약 일정 등록 */
   create: (data: CreateMedicationScheduleRequest) =>

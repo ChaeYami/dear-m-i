@@ -52,7 +52,7 @@ public class NotificationController {
         return ApiResponse.success(
                 NotificationSettingResponse.from(
                         updateNotificationSettingUseCase.updateSetting(
-                                userId, request.enabled(), request.dayBefore(), request.dayOf()
+                                userId, request.enabled(), request.dayBefore(), request.dayOf(), request.medEnabled()
                         )
                 )
         );

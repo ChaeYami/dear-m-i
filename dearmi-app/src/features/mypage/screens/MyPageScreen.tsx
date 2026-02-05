@@ -331,6 +331,13 @@ export const MyPageScreen: React.FC = () => {
                 onPress={() => navigation.navigate('ThemeSettings')}
                 colors={colors}
               />
+              <View style={styles.menuDivider} />
+              <MenuItem
+                icon="help-circle-outline"
+                label="도움말 / 사용 가이드"
+                onPress={() => navigation.navigate('Onboarding', { forceShow: true })}
+                colors={colors}
+              />
             </View>
           </View>
 

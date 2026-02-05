@@ -47,18 +47,15 @@ public class NotificationSetting extends BaseTimestampEntity {
     @Builder.Default
     private Boolean medEnabled = true;
 
-    public void update(Boolean enabled, Boolean dayBefore, Boolean dayOf) {
+    public void update(Boolean enabled, Boolean dayBefore, Boolean dayOf, Boolean medEnabled) {
         this.enabled = enabled;
         this.dayBefore = dayBefore;
         this.dayOf = dayOf;
+        this.medEnabled = medEnabled;
     }
 
     public void updateCheckinSettings(Boolean checkinEnabled, LocalTime checkinTime) {
         this.checkinEnabled = checkinEnabled;
         this.checkinTime = checkinTime;
-    }
-
-    public void updateMedSettings(Boolean medEnabled) {
-        this.medEnabled = medEnabled;
     }
 }

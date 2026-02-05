@@ -17,14 +17,14 @@ public class UpdateNotificationSettingUseCaseImpl implements UpdateNotificationS
 
     @Override
     @Transactional
-    public NotificationSettingResult updateSetting(UUID userId, boolean enabled, boolean dayBefore, boolean dayOf) {
+    public NotificationSettingResult updateSetting(UUID userId, boolean enabled, boolean dayBefore, boolean dayOf, boolean medEnabled) {
         NotificationSetting setting = notificationSettingRepository.findByUserId(userId)
                 .orElseGet(() -> notificationSettingRepository.save(
                         NotificationSetting.builder()
                                 .userId(userId)
                                 .build()
                 ));
-        setting.update(enabled, dayBefore, dayOf);
+        setting.update(enabled, dayBefore, dayOf, medEnabled);
         return NotificationSettingResult.from(notificationSettingRepository.save(setting));
     }
 }

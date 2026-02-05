@@ -2,6 +2,7 @@ package com.dearmi.backend.presentation.medication;
 
 import com.dearmi.backend.application.medication.dto.CheckMedicationCommand;
 import com.dearmi.backend.application.medication.dto.CreateMedicationScheduleCommand;
+import com.dearmi.backend.application.medication.dto.TodayMedicationResult;
 import com.dearmi.backend.application.medication.dto.UpdateMedicationScheduleCommand;
 import com.dearmi.backend.application.medication.service.MedicationDrugInfoService;
 import com.dearmi.backend.application.medication.usecase.*;
@@ -32,14 +33,16 @@ public class MedicationScheduleController {
     private final GetMedicationScheduleDrugInfoUseCase getMedicationScheduleDrugInfoUseCase;
     private final MedicationDrugInfoService medicationDrugInfoService;
 
-    /** GET /api/v1/medication-schedules — 오늘 복약 현황 (활성 일정 + 각 시간대 로그 상태) */
+    /** GET /api/v1/medication-schedules?date= — 특정 날짜(기본값=오늘) 복약 현황 */
     @GetMapping
     public ApiResponse<TodayMedicationResponse> getToday(
-            @AuthenticatedUserId UUID userId
+            @AuthenticatedUserId UUID userId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
-        return ApiResponse.success(
-                TodayMedicationResponse.from(getTodayMedicationUseCase.getToday(userId))
-        );
+        TodayMedicationResult result = (date == null)
+                ? getTodayMedicationUseCase.getToday(userId)
+                : getTodayMedicationUseCase.getForDate(userId, date);
+        return ApiResponse.success(TodayMedicationResponse.from(result));
     }
 
     /** POST /api/v1/medication-schedules — 복약 일정 등록 */

@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
@@ -31,6 +31,7 @@ import type { MedicationStackParamList } from '@/navigation/MedicationNavigator'
 import type { TimeSlotType } from '@/shared/types/domain.types';
 
 type Nav = StackNavigationProp<MedicationStackParamList, 'MedicationHome'>;
+type Route = RouteProp<MedicationStackParamList, 'MedicationHome'>;
 
 const TIME_SLOTS: TimeSlotType[] = ['MORNING', 'AFTERNOON', 'EVENING', 'BEDTIME'];
 
@@ -43,8 +44,15 @@ export const MedicationHomeScreen: React.FC = () => {
   useResetStackOnTabFocus();
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
+  const route = useRoute<Route>();
   const tabBarSafeBottom = useTabBarSafeBottom();
-  const { data, isLoading } = useTodayMedication();
+
+  const today = todayStr();
+  const paramDate = route.params?.date;
+  const selectedDate = paramDate ?? today;
+  const isToday = selectedDate === today;
+
+  const { data, isLoading } = useTodayMedication(isToday ? undefined : selectedDate);
   const { mutate: checkMedication, isPending: isChecking } = useCheckMedication();
   const { mutate: deleteMedicationSchedule } = useDeleteMedicationSchedule();
 
@@ -86,7 +94,7 @@ export const MedicationHomeScreen: React.FC = () => {
   const handleCheck = (scheduleId: string, status: 'TAKEN' | 'SKIPPED', timeSlot: TimeSlotType) => {
     setPendingIds((prev) => new Set(prev).add(scheduleId));
     checkMedication(
-      { scheduleId, req: { logDate: todayStr(), timeSlot, status } },
+      { scheduleId, req: { logDate: selectedDate, timeSlot, status } },
       { onSettled: () => setPendingIds((prev) => { const next = new Set(prev); next.delete(scheduleId); return next; }) }
     );
   };
@@ -136,8 +144,8 @@ export const MedicationHomeScreen: React.FC = () => {
   }, [data]);
 
   const completionRate = totalSlots > 0 ? takenSlots / totalSlots : 0;
-  const today = new Date();
-  const dateLabel = `${today.getMonth() + 1}월 ${today.getDate()}일`;
+  const [, mo, da] = selectedDate.split('-').map(Number);
+  const dateLabel = isToday ? `${mo}월 ${da}일` : `${mo}월 ${da}일 (지난 기록)`;
 
   if (isLoading) return <LoadingSpinner fullscreen />;
 
@@ -148,10 +156,10 @@ export const MedicationHomeScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScreenHeader
-        variant="tab"
-        title="복약 관리"
+        variant={isToday ? 'tab' : 'back'}
+        title={isToday ? '복약 관리' : `${mo}월 ${da}일 복약`}
         rightContent={
-          hasAnySlots ? (
+          isToday && hasAnySlots ? (
             <TouchableOpacity
               onPress={() => {
                 if (isEditMode) {
@@ -235,8 +243,12 @@ export const MedicationHomeScreen: React.FC = () => {
         {/* 시간대별 카드 */}
         {!hasAnySlots ? (
           <View style={styles.emptyWrap}>
-            <Text style={styles.emptyText}>등록된 복약 일정이 없어요</Text>
-            <Text style={styles.emptySubText}>+ 버튼을 눌러 복약 일정을 추가해보세요</Text>
+            <Text style={styles.emptyText}>
+              {isToday ? '등록된 복약 일정이 없어요' : '이 날짜에 활성 복약 일정이 없어요'}
+            </Text>
+            <Text style={styles.emptySubText}>
+              {isToday ? '+ 버튼을 눌러 복약 일정을 추가해보세요' : '복약 일정의 시작/종료일을 확인해주세요'}
+            </Text>
           </View>
         ) : (
           TIME_SLOTS.map((slot) => {
@@ -276,30 +288,34 @@ export const MedicationHomeScreen: React.FC = () => {
           })
         )}
 
-        {/* 복약 이력 버튼 */}
-        <AnimatedPressable
-          style={styles.historyBtn}
-          onPress={() => navigation.navigate('MedicationHistory')}
-        >
-          <Text style={styles.historyBtnText}>복약 이력 보기</Text>
-        </AnimatedPressable>
+        {/* 복약 이력 버튼 — 오늘 화면에서만 */}
+        {isToday && (
+          <AnimatedPressable
+            style={styles.historyBtn}
+            onPress={() => navigation.navigate('MedicationHistory')}
+          >
+            <Text style={styles.historyBtnText}>복약 이력 보기</Text>
+          </AnimatedPressable>
+        )}
       </ScrollView>
 
-      {/* FAB */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => navigation.navigate('MedicationForm', {})}
-        activeOpacity={0.85}
-      >
-        <LinearGradient
-          colors={[colors.primaryVivid, colors.primaryVividDark]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.fabGradient}
+      {/* FAB — 오늘 화면에서만 신규 일정 등록 가능 */}
+      {isToday && (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => navigation.navigate('MedicationForm', {})}
+          activeOpacity={0.85}
         >
-          <Ionicons name="add" size={30} color={colors.textInverse} />
-        </LinearGradient>
-      </TouchableOpacity>
+          <LinearGradient
+            colors={[colors.primaryVivid, colors.primaryVividDark]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.fabGradient}
+          >
+            <Ionicons name="add" size={30} color={colors.textInverse} />
+          </LinearGradient>
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 };

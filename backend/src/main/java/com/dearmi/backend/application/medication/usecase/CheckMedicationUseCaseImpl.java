@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -24,6 +25,11 @@ public class CheckMedicationUseCaseImpl implements CheckMedicationUseCase {
     @Override
     @Transactional
     public MedicationLogResult check(CheckMedicationCommand command) {
+        // 미래 날짜 체크 차단
+        if (command.logDate().isAfter(LocalDate.now())) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST);
+        }
+
         // ④ 원칙: 복약 일정 소유권 검증
         medicationScheduleRepository
                 .findByIdAndUserIdAndDeletedAtIsNull(command.scheduleId(), command.userId())

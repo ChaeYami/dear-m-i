@@ -16,11 +16,14 @@ import { OfflineBanner } from '@/shared/components/OfflineBanner';
 import { PaywallScreen } from '@/features/subscription/screens/PaywallScreen';
 import { WebPaymentScreen } from '@/features/subscription/screens/WebPaymentScreen';
 import { SearchScreen } from '@/features/search/screens/SearchScreen';
+import { OnboardingScreen } from '@/features/onboarding/screens/OnboardingScreen';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { useSubscriptionStore } from '@/features/subscription/store/subscriptionStore';
 import { authApi } from '@/features/auth/api';
 import axiosInstance from '@/shared/api/axiosInstance';
 import { useTheme } from '@/shared/theme';
+import { CacheService } from '@/shared/cache/CacheService';
+import { CACHE_KEYS } from '@/constants/cacheKeys';
 import type { ApiResponse, AppVersionResponse } from '@/shared/types/api.types';
 
 Notifications.setNotificationHandler({
@@ -39,6 +42,7 @@ export type RootStackParamList = {
   Paywall: undefined;
   WebPayment: { planType: 'MONTHLY' | 'YEARLY' };
   Search: undefined;
+  Onboarding: { forceShow?: boolean } | undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -84,6 +88,21 @@ export const RootNavigator: React.FC = () => {
       responseListener.current?.remove();
     };
   }, []);
+
+  // 첫 진입 시 온보딩 자동 표시 (인증 + 로딩 완료 후 1회)
+  const onboardingShownRef = useRef(false);
+  useEffect(() => {
+    if (isLoading || !isAuthenticated || onboardingShownRef.current) return;
+    const completed = CacheService.get<boolean>(CACHE_KEYS.ONBOARDING_COMPLETED);
+    if (completed) return;
+    onboardingShownRef.current = true;
+    // NavigationContainer 가 아직 리렌더 직후 ready 가 안 됐을 수 있어 다음 틱에 navigate
+    setTimeout(() => {
+      if (navigationRef.isReady()) {
+        (navigationRef.current as any)?.navigate('Onboarding');
+      }
+    }, 0);
+  }, [isLoading, isAuthenticated]);
 
   const navigateToScheduleDetail = (data: Record<string, unknown>) => {
     const scheduleId = data?.scheduleId;
@@ -218,6 +237,11 @@ export const RootNavigator: React.FC = () => {
             name="Search"
             component={SearchScreen}
             options={{ presentation: 'modal' } as any}
+          />
+          <Stack.Screen
+            name="Onboarding"
+            component={OnboardingScreen}
+            options={{ presentation: 'modal', gestureEnabled: false } as any}
           />
         </Stack.Navigator>
 

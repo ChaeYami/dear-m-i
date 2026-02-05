@@ -31,21 +31,26 @@ public class GetTodayMedicationUseCaseImpl implements GetTodayMedicationUseCase 
     @Override
     @Transactional(readOnly = true)
     public TodayMedicationResult getToday(UUID userId) {
-        LocalDate today = LocalDate.now();
+        return getForDate(userId, LocalDate.now());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TodayMedicationResult getForDate(UUID userId, LocalDate date) {
         List<MedicationSchedule> schedules =
-                medicationScheduleRepository.findActiveForDateAndUserId(today, userId);
+                medicationScheduleRepository.findActiveForDateAndUserId(date, userId);
 
         List<ScheduleWithLogs> result = schedules.stream()
-                .map(s -> toScheduleWithLogs(s, today))
+                .map(s -> toScheduleWithLogs(s, date))
                 .toList();
 
         return new TodayMedicationResult(result);
     }
 
-    private ScheduleWithLogs toScheduleWithLogs(MedicationSchedule s, LocalDate today) {
-        // 오늘 해당 일정의 모든 로그를 time_slot 기준으로 Map화
+    private ScheduleWithLogs toScheduleWithLogs(MedicationSchedule s, LocalDate date) {
+        // 해당 날짜의 모든 로그를 time_slot 기준으로 Map화
         List<MedicationLog> logs = medicationLogRepository
-                .findByMedicationScheduleIdAndLogDate(s.getId(), today);
+                .findByMedicationScheduleIdAndLogDate(s.getId(), date);
         Map<String, MedicationLog> logBySlot = logs.stream()
                 .collect(Collectors.toMap(MedicationLog::getTimeSlot, Function.identity()));
 
