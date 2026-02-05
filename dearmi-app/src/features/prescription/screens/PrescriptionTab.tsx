@@ -21,6 +21,7 @@ import {
   usePagedPrescriptions,
   useDeletePrescription,
 } from '@/features/prescription/hooks/usePrescription';
+import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import type { PrescriptionStackParamList } from '@/navigation/PrescriptionNavigator';
 import type { Prescription, PrescriptionMedication, OcrStatus } from '@/shared/types/domain.types';
@@ -234,6 +235,7 @@ const PrescriptionCard: React.FC<{
 export const PrescriptionTab: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
+  const tabBarSafeBottom = useTabBarSafeBottom();
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
     usePagedPrescriptions();
   const { mutate: deletePrescription } = useDeletePrescription();
@@ -293,7 +295,7 @@ export const PrescriptionTab: React.FC = () => {
         contentContainerStyle={
           prescriptions.length === 0
             ? { flexGrow: 1 }
-            : { padding: sizes.spacing.lg, gap: sizes.spacing.md, paddingBottom: sizes.tabBarSafeBottom + 20 }
+            : { padding: sizes.spacing.lg, gap: sizes.spacing.md, paddingBottom: tabBarSafeBottom + 20 }
         }
         renderItem={({ item }) => (
           <PrescriptionCard
@@ -344,7 +346,7 @@ export const PrescriptionTab: React.FC = () => {
       <TouchableOpacity
         style={{
           position: 'absolute',
-          bottom: sizes.tabBarSafeBottom + sizes.spacing.md,
+          bottom: tabBarSafeBottom + sizes.spacing.md,
           right: sizes.spacing.xl,
           width: 56,
           height: 56,

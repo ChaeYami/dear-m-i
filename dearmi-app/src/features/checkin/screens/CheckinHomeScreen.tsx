@@ -19,6 +19,7 @@ import { softShadow } from '@/shared/theme/shadows';
 import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { useResetStackOnTabFocus } from '@/shared/hooks/useResetStackOnTabFocus';
+import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import { getEmotionColor, useEmotionLabel } from '@/shared/components/EmotionSlider';
 import { EmotionGraph } from '@/features/checkin/components/EmotionGraph';
 import { DailyCheckinForm } from '@/features/checkin/components/DailyCheckinForm';
@@ -61,6 +62,7 @@ export const CheckinHomeScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const { t } = useTranslation('checkin');
   const emotionLabel = useEmotionLabel();
+  const tabBarSafeBottom = useTabBarSafeBottom();
 
   const todayStr = getTodayStr();
   const dates = useMemo(() => generateDates(30), []);
@@ -123,9 +125,14 @@ export const CheckinHomeScreen: React.FC = () => {
       color: colors.text,
     },
     // 날짜 바
+    dateBarWrapper: {
+      flexGrow: 0,
+      flexShrink: 0,
+    },
     dateBar: {
       paddingHorizontal: sizes.spacing.md,
-      paddingBottom: sizes.spacing.sm,
+      paddingTop: sizes.spacing.sm,
+      paddingBottom: sizes.spacing.md,
       gap: sizes.spacing.sm,
     },
     dateItem: {
@@ -160,9 +167,9 @@ export const CheckinHomeScreen: React.FC = () => {
     // 내용
     content: {
       paddingHorizontal: sizes.spacing.lg,
-      paddingTop: sizes.spacing.sm,
+      paddingTop: sizes.spacing.md,
       gap: sizes.spacing.lg,
-      paddingBottom: sizes.tabBarSafeBottom + 16,
+      paddingBottom: tabBarSafeBottom + 16,
     },
     selectedDateLabel: {
       fontSize: sizes.font.sm,
@@ -304,7 +311,7 @@ export const CheckinHomeScreen: React.FC = () => {
       fontFamily: fontFamily.semibold,
       color: colors.primary,
     },
-  }), [colors]);
+  }), [colors, tabBarSafeBottom]);
 
   // inverted FlatList — 오늘이 자동으로 왼쪽에 표시됨
 
@@ -322,6 +329,7 @@ export const CheckinHomeScreen: React.FC = () => {
         inverted
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item}
+        style={styles.dateBarWrapper}
         contentContainerStyle={styles.dateBar}
         renderItem={({ item }) => {
           const d = new Date(item);

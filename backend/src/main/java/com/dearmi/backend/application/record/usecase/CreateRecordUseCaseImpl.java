@@ -39,6 +39,7 @@ public class CreateRecordUseCaseImpl implements CreateRecordUseCase {
                 .emotionScore(command.emotionScore())
                 .content(command.content())
                 .tags(command.tags())
+                .consultedAt(command.consultedAt())
                 .build();
 
         return RecordResult.from(counselingRecordRepository.save(record));

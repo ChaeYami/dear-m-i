@@ -49,6 +49,7 @@ export interface CounselingRecord {
   content: string;
   emotionScore?: number;
   tags?: string[];
+  consultedAt?: string; // YYYY-MM-DD — 일정 미연결 기록의 진료 날짜
   createdAt: string;
   updatedAt: string;
 }
@@ -59,10 +60,23 @@ export interface CreateRecordRequest {
   content: string;
   emotionScore?: number;
   tags?: string[];
+  consultedAt?: string; // YYYY-MM-DD
 }
 
 /** 상담 기록 수정 요청 */
 export type UpdateRecordRequest = Partial<CreateRecordRequest>;
+
+/** 진료 기록 타임라인 카드용 요약 */
+export interface RecordSummary {
+  id: string;
+  scheduleId?: string;
+  hospitalName?: string;
+  emotionScore?: number;
+  content: string;
+  tags?: string[];
+  consultedAt?: string; // YYYY-MM-DD
+  createdAt: string;    // ISO datetime
+}
 
 // ─── 타임라인 (상담 기록 + 처방전 혼합) ─────────────────────────────────────
 

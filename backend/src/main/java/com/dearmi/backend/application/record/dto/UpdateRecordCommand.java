@@ -1,5 +1,6 @@
 package com.dearmi.backend.application.record.dto;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -8,5 +9,6 @@ public record UpdateRecordCommand(
         UUID recordId,
         Short emotionScore,
         String content,
-        List<String> tags
+        List<String> tags,
+        LocalDate consultedAt
 ) {}

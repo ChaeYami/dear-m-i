@@ -2,6 +2,7 @@ package com.dearmi.backend.application.record.dto;
 
 import com.dearmi.backend.domain.counseling.CounselingRecord;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -12,6 +13,7 @@ public record RecordResult(
         Short emotionScore,
         String content,
         List<String> tags,
+        LocalDate consultedAt,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
@@ -22,6 +24,7 @@ public record RecordResult(
                 r.getEmotionScore(),
                 r.getContent(),
                 r.getTags(),
+                r.getConsultedAt(),
                 r.getCreatedAt(),
                 r.getUpdatedAt()
         );

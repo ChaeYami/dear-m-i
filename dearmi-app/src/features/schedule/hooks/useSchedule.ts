@@ -18,6 +18,18 @@ export const useMonthlySchedules = (year: number, month: number) => {
   });
 };
 
+/** 전체 일정 목록 조회 (캘린더 없이 목록만 보여주는 "전체" 필터용) */
+export const useAllSchedules = (enabled: boolean = true) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.allSchedules(),
+    queryFn: async () => {
+      const { data } = await scheduleApi.getAllSchedules();
+      return data.data ?? [];
+    },
+    enabled,
+  });
+};
+
 /** 일정 상세 조회 */
 export const useScheduleDetail = (id: number | string) => {
   return useQuery({
@@ -74,6 +86,7 @@ export const useCreateSchedule = () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.monthlySchedules(date.getFullYear(), date.getMonth() + 1),
       });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.allSchedules() });
     },
   });
 };
@@ -140,6 +153,7 @@ export const useUpdateSchedule = () => {
           queryKey: QUERY_KEYS.monthlySchedules(d.getFullYear(), d.getMonth() + 1),
         });
       }
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.allSchedules() });
     },
   });
 };
@@ -156,6 +170,7 @@ export const useDeleteSchedule = () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.monthlySchedules(year, month),
       });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.allSchedules() });
     },
   });
 };

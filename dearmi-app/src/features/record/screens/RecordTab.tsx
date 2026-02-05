@@ -4,7 +4,7 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SectionList,
+  FlatList,
   ActivityIndicator,
 
 } from 'react-native';
@@ -19,42 +19,36 @@ import { softShadow } from '@/shared/theme/shadows';
 import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { useResetStackOnTabFocus } from '@/shared/hooks/useResetStackOnTabFocus';
+import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import { useTimeline } from '@/features/record/hooks/useRecord';
 import { getEmotionColor } from '@/shared/components/EmotionSlider';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import type { RecordStackParamList } from '@/navigation/RecordNavigator';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
-import type { TimelineItem, TimelineRecord, TimelinePrescription } from '@/shared/types/domain.types';
+import type { RecordSummary } from '@/shared/types/domain.types';
 
 type Nav = CompositeNavigationProp<
   StackNavigationProp<RecordStackParamList, 'RecordTab'>,
   StackNavigationProp<RootStackParamList>
 >;
 
-interface Section {
-  title: string;
-  data: TimelineItem[];
-}
+/** 카드 정렬 기준 날짜: consultedAt(있으면) > createdAt */
+const recordDate = (item: RecordSummary): string =>
+  item.consultedAt ?? item.createdAt.split('T')[0];
 
-const formatSectionTitle = (dateStr: string): string => {
-  const d = new Date(dateStr);
-  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
+/** 진료일 표시 라벨 — 직접 선택한 consultedAt이 있으면 진료일, 없으면 작성일 */
+const formatRecordDate = (item: RecordSummary): { label: string; isConsulted: boolean } => {
+  const dateStr = recordDate(item);
+  const d = new Date(dateStr + (dateStr.includes('T') ? '' : 'T00:00:00'));
+  const formatted = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+  return { label: formatted, isConsulted: item.consultedAt != null };
 };
 
-const toSections = (items: TimelineItem[]): Section[] => {
-  const map = new Map<string, TimelineItem[]>();
-  items.forEach((item) => {
-    const date = item.createdAt.split('T')[0];
-    if (!map.has(date)) map.set(date, []);
-    map.get(date)!.push(item);
-  });
-  return Array.from(map.entries()).map(([title, data]) => ({ title, data }));
-};
-
-const RecordCard: React.FC<{ item: TimelineRecord; onPress: () => void }> = ({ item, onPress }) => {
+const RecordCard: React.FC<{ item: RecordSummary; onPress: () => void }> = ({ item, onPress }) => {
   const { colors } = useTheme();
   const emotionColor = item.emotionScore !== undefined ? getEmotionColor(item.emotionScore) : colors.primary;
+  const { label: dateLabel, isConsulted } = formatRecordDate(item);
 
   return (
     <View style={styles.timelineRow}>
@@ -68,9 +62,22 @@ const RecordCard: React.FC<{ item: TimelineRecord; onPress: () => void }> = ({ i
         onPress={onPress}
         style={[styles.card, { backgroundColor: colors.surface }, softShadow(colors)]}
       >
+        {/* 날짜 라인 */}
+        <View style={styles.dateRow}>
+          <Ionicons name="calendar-outline" size={13} color={colors.textSub} />
+          <Text style={[styles.dateText, { color: colors.textSub, fontFamily: fontFamily.medium }]}>
+            {dateLabel}
+          </Text>
+          <Text style={[styles.dateLabelKind, { color: colors.textDisabled }]}>
+            {isConsulted ? '진료일' : '작성일'}
+          </Text>
+        </View>
+
         <View style={styles.cardHeader}>
-          {item.hospitalName && (
+          {item.hospitalName ? (
             <Text style={[styles.cardHospital, { color: colors.primary }]}>{item.hospitalName}</Text>
+          ) : (
+            <Text style={[styles.cardHospital, { color: colors.textDisabled }]}>일정 미연결</Text>
           )}
           {item.emotionScore !== undefined && (
             <View style={[styles.emotionBadge, { backgroundColor: emotionColor + '20', borderColor: emotionColor + '40' }]}>
@@ -103,42 +110,6 @@ const RecordCard: React.FC<{ item: TimelineRecord; onPress: () => void }> = ({ i
   );
 };
 
-const PrescriptionCard: React.FC<{ item: TimelinePrescription; onPress: () => void }> = ({ item, onPress }) => {
-  const { colors } = useTheme();
-  return (
-    <View style={styles.timelineRow}>
-      {/* Timeline line + dot */}
-      <View style={styles.timelineLeft}>
-        <View style={[styles.timelineDot, { backgroundColor: colors.secondary }]} />
-        <View style={[styles.timelineLine, { backgroundColor: colors.divider }]} />
-      </View>
-
-      <AnimatedPressable
-        onPress={onPress}
-        style={[styles.card, styles.prescriptionCard, { backgroundColor: colors.surface, borderLeftColor: colors.secondary }, softShadow(colors)]}
-      >
-        <View style={styles.cardHeader}>
-          <View style={[styles.prescriptionBadge, { backgroundColor: colors.secondaryLight + '30' }]}>
-            <Text style={[styles.prescriptionBadgeText, { color: colors.secondary }]}>처방전</Text>
-          </View>
-          {item.hospitalName && (
-            <Text style={[styles.cardHospital, { color: colors.primary }]}>{item.hospitalName}</Text>
-          )}
-        </View>
-        <View style={styles.prescriptionMedRow}>
-          <Ionicons name="medical-outline" size={16} color={colors.text} />
-          <Text style={[styles.prescriptionMedCount, { color: colors.text }]}>약품 {item.medicationCount}종</Text>
-        </View>
-        {item.prescribedAt && (
-          <Text style={[styles.prescriptionDate, { color: colors.textSub }]}>
-            처방일: {item.prescribedAt.split('T')[0]}
-          </Text>
-        )}
-      </AnimatedPressable>
-    </View>
-  );
-};
-
 const EmotionBar: React.FC<{ score: number }> = ({ score }) => {
   const { colors } = useTheme();
   return (
@@ -161,6 +132,7 @@ export const RecordTab: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const isPremium = useAuthStore((s) => s.user?.plan === 'PREMIUM');
+  const tabBarSafeBottom = useTabBarSafeBottom();
   const {
     data,
     fetchNextPage,
@@ -169,9 +141,10 @@ export const RecordTab: React.FC = () => {
     isLoading,
   } = useTimeline();
 
-  const sections = useMemo(() => {
-    const allItems = data?.pages.flatMap((p) => p.items) ?? [];
-    return toSections(allItems);
+  const items = useMemo(() => {
+    const allItems = data?.pages.flatMap((p) => p.content) ?? [];
+    // 정렬: recordDate(consultedAt > createdAt) 내림차순
+    return [...allItems].sort((a, b) => recordDate(b).localeCompare(recordDate(a)));
   }, [data]);
 
   const handleEndReached = () => {
@@ -211,24 +184,12 @@ export const RecordTab: React.FC = () => {
         </View>
       )}
 
-      <SectionList
-        sections={sections}
-        keyExtractor={(item) => `${item.type}-${item.id}`}
-        renderSectionHeader={({ section }) => (
-          <View style={[styles.sectionHeader, { backgroundColor: colors.background }]}>
-            <View style={[styles.sectionAccent, { backgroundColor: colors.primary }]} />
-            <Text style={[styles.sectionHeaderText, { color: colors.text }]}>
-              {formatSectionTitle(section.title)}
-            </Text>
-          </View>
+      <FlatList
+        data={items}
+        keyExtractor={(item) => `record-${item.id}`}
+        renderItem={({ item }) => (
+          <RecordCard item={item} onPress={() => {}} />
         )}
-        renderItem={({ item }) =>
-          item.type === 'record' ? (
-            <RecordCard item={item as TimelineRecord} onPress={() => {}} />
-          ) : (
-            <PrescriptionCard item={item as TimelinePrescription} onPress={() => {}} />
-          )
-        }
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.3}
         ListFooterComponent={
@@ -245,13 +206,16 @@ export const RecordTab: React.FC = () => {
             <Text style={[styles.emptySubText, { color: colors.textDisabled }]}>진료 후 기록을 남겨보세요</Text>
           </View>
         }
-        contentContainerStyle={sections.length === 0 ? styles.emptyContainer : styles.listContent}
-        stickySectionHeadersEnabled
+        contentContainerStyle={
+          items.length === 0
+            ? styles.emptyContainer
+            : [styles.listContent, { paddingBottom: tabBarSafeBottom + 20 }]
+        }
       />
 
       <AnimatedPressable
         onPress={() => navigation.navigate('RecordForm', undefined)}
-        style={[styles.fab]}
+        style={[styles.fab, { bottom: tabBarSafeBottom + sizes.spacing.md }]}
       >
         <LinearGradient
           colors={[colors.primaryVivid, colors.primaryVividDark]}
@@ -315,7 +279,7 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.bold,
     marginLeft: sizes.spacing.sm,
   },
-  listContent: { paddingBottom: sizes.tabBarSafeBottom + 20 },
+  listContent: {},
   emptyContainer: { flexGrow: 1 },
 
   // Section headers with accent bar
@@ -369,6 +333,18 @@ const styles = StyleSheet.create({
   },
   prescriptionCard: {
     borderLeftWidth: 3,
+  },
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  dateText: {
+    fontSize: sizes.font.xs,
+  },
+  dateLabelKind: {
+    fontSize: 10,
+    marginLeft: 2,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -460,7 +436,6 @@ const styles = StyleSheet.create({
   // FAB
   fab: {
     position: 'absolute',
-    bottom: sizes.tabBarSafeBottom + sizes.spacing.md,
     right: sizes.spacing.xl,
     width: 60,
     height: 60,

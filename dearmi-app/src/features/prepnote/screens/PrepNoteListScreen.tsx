@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { usePrepNotes, useDeletePrepNote } from '@/features/prepnote/hooks/usePrepNote';
+import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import type { PrepNote } from '@/shared/types/domain.types';
 import type { ScheduleStackParamList } from '@/navigation/ScheduleNavigator';
@@ -34,6 +35,7 @@ const formatDate = (iso: string) => {
 export const PrepNoteListScreen: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
+  const tabBarSafeBottom = useTabBarSafeBottom();
   const { data: notes = [], isLoading } = usePrepNotes();
   const { mutate: deleteNote } = useDeletePrepNote();
 
@@ -157,7 +159,7 @@ export const PrepNoteListScreen: React.FC = () => {
     },
     fab: {
       position: 'absolute',
-      bottom: sizes.tabBarSafeBottom + sizes.spacing.md,
+      bottom: tabBarSafeBottom + sizes.spacing.md,
       right: sizes.spacing.xl,
       width: 56,
       height: 56,
@@ -176,7 +178,7 @@ export const PrepNoteListScreen: React.FC = () => {
       color: colors.textInverse,
       lineHeight: 32,
     },
-  }), [colors]);
+  }), [colors, tabBarSafeBottom]);
 
   if (isLoading) return <LoadingSpinner fullscreen />;
 

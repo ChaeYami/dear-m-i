@@ -17,6 +17,7 @@ import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { useCreatePrepNote, useUpdatePrepNote, usePrepNotes } from '@/features/prepnote/hooks/usePrepNote';
 import { useRecentSchedules } from '@/features/record/hooks/useRecord';
+import { useUnsavedChangesWarning } from '@/shared/hooks/useUnsavedChangesWarning';
 import type { ScheduleStackParamList } from '@/navigation/ScheduleNavigator';
 
 type Nav = StackNavigationProp<ScheduleStackParamList, 'PrepNoteForm'>;
@@ -38,7 +39,7 @@ export const PrepNoteFormScreen: React.FC = () => {
   const { data: allNotes = [] } = usePrepNotes();
   const existingNote = allNotes.find((n) => n.id === noteId);
 
-  const { data: recentSchedules = [] } = useRecentSchedules();
+  const { data: recentSchedules = [] } = useRecentSchedules('FUTURE');
   const top10 = recentSchedules.slice(0, 10);
 
   const { mutate: create, isPending: isCreating } = useCreatePrepNote();
@@ -58,6 +59,13 @@ export const PrepNoteFormScreen: React.FC = () => {
     }
   }, [existingNote]);
 
+  // 변경사항 추적 → 이탈 경고
+  const isDirty =
+    content.trim() !== (existingNote?.content ?? '') ||
+    (!isEdit && selectedScheduleId !== initialScheduleId);
+
+  const { markSavedAndExit } = useUnsavedChangesWarning({ isDirty });
+
   const handleSave = () => {
     if (!content.trim()) {
       Alert.alert('필수 입력', '내용을 입력해 주세요.');
@@ -67,12 +75,12 @@ export const PrepNoteFormScreen: React.FC = () => {
     if (isEdit && noteId) {
       update(
         { id: noteId, data: { content: content.trim() } },
-        { onSuccess: () => navigation.goBack() }
+        { onSuccess: () => markSavedAndExit() }
       );
     } else {
       create(
         { content: content.trim(), scheduleId: selectedScheduleId },
-        { onSuccess: () => navigation.goBack() }
+        { onSuccess: () => markSavedAndExit() }
       );
     }
   };
@@ -179,6 +187,11 @@ export const PrepNoteFormScreen: React.FC = () => {
                 >
                   <Text style={styles.dropdownItemText}>선택 안 함</Text>
                 </TouchableOpacity>
+                {top10.length === 0 && (
+                  <View style={styles.dropdownItem}>
+                    <Text style={[styles.dropdownItemText, { color: colors.textDisabled }]}>다가오는 일정이 없습니다</Text>
+                  </View>
+                )}
                 {top10.map((s) => (
                   <TouchableOpacity
                     key={s.id}

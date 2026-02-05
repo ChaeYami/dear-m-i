@@ -4,6 +4,7 @@ import com.dearmi.backend.application.schedule.dto.CreateScheduleCommand;
 import com.dearmi.backend.application.schedule.dto.ScheduleResult;
 import com.dearmi.backend.application.schedule.dto.UpdateScheduleCommand;
 import com.dearmi.backend.application.schedule.usecase.*;
+import com.dearmi.backend.application.schedule.usecase.GetRecentSchedulesUseCase.Direction;
 import com.dearmi.backend.common.response.ApiResponse;
 import com.dearmi.backend.infrastructure.security.AuthenticatedUserId;
 import com.dearmi.backend.presentation.schedule.dto.CreateScheduleRequest;
@@ -30,6 +31,8 @@ public class ScheduleController {
     private final DeleteScheduleUseCase deleteScheduleUseCase;
     private final GetMonthlySchedulesUseCase getMonthlySchedulesUseCase;
     private final GetScheduleDetailUseCase getScheduleDetailUseCase;
+    private final GetRecentSchedulesUseCase getRecentSchedulesUseCase;
+    private final GetAllSchedulesUseCase getAllSchedulesUseCase;
 
     /**
      * GET /api/v1/schedules?year=2026&month=4
@@ -64,6 +67,36 @@ public class ScheduleController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(ScheduleResponse.from(result)));
+    }
+
+    /**
+     * GET /api/v1/schedules/all
+     * 사용자의 전체 일정 (캘린더 없이 목록만 보여주는 "전체" 필터용)
+     * scheduledAt DESC 정렬
+     */
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getAll(
+            @AuthenticatedUserId UUID userId) {
+
+        List<ScheduleResult> results = getAllSchedulesUseCase.getAll(userId);
+        List<ScheduleResponse> response = results.stream().map(ScheduleResponse::from).toList();
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /**
+     * GET /api/v1/schedules/recent?direction=PAST&limit=10
+     * - direction=PAST: 과거 일정 (RecordForm 진료 기록 작성용)
+     * - direction=FUTURE: 다가오는 일정 (PrepNoteForm 준비 메모 작성용)
+     */
+    @GetMapping("/recent")
+    public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getRecent(
+            @AuthenticatedUserId UUID userId,
+            @RequestParam(defaultValue = "PAST") Direction direction,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(50) int limit) {
+
+        List<ScheduleResult> results = getRecentSchedulesUseCase.get(userId, direction, limit);
+        List<ScheduleResponse> response = results.stream().map(ScheduleResponse::from).toList();
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     /**

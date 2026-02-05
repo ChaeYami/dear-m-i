@@ -18,12 +18,15 @@ import { softShadow, floatingShadow } from '@/shared/theme/shadows';
 import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { useResetStackOnTabFocus } from '@/shared/hooks/useResetStackOnTabFocus';
-import { useMonthlySchedules } from '@/features/schedule/hooks/useSchedule';
+import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
+import { useMonthlySchedules, useAllSchedules } from '@/features/schedule/hooks/useSchedule';
 import type { ScheduleStackParamList } from '@/navigation/ScheduleNavigator';
 import type { HospitalSchedule } from '@/shared/types/domain.types';
 
 type Nav = StackNavigationProp<ScheduleStackParamList, 'ScheduleTab'>;
-type ViewMode = 'monthly' | 'weekly';
+type ViewMode = 'monthly' | 'weekly' | 'all';
+
+const WEEK_DAYS_LABEL = ['일', '월', '화', '수', '목', '금', '토'];
 
 const toDateString = (iso: string) => iso.split('T')[0];
 
@@ -69,7 +72,10 @@ export const ScheduleTab: React.FC = () => {
   const [visibleMonth, setVisibleMonth] = useState(today.getMonth() + 1);
   const [selectedDate, setSelectedDate] = useState<string>(todayStr);
 
+  const tabBarSafeBottom = useTabBarSafeBottom();
+
   const { data: schedules = [] } = useMonthlySchedules(visibleYear, visibleMonth);
+  const { data: allSchedules = [] } = useAllSchedules(viewMode === 'all');
 
   const markedDates = useMemo(() => {
     const marks: Record<string, any> = {};
@@ -105,6 +111,9 @@ export const ScheduleTab: React.FC = () => {
   }, [schedules, selectedDate, todayStr, colors]);
 
   const displaySchedules = useMemo(() => {
+    if (viewMode === 'all') {
+      return [...allSchedules].sort((a, b) => b.scheduledAt.localeCompare(a.scheduledAt));
+    }
     if (viewMode === 'weekly') {
       const weekDates = getWeekDates(new Date(selectedDate));
       return schedules
@@ -112,7 +121,7 @@ export const ScheduleTab: React.FC = () => {
         .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt));
     }
     return [...schedules].sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt));
-  }, [schedules, viewMode, selectedDate]);
+  }, [schedules, allSchedules, viewMode, selectedDate]);
 
   const groupedSchedules = useMemo(() => {
     const map = new Map<string, HospitalSchedule[]>();
@@ -202,88 +211,123 @@ export const ScheduleTab: React.FC = () => {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScreenHeader variant="tab" title={t('tab_schedule')} rightContent={
-        <>
-          <TouchableOpacity style={[styles.todayBtn, { borderColor: colors.primary }]} onPress={goToToday} hitSlop={8}>
-            <Text style={[styles.todayBtnText, { color: colors.primary, fontFamily: fontFamily.semibold }]}>오늘</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.prepNoteBtn, { backgroundColor: colors.primary }]}
-            onPress={() => navigation.navigate('PrepNoteList')}
-            hitSlop={8}
-          >
-            <Ionicons name="create-outline" size={16} color={colors.textInverse} />
-            <Text style={[styles.prepNoteBtnText, { color: colors.textInverse, fontFamily: fontFamily.semibold }]}>준비 메모</Text>
-          </TouchableOpacity>
-        </>
+        <TouchableOpacity
+          style={[styles.prepNoteBtn, { backgroundColor: colors.primary }]}
+          onPress={() => navigation.navigate('PrepNoteList')}
+          hitSlop={8}
+        >
+          <Ionicons name="create-outline" size={16} color={colors.textInverse} />
+          <Text style={[styles.prepNoteBtnText, { color: colors.textInverse, fontFamily: fontFamily.semibold }]}>준비 메모</Text>
+        </TouchableOpacity>
       } />
 
       <View style={[styles.viewToggle, { backgroundColor: colors.disabled }]}>
-        <TouchableOpacity
-          style={[
-            styles.toggleBtn,
-            viewMode === 'monthly' && {
-              backgroundColor: colors.surface,
-              shadowColor: colors.glassShadow,
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 1,
-              shadowRadius: 4,
-              elevation: 2,
-            },
-          ]}
-          onPress={() => setViewMode('monthly')}
-        >
-          <Text style={[
-            styles.toggleBtnText,
-            { color: colors.textSub, fontFamily: fontFamily.medium },
-            viewMode === 'monthly' && { color: colors.primary, fontFamily: fontFamily.bold },
-          ]}>
-            월간
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.toggleBtn,
-            viewMode === 'weekly' && {
-              backgroundColor: colors.surface,
-              shadowColor: colors.glassShadow,
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 1,
-              shadowRadius: 4,
-              elevation: 2,
-            },
-          ]}
-          onPress={() => setViewMode('weekly')}
-        >
-          <Text style={[
-            styles.toggleBtnText,
-            { color: colors.textSub, fontFamily: fontFamily.medium },
-            viewMode === 'weekly' && { color: colors.primary, fontFamily: fontFamily.bold },
-          ]}>
-            주간
-          </Text>
-        </TouchableOpacity>
+        {(['monthly', 'weekly', 'all'] as const).map((mode) => {
+          const label = mode === 'monthly' ? '월간' : mode === 'weekly' ? '주간' : '전체';
+          const active = viewMode === mode;
+          return (
+            <TouchableOpacity
+              key={mode}
+              style={[
+                styles.toggleBtn,
+                active && {
+                  backgroundColor: colors.surface,
+                  shadowColor: colors.glassShadow,
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 1,
+                  shadowRadius: 4,
+                  elevation: 2,
+                },
+              ]}
+              onPress={() => setViewMode(mode)}
+            >
+              <Text style={[
+                styles.toggleBtnText,
+                { color: colors.textSub, fontFamily: fontFamily.medium },
+                active && { color: colors.primary, fontFamily: fontFamily.bold },
+              ]}>
+                {label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <Calendar
-          key={currentMonth}
-          current={currentMonth}
-          markedDates={markedDates}
-          markingType="multi-dot"
-          onDayPress={handleDayPress}
-          onMonthChange={(month) => {
-            setVisibleYear(month.year);
-            setVisibleMonth(month.month);
-          }}
-          enableSwipeMonths
-          theme={calendarTheme}
-          style={styles.calendar}
-        />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarSafeBottom + 80 }]}
+      >
+        {viewMode === 'monthly' && (
+          <Calendar
+            key={currentMonth}
+            current={currentMonth}
+            markedDates={markedDates}
+            markingType="multi-dot"
+            onDayPress={handleDayPress}
+            onMonthChange={(month) => {
+              setVisibleYear(month.year);
+              setVisibleMonth(month.month);
+            }}
+            enableSwipeMonths
+            theme={calendarTheme}
+            style={styles.calendar}
+            renderHeader={(date: any) => {
+              const d: Date = date instanceof Date ? date : new Date(date);
+              const isCurrentMonth =
+                d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth();
+              return (
+                <View style={styles.calendarHeader}>
+                  <Text style={[styles.calendarHeaderText, { color: colors.text, fontFamily: fontFamily.bold }]}>
+                    {d.getFullYear()}년 {d.getMonth() + 1}월
+                  </Text>
+                  {!isCurrentMonth && (
+                    <TouchableOpacity
+                      style={[styles.todayBtn, { borderColor: colors.primary }]}
+                      onPress={goToToday}
+                      hitSlop={8}
+                    >
+                      <Text style={[styles.todayBtnText, { color: colors.primary, fontFamily: fontFamily.semibold }]}>오늘</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              );
+            }}
+          />
+        )}
+
+        {viewMode === 'weekly' && (
+          <WeekStrip
+            selectedDate={selectedDate}
+            schedules={schedules}
+            colors={colors}
+            todayStr={todayStr}
+            onDayPress={handleDayPress}
+            onPrevWeek={() => {
+              const d = new Date(selectedDate);
+              d.setDate(d.getDate() - 7);
+              const newDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+              setSelectedDate(newDate);
+              setVisibleYear(d.getFullYear());
+              setVisibleMonth(d.getMonth() + 1);
+            }}
+            onNextWeek={() => {
+              const d = new Date(selectedDate);
+              d.setDate(d.getDate() + 7);
+              const newDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+              setSelectedDate(newDate);
+              setVisibleYear(d.getFullYear());
+              setVisibleMonth(d.getMonth() + 1);
+            }}
+            onToday={goToToday}
+          />
+        )}
 
         <View style={styles.scheduleList}>
           <View style={styles.listHeader}>
             <Text style={[styles.listTitle, { color: colors.text, fontFamily: fontFamily.bold }]}>
-              {viewMode === 'monthly'
+              {viewMode === 'all'
+                ? '전체 일정'
+                : viewMode === 'monthly'
                 ? `${visibleMonth}월 일정`
                 : `${formatDateFull(selectedDate)} 주간`}
             </Text>
@@ -320,7 +364,7 @@ export const ScheduleTab: React.FC = () => {
 
       <AnimatedPressable
         onPress={() => navigation.navigate('ScheduleForm', { defaultDate: selectedDate })}
-        style={[styles.fab, floatingShadow(colors)]}
+        style={[styles.fab, { bottom: tabBarSafeBottom + sizes.spacing.md }, floatingShadow(colors)]}
         scaleValue={0.92}
       >
         <LinearGradient
@@ -333,6 +377,129 @@ export const ScheduleTab: React.FC = () => {
         </LinearGradient>
       </AnimatedPressable>
     </SafeAreaView>
+  );
+};
+
+/** 주간 캘린더 (7일 가로 스트립) */
+const WeekStrip: React.FC<{
+  selectedDate: string;
+  schedules: HospitalSchedule[];
+  colors: any;
+  todayStr: string;
+  onDayPress: (day: { dateString: string }) => void;
+  onPrevWeek: () => void;
+  onNextWeek: () => void;
+  onToday: () => void;
+}> = ({ selectedDate, schedules, colors, todayStr, onDayPress, onPrevWeek, onNextWeek, onToday }) => {
+  const weekDates = useMemo(() => getWeekDates(new Date(selectedDate)), [selectedDate]);
+  const scheduleDateSet = useMemo(
+    () => new Set(schedules.map((s) => toDateString(s.scheduledAt))),
+    [schedules]
+  );
+
+  const start = new Date(weekDates[0]);
+  const end = new Date(weekDates[6]);
+  const headerLabel =
+    start.getMonth() === end.getMonth()
+      ? `${start.getFullYear()}년 ${start.getMonth() + 1}월`
+      : `${start.getFullYear()}년 ${start.getMonth() + 1}월 - ${end.getMonth() + 1}월`;
+
+  const isCurrentWeek = weekDates.includes(todayStr);
+
+  return (
+    <View style={styles.weekStripWrap}>
+      {/* 헤더: 좌우 화살표 + 월/년 + (오늘 버튼) */}
+      <View style={styles.weekStripHeader}>
+        <TouchableOpacity onPress={onPrevWeek} hitSlop={8}>
+          <Ionicons name="chevron-back" size={20} color={colors.primary} />
+        </TouchableOpacity>
+        <Text style={[styles.calendarHeaderText, { color: colors.text, fontFamily: fontFamily.bold }]}>
+          {headerLabel}
+        </Text>
+        <TouchableOpacity onPress={onNextWeek} hitSlop={8}>
+          <Ionicons name="chevron-forward" size={20} color={colors.primary} />
+        </TouchableOpacity>
+        {!isCurrentWeek && (
+          <TouchableOpacity
+            style={[styles.todayBtn, { borderColor: colors.primary, marginLeft: sizes.spacing.sm }]}
+            onPress={onToday}
+            hitSlop={8}
+          >
+            <Text style={[styles.todayBtnText, { color: colors.primary, fontFamily: fontFamily.semibold }]}>오늘</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* 요일 헤더 */}
+      <View style={styles.weekStripRow}>
+        {WEEK_DAYS_LABEL.map((label, idx) => (
+          <View key={label} style={styles.weekStripCell}>
+            <Text
+              style={[
+                styles.weekStripDayLabel,
+                {
+                  color:
+                    idx === 0 ? colors.error : idx === 6 ? colors.primary : colors.textSub,
+                  fontFamily: fontFamily.semibold,
+                },
+              ]}
+            >
+              {label}
+            </Text>
+          </View>
+        ))}
+      </View>
+
+      {/* 날짜 행 */}
+      <View style={styles.weekStripRow}>
+        {weekDates.map((dateStr) => {
+          const d = new Date(dateStr);
+          const isSelected = dateStr === selectedDate;
+          const isToday = dateStr === todayStr;
+          const hasSchedule = scheduleDateSet.has(dateStr);
+          return (
+            <TouchableOpacity
+              key={dateStr}
+              style={styles.weekStripCell}
+              onPress={() => onDayPress({ dateString: dateStr })}
+              activeOpacity={0.7}
+            >
+              <View
+                style={[
+                  styles.weekStripDateCircle,
+                  isSelected && { backgroundColor: colors.primary },
+                  !isSelected && isToday && { backgroundColor: colors.primaryLight + '30' },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.weekStripDateText,
+                    {
+                      color: isSelected
+                        ? colors.textInverse
+                        : isToday
+                        ? colors.primary
+                        : colors.text,
+                      fontFamily: isSelected || isToday ? fontFamily.bold : fontFamily.medium,
+                    },
+                  ]}
+                >
+                  {d.getDate()}
+                </Text>
+              </View>
+              {hasSchedule && (
+                <View
+                  style={[
+                    styles.weekStripDot,
+                    { backgroundColor: isSelected ? colors.textInverse : colors.primary },
+                  ]}
+                />
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </View>
   );
 };
 
@@ -396,6 +563,56 @@ const styles = StyleSheet.create({
   todayBtnText: {
     fontSize: sizes.font.sm,
   },
+  calendarHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: sizes.spacing.md,
+    paddingVertical: sizes.spacing.xs,
+  },
+  calendarHeaderText: {
+    fontSize: sizes.font.lg,
+  },
+  weekStripWrap: {
+    paddingHorizontal: sizes.spacing.lg,
+    paddingTop: sizes.spacing.sm,
+    paddingBottom: sizes.spacing.md,
+    gap: sizes.spacing.sm,
+  },
+  weekStripHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: sizes.spacing.md,
+    paddingVertical: sizes.spacing.xs,
+  },
+  weekStripRow: {
+    flexDirection: 'row',
+  },
+  weekStripCell: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  weekStripDayLabel: {
+    fontSize: sizes.font.xs,
+  },
+  weekStripDateCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  weekStripDateText: {
+    fontSize: sizes.font.md,
+  },
+  weekStripDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginTop: 2,
+  },
   prepNoteBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -423,9 +640,7 @@ const styles = StyleSheet.create({
   toggleBtnText: {
     fontSize: sizes.font.sm,
   },
-  scrollContent: {
-    paddingBottom: sizes.tabBarSafeBottom + 80,
-  },
+  scrollContent: {},
   calendar: {
     paddingBottom: sizes.spacing.sm,
   },
@@ -493,7 +708,6 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    bottom: sizes.tabBarSafeBottom + sizes.spacing.md,
     right: sizes.spacing.xl,
     width: 60,
     height: 60,

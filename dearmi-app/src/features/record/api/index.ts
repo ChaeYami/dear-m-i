@@ -1,5 +1,5 @@
 import axiosInstance from '@/shared/api/axiosInstance';
-import type { ApiResponse, TimelineResponse } from '@/shared/types/api.types';
+import type { ApiResponse, RecordTimelinePage } from '@/shared/types/api.types';
 import type {
   CounselingRecord,
   HospitalSchedule,
@@ -8,10 +8,10 @@ import type {
 } from '@/shared/types/domain.types';
 
 export const recordApi = {
-  /** 타임라인 (상담 기록 + 처방전 혼합, 커서 기반 페이지네이션) */
-  getTimeline: (cursor?: string, limit = 20) =>
-    axiosInstance.get<ApiResponse<TimelineResponse>>('/api/v1/timeline', {
-      params: { cursor, limit },
+  /** 진료 기록 타임라인 (페이지 기반) */
+  getTimeline: (page = 0, size = 20) =>
+    axiosInstance.get<ApiResponse<RecordTimelinePage>>('/api/v1/records', {
+      params: { page, size },
     }),
 
   /** 상담 기록 상세 */
@@ -30,7 +30,13 @@ export const recordApi = {
   deleteRecord: (id: number) =>
     axiosInstance.delete<ApiResponse<void>>(`/api/v1/records/${id}`),
 
-  /** RecordForm 드롭다운용 최근 일정 목록 */
-  getRecentSchedules: () =>
-    axiosInstance.get<ApiResponse<HospitalSchedule[]>>('/api/v1/schedules/recent'),
+  /**
+   * RecordForm/PrepNoteForm 드롭다운용 최근 일정 목록
+   * - direction=PAST: 과거 일정 (진료 기록 작성)
+   * - direction=FUTURE: 다가오는 일정 (준비 메모 작성)
+   */
+  getRecentSchedules: (direction: 'PAST' | 'FUTURE' = 'PAST', limit = 10) =>
+    axiosInstance.get<ApiResponse<HospitalSchedule[]>>('/api/v1/schedules/recent', {
+      params: { direction, limit },
+    }),
 };

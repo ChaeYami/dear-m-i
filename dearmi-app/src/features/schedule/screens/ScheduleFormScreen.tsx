@@ -17,6 +17,7 @@ import type { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { useCreateSchedule, useUpdateSchedule } from '@/features/schedule/hooks/useSchedule';
+import { useUnsavedChangesWarning } from '@/shared/hooks/useUnsavedChangesWarning';
 import type { ScheduleStackParamList } from '@/navigation/ScheduleNavigator';
 
 type Nav = StackNavigationProp<ScheduleStackParamList, 'ScheduleForm'>;
@@ -52,6 +53,15 @@ export const ScheduleFormScreen: React.FC = () => {
   const { mutate: createSchedule, isPending: isCreating } = useCreateSchedule();
   const { mutate: updateSchedule, isPending: isUpdating } = useUpdateSchedule();
   const isPending = isCreating || isUpdating;
+
+  // 변경사항 추적 → 이탈 경고
+  const isDirty =
+    hospitalName.trim() !== (schedule?.hospitalName ?? '') ||
+    doctorName.trim() !== (schedule?.doctorName ?? '') ||
+    memo.trim() !== (schedule?.memo ?? '') ||
+    selectedDate.getTime() !== initialDate.getTime();
+
+  const { markSavedAndExit } = useUnsavedChangesWarning({ isDirty });
 
   const handleDateChange = (_: DateTimePickerEvent, date?: Date) => {
     if (Platform.OS === 'android') setShowDatePicker(false);
@@ -99,10 +109,10 @@ export const ScheduleFormScreen: React.FC = () => {
     if (isEdit && schedule) {
       updateSchedule(
         { id: schedule.id, data: payload },
-        { onSuccess: () => navigation.goBack() }
+        { onSuccess: () => markSavedAndExit() }
       );
     } else {
-      createSchedule(payload, { onSuccess: () => navigation.goBack() });
+      createSchedule(payload, { onSuccess: () => markSavedAndExit() });
     }
   };
 

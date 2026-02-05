@@ -57,7 +57,8 @@ public class RecordController {
                 request.scheduleId(),
                 request.emotionScore(),
                 request.content(),
-                request.tags()
+                request.tags(),
+                request.consultedAt()
         );
         return ApiResponse.success(RecordResponse.from(createRecordUseCase.create(command)));
     }
@@ -83,7 +84,8 @@ public class RecordController {
                 recordId,
                 request.emotionScore(),
                 request.content(),
-                request.tags()
+                request.tags(),
+                request.consultedAt()
         );
         return ApiResponse.success(RecordResponse.from(updateRecordUseCase.update(command)));
     }

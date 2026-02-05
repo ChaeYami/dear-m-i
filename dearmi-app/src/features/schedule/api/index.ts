@@ -12,6 +12,10 @@ export const scheduleApi = {
       params: { year, month },
     }),
 
+  /** 전체 일정 (캘린더 없이 목록만 보여주는 "전체" 필터용) */
+  getAllSchedules: () =>
+    axiosInstance.get<ApiResponse<HospitalSchedule[]>>('/api/v1/schedules/all'),
+
   getScheduleDetail: (id: number | string) =>
     axiosInstance.get<ApiResponse<HospitalSchedule>>(`/api/v1/schedules/${id}`),
 

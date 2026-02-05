@@ -45,9 +45,19 @@ export interface PresignedUrlResponse {
   uploadUrl: string;
 }
 
-/** 타임라인 커서 페이지 응답 */
+/** 타임라인 커서 페이지 응답 (호환용 — 사용 안 함) */
 export interface TimelineResponse {
   items: import('./domain.types').TimelineItem[];
   nextCursor?: string;
   hasNext: boolean;
+}
+
+/** 진료 기록 타임라인 페이지 응답 (백엔드 RecordTimelineResponse 매핑) */
+export interface RecordTimelinePage {
+  content: import('./domain.types').RecordSummary[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  isLimited: boolean;
 }

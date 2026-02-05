@@ -23,7 +23,7 @@ public class UpdateRecordUseCaseImpl implements UpdateRecordUseCase {
                 .findByIdAndUserIdAndDeletedAtIsNull(command.recordId(), command.userId())
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
-        record.update(command.emotionScore(), command.content(), command.tags());
+        record.update(command.emotionScore(), command.content(), command.tags(), command.consultedAt());
         return RecordResult.from(counselingRecordRepository.save(record));
     }
 }

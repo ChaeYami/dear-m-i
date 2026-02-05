@@ -61,6 +61,36 @@ public class HospitalScheduleRepositoryImpl implements HospitalScheduleRepositor
     }
 
     @Override
+    public List<HospitalSchedule> findPastByUserId(UUID userId, LocalDateTime now, int limit) {
+        QHospitalSchedule hs = QHospitalSchedule.hospitalSchedule;
+        return queryFactory
+                .selectFrom(hs)
+                .where(
+                        hs.userId.eq(userId),
+                        hs.deletedAt.isNull(),
+                        hs.scheduledAt.lt(now)
+                )
+                .orderBy(hs.scheduledAt.desc())
+                .limit(limit)
+                .fetch();
+    }
+
+    @Override
+    public List<HospitalSchedule> findFutureByUserId(UUID userId, LocalDateTime now, int limit) {
+        QHospitalSchedule hs = QHospitalSchedule.hospitalSchedule;
+        return queryFactory
+                .selectFrom(hs)
+                .where(
+                        hs.userId.eq(userId),
+                        hs.deletedAt.isNull(),
+                        hs.scheduledAt.goe(now)
+                )
+                .orderBy(hs.scheduledAt.asc())
+                .limit(limit)
+                .fetch();
+    }
+
+    @Override
     public void delete(HospitalSchedule schedule) {
         jpa.delete(schedule);
     }

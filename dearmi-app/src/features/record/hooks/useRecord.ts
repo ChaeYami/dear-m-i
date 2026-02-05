@@ -3,16 +3,28 @@ import { QUERY_KEYS } from '@/constants/cacheKeys';
 import { recordApi } from '@/features/record/api';
 import type { CreateRecordRequest, UpdateRecordRequest } from '@/shared/types/domain.types';
 
-/** 타임라인 무한 스크롤 (커서 기반) */
+/** 진료 기록 타임라인 무한 스크롤 (page 기반) */
 export const useTimeline = () => {
   return useInfiniteQuery({
     queryKey: QUERY_KEYS.timeline(),
     queryFn: async ({ pageParam }) => {
-      const { data } = await recordApi.getTimeline(pageParam as string | undefined);
-      return data.data ?? { items: [], hasNext: false };
+      const { data } = await recordApi.getTimeline(pageParam as number, 20);
+      return (
+        data.data ?? {
+          content: [],
+          page: 0,
+          size: 20,
+          totalElements: 0,
+          totalPages: 0,
+          isLimited: false,
+        }
+      );
     },
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.nextCursor : undefined),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      const nextPage = lastPage.page + 1;
+      return nextPage < lastPage.totalPages ? nextPage : undefined;
+    },
   });
 };
 
@@ -28,12 +40,16 @@ export const useRecordDetail = (id: number) => {
   });
 };
 
-/** RecordForm 드롭다운: 최근 일정 */
-export const useRecentSchedules = () => {
+/**
+ * 최근 일정 드롭다운 — direction에 따라 과거/미래 일정 반환
+ * - PAST: RecordForm 진료 기록 작성용 (과거 일정 내림차순)
+ * - FUTURE: PrepNoteForm 준비 메모 작성용 (다가오는 일정 오름차순)
+ */
+export const useRecentSchedules = (direction: 'PAST' | 'FUTURE' = 'PAST') => {
   return useQuery({
-    queryKey: QUERY_KEYS.recentSchedules(),
+    queryKey: QUERY_KEYS.recentSchedules(direction),
     queryFn: async () => {
-      const { data } = await recordApi.getRecentSchedules();
+      const { data } = await recordApi.getRecentSchedules(direction);
       return data.data ?? [];
     },
   });

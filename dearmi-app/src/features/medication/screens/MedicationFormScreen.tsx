@@ -22,6 +22,7 @@ import { softShadow } from '@/shared/theme/shadows';
 import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
 import { useCreateMedicationSchedule } from '@/features/medication/hooks/useMedication';
 import { useMedicationDetail } from '@/features/prescription/hooks/usePrescription';
+import { useUnsavedChangesWarning } from '@/shared/hooks/useUnsavedChangesWarning';
 import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
 import type { TimeSlotType } from '@/shared/types/domain.types';
 
@@ -151,9 +152,17 @@ export const MedicationFormScreen: React.FC = () => {
     return true;
   };
 
+  // 변경사항 추적 → 이탈 경고 (drugName/dosage/durationDays 입력 시)
+  const isDirty =
+    drugName.trim() !== (drugNameParam ?? '') ||
+    dosage.trim() !== (dosageParam ?? '') ||
+    durationDays !== (totalDaysParam !== undefined ? String(totalDaysParam) : '');
+
+  const { markSavedAndExit } = useUnsavedChangesWarning({ isDirty });
+
   const handleSave = () => {
     if (!validate()) return;
-    create(buildPayload(), { onSuccess: () => navigation.goBack() });
+    create(buildPayload(), { onSuccess: () => markSavedAndExit() });
   };
 
   /** OCR 흐름: 저장 후 다음 약품으로 이동 */

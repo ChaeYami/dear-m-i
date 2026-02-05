@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,12 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
@@ -23,6 +25,7 @@ import { usePrepNotesBySchedule } from '@/features/prepnote/hooks/usePrepNote';
 import { useCheckinSummary } from '@/features/checkin/hooks/useCheckin';
 import { getEmotionColor } from '@/shared/components/EmotionSlider';
 import { useAuthStore } from '@/features/auth/store/authStore';
+import { useUnsavedChangesWarning } from '@/shared/hooks/useUnsavedChangesWarning';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import { prescriptionApi } from '@/features/prescription/api';
 import type { RecordStackParamList } from '@/navigation/RecordNavigator';
@@ -45,7 +48,7 @@ export const RecordFormScreen: React.FC = () => {
   const contentLimit = isPremium ? undefined : FREE_CONTENT_LIMIT;
 
   const { data: existingRecord, isLoading: isLoadingRecord } = useRecordDetail(recordId ?? 0);
-  const { data: recentSchedules = [] } = useRecentSchedules();
+  const { data: recentSchedules = [] } = useRecentSchedules('PAST');
   const { mutate: createRecord, isPending: isCreating } = useCreateRecord();
   const { mutate: updateRecord, isPending: isUpdating } = useUpdateRecord();
   const isPending = isCreating || isUpdating;
@@ -62,6 +65,35 @@ export const RecordFormScreen: React.FC = () => {
   const [showSchedulePicker, setShowSchedulePicker] = useState(false);
   const [showPrepNotes, setShowPrepNotes] = useState(false);
   const [showCheckinSummary, setShowCheckinSummary] = useState(false);
+
+  // 일정 미연결 시 직접 선택할 진료 날짜
+  const [consultedAt, setConsultedAt] = useState<Date | null>(
+    existingRecord?.consultedAt ? new Date(existingRecord.consultedAt) : null
+  );
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [hydrated, setHydrated] = useState(!isEdit);
+
+  // 편집 모드: 비동기 로드된 existingRecord 로 폼 상태 초기화 (1회)
+  useEffect(() => {
+    if (!isEdit || !existingRecord || hydrated) return;
+    setSelectedScheduleId(existingRecord.scheduleId);
+    setEmotionScore(existingRecord.emotionScore ?? 5);
+    setContent(existingRecord.content ?? '');
+    setTags(existingRecord.tags ?? []);
+    setConsultedAt(existingRecord.consultedAt ? new Date(existingRecord.consultedAt) : null);
+    setHydrated(true);
+  }, [isEdit, existingRecord, hydrated]);
+
+  // 변경사항 추적 → 이탈 경고 (편집 모드는 hydrate 후에만)
+  const isDirty = hydrated && (
+    content.trim() !== (existingRecord?.content ?? '') ||
+    emotionScore !== (existingRecord?.emotionScore ?? 5) ||
+    JSON.stringify(tags) !== JSON.stringify(existingRecord?.tags ?? []) ||
+    selectedScheduleId !== (isEdit ? existingRecord?.scheduleId : scheduleIdFromNav) ||
+    (consultedAt?.toISOString().split('T')[0] ?? null) !== (existingRecord?.consultedAt ?? null)
+  );
+
+  const { markSavedAndExit } = useUnsavedChangesWarning({ isDirty });
 
   // 처방전 첨부
   const [rxImage, setRxImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
@@ -139,17 +171,26 @@ export const RecordFormScreen: React.FC = () => {
       return;
     }
 
+    const formatLocalDate = (d: Date) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+
     const payload = {
       scheduleId: selectedScheduleId,
       content: content.trim(),
       emotionScore,
       tags: tags.length > 0 ? tags : undefined,
+      // 일정 미연결이고 직접 날짜를 선택한 경우만 전송
+      consultedAt: !selectedScheduleId && consultedAt ? formatLocalDate(consultedAt) : undefined,
     };
 
     if (isEdit && recordId) {
-      updateRecord({ id: recordId, data: payload }, { onSuccess: () => navigation.goBack() });
+      updateRecord({ id: recordId, data: payload }, { onSuccess: () => markSavedAndExit() });
     } else {
-      createRecord(payload, { onSuccess: () => navigation.goBack() });
+      createRecord(payload, { onSuccess: () => markSavedAndExit() });
     }
   };
 
@@ -256,6 +297,11 @@ export const RecordFormScreen: React.FC = () => {
               >
                 <Text style={[styles.dropdownItemText, { color: colors.text }]}>선택 안 함</Text>
               </TouchableOpacity>
+              {recentSchedules.length === 0 && (
+                <View style={[styles.dropdownItem, { borderBottomColor: colors.divider }]}>
+                  <Text style={[styles.dropdownItemText, { color: colors.textDisabled }]}>최근 일정이 없습니다</Text>
+                </View>
+              )}
               {recentSchedules.map((s) => (
                 <TouchableOpacity
                   key={s.id}
@@ -284,6 +330,50 @@ export const RecordFormScreen: React.FC = () => {
             </View>
           )}
         </View>
+
+        {/* 일정 미연결 시 진료 날짜 직접 선택 */}
+        {!selectedScheduleId && (
+          <View style={styles.field}>
+            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>진료 날짜 (선택)</Text>
+            <TouchableOpacity
+              style={[styles.scheduleSelector, { backgroundColor: colors.surface, borderColor: colors.divider }]}
+              onPress={() => setShowDatePicker(true)}
+              activeOpacity={0.8}
+            >
+              <Text
+                style={
+                  consultedAt
+                    ? [styles.scheduleName, { color: colors.text }]
+                    : [styles.schedulePlaceholder, { color: colors.textDisabled }]
+                }
+              >
+                {consultedAt
+                  ? `${consultedAt.getFullYear()}년 ${consultedAt.getMonth() + 1}월 ${consultedAt.getDate()}일`
+                  : '진료받은 날짜 선택'}
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                {consultedAt && (
+                  <TouchableOpacity onPress={() => setConsultedAt(null)} hitSlop={8}>
+                    <Ionicons name="close-circle" size={18} color={colors.textSub} />
+                  </TouchableOpacity>
+                )}
+                <Ionicons name="calendar-outline" size={18} color={colors.textSub} />
+              </View>
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                value={consultedAt ?? new Date()}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                maximumDate={new Date()}
+                onChange={(_, date) => {
+                  setShowDatePicker(Platform.OS === 'ios');
+                  if (date) setConsultedAt(date);
+                }}
+              />
+            )}
+          </View>
+        )}
 
         {selectedScheduleId && prepNotes.length > 0 && (
           <View style={styles.prepNoteSection}>

@@ -39,6 +39,7 @@ export const QUERY_KEYS = {
 
   // 일정
   monthlySchedules: (year: number, month: number) => ['schedules', year, month] as const,
+  allSchedules: () => ['schedules', 'all'] as const,
   schedule: (id: number | string) => ['schedule', id] as const,
 
   // 타임라인 (상담 기록 + 처방전 혼합)
@@ -48,8 +49,9 @@ export const QUERY_KEYS = {
   records: () => ['records'] as const,
   record: (id: number) => ['record', id] as const,
 
-  // 최근 일정 (RecordForm 드롭다운용)
-  recentSchedules: () => ['recentSchedules'] as const,
+  // 최근 일정 (RecordForm/PrepNoteForm 드롭다운용)
+  recentSchedules: (direction: 'PAST' | 'FUTURE' = 'PAST') =>
+    ['recentSchedules', direction] as const,
 
   // 처방전
   prescriptions: () => ['prescriptions'] as const,

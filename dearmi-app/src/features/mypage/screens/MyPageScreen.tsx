@@ -18,6 +18,7 @@ import { softShadow } from '@/shared/theme/shadows';
 import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { useResetStackOnTabFocus } from '@/shared/hooks/useResetStackOnTabFocus';
+import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { useSubscriptionStore } from '@/features/subscription/store/subscriptionStore';
 import type { MyPageStackParamList } from '@/navigation/MyPageNavigator';
@@ -91,6 +92,7 @@ export const MyPageScreen: React.FC = () => {
   const { t } = useTranslation('settings');
   const { user, logout } = useAuthStore();
   const { plan, expiresAt } = useSubscriptionStore();
+  const tabBarSafeBottom = useTabBarSafeBottom();
 
   const handleLogout = () => {
     Alert.alert(t('auth:logout'), t('auth:logout_confirm'), [
@@ -115,7 +117,7 @@ export const MyPageScreen: React.FC = () => {
       fontFamily: fontFamily.bold,
       color: colors.text,
     },
-    content: { paddingBottom: sizes.tabBarSafeBottom + 16 },
+    content: { paddingBottom: tabBarSafeBottom + 16 },
     gradientStrip: {
       height: 80,
       borderBottomLeftRadius: 32,
@@ -229,7 +231,7 @@ export const MyPageScreen: React.FC = () => {
       fontFamily: fontFamily.regular,
       color: colors.textSub,
     },
-  }), [colors]);
+  }), [colors, tabBarSafeBottom]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import axiosInstance from '@/shared/api/axiosInstance';
 import { SkeletonLoader } from '@/shared/components/SkeletonLoader';
 import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
@@ -98,10 +99,11 @@ export const MedicationScheduleDetailScreen: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation();
   const { scheduleId, drugName } = useRoute<Route>().params;
+  const tabBarSafeBottom = useTabBarSafeBottom();
   const { data: info, isLoading } = useMedicationScheduleDrugInfo(scheduleId);
   const { mutate: refreshDrugInfo, isPending: isRefreshing } = useRefreshDrugInfo(scheduleId);
 
-  const styles = getStyles(colors);
+  const styles = getStyles(colors, tabBarSafeBottom);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -223,7 +225,7 @@ const DrugSection: React.FC<{
   const displaySections = isOpen ? sections : sections.slice(0, maxPreview ?? sections.length);
   const hasMore = !isOpen && maxPreview !== undefined && sections.length > maxPreview;
 
-  const styles = getStyles(colors);
+  const styles = getStyles(colors, 0);
 
   return (
     <View style={styles.sectionCard}>
@@ -265,7 +267,7 @@ const DrugSection: React.FC<{
   );
 };
 
-const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
+const getStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBottom: number) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     header: {
@@ -285,7 +287,7 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
     content: {
       padding: sizes.spacing.lg,
       gap: sizes.spacing.md,
-      paddingBottom: sizes.tabBarSafeBottom + 20,
+      paddingBottom: tabBarSafeBottom + 20,
     },
     skeletonWrap: { gap: sizes.spacing.md },
     statusWrap: {

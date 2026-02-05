@@ -16,10 +16,17 @@ import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { softShadow, floatingShadow } from '@/shared/theme/shadows';
 import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
 import { useTodayMedication, useCheckMedication, useDeleteMedicationSchedule } from '@/features/medication/hooks/useMedication';
-import { MedicationCard, type SlotItem } from '@/features/medication/components/MedicationCard';
+import {
+  MedicationCard,
+  SLOT_LABELS,
+  SLOT_COLORS,
+  formatSlotTime,
+  type SlotItem,
+} from '@/features/medication/components/MedicationCard';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { useResetStackOnTabFocus } from '@/shared/hooks/useResetStackOnTabFocus';
+import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
 import type { TimeSlotType } from '@/shared/types/domain.types';
 
@@ -36,6 +43,7 @@ export const MedicationHomeScreen: React.FC = () => {
   useResetStackOnTabFocus();
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
+  const tabBarSafeBottom = useTabBarSafeBottom();
   const { data, isLoading } = useTodayMedication();
   const { mutate: checkMedication, isPending: isChecking } = useCheckMedication();
   const { mutate: deleteMedicationSchedule } = useDeleteMedicationSchedule();
@@ -135,7 +143,7 @@ export const MedicationHomeScreen: React.FC = () => {
 
   const hasAnySlots = TIME_SLOTS.some((s) => slotGroups[s].length > 0);
 
-  const styles = getStyles(colors);
+  const styles = getStyles(colors, tabBarSafeBottom);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -231,29 +239,41 @@ export const MedicationHomeScreen: React.FC = () => {
             <Text style={styles.emptySubText}>+ 버튼을 눌러 복약 일정을 추가해보세요</Text>
           </View>
         ) : (
-          TIME_SLOTS.map((slot) =>
-            slotGroups[slot].length > 0 ? (
-              <AnimatedPressable
-                key={slot}
-                style={styles.medicationCardWrap}
-              >
-                <MedicationCard
-                  timeSlot={slot}
-                  items={slotGroups[slot]}
-                  pendingScheduleIds={pendingIds}
-                  isEditMode={isEditMode}
-                  selectedIds={selectedIds}
-                  onToggleSelect={toggleSelect}
-                  onDrugPress={(scheduleId, drugName) =>
-                    navigation.navigate('MedicationScheduleDetail', { scheduleId, drugName })
-                  }
-                  onDelete={(scheduleId, drugName) => handleDelete(scheduleId, drugName)}
-                  onTaken={(scheduleId) => handleCheck(scheduleId, 'TAKEN', slot)}
-                  onSkipped={(scheduleId) => handleCheck(scheduleId, 'SKIPPED', slot)}
-                />
-              </AnimatedPressable>
-            ) : null
-          )
+          TIME_SLOTS.map((slot) => {
+            if (slotGroups[slot].length === 0) return null;
+            const notifyTime = slotGroups[slot][0]?.notifyTime;
+            return (
+              <View key={slot} style={styles.slotGroup}>
+                {/* 시간대 라벨 (카드 밖, 배경 없음) */}
+                <View style={styles.slotHeaderRow}>
+                  <Text style={[styles.slotHeaderLabel, { color: SLOT_COLORS[slot] }]}>
+                    {SLOT_LABELS[slot]}
+                  </Text>
+                  {notifyTime && (
+                    <Text style={[styles.slotHeaderTime, { color: colors.textSub }]}>
+                      {formatSlotTime(notifyTime)}
+                    </Text>
+                  )}
+                </View>
+
+                <View style={styles.medicationCardWrap}>
+                  <MedicationCard
+                    items={slotGroups[slot]}
+                    pendingScheduleIds={pendingIds}
+                    isEditMode={isEditMode}
+                    selectedIds={selectedIds}
+                    onToggleSelect={toggleSelect}
+                    onDrugPress={(scheduleId, drugName) =>
+                      navigation.navigate('MedicationScheduleDetail', { scheduleId, drugName })
+                    }
+                    onDelete={(scheduleId, drugName) => handleDelete(scheduleId, drugName)}
+                    onTaken={(scheduleId) => handleCheck(scheduleId, 'TAKEN', slot)}
+                    onSkipped={(scheduleId) => handleCheck(scheduleId, 'SKIPPED', slot)}
+                  />
+                </View>
+              </View>
+            );
+          })
         )}
 
         {/* 복약 이력 버튼 */}
@@ -284,10 +304,10 @@ export const MedicationHomeScreen: React.FC = () => {
   );
 };
 
-const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
+const getStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBottom: number) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    content: { padding: sizes.spacing.lg, paddingBottom: sizes.tabBarSafeBottom + 80, gap: sizes.spacing.md },
+    content: { padding: sizes.spacing.lg, paddingBottom: tabBarSafeBottom + 80, gap: sizes.spacing.md },
     summaryCard: {
       backgroundColor: colors.surface,
       borderRadius: sizes.radius.xxl,
@@ -332,6 +352,24 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
       color: colors.textSub,
       textAlign: 'right',
       marginTop: -4,
+    },
+    slotGroup: {
+      gap: sizes.spacing.xs,
+    },
+    slotHeaderRow: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      gap: sizes.spacing.sm,
+      paddingHorizontal: sizes.spacing.xs,
+      marginTop: sizes.spacing.sm,
+    },
+    slotHeaderLabel: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.bold,
+    },
+    slotHeaderTime: {
+      fontSize: sizes.font.sm,
+      fontFamily: fontFamily.medium,
     },
     medicationCardWrap: {
       borderRadius: sizes.radius.xxl,
@@ -416,7 +454,7 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
     },
     fab: {
       position: 'absolute',
-      bottom: sizes.tabBarSafeBottom + sizes.spacing.md,
+      bottom: tabBarSafeBottom + sizes.spacing.md,
       right: sizes.spacing.xl,
       width: 60,
       height: 60,

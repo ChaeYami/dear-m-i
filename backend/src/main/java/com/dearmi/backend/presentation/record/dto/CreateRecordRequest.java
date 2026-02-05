@@ -3,6 +3,7 @@ package com.dearmi.backend.presentation.record.dto;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,5 +15,7 @@ public record CreateRecordRequest(
 
         String content,
 
-        List<String> tags
+        List<String> tags,
+
+        LocalDate consultedAt
 ) {}
