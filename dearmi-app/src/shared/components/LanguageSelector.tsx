@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { changeLanguage } from '@/locales/i18n';
 
 export const LanguageSelector: React.FC = () => {
+  const { colors } = useTheme();
   const { i18n, t } = useTranslation('settings');
   const currentLang = i18n.language;
 
@@ -15,53 +16,56 @@ export const LanguageSelector: React.FC = () => {
   ];
 
   return (
-    <View style={styles.container}>
+    <View
+      style={{
+        backgroundColor: colors.surface,
+        borderRadius: sizes.radius.lg,
+        borderWidth: 1,
+        borderColor: colors.divider,
+        overflow: 'hidden',
+      }}
+    >
       {options.map((opt) => {
         const isActive = currentLang === opt.code;
         return (
           <TouchableOpacity
             key={opt.code}
-            style={[styles.option, isActive && styles.optionActive]}
+            style={[
+              {
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingHorizontal: sizes.spacing.lg,
+                paddingVertical: sizes.spacing.md,
+                borderBottomWidth: 1,
+                borderBottomColor: colors.divider,
+              },
+              isActive && { backgroundColor: colors.primaryMuted },
+            ]}
             onPress={() => changeLanguage(opt.code)}
             activeOpacity={0.7}
           >
-            <Text style={[styles.optionText, isActive && styles.optionTextActive]}>
+            <Text
+              style={[
+                {
+                  fontFamily: fontFamily.regular,
+                  fontSize: sizes.font.md,
+                  color: colors.text,
+                },
+                isActive && {
+                  fontFamily: fontFamily.semibold,
+                  color: colors.primary,
+                },
+              ]}
+            >
               {opt.label}
             </Text>
-            {isActive && <Ionicons name="checkmark" size={sizes.font.md} color={colors.primary} />}
+            {isActive && (
+              <Ionicons name="checkmark" size={sizes.font.md} color={colors.primary} />
+            )}
           </TouchableOpacity>
         );
       })}
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.surfaceSolid,
-    borderRadius: sizes.radius.lg,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    overflow: 'hidden',
-  },
-  option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: sizes.spacing.lg,
-    paddingVertical: sizes.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
-  },
-  optionActive: {
-    backgroundColor: colors.primaryLight + '20',
-  },
-  optionText: {
-    fontSize: sizes.font.md,
-    color: colors.text,
-  },
-  optionTextActive: {
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.semibold,
-  },
-});

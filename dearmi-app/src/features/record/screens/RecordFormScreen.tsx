@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { EmotionSlider } from '@/shared/components/EmotionSlider';
 import { useCreateRecord, useUpdateRecord, useRecordDetail, useRecentSchedules } from '@/features/record/hooks/useRecord';
 import { usePrepNotesBySchedule } from '@/features/prepnote/hooks/usePrepNote';
@@ -32,6 +32,7 @@ type Route = RouteProp<RecordStackParamList, 'RecordForm'>;
 const FREE_CONTENT_LIMIT = 200;
 
 export const RecordFormScreen: React.FC = () => {
+  const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const params = useRoute<Route>().params;
   const scheduleIdFromNav = params?.scheduleId;
@@ -156,14 +157,14 @@ export const RecordFormScreen: React.FC = () => {
   const selectedSchedule = recentSchedules.find((s) => s.id === selectedScheduleId);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <Text style={styles.headerCancel}>취소</Text>
+          <Text style={[styles.headerCancel, { color: colors.textSub }]}>취소</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{isEdit ? '기록 수정' : '기록 작성'}</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{isEdit ? '기록 수정' : '기록 작성'}</Text>
         <TouchableOpacity onPress={handleSave} disabled={isPending} hitSlop={12}>
-          <Text style={[styles.headerSave, isPending && styles.headerSaveDisabled]}>
+          <Text style={[styles.headerSave, isPending && styles.headerSaveDisabled, { color: colors.primary }]}>
             {isPending ? '저장 중…' : '저장'}
           </Text>
         </TouchableOpacity>
@@ -173,11 +174,11 @@ export const RecordFormScreen: React.FC = () => {
         {checkinSummary && checkinSummary.totalCheckins > 0 && (
           <View style={styles.summarySection}>
             <TouchableOpacity
-              style={styles.summaryToggle}
+              style={[styles.summaryToggle, { backgroundColor: colors.secondaryLight + '20', borderColor: colors.secondaryLight }]}
               onPress={() => setShowCheckinSummary((v) => !v)}
               activeOpacity={0.8}
             >
-              <Text style={styles.summaryToggleText}>
+              <Text style={[styles.summaryToggleText, { color: colors.secondary }]}>
                 이번 주 체크인 요약 ({checkinSummary.totalCheckins}일)
               </Text>
               <Ionicons
@@ -187,10 +188,10 @@ export const RecordFormScreen: React.FC = () => {
               />
             </TouchableOpacity>
             {showCheckinSummary && (
-              <View style={styles.summaryCard}>
+              <View style={[styles.summaryCard, { backgroundColor: colors.surface, borderColor: colors.divider }]}>
                 {checkinSummary.averageEmotionScore != null && (
                   <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>평균 감정</Text>
+                    <Text style={[styles.summaryLabel, { color: colors.textSub }]}>평균 감정</Text>
                     <Text
                       style={[
                         styles.summaryValue,
@@ -203,22 +204,22 @@ export const RecordFormScreen: React.FC = () => {
                 )}
                 {checkinSummary.averageSleepHours != null && (
                   <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>평균 수면</Text>
-                    <Text style={styles.summaryValue}>
+                    <Text style={[styles.summaryLabel, { color: colors.textSub }]}>평균 수면</Text>
+                    <Text style={[styles.summaryValue, { color: colors.text }]}>
                       {checkinSummary.averageSleepHours.toFixed(1)}시간
                     </Text>
                   </View>
                 )}
                 {checkinSummary.medicationRate != null && (
                   <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>복약률</Text>
-                    <Text style={styles.summaryValue}>{checkinSummary.medicationRate}%</Text>
+                    <Text style={[styles.summaryLabel, { color: colors.textSub }]}>복약률</Text>
+                    <Text style={[styles.summaryValue, { color: colors.text }]}>{checkinSummary.medicationRate}%</Text>
                   </View>
                 )}
                 {checkinSummary.topTriggerTags.length > 0 && (
                   <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>주요 트리거</Text>
-                    <Text style={styles.summaryValue}>
+                    <Text style={[styles.summaryLabel, { color: colors.textSub }]}>주요 트리거</Text>
+                    <Text style={[styles.summaryValue, { color: colors.text }]}>
                       {checkinSummary.topTriggerTags.join(', ')}
                     </Text>
                   </View>
@@ -229,13 +230,13 @@ export const RecordFormScreen: React.FC = () => {
         )}
 
         <View style={styles.field}>
-          <Text style={styles.fieldLabel}>연결 일정 (선택)</Text>
+          <Text style={[styles.fieldLabel, { color: colors.textSub }]}>연결 일정 (선택)</Text>
           <TouchableOpacity
-            style={styles.scheduleSelector}
+            style={[styles.scheduleSelector, { backgroundColor: colors.surface, borderColor: colors.divider }]}
             onPress={() => setShowSchedulePicker((v) => !v)}
             activeOpacity={0.8}
           >
-            <Text style={selectedSchedule ? styles.scheduleName : styles.schedulePlaceholder}>
+            <Text style={selectedSchedule ? [styles.scheduleName, { color: colors.text }] : [styles.schedulePlaceholder, { color: colors.textDisabled }]}>
               {selectedSchedule
                 ? `${selectedSchedule.hospitalName} · ${formatDate(selectedSchedule.scheduledAt)}`
                 : '일정 선택 (선택 사항)'}
@@ -248,22 +249,23 @@ export const RecordFormScreen: React.FC = () => {
           </TouchableOpacity>
 
           {showSchedulePicker && (
-            <View style={styles.dropdown}>
+            <View style={[styles.dropdown, { backgroundColor: colors.surface, borderColor: colors.divider }]}>
               <TouchableOpacity
-                style={styles.dropdownItem}
+                style={[styles.dropdownItem, { borderBottomColor: colors.divider }]}
                 onPress={() => {
                   setSelectedScheduleId(undefined);
                   setShowSchedulePicker(false);
                 }}
               >
-                <Text style={styles.dropdownItemText}>선택 안 함</Text>
+                <Text style={[styles.dropdownItemText, { color: colors.text }]}>선택 안 함</Text>
               </TouchableOpacity>
               {recentSchedules.map((s) => (
                 <TouchableOpacity
                   key={s.id}
                   style={[
                     styles.dropdownItem,
-                    s.id === selectedScheduleId && styles.dropdownItemSelected,
+                    { borderBottomColor: colors.divider },
+                    s.id === selectedScheduleId && { backgroundColor: colors.primaryLight + '15' },
                   ]}
                   onPress={() => {
                     setSelectedScheduleId(s.id);
@@ -273,12 +275,13 @@ export const RecordFormScreen: React.FC = () => {
                   <Text
                     style={[
                       styles.dropdownItemText,
-                      s.id === selectedScheduleId && styles.dropdownItemTextSelected,
+                      { color: colors.text },
+                      s.id === selectedScheduleId && { color: colors.primary, fontFamily: fontFamily.semibold },
                     ]}
                   >
                     {s.hospitalName}
                   </Text>
-                  <Text style={styles.dropdownItemDate}>{formatDate(s.scheduledAt)}</Text>
+                  <Text style={[styles.dropdownItemDate, { color: colors.textSub }]}>{formatDate(s.scheduledAt)}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -288,13 +291,13 @@ export const RecordFormScreen: React.FC = () => {
         {selectedScheduleId && prepNotes.length > 0 && (
           <View style={styles.prepNoteSection}>
             <TouchableOpacity
-              style={styles.prepNoteToggle}
+              style={[styles.prepNoteToggle, { backgroundColor: colors.primaryLight + '15', borderColor: colors.primaryLight }]}
               onPress={() => setShowPrepNotes((v) => !v)}
               activeOpacity={0.8}
             >
               <View style={styles.prepNoteToggleLeft}>
                 <Ionicons name="create-outline" size={16} color={colors.primary} />
-                <Text style={styles.prepNoteToggleText}>
+                <Text style={[styles.prepNoteToggleText, { color: colors.primary }]}>
                   진료 준비 메모 참고 ({prepNotes.length}개)
                 </Text>
               </View>
@@ -306,28 +309,29 @@ export const RecordFormScreen: React.FC = () => {
             </TouchableOpacity>
             {showPrepNotes &&
               prepNotes.map((note) => (
-                <View key={note.id} style={styles.prepNoteCard}>
-                  <Text style={styles.prepNoteContent}>{note.content}</Text>
+                <View key={note.id} style={[styles.prepNoteCard, { backgroundColor: colors.surface, borderColor: colors.divider, borderLeftColor: colors.primary }]}>
+                  <Text style={[styles.prepNoteContent, { color: colors.textSub }]}>{note.content}</Text>
                 </View>
               ))}
           </View>
         )}
 
         <View style={styles.field}>
-          <Text style={styles.fieldLabel}>오늘 컨디션</Text>
+          <Text style={[styles.fieldLabel, { color: colors.textSub }]}>오늘 컨디션</Text>
           <EmotionSlider value={emotionScore} onChange={setEmotionScore} />
         </View>
 
         <View style={styles.field}>
           <View style={styles.fieldLabelRow}>
-            <Text style={styles.fieldLabel}>
-              상담 내용 <Text style={styles.required}>*</Text>
+            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>
+              상담 내용 <Text style={{ color: colors.error }}>*</Text>
             </Text>
             {contentLimit && (
               <Text
                 style={[
                   styles.charCount,
-                  content.length > contentLimit && styles.charCountOver,
+                  { color: colors.textDisabled },
+                  content.length > contentLimit && { color: colors.error, fontFamily: fontFamily.semibold },
                 ]}
               >
                 {content.length}/{contentLimit}
@@ -336,7 +340,7 @@ export const RecordFormScreen: React.FC = () => {
             )}
           </View>
           <TextInput
-            style={[styles.textArea, content.length > (contentLimit ?? Infinity) && styles.textAreaError]}
+            style={[styles.textArea, { backgroundColor: colors.surface, borderColor: colors.divider, color: colors.text }, content.length > (contentLimit ?? Infinity) && { borderColor: colors.error }]}
             placeholder="진료 내용, 의사 선생님 말씀, 느낀 점 등을 자유롭게 기록하세요"
             placeholderTextColor={colors.textDisabled}
             value={content}
@@ -348,10 +352,10 @@ export const RecordFormScreen: React.FC = () => {
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.fieldLabel}>태그 (선택)</Text>
+          <Text style={[styles.fieldLabel, { color: colors.textSub }]}>태그 (선택)</Text>
           <View style={styles.tagInputRow}>
             <TextInput
-              style={styles.tagInput}
+              style={[styles.tagInput, { backgroundColor: colors.surface, borderColor: colors.divider, color: colors.text }]}
               placeholder="#우울감, #수면장애…"
               placeholderTextColor={colors.textDisabled}
               value={tagInput}
@@ -360,8 +364,8 @@ export const RecordFormScreen: React.FC = () => {
               returnKeyType="done"
               blurOnSubmit={false}
             />
-            <TouchableOpacity style={styles.tagAddBtn} onPress={handleAddTag}>
-              <Text style={styles.tagAddBtnText}>추가</Text>
+            <TouchableOpacity style={[styles.tagAddBtn, { backgroundColor: colors.primary }]} onPress={handleAddTag}>
+              <Text style={[styles.tagAddBtnText, { color: colors.textInverse }]}>추가</Text>
             </TouchableOpacity>
           </View>
           {tags.length > 0 && (
@@ -369,11 +373,11 @@ export const RecordFormScreen: React.FC = () => {
               {tags.map((tag) => (
                 <TouchableOpacity
                   key={tag}
-                  style={styles.tagChip}
+                  style={[styles.tagChip, { backgroundColor: colors.primaryLight + '25' }]}
                   onPress={() => handleRemoveTag(tag)}
                   activeOpacity={0.75}
                 >
-                  <Text style={styles.tagChipText}>#{tag}</Text>
+                  <Text style={[styles.tagChipText, { color: colors.primary }]}>#{tag}</Text>
                   <Ionicons name="close-circle" size={14} color={colors.primary} />
                 </TouchableOpacity>
               ))}
@@ -384,21 +388,21 @@ export const RecordFormScreen: React.FC = () => {
         {/* 처방전 첨부 (프리미엄) */}
         {isPremium && (
           <View style={styles.field}>
-            <Text style={styles.fieldLabel}>처방전 첨부 (선택)</Text>
+            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>처방전 첨부 (선택)</Text>
             {rxDone ? (
-              <View style={styles.rxDoneBox}>
+              <View style={[styles.rxDoneBox, { backgroundColor: colors.successLight }]}>
                 <Ionicons name="checkmark-circle" size={20} color={colors.success} />
-                <Text style={styles.rxDoneText}>처방전이 등록되었습니다. OCR 분석이 진행됩니다.</Text>
+                <Text style={[styles.rxDoneText, { color: colors.success }]}>처방전이 등록되었습니다. OCR 분석이 진행됩니다.</Text>
               </View>
             ) : rxImage ? (
-              <View style={styles.rxPreviewWrap}>
+              <View style={[styles.rxPreviewWrap, { borderColor: colors.divider }]}>
                 <Image source={{ uri: rxImage.uri }} style={styles.rxPreview} resizeMode="cover" />
-                <View style={styles.rxActions}>
-                  <TouchableOpacity style={styles.rxChangeBtn} onPress={pickRxImage} disabled={rxUploading}>
-                    <Text style={styles.rxChangeBtnText}>다시 선택</Text>
+                <View style={[styles.rxActions, { backgroundColor: colors.surface }]}>
+                  <TouchableOpacity style={[styles.rxChangeBtn, { borderColor: colors.divider }]} onPress={pickRxImage} disabled={rxUploading}>
+                    <Text style={[styles.rxChangeBtnText, { color: colors.textSub }]}>다시 선택</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[styles.rxUploadBtn, rxUploading && styles.rxUploadBtnDisabled]}
+                    style={[styles.rxUploadBtn, { backgroundColor: colors.primary }, rxUploading && styles.rxUploadBtnDisabled]}
                     onPress={uploadRx}
                     disabled={rxUploading}
                   >
@@ -407,17 +411,17 @@ export const RecordFormScreen: React.FC = () => {
                     ) : (
                       <>
                         <Ionicons name="cloud-upload-outline" size={16} color={colors.textInverse} />
-                        <Text style={styles.rxUploadBtnText}>업로드 및 OCR</Text>
+                        <Text style={[styles.rxUploadBtnText, { color: colors.textInverse }]}>업로드 및 OCR</Text>
                       </>
                     )}
                   </TouchableOpacity>
                 </View>
               </View>
             ) : (
-              <TouchableOpacity style={styles.rxAddBtn} onPress={pickRxImage} activeOpacity={0.8}>
+              <TouchableOpacity style={[styles.rxAddBtn, { borderColor: colors.divider, backgroundColor: colors.surface }]} onPress={pickRxImage} activeOpacity={0.8}>
                 <Ionicons name="camera-outline" size={24} color={colors.primary} />
-                <Text style={styles.rxAddBtnText}>처방전 사진 첨부</Text>
-                <Text style={styles.rxAddBtnSub}>촬영 또는 갤러리에서 선택</Text>
+                <Text style={[styles.rxAddBtnText, { color: colors.primary }]}>처방전 사진 첨부</Text>
+                <Text style={[styles.rxAddBtnSub, { color: colors.textDisabled }]}>촬영 또는 갤러리에서 선택</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -433,7 +437,7 @@ const formatDate = (iso: string) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1 },
   header: {
     height: sizes.headerHeight,
     flexDirection: 'row',
@@ -443,14 +447,12 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
+    fontFamily: fontFamily.bold,
   },
-  headerCancel: { fontSize: sizes.font.md, color: colors.textSub },
+  headerCancel: { fontSize: sizes.font.md },
   headerSave: {
     fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.primary,
+    fontFamily: fontFamily.semibold,
   },
   headerSaveDisabled: { opacity: 0.4 },
   content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg, paddingBottom: 40 },
@@ -458,29 +460,22 @@ const styles = StyleSheet.create({
   fieldLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   fieldLabel: {
     fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.medium,
-    color: colors.textSub,
+    fontFamily: fontFamily.medium,
   },
-  required: { color: colors.error },
-  charCount: { fontSize: sizes.font.xs, color: colors.textDisabled },
-  charCountOver: { color: colors.error, fontWeight: sizes.fontWeight.semibold },
+  charCount: { fontSize: sizes.font.xs },
   scheduleSelector: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.surfaceSolid,
     borderWidth: 1,
-    borderColor: colors.divider,
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.md,
   },
-  scheduleName: { fontSize: sizes.font.md, color: colors.text, flex: 1 },
-  schedulePlaceholder: { fontSize: sizes.font.md, color: colors.textDisabled, flex: 1 },
+  scheduleName: { fontSize: sizes.font.md, flex: 1 },
+  schedulePlaceholder: { fontSize: sizes.font.md, flex: 1 },
   dropdown: {
-    backgroundColor: colors.surfaceSolid,
     borderWidth: 1,
-    borderColor: colors.divider,
     borderRadius: sizes.radius.md,
     overflow: 'hidden',
   },
@@ -488,57 +483,44 @@ const styles = StyleSheet.create({
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  dropdownItemSelected: { backgroundColor: colors.primaryLight + '15' },
-  dropdownItemText: { fontSize: sizes.font.md, color: colors.text },
-  dropdownItemTextSelected: { color: colors.primary, fontWeight: sizes.fontWeight.semibold },
-  dropdownItemDate: { fontSize: sizes.font.sm, color: colors.textSub },
+  dropdownItemText: { fontSize: sizes.font.md },
+  dropdownItemDate: { fontSize: sizes.font.sm },
   textArea: {
-    backgroundColor: colors.surfaceSolid,
     borderWidth: 1,
-    borderColor: colors.divider,
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
     paddingTop: sizes.spacing.md,
     paddingBottom: sizes.spacing.md,
     fontSize: sizes.font.md,
-    color: colors.text,
     minHeight: 140,
     lineHeight: 22,
   },
-  textAreaError: { borderColor: colors.error },
   tagInputRow: { flexDirection: 'row', gap: sizes.spacing.sm },
   tagInput: {
     flex: 1,
-    backgroundColor: colors.surfaceSolid,
     borderWidth: 1,
-    borderColor: colors.divider,
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.sm,
     fontSize: sizes.font.md,
-    color: colors.text,
   },
   tagAddBtn: {
-    backgroundColor: colors.primary,
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
     justifyContent: 'center',
   },
   tagAddBtnText: {
-    color: colors.textInverse,
     fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.semibold,
+    fontFamily: fontFamily.semibold,
   },
   tagList: { flexDirection: 'row', flexWrap: 'wrap', gap: sizes.spacing.xs },
   tagChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.primaryLight + '25',
     paddingHorizontal: sizes.spacing.sm,
     paddingVertical: 4,
     borderRadius: sizes.radius.full,
@@ -546,32 +528,26 @@ const styles = StyleSheet.create({
   },
   tagChipText: {
     fontSize: sizes.font.xs,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.medium,
+    fontFamily: fontFamily.medium,
   },
   summarySection: { gap: sizes.spacing.sm },
   summaryToggle: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: colors.secondaryLight + '20',
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.sm,
     borderWidth: 1,
-    borderColor: colors.secondaryLight,
   },
   summaryToggleText: {
     fontSize: sizes.font.sm,
-    color: colors.secondary,
-    fontWeight: sizes.fontWeight.semibold,
+    fontFamily: fontFamily.semibold,
   },
   summaryCard: {
-    backgroundColor: colors.surfaceSolid,
     borderRadius: sizes.radius.md,
     padding: sizes.spacing.md,
     borderWidth: 1,
-    borderColor: colors.divider,
     gap: sizes.spacing.sm,
   },
   summaryRow: {
@@ -581,24 +557,20 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: sizes.font.sm,
-    color: colors.textSub,
   },
   summaryValue: {
     fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.text,
+    fontFamily: fontFamily.semibold,
   },
   prepNoteSection: { gap: sizes.spacing.sm },
   prepNoteToggle: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: colors.primaryLight + '15',
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.sm,
     borderWidth: 1,
-    borderColor: colors.primaryLight,
   },
   prepNoteToggleLeft: {
     flexDirection: 'row',
@@ -607,21 +579,16 @@ const styles = StyleSheet.create({
   },
   prepNoteToggleText: {
     fontSize: sizes.font.sm,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.semibold,
+    fontFamily: fontFamily.semibold,
   },
   prepNoteCard: {
-    backgroundColor: colors.surfaceSolid,
     borderRadius: sizes.radius.md,
     padding: sizes.spacing.md,
     borderWidth: 1,
-    borderColor: colors.divider,
     borderLeftWidth: 3,
-    borderLeftColor: colors.primary,
   },
   prepNoteContent: {
     fontSize: sizes.font.sm,
-    color: colors.textSub,
     lineHeight: 20,
   },
   // 처방전 첨부
@@ -631,24 +598,19 @@ const styles = StyleSheet.create({
     paddingVertical: sizes.spacing.xl,
     borderRadius: sizes.radius.lg,
     borderWidth: 1.5,
-    borderColor: colors.divider,
     borderStyle: 'dashed',
-    backgroundColor: colors.surfaceSolid,
   },
   rxAddBtnText: {
     fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.primary,
+    fontFamily: fontFamily.semibold,
   },
   rxAddBtnSub: {
     fontSize: sizes.font.xs,
-    color: colors.textDisabled,
   },
   rxPreviewWrap: {
     borderRadius: sizes.radius.lg,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: colors.divider,
   },
   rxPreview: {
     width: '100%',
@@ -658,7 +620,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: sizes.spacing.sm,
     padding: sizes.spacing.sm,
-    backgroundColor: colors.surfaceSolid,
   },
   rxChangeBtn: {
     flex: 1,
@@ -666,12 +627,10 @@ const styles = StyleSheet.create({
     paddingVertical: sizes.spacing.sm,
     borderRadius: sizes.radius.md,
     borderWidth: 1,
-    borderColor: colors.divider,
   },
   rxChangeBtnText: {
     fontSize: sizes.font.sm,
-    color: colors.textSub,
-    fontWeight: sizes.fontWeight.medium,
+    fontFamily: fontFamily.medium,
   },
   rxUploadBtn: {
     flex: 1,
@@ -681,26 +640,22 @@ const styles = StyleSheet.create({
     gap: sizes.spacing.xs,
     paddingVertical: sizes.spacing.sm,
     borderRadius: sizes.radius.md,
-    backgroundColor: colors.primary,
   },
   rxUploadBtnDisabled: { opacity: 0.6 },
   rxUploadBtnText: {
     fontSize: sizes.font.sm,
-    color: colors.textInverse,
-    fontWeight: sizes.fontWeight.semibold,
+    fontFamily: fontFamily.semibold,
   },
   rxDoneBox: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: sizes.spacing.sm,
-    backgroundColor: colors.successLight,
     borderRadius: sizes.radius.md,
     padding: sizes.spacing.md,
   },
   rxDoneText: {
     flex: 1,
     fontSize: sizes.font.sm,
-    color: colors.success,
-    fontWeight: sizes.fontWeight.medium,
+    fontFamily: fontFamily.medium,
   },
 });

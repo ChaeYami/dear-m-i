@@ -1,6 +1,6 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import { colors } from '@/constants';
+
 import { MedicationHomeScreen } from '@/features/medication/screens/MedicationHomeScreen';
 import { MedicationFormScreen } from '@/features/medication/screens/MedicationFormScreen';
 import { MedicationHistoryScreen } from '@/features/medication/screens/MedicationHistoryScreen';
@@ -33,7 +33,7 @@ export const MedicationNavigator: React.FC = () => (
   <Stack.Navigator
     screenOptions={{
       headerShown: false,
-      cardStyle: { backgroundColor: colors.background },
+      cardStyle: { backgroundColor: 'transparent' },
     }}
   >
     <Stack.Screen name="MedicationHome" component={MedicationHomeScreen} />

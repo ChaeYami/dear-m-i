@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
-  
+
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { CompositeNavigationProp } from '@react-navigation/native';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import {
   usePrescriptionDetail,
   useSavePrescription,
@@ -51,21 +51,36 @@ const newMedication = (): EditableMedication => ({
 
 // ─── 상태별 UI ────────────────────────────────────────────────────────────────
 
-const PendingView: React.FC = () => (
-  <View style={styles.statusWrap}>
+const PendingView: React.FC<{ colors: ReturnType<typeof useTheme>['colors'] }> = ({ colors }) => (
+  <View style={staticStyles.statusWrap}>
     <ActivityIndicator size="large" color={colors.primary} />
-    <Text style={styles.statusTitle}>처방전을 분석 중입니다…</Text>
-    <Text style={styles.statusSub}>잠시만 기다려 주세요</Text>
+    <Text style={[staticStyles.statusTitle, { fontFamily: fontFamily.bold, color: colors.text }]}>
+      처방전을 분석 중입니다…
+    </Text>
+    <Text style={[staticStyles.statusSub, { color: colors.textSub }]}>잠시만 기다려 주세요</Text>
   </View>
 );
 
-const FailedView: React.FC<{ onManualEntry: () => void }> = ({ onManualEntry }) => (
-  <View style={styles.statusWrap}>
-    <Text style={styles.failIcon}>⚠️</Text>
-    <Text style={styles.statusTitle}>자동 인식에 실패했습니다</Text>
-    <Text style={styles.statusSub}>직접 입력해서 저장할 수 있어요</Text>
-    <TouchableOpacity style={styles.manualEntryBtn} onPress={onManualEntry} activeOpacity={0.8}>
-      <Text style={styles.manualEntryBtnText}>직접 입력하기</Text>
+const FailedView: React.FC<{
+  onManualEntry: () => void;
+  colors: ReturnType<typeof useTheme>['colors'];
+}> = ({ onManualEntry, colors }) => (
+  <View style={staticStyles.statusWrap}>
+    <Text style={staticStyles.failIcon}>⚠️</Text>
+    <Text style={[staticStyles.statusTitle, { fontFamily: fontFamily.bold, color: colors.text }]}>
+      자동 인식에 실패했습니다
+    </Text>
+    <Text style={[staticStyles.statusSub, { color: colors.textSub }]}>
+      직접 입력해서 저장할 수 있어요
+    </Text>
+    <TouchableOpacity
+      style={[staticStyles.manualEntryBtn, { backgroundColor: colors.primary }]}
+      onPress={onManualEntry}
+      activeOpacity={0.8}
+    >
+      <Text style={[staticStyles.manualEntryBtnText, { fontFamily: fontFamily.semibold, color: colors.textInverse }]}>
+        직접 입력하기
+      </Text>
     </TouchableOpacity>
   </View>
 );
@@ -77,31 +92,34 @@ const MedicationRow: React.FC<{
   index: number;
   onChange: (index: number, field: keyof EditableMedication, value: string) => void;
   onRemove: (index: number) => void;
-}> = ({ item, index, onChange, onRemove }) => (
-  <View style={styles.medRow}>
-    <View style={styles.medRowHeader}>
-      <Text style={styles.medRowIndex}>#{index + 1}</Text>
+  colors: ReturnType<typeof useTheme>['colors'];
+}> = ({ item, index, onChange, onRemove, colors }) => (
+  <View style={[staticStyles.medRow, { backgroundColor: colors.surface, borderColor: colors.divider }]}>
+    <View style={staticStyles.medRowHeader}>
+      <Text style={[staticStyles.medRowIndex, { fontFamily: fontFamily.semibold, color: colors.textSub }]}>
+        #{index + 1}
+      </Text>
       <TouchableOpacity onPress={() => onRemove(index)} hitSlop={8}>
-        <Text style={styles.removeBtn}>✕</Text>
+        <Text style={[staticStyles.removeBtn, { fontFamily: fontFamily.bold, color: colors.error }]}>✕</Text>
       </TouchableOpacity>
     </View>
     <TextInput
-      style={styles.medInput}
+      style={[staticStyles.medInput, { backgroundColor: colors.background, borderColor: colors.divider, color: colors.text }]}
       placeholder="약품명 *"
       placeholderTextColor={colors.textDisabled}
       value={item.medicationName}
       onChangeText={(v) => onChange(index, 'medicationName', v)}
     />
-    <View style={styles.medInputRow}>
+    <View style={staticStyles.medInputRow}>
       <TextInput
-        style={[styles.medInput, styles.medInputHalf]}
+        style={[staticStyles.medInput, staticStyles.medInputHalf, { backgroundColor: colors.background, borderColor: colors.divider, color: colors.text }]}
         placeholder="용량 (예: 10mg)"
         placeholderTextColor={colors.textDisabled}
         value={item.dosage}
         onChangeText={(v) => onChange(index, 'dosage', v)}
       />
       <TextInput
-        style={[styles.medInput, styles.medInputHalf]}
+        style={[staticStyles.medInput, staticStyles.medInputHalf, { backgroundColor: colors.background, borderColor: colors.divider, color: colors.text }]}
         placeholder="용법 (예: 1일 2회)"
         placeholderTextColor={colors.textDisabled}
         value={item.frequency}
@@ -109,7 +127,7 @@ const MedicationRow: React.FC<{
       />
     </View>
     <TextInput
-      style={[styles.medInput, styles.medInputShort]}
+      style={[staticStyles.medInput, staticStyles.medInputShort, { backgroundColor: colors.background, borderColor: colors.divider, color: colors.text }]}
       placeholder="투약일수 (예: 7)"
       placeholderTextColor={colors.textDisabled}
       value={item.durationDays}
@@ -122,6 +140,7 @@ const MedicationRow: React.FC<{
 // ─── 메인 화면 ────────────────────────────────────────────────────────────────
 
 export const OcrResultScreen: React.FC = () => {
+  const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const { prescriptionId } = useRoute<Route>().params;
 
@@ -253,16 +272,24 @@ export const OcrResultScreen: React.FC = () => {
     ocrStatus === 'COMPLETED' || ocrStatus === 'FAILED' || editMode;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[staticStyles.container, { backgroundColor: colors.background }]}>
       {/* 헤더 */}
-      <View style={styles.header}>
+      <View style={staticStyles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
           <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>OCR 결과</Text>
+        <Text style={[staticStyles.headerTitle, { fontFamily: fontFamily.bold, color: colors.text }]}>
+          OCR 결과
+        </Text>
         {showEditor ? (
           <TouchableOpacity onPress={handleSave} disabled={isSaving} hitSlop={12}>
-            <Text style={[styles.saveBtn, isSaving && styles.saveBtnDisabled]}>
+            <Text
+              style={[
+                staticStyles.saveBtn,
+                { fontFamily: fontFamily.semibold, color: colors.primary },
+                isSaving && staticStyles.saveBtnDisabled,
+              ]}
+            >
               {isSaving ? '저장 중…' : '저장'}
             </Text>
           </TouchableOpacity>
@@ -273,23 +300,25 @@ export const OcrResultScreen: React.FC = () => {
 
       {/* 본문 */}
       {isLoading || ocrStatus === 'PENDING' || ocrStatus === 'PROCESSING' ? (
-        <PendingView />
+        <PendingView colors={colors} />
       ) : ocrStatus === 'FAILED' && !editMode ? (
-        <FailedView onManualEntry={() => setEditMode(true)} />
+        <FailedView onManualEntry={() => setEditMode(true)} colors={colors} />
       ) : (
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={staticStyles.content} keyboardShouldPersistTaps="handled">
           {/* 기본 정보 */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>기본 정보</Text>
+          <View style={staticStyles.section}>
+            <Text style={[staticStyles.sectionTitle, { fontFamily: fontFamily.bold, color: colors.text }]}>
+              기본 정보
+            </Text>
             <TextInput
-              style={styles.input}
+              style={[staticStyles.input, { backgroundColor: colors.surface, borderColor: colors.divider, color: colors.text }]}
               placeholder="병원명 (선택)"
               placeholderTextColor={colors.textDisabled}
               value={hospitalName}
               onChangeText={setHospitalName}
             />
             <TextInput
-              style={styles.input}
+              style={[staticStyles.input, { backgroundColor: colors.surface, borderColor: colors.divider, color: colors.text }]}
               placeholder="처방일 (예: 2025-01-15)"
               placeholderTextColor={colors.textDisabled}
               value={prescribedAt}
@@ -298,10 +327,19 @@ export const OcrResultScreen: React.FC = () => {
           </View>
 
           {/* 약품 목록 */}
-          <View style={styles.section}>
-            <View style={styles.sectionTitleRow}>
-              <Text style={styles.sectionTitle}>약품 목록</Text>
-              <Text style={styles.sectionCount}>{medications.length}종</Text>
+          <View style={staticStyles.section}>
+            <View style={staticStyles.sectionTitleRow}>
+              <Text style={[staticStyles.sectionTitle, { fontFamily: fontFamily.bold, color: colors.text }]}>
+                약품 목록
+              </Text>
+              <Text
+                style={[
+                  staticStyles.sectionCount,
+                  { color: colors.textSub, backgroundColor: colors.divider },
+                ]}
+              >
+                {medications.length}종
+              </Text>
             </View>
 
             {medications.map((med, index) => (
@@ -311,11 +349,18 @@ export const OcrResultScreen: React.FC = () => {
                 index={index}
                 onChange={handleChangeMed}
                 onRemove={handleRemoveMed}
+                colors={colors}
               />
             ))}
 
-            <TouchableOpacity style={styles.addMedBtn} onPress={handleAddMed} activeOpacity={0.8}>
-              <Text style={styles.addMedBtnText}>+ 약품 추가</Text>
+            <TouchableOpacity
+              style={[staticStyles.addMedBtn, { borderColor: colors.secondary }]}
+              onPress={handleAddMed}
+              activeOpacity={0.8}
+            >
+              <Text style={[staticStyles.addMedBtnText, { fontFamily: fontFamily.semibold, color: colors.secondary }]}>
+                + 약품 추가
+              </Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -324,26 +369,21 @@ export const OcrResultScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const staticStyles = StyleSheet.create({
+  container: { flex: 1 },
   header: {
     height: sizes.headerHeight,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: sizes.spacing.lg,
   },
-  backBtn: { fontSize: sizes.font.md, color: colors.primary, fontWeight: sizes.fontWeight.medium },
   headerTitle: {
     flex: 1,
     textAlign: 'center',
     fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
   },
   saveBtn: {
     fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.primary,
   },
   saveBtnDisabled: { opacity: 0.4 },
   // 상태 화면
@@ -357,26 +397,20 @@ const styles = StyleSheet.create({
   failIcon: { fontSize: 48 },
   statusTitle: {
     fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
     textAlign: 'center',
   },
   statusSub: {
     fontSize: sizes.font.md,
-    color: colors.textSub,
     textAlign: 'center',
   },
   manualEntryBtn: {
     marginTop: sizes.spacing.sm,
-    backgroundColor: colors.primary,
     borderRadius: sizes.radius.md,
     paddingVertical: sizes.spacing.md,
     paddingHorizontal: sizes.spacing.xl,
   },
   manualEntryBtnText: {
     fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.textInverse,
   },
   // 편집기
   content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg, paddingBottom: 40 },
@@ -384,35 +418,26 @@ const styles = StyleSheet.create({
   sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.sm },
   sectionTitle: {
     fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
   },
   sectionCount: {
     fontSize: sizes.font.sm,
-    color: colors.textSub,
-    backgroundColor: colors.divider,
     paddingHorizontal: sizes.spacing.sm,
     paddingVertical: 2,
     borderRadius: sizes.radius.full,
   },
   input: {
-    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.divider,
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.md,
     fontSize: sizes.font.md,
-    color: colors.text,
   },
   // 약품 행
   medRow: {
-    backgroundColor: colors.surface,
     borderRadius: sizes.radius.lg,
     padding: sizes.spacing.md,
     gap: sizes.spacing.sm,
     borderWidth: 1,
-    borderColor: colors.divider,
   },
   medRowHeader: {
     flexDirection: 'row',
@@ -421,31 +446,23 @@ const styles = StyleSheet.create({
   },
   medRowIndex: {
     fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.textSub,
   },
   removeBtn: {
     fontSize: sizes.font.md,
-    color: colors.error,
-    fontWeight: sizes.fontWeight.bold,
     padding: 2,
   },
   medInput: {
-    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: colors.divider,
     borderRadius: sizes.radius.sm,
     paddingHorizontal: sizes.spacing.sm,
     paddingVertical: sizes.spacing.sm,
     fontSize: sizes.font.sm,
-    color: colors.text,
   },
   medInputRow: { flexDirection: 'row', gap: sizes.spacing.sm },
   medInputHalf: { flex: 1 },
   medInputShort: { width: 140 },
   addMedBtn: {
     borderWidth: 1.5,
-    borderColor: colors.secondary,
     borderStyle: 'dashed',
     borderRadius: sizes.radius.md,
     paddingVertical: sizes.spacing.md,
@@ -453,7 +470,5 @@ const styles = StyleSheet.create({
   },
   addMedBtnText: {
     fontSize: sizes.font.md,
-    color: colors.secondary,
-    fontWeight: sizes.fontWeight.semibold,
   },
 });

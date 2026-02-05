@@ -6,7 +6,7 @@
     "scheme": "dearmi",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -41,7 +41,18 @@
         }
       ],
       "expo-localization",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/SUIT-Regular.ttf",
+            "./assets/fonts/SUIT-Medium.ttf",
+            "./assets/fonts/SUIT-SemiBold.ttf",
+            "./assets/fonts/SUIT-Bold.ttf"
+          ]
+        }
+      ]
     ]
   }
 }

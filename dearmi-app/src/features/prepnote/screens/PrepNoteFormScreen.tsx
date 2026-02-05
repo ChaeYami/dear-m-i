@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,14 +6,14 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  
+
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { useCreatePrepNote, useUpdatePrepNote, usePrepNotes } from '@/features/prepnote/hooks/usePrepNote';
 import { useRecentSchedules } from '@/features/record/hooks/useRecord';
 import type { ScheduleStackParamList } from '@/navigation/ScheduleNavigator';
@@ -27,6 +27,7 @@ const formatDate = (iso: string) => {
 };
 
 export const PrepNoteFormScreen: React.FC = () => {
+  const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const params = useRoute<Route>().params;
   const noteId = params?.noteId;
@@ -76,6 +77,89 @@ export const PrepNoteFormScreen: React.FC = () => {
   };
 
   const selectedSchedule = top10.find((s) => String(s.id) === selectedScheduleId);
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: {
+      height: sizes.headerHeight,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: sizes.spacing.lg,
+      backgroundColor: colors.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.divider,
+    },
+    headerCancel: { fontSize: sizes.font.md, color: colors.textSub },
+    headerTitle: {
+      fontSize: sizes.font.lg,
+      fontFamily: fontFamily.bold,
+      color: colors.text,
+    },
+    headerSave: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.semibold,
+      color: colors.primary,
+    },
+    headerSaveDisabled: { opacity: 0.4 },
+    content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg, paddingBottom: 40 },
+    field: { gap: sizes.spacing.sm },
+    label: {
+      fontSize: sizes.font.sm,
+      fontFamily: fontFamily.semibold,
+      color: colors.textSub,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    required: { color: colors.error, textTransform: 'none' },
+    scheduleSelector: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.divider,
+      borderRadius: sizes.radius.md,
+      paddingHorizontal: sizes.spacing.md,
+      paddingVertical: sizes.spacing.md,
+    },
+    scheduleName: { fontSize: sizes.font.md, color: colors.text, flex: 1 },
+    schedulePlaceholder: { fontSize: sizes.font.md, color: colors.textDisabled, flex: 1 },
+    dropdownArrow: { fontSize: sizes.font.xs, color: colors.textSub },
+    dropdown: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.divider,
+      borderRadius: sizes.radius.md,
+      overflow: 'hidden',
+    },
+    dropdownItem: {
+      paddingHorizontal: sizes.spacing.md,
+      paddingVertical: sizes.spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.divider,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    dropdownItemSelected: { backgroundColor: colors.primary + '10' },
+    dropdownItemText: { fontSize: sizes.font.md, color: colors.text },
+    dropdownItemTextSelected: { color: colors.primary, fontFamily: fontFamily.semibold },
+    dropdownItemDate: { fontSize: sizes.font.sm, color: colors.textSub },
+    textArea: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.divider,
+      borderRadius: sizes.radius.md,
+      paddingHorizontal: sizes.spacing.md,
+      paddingTop: sizes.spacing.md,
+      paddingBottom: sizes.spacing.md,
+      fontSize: sizes.font.md,
+      color: colors.text,
+      minHeight: 180,
+      lineHeight: 22,
+    },
+  }), [colors]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -171,86 +255,3 @@ export const PrepNoteFormScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  header: {
-    height: sizes.headerHeight,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: sizes.spacing.lg,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
-  },
-  headerCancel: { fontSize: sizes.font.md, color: colors.textSub },
-  headerTitle: {
-    fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
-  },
-  headerSave: {
-    fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.primary,
-  },
-  headerSaveDisabled: { opacity: 0.4 },
-  content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg, paddingBottom: 40 },
-  field: { gap: sizes.spacing.sm },
-  label: {
-    fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.textSub,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  required: { color: colors.error, textTransform: 'none' },
-  scheduleSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    borderRadius: sizes.radius.md,
-    paddingHorizontal: sizes.spacing.md,
-    paddingVertical: sizes.spacing.md,
-  },
-  scheduleName: { fontSize: sizes.font.md, color: colors.text, flex: 1 },
-  schedulePlaceholder: { fontSize: sizes.font.md, color: colors.textDisabled, flex: 1 },
-  dropdownArrow: { fontSize: sizes.font.xs, color: colors.textSub },
-  dropdown: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    borderRadius: sizes.radius.md,
-    overflow: 'hidden',
-  },
-  dropdownItem: {
-    paddingHorizontal: sizes.spacing.md,
-    paddingVertical: sizes.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  dropdownItemSelected: { backgroundColor: colors.primary + '10' },
-  dropdownItemText: { fontSize: sizes.font.md, color: colors.text },
-  dropdownItemTextSelected: { color: colors.primary, fontWeight: sizes.fontWeight.semibold },
-  dropdownItemDate: { fontSize: sizes.font.sm, color: colors.textSub },
-  textArea: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    borderRadius: sizes.radius.md,
-    paddingHorizontal: sizes.spacing.md,
-    paddingTop: sizes.spacing.md,
-    paddingBottom: sizes.spacing.md,
-    fontSize: sizes.font.md,
-    color: colors.text,
-    minHeight: 180,
-    lineHeight: 22,
-  },
-});

@@ -6,13 +6,13 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
-  
+
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { useScheduleDetail, useDeleteSchedule } from '@/features/schedule/hooks/useSchedule';
 import { usePrepNotesBySchedule } from '@/features/prepnote/hooks/usePrepNote';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
@@ -31,6 +31,7 @@ const formatDateTime = (iso: string) => {
 };
 
 export const ScheduleDetailScreen: React.FC = () => {
+  const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const { scheduleId } = useRoute<Route>().params;
 
@@ -69,48 +70,48 @@ export const ScheduleDetailScreen: React.FC = () => {
 
   if (!schedule) {
     return (
-      <SafeAreaView style={styles.container}>
-        <Header onBack={() => navigation.goBack()} title="일정 상세" />
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <Header onBack={() => navigation.goBack()} title="일정 상세" colors={colors} />
         <View style={styles.emptyWrap}>
-          <Text style={styles.emptyText}>일정을 찾을 수 없습니다.</Text>
+          <Text style={[styles.emptyText, { color: colors.textSub }]}>일정을 찾을 수 없습니다.</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Header onBack={() => navigation.goBack()} title="일정 상세" />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <Header onBack={() => navigation.goBack()} title="일정 상세" colors={colors} />
 
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.card}>
-          <InfoRow label="병원" value={schedule.hospitalName} />
+        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.divider }]}>
+          <InfoRow label="병원" value={schedule.hospitalName} colors={colors} />
           {schedule.doctorName && (
-            <InfoRow label="담당 선생님" value={`${schedule.doctorName} 선생님`} />
+            <InfoRow label="담당 선생님" value={`${schedule.doctorName} 선생님`} colors={colors} />
           )}
-          <InfoRow label="일시" value={formatDateTime(schedule.scheduledAt)} />
-          {schedule.memo && <InfoRow label="메모" value={schedule.memo} multiline />}
+          <InfoRow label="일시" value={formatDateTime(schedule.scheduledAt)} colors={colors} />
+          {schedule.memo && <InfoRow label="메모" value={schedule.memo} multiline colors={colors} />}
         </View>
 
         <View style={styles.prepNoteSection}>
           <View style={styles.prepNoteHeader}>
-            <Text style={styles.prepNoteSectionTitle}>진료 준비 메모</Text>
+            <Text style={[styles.prepNoteSectionTitle, { color: colors.textSub, fontFamily: fontFamily.bold }]}>진료 준비 메모</Text>
             <TouchableOpacity
               onPress={() =>
                 navigation.navigate('PrepNoteForm', { scheduleId: String(scheduleId) })
               }
               hitSlop={8}
             >
-              <Text style={styles.prepNoteAddBtn}>+ 메모 추가</Text>
+              <Text style={[styles.prepNoteAddBtn, { color: colors.primary, fontFamily: fontFamily.semibold }]}>+ 메모 추가</Text>
             </TouchableOpacity>
           </View>
           {prepNotes.length === 0 ? (
-            <Text style={styles.prepNoteEmpty}>아직 준비 메모가 없어요.</Text>
+            <Text style={[styles.prepNoteEmpty, { color: colors.textDisabled }]}>아직 준비 메모가 없어요.</Text>
           ) : (
             prepNotes.map((note) => (
               <TouchableOpacity
                 key={note.id}
-                style={styles.prepNoteCard}
+                style={[styles.prepNoteCard, { backgroundColor: colors.surface, borderColor: colors.divider, borderLeftColor: colors.primary }]}
                 onPress={() =>
                   navigation.navigate('PrepNoteForm', {
                     noteId: note.id,
@@ -119,7 +120,7 @@ export const ScheduleDetailScreen: React.FC = () => {
                 }
                 activeOpacity={0.75}
               >
-                <Text style={styles.prepNoteContent} numberOfLines={3}>
+                <Text style={[styles.prepNoteContent, { color: colors.text }]} numberOfLines={3}>
                   {note.content}
                 </Text>
               </TouchableOpacity>
@@ -127,26 +128,30 @@ export const ScheduleDetailScreen: React.FC = () => {
           )}
         </View>
 
-        <TouchableOpacity style={styles.linkButton} onPress={handleLinkRecord} activeOpacity={0.8}>
+        <TouchableOpacity
+          style={[styles.linkButton, { backgroundColor: colors.surface, borderColor: colors.secondary }]}
+          onPress={handleLinkRecord}
+          activeOpacity={0.8}
+        >
           <Ionicons name="document-text-outline" size={18} color={colors.secondary} />
-          <Text style={styles.linkButtonText}>상담 기록 연결하기</Text>
+          <Text style={[styles.linkButtonText, { color: colors.secondary, fontFamily: fontFamily.semibold }]}>상담 기록 연결하기</Text>
         </TouchableOpacity>
 
         <View style={styles.actions}>
           <TouchableOpacity
-            style={[styles.actionBtn, styles.editBtn]}
+            style={[styles.actionBtn, { backgroundColor: colors.primary }]}
             onPress={() => navigation.navigate('ScheduleForm', { schedule })}
             activeOpacity={0.8}
           >
-            <Text style={styles.editBtnText}>수정</Text>
+            <Text style={[styles.actionBtnText, { color: colors.textInverse, fontFamily: fontFamily.semibold }]}>수정</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.actionBtn, styles.deleteBtn]}
+            style={[styles.actionBtn, { backgroundColor: colors.errorLight, borderWidth: 1, borderColor: colors.error }]}
             onPress={handleDelete}
             disabled={isDeleting}
             activeOpacity={0.8}
           >
-            <Text style={styles.deleteBtnText}>{isDeleting ? '삭제 중…' : '삭제'}</Text>
+            <Text style={[styles.actionBtnText, { color: colors.error, fontFamily: fontFamily.semibold }]}>{isDeleting ? '삭제 중…' : '삭제'}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -154,29 +159,30 @@ export const ScheduleDetailScreen: React.FC = () => {
   );
 };
 
-const Header: React.FC<{ onBack: () => void; title: string }> = ({ onBack, title }) => (
+const Header: React.FC<{ onBack: () => void; title: string; colors: any }> = ({ onBack, title, colors }) => (
   <View style={styles.header}>
     <TouchableOpacity onPress={onBack} hitSlop={12}>
       <Ionicons name="chevron-back" size={24} color={colors.primary} />
     </TouchableOpacity>
-    <Text style={styles.headerTitle}>{title}</Text>
+    <Text style={[styles.headerTitle, { color: colors.text, fontFamily: fontFamily.bold }]}>{title}</Text>
     <View style={styles.headerRight} />
   </View>
 );
 
-const InfoRow: React.FC<{ label: string; value: string; multiline?: boolean }> = ({
+const InfoRow: React.FC<{ label: string; value: string; multiline?: boolean; colors: any }> = ({
   label,
   value,
   multiline,
+  colors,
 }) => (
   <View style={[styles.infoRow, multiline && styles.infoRowMultiline]}>
-    <Text style={styles.infoLabel}>{label}</Text>
-    <Text style={[styles.infoValue, multiline && styles.infoValueMultiline]}>{value}</Text>
+    <Text style={[styles.infoLabel, { color: colors.textSub, fontFamily: fontFamily.medium }]}>{label}</Text>
+    <Text style={[styles.infoValue, { color: colors.text }, multiline && styles.infoValueMultiline]}>{value}</Text>
   </View>
 );
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1 },
   header: {
     height: sizes.headerHeight,
     flexDirection: 'row',
@@ -187,20 +193,16 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
     fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
   },
   headerRight: { width: 48 },
   content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg },
   emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  emptyText: { fontSize: sizes.font.md, color: colors.textSub },
+  emptyText: { fontSize: sizes.font.md },
   card: {
-    backgroundColor: colors.surfaceSolid,
     borderRadius: sizes.radius.xl,
     padding: sizes.spacing.lg,
     gap: sizes.spacing.md,
     borderWidth: 1,
-    borderColor: colors.divider,
   },
   infoRow: {
     flexDirection: 'row',
@@ -210,13 +212,10 @@ const styles = StyleSheet.create({
   infoRowMultiline: { flexDirection: 'column', alignItems: 'flex-start', gap: sizes.spacing.xs },
   infoLabel: {
     fontSize: sizes.font.sm,
-    color: colors.textSub,
-    fontWeight: sizes.fontWeight.medium,
     minWidth: 80,
   },
   infoValue: {
     fontSize: sizes.font.md,
-    color: colors.text,
     flex: 1,
     textAlign: 'right',
   },
@@ -231,33 +230,24 @@ const styles = StyleSheet.create({
   },
   prepNoteSectionTitle: {
     fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.textSub,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   prepNoteAddBtn: {
     fontSize: sizes.font.sm,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.semibold,
   },
   prepNoteEmpty: {
     fontSize: sizes.font.sm,
-    color: colors.textDisabled,
     paddingVertical: sizes.spacing.sm,
   },
   prepNoteCard: {
-    backgroundColor: colors.surfaceSolid,
     borderRadius: sizes.radius.md,
     padding: sizes.spacing.md,
     borderWidth: 1,
-    borderColor: colors.divider,
     borderLeftWidth: 3,
-    borderLeftColor: colors.primary,
   },
   prepNoteContent: {
     fontSize: sizes.font.md,
-    color: colors.text,
     lineHeight: 22,
   },
   linkButton: {
@@ -265,18 +255,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: sizes.spacing.sm,
-    backgroundColor: colors.surfaceSolid,
     borderRadius: sizes.radius.lg,
     paddingVertical: sizes.spacing.md,
     paddingHorizontal: sizes.spacing.lg,
     borderWidth: 1.5,
-    borderColor: colors.secondary,
     borderStyle: 'dashed',
   },
   linkButtonText: {
     fontSize: sizes.font.md,
-    color: colors.secondary,
-    fontWeight: sizes.fontWeight.semibold,
   },
   actions: { flexDirection: 'row', gap: sizes.spacing.md },
   actionBtn: {
@@ -285,22 +271,7 @@ const styles = StyleSheet.create({
     borderRadius: sizes.radius.lg,
     alignItems: 'center',
   },
-  editBtn: {
-    backgroundColor: colors.primary,
-  },
-  editBtnText: {
+  actionBtnText: {
     fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.textInverse,
-  },
-  deleteBtn: {
-    backgroundColor: colors.errorLight,
-    borderWidth: 1,
-    borderColor: colors.error,
-  },
-  deleteBtnText: {
-    fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.error,
   },
 });

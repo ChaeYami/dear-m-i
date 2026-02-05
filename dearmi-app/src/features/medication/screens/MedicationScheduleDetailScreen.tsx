@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import axiosInstance from '@/shared/api/axiosInstance';
 import { SkeletonLoader } from '@/shared/components/SkeletonLoader';
 import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
@@ -95,10 +95,13 @@ const parseSections = (text: string | null): Array<{ title: string; content: str
 };
 
 export const MedicationScheduleDetailScreen: React.FC = () => {
+  const { colors } = useTheme();
   const navigation = useNavigation();
   const { scheduleId, drugName } = useRoute<Route>().params;
   const { data: info, isLoading } = useMedicationScheduleDrugInfo(scheduleId);
   const { mutate: refreshDrugInfo, isPending: isRefreshing } = useRefreshDrugInfo(scheduleId);
+
+  const styles = getStyles(colors);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -215,9 +218,12 @@ const DrugSection: React.FC<{
   defaultOpen?: boolean;
   maxPreview?: number;
 }> = ({ icon, iconColor, title, sections, defaultOpen = false, maxPreview }) => {
+  const { colors } = useTheme();
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const displaySections = isOpen ? sections : sections.slice(0, maxPreview ?? sections.length);
   const hasMore = !isOpen && maxPreview !== undefined && sections.length > maxPreview;
+
+  const styles = getStyles(colors);
 
   return (
     <View style={styles.sectionCard}>
@@ -259,152 +265,153 @@ const DrugSection: React.FC<{
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  header: {
-    height: sizes.headerHeight,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: sizes.spacing.lg,
-    gap: sizes.spacing.sm,
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
-  },
-  content: {
-    padding: sizes.spacing.lg,
-    gap: sizes.spacing.md,
-    paddingBottom: sizes.tabBarSafeBottom + 20,
-  },
-  skeletonWrap: { gap: sizes.spacing.md },
-  statusWrap: {
-    alignItems: 'center',
-    paddingTop: 80,
-    gap: sizes.spacing.md,
-  },
-  statusTitle: {
-    fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.textSub,
-  },
-  statusDesc: {
-    fontSize: sizes.font.sm,
-    color: colors.textDisabled,
-  },
-  // 기본 정보 카드
-  infoCard: {
-    backgroundColor: colors.primaryLight + '15',
-    borderRadius: sizes.radius.xl,
-    padding: sizes.spacing.lg,
-    gap: sizes.spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.primaryLight + '30',
-  },
-  infoCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: sizes.spacing.sm,
-    marginBottom: sizes.spacing.xs,
-  },
-  infoCardTitle: {
-    fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
-    flex: 1,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  infoLabel: {
-    fontSize: sizes.font.sm,
-    color: colors.textSub,
-  },
-  infoValue: {
-    fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.medium,
-    color: colors.text,
-  },
-  // 섹션 카드 (효능/용법/주의)
-  sectionCard: {
-    backgroundColor: colors.surfaceSolid,
-    borderRadius: sizes.radius.xl,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    overflow: 'hidden',
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: sizes.spacing.md,
-  },
-  sectionHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: sizes.spacing.sm,
-  },
-  sectionTitle: {
-    fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
-  },
-  sectionBody: {
-    paddingHorizontal: sizes.spacing.md,
-    paddingBottom: sizes.spacing.md,
-    gap: sizes.spacing.md,
-  },
-  subsection: {
-    gap: sizes.spacing.xs,
-  },
-  subsectionTitle: {
-    fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.text,
-    lineHeight: 20,
-  },
-  cautionTitle: {
-    color: colors.error,
-  },
-  subsectionContent: {
-    fontSize: sizes.font.sm,
-    color: colors.textSub,
-    lineHeight: 21,
-  },
-  showMoreBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: sizes.spacing.xs,
-    paddingVertical: sizes.spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.divider,
-  },
-  showMoreText: {
-    fontSize: sizes.font.sm,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.medium,
-  },
-  nedrugLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: sizes.spacing.sm,
-    backgroundColor: colors.primaryLight + '15',
-    borderRadius: sizes.radius.lg,
-    paddingVertical: sizes.spacing.md,
-    borderWidth: 1,
-    borderColor: colors.primaryLight + '30',
-  },
-  nedrugLinkText: {
-    fontSize: sizes.font.sm,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.semibold,
-    flex: 1,
-  },
-});
+const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: {
+      height: sizes.headerHeight,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: sizes.spacing.lg,
+      gap: sizes.spacing.sm,
+    },
+    headerTitle: {
+      flex: 1,
+      textAlign: 'center',
+      fontSize: sizes.font.lg,
+      fontFamily: fontFamily.bold,
+      color: colors.text,
+    },
+    content: {
+      padding: sizes.spacing.lg,
+      gap: sizes.spacing.md,
+      paddingBottom: sizes.tabBarSafeBottom + 20,
+    },
+    skeletonWrap: { gap: sizes.spacing.md },
+    statusWrap: {
+      alignItems: 'center',
+      paddingTop: 80,
+      gap: sizes.spacing.md,
+    },
+    statusTitle: {
+      fontSize: sizes.font.lg,
+      fontFamily: fontFamily.semibold,
+      color: colors.textSub,
+    },
+    statusDesc: {
+      fontSize: sizes.font.sm,
+      color: colors.textDisabled,
+    },
+    // 기본 정보 카드
+    infoCard: {
+      backgroundColor: colors.primaryLight + '15',
+      borderRadius: sizes.radius.xl,
+      padding: sizes.spacing.lg,
+      gap: sizes.spacing.sm,
+      borderWidth: 1,
+      borderColor: colors.primaryLight + '30',
+    },
+    infoCardHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: sizes.spacing.sm,
+      marginBottom: sizes.spacing.xs,
+    },
+    infoCardTitle: {
+      fontSize: sizes.font.lg,
+      fontFamily: fontFamily.bold,
+      color: colors.text,
+      flex: 1,
+    },
+    infoRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    infoLabel: {
+      fontSize: sizes.font.sm,
+      color: colors.textSub,
+    },
+    infoValue: {
+      fontSize: sizes.font.sm,
+      fontFamily: fontFamily.medium,
+      color: colors.text,
+    },
+    // 섹션 카드 (효능/용법/주의)
+    sectionCard: {
+      backgroundColor: colors.surface,
+      borderRadius: sizes.radius.xl,
+      borderWidth: 1,
+      borderColor: colors.divider,
+      overflow: 'hidden',
+    },
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: sizes.spacing.md,
+    },
+    sectionHeaderLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: sizes.spacing.sm,
+    },
+    sectionTitle: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.bold,
+      color: colors.text,
+    },
+    sectionBody: {
+      paddingHorizontal: sizes.spacing.md,
+      paddingBottom: sizes.spacing.md,
+      gap: sizes.spacing.md,
+    },
+    subsection: {
+      gap: sizes.spacing.xs,
+    },
+    subsectionTitle: {
+      fontSize: sizes.font.sm,
+      fontFamily: fontFamily.semibold,
+      color: colors.text,
+      lineHeight: 20,
+    },
+    cautionTitle: {
+      color: colors.error,
+    },
+    subsectionContent: {
+      fontSize: sizes.font.sm,
+      color: colors.textSub,
+      lineHeight: 21,
+    },
+    showMoreBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: sizes.spacing.xs,
+      paddingVertical: sizes.spacing.sm,
+      borderTopWidth: 1,
+      borderTopColor: colors.divider,
+    },
+    showMoreText: {
+      fontSize: sizes.font.sm,
+      color: colors.primary,
+      fontFamily: fontFamily.medium,
+    },
+    nedrugLink: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: sizes.spacing.sm,
+      backgroundColor: colors.primaryLight + '15',
+      borderRadius: sizes.radius.lg,
+      paddingVertical: sizes.spacing.md,
+      borderWidth: 1,
+      borderColor: colors.primaryLight + '30',
+    },
+    nedrugLinkText: {
+      fontSize: sizes.font.sm,
+      color: colors.primary,
+      fontFamily: fontFamily.semibold,
+      flex: 1,
+    },
+  });

@@ -4,11 +4,10 @@ import {
   View,
   Text,
   TouchableOpacity,
-  StyleSheet,
   TextInputProps,
   ViewStyle,
 } from 'react-native';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -31,28 +30,58 @@ export const Input = forwardRef<TextInput, InputProps>(
     },
     ref,
   ) => {
+    const { colors } = useTheme();
     const [isFocused, setIsFocused] = useState(false);
     const [secureVisible, setSecureVisible] = useState(false);
 
     const isSecure = secureTextEntry && !secureVisible;
 
     return (
-      <View style={[styles.container, containerStyle]}>
-        {label && <Text style={styles.label}>{label}</Text>}
+      <View style={[{ marginBottom: sizes.spacing.sm }, containerStyle]}>
+        {label && (
+          <Text
+            style={{
+              fontFamily: fontFamily.medium,
+              fontSize: sizes.font.sm,
+              color: colors.textSub,
+              marginBottom: sizes.spacing.xs,
+            }}
+          >
+            {label}
+          </Text>
+        )}
 
         <View
           style={[
-            styles.inputWrapper,
-            multiline && styles.inputWrapperMultiline,
-            isFocused && styles.wrapperFocused,
-            errorMessage ? styles.wrapperError : undefined,
+            {
+              flexDirection: 'row',
+              alignItems: 'center',
+              borderWidth: 1.5,
+              borderColor: colors.divider,
+              borderRadius: sizes.radius.lg,
+              backgroundColor: colors.surface,
+              height: 48,
+            },
+            multiline && { height: 120, alignItems: 'flex-start' as const },
+            isFocused && { borderColor: colors.primary },
+            errorMessage ? { borderColor: colors.error } : undefined,
           ]}
         >
           <TextInput
             ref={ref}
             style={[
-              styles.input,
-              multiline && styles.inputMultiline,
+              {
+                flex: 1,
+                paddingHorizontal: sizes.spacing.md,
+                fontFamily: fontFamily.regular,
+                fontSize: sizes.font.md,
+                color: colors.text,
+                height: '100%',
+              },
+              multiline && {
+                paddingTop: sizes.spacing.sm,
+                paddingBottom: sizes.spacing.sm,
+              },
               style,
             ]}
             placeholderTextColor={colors.textDisabled}
@@ -74,74 +103,36 @@ export const Input = forwardRef<TextInput, InputProps>(
             <TouchableOpacity
               onPress={() => setSecureVisible((v) => !v)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              style={styles.toggleButton}
+              style={{ paddingHorizontal: sizes.spacing.sm }}
             >
-              <Text style={styles.toggleText}>
+              <Text
+                style={{
+                  fontFamily: fontFamily.medium,
+                  fontSize: sizes.font.sm,
+                  color: colors.primary,
+                }}
+              >
                 {secureVisible ? '숨기기' : '보기'}
               </Text>
             </TouchableOpacity>
           )}
         </View>
 
-        {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
+        {errorMessage && (
+          <Text
+            style={{
+              fontFamily: fontFamily.regular,
+              fontSize: sizes.font.xs,
+              color: colors.error,
+              marginTop: sizes.spacing.xs,
+            }}
+          >
+            {errorMessage}
+          </Text>
+        )}
       </View>
     );
   },
 );
 
 Input.displayName = 'Input';
-
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: sizes.spacing.sm,
-  },
-  label: {
-    fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.medium,
-    color: colors.textSub,
-    marginBottom: sizes.spacing.xs,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.divider,
-    borderRadius: sizes.radius.md,
-    backgroundColor: colors.surfaceSolid,
-    height: 48,
-  },
-  inputWrapperMultiline: {
-    height: 120,
-    alignItems: 'flex-start',
-  },
-  wrapperFocused: {
-    borderColor: colors.primary,
-  },
-  wrapperError: {
-    borderColor: colors.error,
-  },
-  input: {
-    flex: 1,
-    paddingHorizontal: sizes.spacing.md,
-    fontSize: sizes.font.md,
-    color: colors.text,
-    height: '100%',
-  },
-  inputMultiline: {
-    paddingTop: sizes.spacing.sm,
-    paddingBottom: sizes.spacing.sm,
-  },
-  toggleButton: {
-    paddingHorizontal: sizes.spacing.sm,
-  },
-  toggleText: {
-    fontSize: sizes.font.sm,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.medium,
-  },
-  errorText: {
-    fontSize: sizes.font.xs,
-    color: colors.error,
-    marginTop: sizes.spacing.xs,
-  },
-});

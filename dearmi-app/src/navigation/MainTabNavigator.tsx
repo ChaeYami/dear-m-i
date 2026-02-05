@@ -1,19 +1,15 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { useNavigation } from '@react-navigation/native';
-import type { StackNavigationProp } from '@react-navigation/stack';
 import { useTranslation } from 'react-i18next';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { ScheduleNavigator } from './ScheduleNavigator';
 import { CheckinNavigator } from './CheckinNavigator';
 import { RecordNavigator } from './RecordNavigator';
 import { MedicationNavigator } from './MedicationNavigator';
 import { MyPageNavigator } from './MyPageNavigator';
-import { useAuthStore } from '@/features/auth/store/authStore';
 import { useFcmSetup } from '@/shared/hooks/useFcmSetup';
-import type { RootStackParamList } from './RootNavigator';
 
 export type MainTabParamList = {
   Schedule: undefined;
@@ -25,27 +21,6 @@ export type MainTabParamList = {
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-const PremiumGate: React.FC = () => {
-  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-  const { t } = useTranslation();
-
-  return (
-    <View style={styles.gateContainer}>
-      <Ionicons name="lock-closed" size={48} color={colors.textDisabled} />
-      <Text style={styles.gateTitle}>{t('premium_gate_title')}</Text>
-      <Text style={styles.gateDesc}>{t('premium_gate_desc')}</Text>
-      <TouchableOpacity
-        style={styles.upgradeBtn}
-        onPress={() => navigation.navigate('Paywall')}
-        activeOpacity={0.85}
-      >
-        <Text style={styles.upgradeBtnTxt}>{t('upgrade')}</Text>
-      </TouchableOpacity>
-    </View>
-  );
-};
-
-
 const TAB_ICONS: Record<string, { focused: keyof typeof Ionicons.glyphMap; unfocused: keyof typeof Ionicons.glyphMap }> = {
   Schedule:     { focused: 'calendar',         unfocused: 'calendar-outline' },
   Checkin:      { focused: 'heart',            unfocused: 'heart-outline' },
@@ -56,6 +31,7 @@ const TAB_ICONS: Record<string, { focused: keyof typeof Ionicons.glyphMap; unfoc
 
 export const MainTabNavigator: React.FC = () => {
   useFcmSetup();
+  const { colors, isDark } = useTheme();
   const { t } = useTranslation();
 
   return (
@@ -70,20 +46,22 @@ export const MainTabNavigator: React.FC = () => {
           marginHorizontal: 20,
           height: sizes.tabBarHeight,
           borderRadius: 32,
-          backgroundColor: 'rgba(255, 255, 255, 0.92)',
+          backgroundColor: isDark
+            ? 'rgba(30, 27, 46, 0.92)'
+            : 'rgba(255, 255, 255, 0.92)',
           borderWidth: 1,
           borderColor: colors.glassBorder,
           borderTopWidth: 0,
           elevation: 8,
-          shadowColor: '#000',
+          shadowColor: isDark ? '#000' : colors.glassShadow,
           shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.12,
+          shadowOpacity: isDark ? 0.4 : 0.12,
           shadowRadius: 16,
           paddingHorizontal: 4,
         },
         tabBarLabelStyle: {
+          fontFamily: fontFamily.medium,
           fontSize: 9,
-          fontWeight: sizes.fontWeight.medium,
           marginBottom: 6,
         },
         tabBarIconStyle: {
@@ -92,9 +70,23 @@ export const MainTabNavigator: React.FC = () => {
         tabBarIcon: ({ focused, color }) => {
           const icons = TAB_ICONS[route.name] ?? TAB_ICONS.Schedule;
           return (
-            <View style={styles.tabIconWrap}>
-              {focused && <View style={styles.tabDot} />}
-              <Ionicons name={focused ? icons.focused : icons.unfocused} size={focused ? 22 : 20} color={color} />
+            <View style={{ alignItems: 'center' }}>
+              {focused && (
+                <View
+                  style={{
+                    width: 4,
+                    height: 4,
+                    borderRadius: 2,
+                    backgroundColor: colors.primary,
+                    marginBottom: 2,
+                  }}
+                />
+              )}
+              <Ionicons
+                name={focused ? icons.focused : icons.unfocused}
+                size={focused ? 22 : 20}
+                color={color}
+              />
             </View>
           );
         },
@@ -109,51 +101,3 @@ export const MainTabNavigator: React.FC = () => {
     </Tab.Navigator>
   );
 };
-
-const styles = StyleSheet.create({
-  tabIconWrap: {
-    alignItems: 'center',
-  },
-  tabDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.primary,
-    marginBottom: 2,
-  },
-  gateContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.background,
-    paddingHorizontal: sizes.spacing.xl,
-  },
-  gateTitle: {
-    fontSize: sizes.font.xl,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
-    marginTop: sizes.spacing.lg,
-    marginBottom: sizes.spacing.md,
-    textAlign: 'center',
-  },
-  gateDesc: {
-    fontSize: sizes.font.md,
-    color: colors.textSub,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: sizes.spacing.xl,
-  },
-  upgradeBtn: {
-    height: sizes.buttonHeight.lg,
-    paddingHorizontal: sizes.spacing.xxl,
-    borderRadius: sizes.radius.lg,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  upgradeBtnTxt: {
-    fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.textInverse,
-  },
-});

@@ -1,20 +1,21 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   Platform,
-  
+
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { useLogin } from '@/features/auth/hooks/useLogin';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 
 export const LoginScreen: React.FC = () => {
+  const { colors } = useTheme();
   const { t } = useTranslation('auth');
   const { loginWithGoogle, loginWithApple, loginWithDev, isLoading, error, clearError } = useLogin();
   const isDev = __DEV__;
@@ -25,6 +26,108 @@ export const LoginScreen: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [error, clearError]);
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+      justifyContent: 'space-between',
+      paddingVertical: sizes.spacing.xxl,
+      paddingHorizontal: sizes.spacing.xl,
+    },
+    header: {
+      alignItems: 'center',
+      marginTop: sizes.spacing.xxl,
+    },
+    logoCircle: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: colors.primaryLight,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: sizes.spacing.md,
+    },
+    logoText: {
+      fontSize: 40,
+      fontFamily: fontFamily.bold,
+      color: colors.textInverse,
+    },
+    appName: {
+      fontSize: sizes.font.xxxl,
+      fontFamily: fontFamily.bold,
+      color: colors.text,
+      marginBottom: sizes.spacing.xs,
+    },
+    tagline: {
+      fontSize: sizes.font.md,
+      color: colors.textSub,
+    },
+    buttonArea: {
+      gap: sizes.spacing.md,
+    },
+    errorBox: {
+      backgroundColor: colors.errorLight,
+      borderRadius: sizes.radius.md,
+      padding: sizes.spacing.md,
+      marginBottom: sizes.spacing.sm,
+    },
+    errorText: {
+      color: colors.error,
+      fontSize: sizes.font.sm,
+      textAlign: 'center',
+    },
+    socialButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.divider,
+      borderRadius: sizes.radius.lg,
+      paddingVertical: sizes.spacing.md,
+      paddingHorizontal: sizes.spacing.lg,
+      gap: sizes.spacing.md,
+    },
+    appleButton: {
+      backgroundColor: '#1A1825',
+      borderColor: 'transparent',
+    },
+    socialIconPlaceholder: {
+      width: 24,
+      height: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    socialButtonText: {
+      flex: 1,
+      textAlign: 'center',
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.semibold,
+      color: colors.text,
+    },
+    appleButtonText: {
+      color: colors.textInverse,
+    },
+    devButton: {
+      borderWidth: 1,
+      borderColor: colors.warning,
+      borderRadius: sizes.radius.md,
+      borderStyle: 'dashed' as const,
+      paddingVertical: sizes.spacing.sm,
+      alignItems: 'center' as const,
+    },
+    devButtonText: {
+      fontSize: sizes.font.sm,
+      color: colors.warning,
+      fontFamily: fontFamily.medium,
+    },
+    terms: {
+      fontSize: sizes.font.xs,
+      color: colors.textDisabled,
+      textAlign: 'center',
+      lineHeight: 18,
+    },
+  }), [colors]);
 
   if (isLoading) {
     return <LoadingSpinner fullscreen />;
@@ -88,105 +191,3 @@ export const LoginScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-    justifyContent: 'space-between',
-    paddingVertical: sizes.spacing.xxl,
-    paddingHorizontal: sizes.spacing.xl,
-  },
-  header: {
-    alignItems: 'center',
-    marginTop: sizes.spacing.xxl,
-  },
-  logoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: sizes.spacing.md,
-  },
-  logoText: {
-    fontSize: 40,
-    fontWeight: '700',
-    color: colors.textInverse,
-  },
-  appName: {
-    fontSize: sizes.font.xxxl,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: sizes.spacing.xs,
-  },
-  tagline: {
-    fontSize: sizes.font.md,
-    color: colors.textSub,
-  },
-  buttonArea: {
-    gap: sizes.spacing.md,
-  },
-  errorBox: {
-    backgroundColor: colors.errorLight,
-    borderRadius: sizes.radius.md,
-    padding: sizes.spacing.md,
-    marginBottom: sizes.spacing.sm,
-  },
-  errorText: {
-    color: colors.error,
-    fontSize: sizes.font.sm,
-    textAlign: 'center',
-  },
-  socialButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surfaceSolid,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    borderRadius: sizes.radius.lg,
-    paddingVertical: sizes.spacing.md,
-    paddingHorizontal: sizes.spacing.lg,
-    gap: sizes.spacing.md,
-  },
-  appleButton: {
-    backgroundColor: '#1A1825',
-    borderColor: 'transparent',
-  },
-  socialIconPlaceholder: {
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  socialButtonText: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: sizes.font.md,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  appleButtonText: {
-    color: colors.textInverse,
-  },
-  devButton: {
-    borderWidth: 1,
-    borderColor: colors.warning,
-    borderRadius: sizes.radius.md,
-    borderStyle: 'dashed' as const,
-    paddingVertical: sizes.spacing.sm,
-    alignItems: 'center' as const,
-  },
-  devButtonText: {
-    fontSize: sizes.font.sm,
-    color: colors.warning,
-    fontWeight: sizes.fontWeight.medium,
-  },
-  terms: {
-    fontSize: sizes.font.xs,
-    color: colors.textDisabled,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-});

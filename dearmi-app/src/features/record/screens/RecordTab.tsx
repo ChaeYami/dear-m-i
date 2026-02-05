@@ -6,14 +6,14 @@ import {
   TouchableOpacity,
   SectionList,
   ActivityIndicator,
-  
+
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { CompositeNavigationProp } from '@react-navigation/native';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { useTimeline } from '@/features/record/hooks/useRecord';
 import { getEmotionColor } from '@/shared/components/EmotionSlider';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
@@ -47,78 +47,88 @@ const toSections = (items: TimelineItem[]): Section[] => {
   return Array.from(map.entries()).map(([title, data]) => ({ title, data }));
 };
 
-const RecordCard: React.FC<{ item: TimelineRecord }> = ({ item }) => (
-  <View style={styles.card}>
-    <View style={styles.cardHeader}>
-      {item.hospitalName && (
-        <Text style={styles.cardHospital}>{item.hospitalName}</Text>
-      )}
+const RecordCard: React.FC<{ item: TimelineRecord }> = ({ item }) => {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.card, { backgroundColor: colors.surface, shadowColor: colors.glassShadow }]}>
+      <View style={styles.cardHeader}>
+        {item.hospitalName && (
+          <Text style={[styles.cardHospital, { color: colors.primary }]}>{item.hospitalName}</Text>
+        )}
+        {item.emotionScore !== undefined && (
+          <View style={[styles.emotionBadge, { backgroundColor: getEmotionColor(item.emotionScore) + '22' }]}>
+            <Text style={[styles.emotionScore, { color: getEmotionColor(item.emotionScore) }]}>
+              {item.emotionScore}점
+            </Text>
+          </View>
+        )}
+      </View>
+
       {item.emotionScore !== undefined && (
-        <View style={[styles.emotionBadge, { backgroundColor: getEmotionColor(item.emotionScore) + '22' }]}>
-          <Text style={[styles.emotionScore, { color: getEmotionColor(item.emotionScore) }]}>
-            {item.emotionScore}점
-          </Text>
+        <EmotionBar score={item.emotionScore} />
+      )}
+
+      <Text style={[styles.cardContent, { color: colors.text }]} numberOfLines={3}>
+        {item.content}
+      </Text>
+
+      {item.tags && item.tags.length > 0 && (
+        <View style={styles.tagRow}>
+          {item.tags.map((tag) => (
+            <View key={tag} style={[styles.tag, { backgroundColor: colors.primaryLight + '25' }]}>
+              <Text style={[styles.tagText, { color: colors.primary }]}>#{tag}</Text>
+            </View>
+          ))}
         </View>
       )}
     </View>
+  );
+};
 
-    {item.emotionScore !== undefined && (
-      <EmotionBar score={item.emotionScore} />
-    )}
-
-    <Text style={styles.cardContent} numberOfLines={3}>
-      {item.content}
-    </Text>
-
-    {item.tags && item.tags.length > 0 && (
-      <View style={styles.tagRow}>
-        {item.tags.map((tag) => (
-          <View key={tag} style={styles.tag}>
-            <Text style={styles.tagText}>#{tag}</Text>
-          </View>
-        ))}
+const PrescriptionCard: React.FC<{ item: TimelinePrescription }> = ({ item }) => {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.card, styles.prescriptionCard, { backgroundColor: colors.surface, shadowColor: colors.glassShadow, borderLeftColor: colors.secondary }]}>
+      <View style={styles.cardHeader}>
+        <View style={[styles.prescriptionBadge, { backgroundColor: colors.secondaryLight + '30' }]}>
+          <Text style={[styles.prescriptionBadgeText, { color: colors.secondary }]}>처방전</Text>
+        </View>
+        {item.hospitalName && (
+          <Text style={[styles.cardHospital, { color: colors.primary }]}>{item.hospitalName}</Text>
+        )}
       </View>
-    )}
-  </View>
-);
-
-const PrescriptionCard: React.FC<{ item: TimelinePrescription }> = ({ item }) => (
-  <View style={[styles.card, styles.prescriptionCard]}>
-    <View style={styles.cardHeader}>
-      <View style={styles.prescriptionBadge}>
-        <Text style={styles.prescriptionBadgeText}>처방전</Text>
+      <View style={styles.prescriptionMedRow}>
+        <Ionicons name="medical-outline" size={16} color={colors.text} />
+        <Text style={[styles.prescriptionMedCount, { color: colors.text }]}>약품 {item.medicationCount}종</Text>
       </View>
-      {item.hospitalName && (
-        <Text style={styles.cardHospital}>{item.hospitalName}</Text>
+      {item.prescribedAt && (
+        <Text style={[styles.prescriptionDate, { color: colors.textSub }]}>
+          처방일: {item.prescribedAt.split('T')[0]}
+        </Text>
       )}
     </View>
-    <View style={styles.prescriptionMedRow}>
-      <Ionicons name="medical-outline" size={16} color={colors.text} />
-      <Text style={styles.prescriptionMedCount}>약품 {item.medicationCount}종</Text>
-    </View>
-    {item.prescribedAt && (
-      <Text style={styles.prescriptionDate}>
-        처방일: {item.prescribedAt.split('T')[0]}
-      </Text>
-    )}
-  </View>
-);
+  );
+};
 
-const EmotionBar: React.FC<{ score: number }> = ({ score }) => (
-  <View style={styles.emotionBarBg}>
-    <View
-      style={[
-        styles.emotionBarFill,
-        {
-          width: `${score * 10}%` as any,
-          backgroundColor: getEmotionColor(score),
-        },
-      ]}
-    />
-  </View>
-);
+const EmotionBar: React.FC<{ score: number }> = ({ score }) => {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.emotionBarBg, { backgroundColor: colors.disabled }]}>
+      <View
+        style={[
+          styles.emotionBarFill,
+          {
+            width: `${score * 10}%` as any,
+            backgroundColor: getEmotionColor(score),
+          },
+        ]}
+      />
+    </View>
+  );
+};
 
 export const RecordTab: React.FC = () => {
+  const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const isPremium = useAuthStore((s) => s.user?.plan === 'PREMIUM');
   const {
@@ -141,29 +151,29 @@ export const RecordTab: React.FC = () => {
   if (isLoading) return <LoadingSpinner fullscreen />;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>진료 기록</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>진료 기록</Text>
         <TouchableOpacity
-          style={styles.prescriptionBtn}
+          style={[styles.prescriptionBtn, { backgroundColor: colors.primary }]}
           onPress={() => navigation.navigate('PrescriptionList' as any)}
           activeOpacity={0.8}
         >
           <Ionicons name="medkit-outline" size={16} color={colors.textInverse} />
-          <Text style={styles.prescriptionBtnText}>처방 목록</Text>
+          <Text style={[styles.prescriptionBtnText, { color: colors.textInverse }]}>처방 목록</Text>
         </TouchableOpacity>
       </View>
 
       {!isPremium && (
-        <View style={styles.freeBanner}>
+        <View style={[styles.freeBanner, { backgroundColor: colors.warningLight, borderBottomColor: colors.warning + '30' }]}>
           <View style={styles.freeBannerLeft}>
             <Ionicons name="lock-closed-outline" size={14} color={colors.text} />
-            <Text style={styles.freeBannerText}>
+            <Text style={[styles.freeBannerText, { color: colors.text }]}>
               무료 플랜은 최근 2개월 기록만 조회됩니다.
             </Text>
           </View>
           <TouchableOpacity onPress={() => navigation.navigate('Paywall')} hitSlop={8}>
-            <Text style={styles.freeBannerUpgrade}>업그레이드</Text>
+            <Text style={[styles.freeBannerUpgrade, { color: colors.primary }]}>업그레이드</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -172,8 +182,8 @@ export const RecordTab: React.FC = () => {
         sections={sections}
         keyExtractor={(item) => `${item.type}-${item.id}`}
         renderSectionHeader={({ section }) => (
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionHeaderText}>
+          <View style={[styles.sectionHeader, { backgroundColor: colors.background, borderBottomColor: colors.divider }]}>
+            <Text style={[styles.sectionHeaderText, { color: colors.textSub }]}>
               {formatSectionTitle(section.title)}
             </Text>
           </View>
@@ -197,8 +207,8 @@ export const RecordTab: React.FC = () => {
         }
         ListEmptyComponent={
           <View style={styles.emptyWrap}>
-            <Text style={styles.emptyText}>아직 기록이 없어요</Text>
-            <Text style={styles.emptySubText}>진료 후 기록을 남겨보세요</Text>
+            <Text style={[styles.emptyText, { color: colors.textSub }]}>아직 기록이 없어요</Text>
+            <Text style={[styles.emptySubText, { color: colors.textDisabled }]}>진료 후 기록을 남겨보세요</Text>
           </View>
         }
         contentContainerStyle={sections.length === 0 ? styles.emptyContainer : styles.listContent}
@@ -206,7 +216,7 @@ export const RecordTab: React.FC = () => {
       />
 
       <TouchableOpacity
-        style={styles.fab}
+        style={[styles.fab, { backgroundColor: colors.primary, shadowColor: colors.glassShadow }]}
         onPress={() => navigation.navigate('RecordForm', undefined)}
         activeOpacity={0.85}
       >
@@ -217,7 +227,7 @@ export const RecordTab: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1 },
   header: {
     height: sizes.headerHeight,
     flexDirection: 'row',
@@ -229,27 +239,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: colors.primary,
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.xs + 2,
     borderRadius: sizes.radius.full,
   },
   prescriptionBtnText: {
     fontSize: sizes.font.sm,
-    color: colors.textInverse,
-    fontWeight: sizes.fontWeight.semibold,
+    fontFamily: fontFamily.semibold,
   },
   headerTitle: {
     fontSize: sizes.font.xl,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
+    fontFamily: fontFamily.bold,
   },
   freeBanner: {
-    backgroundColor: colors.warningLight,
     paddingHorizontal: sizes.spacing.lg,
     paddingVertical: sizes.spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.warning + '30',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -262,13 +267,11 @@ const styles = StyleSheet.create({
   },
   freeBannerText: {
     fontSize: sizes.font.sm,
-    color: colors.text,
     flex: 1,
   },
   freeBannerUpgrade: {
     fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.primary,
+    fontFamily: fontFamily.bold,
     marginLeft: sizes.spacing.sm,
   },
   listContent: { paddingBottom: sizes.tabBarSafeBottom + 20 },
@@ -276,23 +279,18 @@ const styles = StyleSheet.create({
   sectionHeader: {
     paddingHorizontal: sizes.spacing.lg,
     paddingVertical: sizes.spacing.sm,
-    backgroundColor: colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
   },
   sectionHeaderText: {
     fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.textSub,
+    fontFamily: fontFamily.semibold,
   },
   card: {
-    backgroundColor: colors.surfaceSolid,
     marginHorizontal: sizes.spacing.lg,
     marginTop: sizes.spacing.md,
     borderRadius: sizes.radius.xl,
     padding: sizes.spacing.md,
     gap: sizes.spacing.sm,
-    shadowColor: colors.glassShadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
     shadowRadius: 8,
@@ -300,7 +298,6 @@ const styles = StyleSheet.create({
   },
   prescriptionCard: {
     borderLeftWidth: 3,
-    borderLeftColor: colors.secondary,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -309,8 +306,7 @@ const styles = StyleSheet.create({
   },
   cardHospital: {
     fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.primary,
+    fontFamily: fontFamily.semibold,
     flex: 1,
   },
   emotionBadge: {
@@ -320,11 +316,10 @@ const styles = StyleSheet.create({
   },
   emotionScore: {
     fontSize: sizes.font.xs,
-    fontWeight: sizes.fontWeight.bold,
+    fontFamily: fontFamily.bold,
   },
   emotionBarBg: {
     height: 6,
-    backgroundColor: colors.disabled,
     borderRadius: 3,
     overflow: 'hidden',
   },
@@ -334,7 +329,6 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     fontSize: sizes.font.sm,
-    color: colors.text,
     lineHeight: 20,
   },
   tagRow: {
@@ -343,18 +337,15 @@ const styles = StyleSheet.create({
     gap: sizes.spacing.xs,
   },
   tag: {
-    backgroundColor: colors.primaryLight + '25',
     paddingHorizontal: sizes.spacing.sm,
     paddingVertical: 2,
     borderRadius: sizes.radius.full,
   },
   tagText: {
     fontSize: sizes.font.xs,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.medium,
+    fontFamily: fontFamily.medium,
   },
   prescriptionBadge: {
-    backgroundColor: colors.secondaryLight + '30',
     paddingHorizontal: sizes.spacing.sm,
     paddingVertical: 2,
     borderRadius: sizes.radius.full,
@@ -362,8 +353,7 @@ const styles = StyleSheet.create({
   },
   prescriptionBadgeText: {
     fontSize: sizes.font.xs,
-    color: colors.secondary,
-    fontWeight: sizes.fontWeight.semibold,
+    fontFamily: fontFamily.semibold,
   },
   prescriptionMedRow: {
     flexDirection: 'row',
@@ -372,11 +362,9 @@ const styles = StyleSheet.create({
   },
   prescriptionMedCount: {
     fontSize: sizes.font.md,
-    color: colors.text,
   },
   prescriptionDate: {
     fontSize: sizes.font.sm,
-    color: colors.textSub,
   },
   footerSpinner: { marginVertical: sizes.spacing.lg },
   emptyWrap: {
@@ -388,12 +376,10 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.textSub,
+    fontFamily: fontFamily.semibold,
   },
   emptySubText: {
     fontSize: sizes.font.sm,
-    color: colors.textDisabled,
   },
   fab: {
     position: 'absolute',
@@ -402,10 +388,8 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.glassShadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
     shadowRadius: 12,

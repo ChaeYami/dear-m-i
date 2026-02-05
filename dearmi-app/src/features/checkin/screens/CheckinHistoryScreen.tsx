@@ -4,7 +4,7 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  
+
   SectionList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,7 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { getEmotionColor, useEmotionLabel } from '@/shared/components/EmotionSlider';
 import { formatDate } from '@/shared/utils/dateUtils';
 import { useCheckinHistory } from '@/features/checkin/hooks/useCheckin';
@@ -34,6 +34,7 @@ interface Section {
 }
 
 export const CheckinHistoryScreen: React.FC = () => {
+  const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const { t, i18n } = useTranslation('checkin');
   const emotionLabel = useEmotionLabel();
@@ -49,6 +50,137 @@ export const CheckinHistoryScreen: React.FC = () => {
       data: [checkin],
     }));
   }, [history]);
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: {
+      height: sizes.headerHeight,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: sizes.spacing.lg,
+    },
+    backBtn: {
+      fontSize: sizes.font.md,
+      color: colors.primary,
+      fontFamily: fontFamily.medium,
+      width: 48,
+    },
+    headerTitle: {
+      flex: 1,
+      textAlign: 'center',
+      fontSize: sizes.font.lg,
+      fontFamily: fontFamily.bold,
+      color: colors.text,
+    },
+    freeBanner: {
+      backgroundColor: colors.warningLight,
+      paddingHorizontal: sizes.spacing.lg,
+      paddingVertical: sizes.spacing.sm,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.warning + '44',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    freeBannerText: {
+      fontSize: sizes.font.sm,
+      color: '#92400E',
+      flex: 1,
+    },
+    freeBannerUpgrade: {
+      fontSize: sizes.font.sm,
+      fontFamily: fontFamily.bold,
+      color: colors.primary,
+      marginLeft: sizes.spacing.sm,
+    },
+    listContent: { paddingBottom: 40 },
+    emptyContainer: { flexGrow: 1 },
+    sectionHeader: {
+      paddingHorizontal: sizes.spacing.lg,
+      paddingVertical: sizes.spacing.sm,
+      backgroundColor: colors.background,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.divider,
+    },
+    sectionDate: {
+      fontSize: sizes.font.sm,
+      fontFamily: fontFamily.semibold,
+      color: colors.text,
+    },
+    card: {
+      backgroundColor: colors.surface,
+      marginHorizontal: sizes.spacing.lg,
+      marginTop: sizes.spacing.sm,
+      borderRadius: sizes.radius.md,
+      padding: sizes.spacing.md,
+      gap: sizes.spacing.sm,
+      borderWidth: 1,
+      borderColor: colors.divider,
+    },
+    cardTop: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: sizes.spacing.sm,
+    },
+    scoreBadge: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    scoreBadgeText: {
+      fontSize: sizes.font.sm,
+      fontFamily: fontFamily.bold,
+      color: '#FFFFFF',
+    },
+    scoreLabel: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.semibold,
+    },
+    tagRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: sizes.spacing.xs,
+    },
+    tag: {
+      paddingHorizontal: sizes.spacing.sm,
+      paddingVertical: 2,
+      borderRadius: sizes.radius.full,
+      backgroundColor: colors.primary + '12',
+    },
+    tagText: {
+      fontSize: sizes.font.xs,
+      color: colors.primary,
+      fontFamily: fontFamily.medium,
+    },
+    memo: {
+      fontSize: sizes.font.sm,
+      color: colors.textSub,
+      lineHeight: 20,
+    },
+    metaRow: {
+      flexDirection: 'row',
+      gap: sizes.spacing.md,
+    },
+    metaItem: {
+      fontSize: sizes.font.xs,
+      color: colors.textDisabled,
+    },
+    emptyWrap: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingTop: 100,
+      gap: sizes.spacing.sm,
+    },
+    emptyText: {
+      fontSize: sizes.font.lg,
+      fontFamily: fontFamily.semibold,
+      color: colors.textSub,
+    },
+    emptySubText: { fontSize: sizes.font.sm, color: colors.textDisabled },
+  }), [colors]);
 
   if (isLoading) return <LoadingSpinner fullscreen />;
 
@@ -140,134 +272,3 @@ export const CheckinHistoryScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  header: {
-    height: sizes.headerHeight,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: sizes.spacing.lg,
-  },
-  backBtn: {
-    fontSize: sizes.font.md,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.medium,
-    width: 48,
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
-  },
-  freeBanner: {
-    backgroundColor: colors.warningLight,
-    paddingHorizontal: sizes.spacing.lg,
-    paddingVertical: sizes.spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.warning + '44',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  freeBannerText: {
-    fontSize: sizes.font.sm,
-    color: '#92400E',
-    flex: 1,
-  },
-  freeBannerUpgrade: {
-    fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.primary,
-    marginLeft: sizes.spacing.sm,
-  },
-  listContent: { paddingBottom: 40 },
-  emptyContainer: { flexGrow: 1 },
-  sectionHeader: {
-    paddingHorizontal: sizes.spacing.lg,
-    paddingVertical: sizes.spacing.sm,
-    backgroundColor: colors.background,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
-  },
-  sectionDate: {
-    fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.text,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    marginHorizontal: sizes.spacing.lg,
-    marginTop: sizes.spacing.sm,
-    borderRadius: sizes.radius.md,
-    padding: sizes.spacing.md,
-    gap: sizes.spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.divider,
-  },
-  cardTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: sizes.spacing.sm,
-  },
-  scoreBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  scoreBadgeText: {
-    fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.bold,
-    color: '#FFFFFF',
-  },
-  scoreLabel: {
-    fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.semibold,
-  },
-  tagRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: sizes.spacing.xs,
-  },
-  tag: {
-    paddingHorizontal: sizes.spacing.sm,
-    paddingVertical: 2,
-    borderRadius: sizes.radius.full,
-    backgroundColor: colors.primary + '12',
-  },
-  tagText: {
-    fontSize: sizes.font.xs,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.medium,
-  },
-  memo: {
-    fontSize: sizes.font.sm,
-    color: colors.textSub,
-    lineHeight: 20,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    gap: sizes.spacing.md,
-  },
-  metaItem: {
-    fontSize: sizes.font.xs,
-    color: colors.textDisabled,
-  },
-  emptyWrap: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 100,
-    gap: sizes.spacing.sm,
-  },
-  emptyText: {
-    fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.textSub,
-  },
-  emptySubText: { fontSize: sizes.font.sm, color: colors.textDisabled },
-});

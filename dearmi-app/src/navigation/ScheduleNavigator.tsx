@@ -1,6 +1,6 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import { colors } from '@/constants';
+
 import { ScheduleTab } from '@/features/schedule/screens/ScheduleTab';
 import { ScheduleDetailScreen } from '@/features/schedule/screens/ScheduleDetailScreen';
 import { ScheduleFormScreen } from '@/features/schedule/screens/ScheduleFormScreen';
@@ -23,7 +23,7 @@ export const ScheduleNavigator: React.FC = () => {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
-        cardStyle: { backgroundColor: colors.background },
+        cardStyle: { backgroundColor: 'transparent' },
       }}
     >
       <Stack.Screen name="ScheduleTab" component={ScheduleTab} />

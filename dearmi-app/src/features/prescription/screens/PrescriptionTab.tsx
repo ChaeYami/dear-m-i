@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  
+
   LayoutAnimation,
   Platform,
   UIManager,
@@ -16,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import {
   usePagedPrescriptions,
   useDeletePrescription,
@@ -37,21 +37,24 @@ const formatDate = (dateStr?: string) => {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 };
 
-const OCR_STATUS_CONFIG: Record<OcrStatus, { label: string; color: string }> = {
-  PENDING: { label: '분석 대기', color: colors.warning },
-  PROCESSING: { label: '분석 중', color: colors.primary },
-  COMPLETED: { label: '분석 완료', color: colors.success },
-  FAILED: { label: '인식 실패', color: colors.error },
-};
-
 const MedicationRow: React.FC<{
   med: PrescriptionMedication;
   onPress: () => void;
-}> = ({ med, onPress }) => (
-  <TouchableOpacity style={styles.medRow} onPress={onPress} activeOpacity={0.75}>
-    <View style={styles.medRowLeft}>
-      <Text style={styles.medName}>{med.medicationName}</Text>
-      <Text style={styles.medSub}>
+  colors: ReturnType<typeof useTheme>['colors'];
+}> = ({ med, onPress, colors }) => (
+  <TouchableOpacity
+    style={[
+      staticStyles.medRow,
+      { borderBottomColor: colors.divider },
+    ]}
+    onPress={onPress}
+    activeOpacity={0.75}
+  >
+    <View style={staticStyles.medRowLeft}>
+      <Text style={[staticStyles.medName, { fontFamily: fontFamily.medium, color: colors.text }]}>
+        {med.medicationName}
+      </Text>
+      <Text style={[staticStyles.medSub, { color: colors.textSub }]}>
         {[med.dosage, med.frequency, med.durationDays !== undefined ? `${med.durationDays}일` : undefined]
           .filter(Boolean)
           .join(' · ') || '정보 없음'}
@@ -68,29 +71,41 @@ const PrescriptionCard: React.FC<{
   onMedPress: (med: PrescriptionMedication) => void;
   onDelete: () => void;
   onViewOcr: () => void;
-}> = ({ item, expanded, onToggle, onMedPress, onDelete, onViewOcr }) => {
+  colors: ReturnType<typeof useTheme>['colors'];
+}> = ({ item, expanded, onToggle, onMedPress, onDelete, onViewOcr, colors }) => {
+  const OCR_STATUS_CONFIG: Record<OcrStatus, { label: string; color: string }> = {
+    PENDING: { label: '분석 대기', color: colors.warning },
+    PROCESSING: { label: '분석 중', color: colors.primary },
+    COMPLETED: { label: '분석 완료', color: colors.success },
+    FAILED: { label: '인식 실패', color: colors.error },
+  };
+
   const statusCfg = item.ocrStatus ? OCR_STATUS_CONFIG[item.ocrStatus] : null;
   const isPending = item.ocrStatus === 'PENDING' || item.ocrStatus === 'PROCESSING';
 
   return (
-    <View style={styles.card}>
-      <TouchableOpacity style={styles.cardHeader} onPress={onToggle} activeOpacity={0.8}>
-        <View style={styles.cardHeaderLeft}>
-          <Text style={styles.cardDate}>{formatDate(item.prescribedAt)}</Text>
-          <Text style={styles.cardHospital}>{item.hospitalName ?? '병원명 미상'}</Text>
+    <View style={[staticStyles.card, { backgroundColor: colors.surface, borderColor: colors.divider }]}>
+      <TouchableOpacity style={staticStyles.cardHeader} onPress={onToggle} activeOpacity={0.8}>
+        <View style={staticStyles.cardHeaderLeft}>
+          <Text style={[staticStyles.cardDate, { color: colors.textSub }]}>{formatDate(item.prescribedAt)}</Text>
+          <Text style={[staticStyles.cardHospital, { fontFamily: fontFamily.semibold, color: colors.text }]}>
+            {item.hospitalName ?? '병원명 미상'}
+          </Text>
         </View>
-        <View style={styles.cardHeaderRight}>
+        <View style={staticStyles.cardHeaderRight}>
           {statusCfg && (
-            <View style={[styles.statusBadge, { backgroundColor: statusCfg.color + '20' }]}>
+            <View style={[staticStyles.statusBadge, { backgroundColor: statusCfg.color + '20' }]}>
               {isPending && (
-                <ActivityIndicator size="small" color={statusCfg.color} style={styles.statusSpinner} />
+                <ActivityIndicator size="small" color={statusCfg.color} style={staticStyles.statusSpinner} />
               )}
-              <Text style={[styles.statusText, { color: statusCfg.color }]}>{statusCfg.label}</Text>
+              <Text style={[staticStyles.statusText, { fontFamily: fontFamily.semibold, color: statusCfg.color }]}>
+                {statusCfg.label}
+              </Text>
             </View>
           )}
-          <View style={styles.medCountRow}>
+          <View style={staticStyles.medCountRow}>
             <Ionicons name="medical-outline" size={14} color={colors.textSub} />
-            <Text style={styles.medCount}>{item.medications.length}종</Text>
+            <Text style={[staticStyles.medCount, { color: colors.textSub }]}>{item.medications.length}종</Text>
           </View>
           <Ionicons
             name={expanded ? 'chevron-up' : 'chevron-down'}
@@ -101,30 +116,46 @@ const PrescriptionCard: React.FC<{
       </TouchableOpacity>
 
       {expanded && (
-        <View style={styles.accordion}>
+        <View style={[staticStyles.accordion, { borderTopColor: colors.divider }]}>
           {item.medications.length === 0 ? (
-            <Text style={styles.noMedText}>등록된 약품이 없습니다</Text>
+            <Text style={[staticStyles.noMedText, { color: colors.textDisabled }]}>
+              등록된 약품이 없습니다
+            </Text>
           ) : (
             item.medications.map((med) => (
               <MedicationRow
                 key={med.id}
                 med={med}
                 onPress={() => onMedPress(med)}
+                colors={colors}
               />
             ))
           )}
 
-          <View style={styles.cardActions}>
+          <View style={[staticStyles.cardActions, { backgroundColor: colors.background }]}>
             {(item.ocrStatus === 'FAILED' || item.ocrStatus === 'COMPLETED') && (
-              <TouchableOpacity style={styles.actionBtn} onPress={onViewOcr}>
-                <Text style={styles.actionBtnText}>OCR 결과 보기</Text>
+              <TouchableOpacity
+                style={[
+                  staticStyles.actionBtn,
+                  { backgroundColor: colors.surface, borderColor: colors.divider },
+                ]}
+                onPress={onViewOcr}
+              >
+                <Text style={[staticStyles.actionBtnText, { fontFamily: fontFamily.medium, color: colors.primary }]}>
+                  OCR 결과 보기
+                </Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity
-              style={[styles.actionBtn, styles.deleteActionBtn]}
+              style={[
+                staticStyles.actionBtn,
+                { backgroundColor: colors.surface, borderColor: colors.error + '55' },
+              ]}
               onPress={onDelete}
             >
-              <Text style={styles.deleteActionBtnText}>삭제</Text>
+              <Text style={[staticStyles.deleteActionBtnText, { fontFamily: fontFamily.medium, color: colors.error }]}>
+                삭제
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -134,6 +165,7 @@ const PrescriptionCard: React.FC<{
 };
 
 export const PrescriptionTab: React.FC = () => {
+  const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
     usePagedPrescriptions();
@@ -165,12 +197,14 @@ export const PrescriptionTab: React.FC = () => {
   if (isLoading) return <LoadingSpinner fullscreen />;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[staticStyles.container, { backgroundColor: colors.background }]}>
+      <View style={staticStyles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
           <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>처방 목록</Text>
+        <Text style={[staticStyles.headerTitle, { fontFamily: fontFamily.bold, color: colors.text }]}>
+          처방 목록
+        </Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -178,7 +212,7 @@ export const PrescriptionTab: React.FC = () => {
         data={prescriptions}
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={
-          prescriptions.length === 0 ? styles.emptyContainer : styles.listContent
+          prescriptions.length === 0 ? staticStyles.emptyContainer : staticStyles.listContent
         }
         renderItem={({ item }) => (
           <PrescriptionCard
@@ -195,6 +229,7 @@ export const PrescriptionTab: React.FC = () => {
             onViewOcr={() =>
               navigation.navigate('OcrResult', { prescriptionId: item.id })
             }
+            colors={colors}
           />
         )}
         onEndReached={() => {
@@ -203,19 +238,23 @@ export const PrescriptionTab: React.FC = () => {
         onEndReachedThreshold={0.3}
         ListFooterComponent={
           isFetchingNextPage ? (
-            <ActivityIndicator color={colors.primary} style={styles.footerSpinner} />
+            <ActivityIndicator color={colors.primary} style={staticStyles.footerSpinner} />
           ) : null
         }
         ListEmptyComponent={
-          <View style={styles.emptyWrap}>
-            <Text style={styles.emptyText}>처방전이 없어요</Text>
-            <Text style={styles.emptySubText}>처방전을 촬영해서 등록해보세요</Text>
+          <View style={staticStyles.emptyWrap}>
+            <Text style={[staticStyles.emptyText, { fontFamily: fontFamily.semibold, color: colors.textSub }]}>
+              처방전이 없어요
+            </Text>
+            <Text style={[staticStyles.emptySubText, { color: colors.textDisabled }]}>
+              처방전을 촬영해서 등록해보세요
+            </Text>
           </View>
         }
       />
 
       <TouchableOpacity
-        style={styles.fab}
+        style={[staticStyles.fab, { backgroundColor: colors.primary, shadowColor: colors.glassShadow }]}
         onPress={() => navigation.navigate('PrescriptionUpload')}
         activeOpacity={0.85}
       >
@@ -225,8 +264,8 @@ export const PrescriptionTab: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const staticStyles = StyleSheet.create({
+  container: { flex: 1 },
   header: {
     height: sizes.headerHeight,
     flexDirection: 'row',
@@ -237,16 +276,12 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
     fontSize: sizes.font.xl,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
   },
   listContent: { padding: sizes.spacing.lg, gap: sizes.spacing.md, paddingBottom: sizes.tabBarSafeBottom + 20 },
   emptyContainer: { flexGrow: 1 },
   card: {
-    backgroundColor: colors.surfaceSolid,
     borderRadius: sizes.radius.lg,
     borderWidth: 1,
-    borderColor: colors.divider,
     overflow: 'hidden',
   },
   cardHeader: {
@@ -256,11 +291,9 @@ const styles = StyleSheet.create({
     gap: sizes.spacing.sm,
   },
   cardHeaderLeft: { flex: 1, gap: sizes.spacing.xs },
-  cardDate: { fontSize: sizes.font.sm, color: colors.textSub },
+  cardDate: { fontSize: sizes.font.sm },
   cardHospital: {
     fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.text,
   },
   cardHeaderRight: { alignItems: 'flex-end', gap: sizes.spacing.xs },
   statusBadge: {
@@ -272,12 +305,11 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   statusSpinner: { transform: [{ scale: 0.7 }] },
-  statusText: { fontSize: sizes.font.xs, fontWeight: sizes.fontWeight.semibold },
+  statusText: { fontSize: sizes.font.xs },
   medCountRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  medCount: { fontSize: sizes.font.xs, color: colors.textSub },
+  medCount: { fontSize: sizes.font.xs },
   accordion: {
     borderTopWidth: 1,
-    borderTopColor: colors.divider,
   },
   medRow: {
     flexDirection: 'row',
@@ -285,19 +317,15 @@ const styles = StyleSheet.create({
     paddingVertical: sizes.spacing.md,
     paddingHorizontal: sizes.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
     gap: sizes.spacing.sm,
   },
   medRowLeft: { flex: 1 },
   medName: {
     fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.medium,
-    color: colors.text,
   },
-  medSub: { fontSize: sizes.font.xs, color: colors.textSub, marginTop: 2 },
+  medSub: { fontSize: sizes.font.xs, marginTop: 2 },
   noMedText: {
     fontSize: sizes.font.sm,
-    color: colors.textDisabled,
     textAlign: 'center',
     paddingVertical: sizes.spacing.lg,
   },
@@ -305,24 +333,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: sizes.spacing.sm,
     gap: sizes.spacing.sm,
-    backgroundColor: colors.background,
   },
   actionBtn: {
     flex: 1,
     paddingVertical: sizes.spacing.sm,
     borderRadius: sizes.radius.md,
     alignItems: 'center',
-    backgroundColor: colors.surfaceSolid,
     borderWidth: 1,
-    borderColor: colors.divider,
   },
   actionBtnText: {
     fontSize: sizes.font.sm,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.medium,
   },
-  deleteActionBtn: { borderColor: colors.error + '55' },
-  deleteActionBtnText: { fontSize: sizes.font.sm, color: colors.error, fontWeight: sizes.fontWeight.medium },
+  deleteActionBtnText: { fontSize: sizes.font.sm },
   footerSpinner: { marginVertical: sizes.spacing.lg },
   emptyWrap: {
     flex: 1,
@@ -333,10 +355,8 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.textSub,
   },
-  emptySubText: { fontSize: sizes.font.sm, color: colors.textDisabled },
+  emptySubText: { fontSize: sizes.font.sm },
   fab: {
     position: 'absolute',
     bottom: sizes.tabBarSafeBottom + sizes.spacing.md,
@@ -344,10 +364,8 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.glassShadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
     shadowRadius: 12,

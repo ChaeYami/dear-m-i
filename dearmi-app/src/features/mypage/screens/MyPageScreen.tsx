@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  
+
   ScrollView,
   Alert,
 } from 'react-native';
@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, CompositeNavigationProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { useTranslation } from 'react-i18next';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { useSubscriptionStore } from '@/features/subscription/store/subscriptionStore';
 import type { MyPageStackParamList } from '@/navigation/MyPageNavigator';
@@ -30,15 +30,41 @@ interface MenuItemProps {
   onPress: () => void;
   badge?: string;
   danger?: boolean;
+  colors: any;
 }
 
-const MenuItem: React.FC<MenuItemProps> = ({ icon, label, onPress, badge, danger }) => (
-  <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
+const MenuItem: React.FC<MenuItemProps> = ({ icon, label, onPress, badge, danger, colors }) => (
+  <TouchableOpacity
+    style={{
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: sizes.spacing.lg,
+      paddingVertical: sizes.spacing.md,
+      gap: sizes.spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.divider,
+    }}
+    onPress={onPress}
+    activeOpacity={0.7}
+  >
     <Ionicons name={icon} size={20} color={danger ? colors.error : colors.primary} />
-    <Text style={[styles.menuLabel, danger && styles.menuLabelDanger]}>{label}</Text>
+    <Text style={{
+      flex: 1,
+      fontSize: sizes.font.md,
+      color: danger ? colors.error : colors.text,
+    }}>{label}</Text>
     {badge && (
-      <View style={styles.badge}>
-        <Text style={styles.badgeText}>{badge}</Text>
+      <View style={{
+        backgroundColor: colors.primaryLight + '25',
+        paddingHorizontal: sizes.spacing.sm,
+        paddingVertical: 2,
+        borderRadius: sizes.radius.full,
+      }}>
+        <Text style={{
+          fontSize: sizes.font.xs,
+          color: colors.primary,
+          fontFamily: fontFamily.semibold,
+        }}>{badge}</Text>
       </View>
     )}
     <Ionicons name="chevron-forward" size={18} color={colors.textDisabled} />
@@ -46,6 +72,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ icon, label, onPress, badge, danger
 );
 
 export const MyPageScreen: React.FC = () => {
+  const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const { t } = useTranslation('settings');
   const { user, logout } = useAuthStore();
@@ -57,6 +84,125 @@ export const MyPageScreen: React.FC = () => {
       { text: t('auth:logout'), style: 'destructive', onPress: () => logout() },
     ]);
   };
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: {
+      height: sizes.headerHeight,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: sizes.spacing.lg,
+    },
+    headerTitle: {
+      fontSize: sizes.font.xl,
+      fontFamily: fontFamily.bold,
+      color: colors.text,
+    },
+    content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg, paddingBottom: sizes.tabBarSafeBottom + 16 },
+    profileCard: {
+      backgroundColor: colors.surface,
+      borderRadius: sizes.radius.xl,
+      borderWidth: 1,
+      borderColor: colors.divider,
+      padding: sizes.spacing.lg,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: sizes.spacing.md,
+    },
+    avatar: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: colors.primaryLight,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    avatarText: {
+      fontSize: sizes.font.xl,
+      fontFamily: fontFamily.bold,
+      color: colors.textInverse,
+    },
+    profileInfo: { flex: 1 },
+    profileName: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.semibold,
+      color: colors.text,
+    },
+    profileEmail: {
+      fontSize: sizes.font.xs,
+      color: colors.textSub,
+      marginTop: 2,
+    },
+    planBadge: {
+      paddingHorizontal: sizes.spacing.sm,
+      paddingVertical: sizes.spacing.xs,
+      borderRadius: sizes.radius.full,
+      backgroundColor: colors.disabled,
+    },
+    planBadgePremium: {
+      backgroundColor: colors.secondaryLight + '30',
+    },
+    planBadgeText: {
+      fontSize: sizes.font.xs,
+      fontFamily: fontFamily.semibold,
+      color: colors.textSub,
+    },
+    planBadgeTextPremium: {
+      color: colors.secondary,
+    },
+    section: { gap: sizes.spacing.sm },
+    sectionTitle: {
+      fontSize: sizes.font.xs,
+      fontFamily: fontFamily.bold,
+      color: colors.textSub,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      paddingHorizontal: sizes.spacing.xs,
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: sizes.radius.lg,
+      borderWidth: 1,
+      borderColor: colors.divider,
+      overflow: 'hidden',
+    },
+    subCard: {
+      backgroundColor: colors.surface,
+      borderRadius: sizes.radius.xl,
+      borderWidth: 1,
+      borderColor: colors.divider,
+      padding: sizes.spacing.lg,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    subCardPremium: {
+      borderColor: colors.primaryLight,
+      backgroundColor: colors.primaryLight + '10',
+    },
+    subCardLeft: { flex: 1, gap: sizes.spacing.xs },
+    subCardBadge: {
+      fontSize: sizes.font.xs,
+      fontFamily: fontFamily.bold,
+      color: colors.primary,
+      letterSpacing: 1,
+    },
+    subCardBadgeGray: {
+      fontSize: sizes.font.xs,
+      fontFamily: fontFamily.bold,
+      color: colors.textDisabled,
+      letterSpacing: 1,
+    },
+    subCardTitle: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.semibold,
+      color: colors.text,
+    },
+    subCardDesc: {
+      fontSize: sizes.font.xs,
+      color: colors.textSub,
+    },
+  }), [colors]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -124,11 +270,19 @@ export const MyPageScreen: React.FC = () => {
               icon="notifications-outline"
               label={t('menu_notification')}
               onPress={() => navigation.navigate('NotificationSettings')}
+              colors={colors}
             />
             <MenuItem
               icon="language-outline"
               label={t('menu_language')}
               onPress={() => navigation.navigate('LanguageSettings')}
+              colors={colors}
+            />
+            <MenuItem
+              icon="color-palette-outline"
+              label="테마 설정"
+              onPress={() => navigation.navigate('ThemeSettings')}
+              colors={colors}
             />
           </View>
         </View>
@@ -141,6 +295,7 @@ export const MyPageScreen: React.FC = () => {
               label={t('auth:logout')}
               onPress={handleLogout}
               danger
+              colors={colors}
             />
           </View>
         </View>
@@ -148,148 +303,3 @@ export const MyPageScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  header: {
-    height: sizes.headerHeight,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: sizes.spacing.lg,
-  },
-  headerTitle: {
-    fontSize: sizes.font.xl,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
-  },
-  content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg, paddingBottom: sizes.tabBarSafeBottom + 16 },
-  profileCard: {
-    backgroundColor: colors.surfaceSolid,
-    borderRadius: sizes.radius.xl,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    padding: sizes.spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: sizes.spacing.md,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontSize: sizes.font.xl,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.textInverse,
-  },
-  profileInfo: { flex: 1 },
-  profileName: {
-    fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.text,
-  },
-  profileEmail: {
-    fontSize: sizes.font.xs,
-    color: colors.textSub,
-    marginTop: 2,
-  },
-  planBadge: {
-    paddingHorizontal: sizes.spacing.sm,
-    paddingVertical: sizes.spacing.xs,
-    borderRadius: sizes.radius.full,
-    backgroundColor: colors.disabled,
-  },
-  planBadgePremium: {
-    backgroundColor: colors.secondaryLight + '30',
-  },
-  planBadgeText: {
-    fontSize: sizes.font.xs,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.textSub,
-  },
-  planBadgeTextPremium: {
-    color: colors.secondary,
-  },
-  section: { gap: sizes.spacing.sm },
-  sectionTitle: {
-    fontSize: sizes.font.xs,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.textSub,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    paddingHorizontal: sizes.spacing.xs,
-  },
-  card: {
-    backgroundColor: colors.surfaceSolid,
-    borderRadius: sizes.radius.lg,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    overflow: 'hidden',
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: sizes.spacing.lg,
-    paddingVertical: sizes.spacing.md,
-    gap: sizes.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
-  },
-  menuLabel: {
-    flex: 1,
-    fontSize: sizes.font.md,
-    color: colors.text,
-  },
-  menuLabelDanger: { color: colors.error },
-  badge: {
-    backgroundColor: colors.primaryLight + '25',
-    paddingHorizontal: sizes.spacing.sm,
-    paddingVertical: 2,
-    borderRadius: sizes.radius.full,
-  },
-  badgeText: {
-    fontSize: sizes.font.xs,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.semibold,
-  },
-  subCard: {
-    backgroundColor: colors.surfaceSolid,
-    borderRadius: sizes.radius.xl,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    padding: sizes.spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  subCardPremium: {
-    borderColor: colors.primaryLight,
-    backgroundColor: colors.primaryLight + '10',
-  },
-  subCardLeft: { flex: 1, gap: sizes.spacing.xs },
-  subCardBadge: {
-    fontSize: sizes.font.xs,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.primary,
-    letterSpacing: 1,
-  },
-  subCardBadgeGray: {
-    fontSize: sizes.font.xs,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.textDisabled,
-    letterSpacing: 1,
-  },
-  subCardTitle: {
-    fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.text,
-  },
-  subCardDesc: {
-    fontSize: sizes.font.xs,
-    color: colors.textSub,
-  },
-});

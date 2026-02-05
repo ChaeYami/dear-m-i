@@ -5,14 +5,14 @@ import {
   StyleSheet,
   SectionList,
   TouchableOpacity,
-  
+
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { CompositeNavigationProp } from '@react-navigation/native';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { useMedicationHistory } from '@/features/medication/hooks/useMedication';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
@@ -29,12 +29,6 @@ const SLOT_LABELS: Record<TimeSlotType, string> = {
   MORNING: '아침', AFTERNOON: '점심', EVENING: '저녁', BEDTIME: '취침 전',
 };
 
-const STATUS_CONFIG: Record<MedicationLogStatus, { label: string; color: string }> = {
-  TAKEN: { label: '복용', color: colors.success },
-  SKIPPED: { label: '건너뜀', color: colors.textDisabled },
-  MISSED: { label: '미복용', color: colors.error },
-};
-
 const formatDate = (dateStr: string) => {
   const d = new Date(dateStr);
   return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
@@ -49,9 +43,16 @@ interface Section {
 }
 
 export const MedicationHistoryScreen: React.FC = () => {
+  const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const plan = useAuthStore((s) => s.user?.plan);
   const isFree = plan === 'FREE' || !plan;
+
+  const STATUS_CONFIG: Record<MedicationLogStatus, { label: string; color: string }> = {
+    TAKEN: { label: '복용', color: colors.success },
+    SKIPPED: { label: '건너뜀', color: colors.textDisabled },
+    MISSED: { label: '미복용', color: colors.error },
+  };
 
   const { data: history, isLoading } = useMedicationHistory();
 
@@ -73,6 +74,8 @@ export const MedicationHistoryScreen: React.FC = () => {
   }, [history]);
 
   if (isLoading) return <LoadingSpinner fullscreen />;
+
+  const styles = getStyles(colors);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -137,103 +140,104 @@ export const MedicationHistoryScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  header: {
-    height: sizes.headerHeight,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: sizes.spacing.lg,
-  },
-  backBtn: {
-    fontSize: sizes.font.md,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.medium,
-    width: 48,
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
-  },
-  freeBanner: {
-    backgroundColor: colors.warningLight,
-    paddingHorizontal: sizes.spacing.lg,
-    paddingVertical: sizes.spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.warning + '44',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  freeBannerText: {
-    fontSize: sizes.font.sm,
-    color: '#92400E',
-    flex: 1,
-  },
-  freeBannerUpgrade: {
-    fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.primary,
-    marginLeft: sizes.spacing.sm,
-  },
-  listContent: { paddingBottom: 40 },
-  emptyContainer: { flexGrow: 1 },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: sizes.spacing.lg,
-    paddingVertical: sizes.spacing.sm,
-    backgroundColor: colors.background,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
-  },
-  sectionDate: {
-    fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.text,
-  },
-  sectionRate: {
-    fontSize: sizes.font.xs,
-    color: colors.textSub,
-  },
-  logRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: sizes.spacing.lg,
-    paddingVertical: sizes.spacing.md,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
-  },
-  slotLabel: {
-    fontSize: sizes.font.md,
-    color: colors.text,
-  },
-  statusBadge: {
-    paddingHorizontal: sizes.spacing.sm,
-    paddingVertical: 3,
-    borderRadius: sizes.radius.full,
-  },
-  statusText: {
-    fontSize: sizes.font.xs,
-    fontWeight: sizes.fontWeight.semibold,
-  },
-  emptyWrap: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 100,
-    gap: sizes.spacing.sm,
-  },
-  emptyText: {
-    fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.textSub,
-  },
-  emptySubText: { fontSize: sizes.font.sm, color: colors.textDisabled },
-});
+const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: {
+      height: sizes.headerHeight,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: sizes.spacing.lg,
+    },
+    backBtn: {
+      fontSize: sizes.font.md,
+      color: colors.primary,
+      fontFamily: fontFamily.medium,
+      width: 48,
+    },
+    headerTitle: {
+      flex: 1,
+      textAlign: 'center',
+      fontSize: sizes.font.lg,
+      fontFamily: fontFamily.bold,
+      color: colors.text,
+    },
+    freeBanner: {
+      backgroundColor: colors.warningLight,
+      paddingHorizontal: sizes.spacing.lg,
+      paddingVertical: sizes.spacing.sm,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.warning + '44',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    freeBannerText: {
+      fontSize: sizes.font.sm,
+      color: '#92400E',
+      flex: 1,
+    },
+    freeBannerUpgrade: {
+      fontSize: sizes.font.sm,
+      fontFamily: fontFamily.bold,
+      color: colors.primary,
+      marginLeft: sizes.spacing.sm,
+    },
+    listContent: { paddingBottom: 40 },
+    emptyContainer: { flexGrow: 1 },
+    sectionHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: sizes.spacing.lg,
+      paddingVertical: sizes.spacing.sm,
+      backgroundColor: colors.background,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.divider,
+    },
+    sectionDate: {
+      fontSize: sizes.font.sm,
+      fontFamily: fontFamily.semibold,
+      color: colors.text,
+    },
+    sectionRate: {
+      fontSize: sizes.font.xs,
+      color: colors.textSub,
+    },
+    logRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: sizes.spacing.lg,
+      paddingVertical: sizes.spacing.md,
+      backgroundColor: colors.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.divider,
+    },
+    slotLabel: {
+      fontSize: sizes.font.md,
+      color: colors.text,
+    },
+    statusBadge: {
+      paddingHorizontal: sizes.spacing.sm,
+      paddingVertical: 3,
+      borderRadius: sizes.radius.full,
+    },
+    statusText: {
+      fontSize: sizes.font.xs,
+      fontFamily: fontFamily.semibold,
+    },
+    emptyWrap: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingTop: 100,
+      gap: sizes.spacing.sm,
+    },
+    emptyText: {
+      fontSize: sizes.font.lg,
+      fontFamily: fontFamily.semibold,
+      color: colors.textSub,
+    },
+    emptySubText: { fontSize: sizes.font.sm, color: colors.textDisabled },
+  });

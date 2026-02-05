@@ -1,6 +1,6 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import { colors } from '@/constants';
+
 import { RecordTab } from '@/features/record/screens/RecordTab';
 import { RecordFormScreen } from '@/features/record/screens/RecordFormScreen';
 import { PrescriptionTab } from '@/features/prescription/screens/PrescriptionTab';
@@ -24,7 +24,7 @@ export const RecordNavigator: React.FC = () => {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
-        cardStyle: { backgroundColor: colors.background },
+        cardStyle: { backgroundColor: 'transparent' },
       }}
     >
       <Stack.Screen name="RecordTab" component={RecordTab} />

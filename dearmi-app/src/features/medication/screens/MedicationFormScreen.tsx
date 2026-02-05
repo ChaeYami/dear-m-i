@@ -6,7 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  
+
   Platform,
   Alert,
   Switch,
@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { useCreateMedicationSchedule } from '@/features/medication/hooks/useMedication';
 import { useMedicationDetail } from '@/features/prescription/hooks/usePrescription';
 import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
@@ -45,6 +45,7 @@ const addDays = (d: Date, n: number) => {
 };
 
 export const MedicationFormScreen: React.FC = () => {
+  const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const params = useRoute<Route>().params ?? {};
   const {
@@ -179,6 +180,8 @@ export const MedicationFormScreen: React.FC = () => {
 
   const nextMed = remainingMeds?.[0];
   const showNextButton = isFromOcr && nextMed;
+
+  const styles = getStyles(colors);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -331,127 +334,128 @@ export const MedicationFormScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  header: {
-    height: sizes.headerHeight,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: sizes.spacing.lg,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
-  },
-  headerCancel: { fontSize: sizes.font.md, color: colors.textSub },
-  headerTitle: {
-    fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
-  },
-  headerSave: {
-    fontSize: sizes.font.md,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.semibold,
-  },
-  headerSaveDisabled: { opacity: 0.4 },
-  ocrBanner: {
-    backgroundColor: colors.primary + '10',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.primary + '25',
-    paddingHorizontal: sizes.spacing.lg,
-    paddingVertical: sizes.spacing.sm,
-  },
-  ocrBannerText: {
-    fontSize: sizes.font.sm,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.medium,
-  },
-  content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg },
-  contentWithNext: { paddingBottom: 100 },
-  field: { gap: sizes.spacing.sm },
-  label: {
-    fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.textSub,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  input: {
-    height: sizes.buttonHeight.md,
-    backgroundColor: colors.surface,
-    borderRadius: sizes.radius.lg,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    paddingHorizontal: sizes.spacing.md,
-    fontSize: sizes.font.md,
-    color: colors.text,
-  },
-  slotRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: sizes.spacing.xs,
-  },
-  slotLeft: { flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.sm },
-  slotLabel: { fontSize: sizes.font.md, color: colors.text },
-  timePill: {
-    paddingHorizontal: sizes.spacing.md,
-    paddingVertical: 6,
-    backgroundColor: colors.primary + '18',
-    borderRadius: sizes.radius.full,
-    borderWidth: 1,
-    borderColor: colors.primary + '44',
-  },
-  timePillText: {
-    fontSize: sizes.font.sm,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.medium,
-  },
-  dateBtn: {
-    height: sizes.buttonHeight.md,
-    backgroundColor: colors.surface,
-    borderRadius: sizes.radius.lg,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    paddingHorizontal: sizes.spacing.md,
-    justifyContent: 'center',
-  },
-  dateBtnText: { fontSize: sizes.font.md, color: colors.text },
-  doneBtn: { alignItems: 'flex-end', paddingVertical: sizes.spacing.xs },
-  doneBtnText: {
-    fontSize: sizes.font.md,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.semibold,
-  },
-  endDateHint: {
-    fontSize: sizes.font.xs,
-    color: colors.textSub,
-    marginTop: 2,
-  },
-  // 다음 약품 버튼
-  nextBtnWrap: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: sizes.spacing.lg,
-    paddingBottom: sizes.spacing.xl,
-    backgroundColor: colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: colors.divider,
-  },
-  nextBtn: {
-    height: sizes.buttonHeight.lg,
-    backgroundColor: colors.secondary,
-    borderRadius: sizes.radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  nextBtnDisabled: { opacity: 0.5 },
-  nextBtnText: {
-    fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.textInverse,
-  },
-});
+const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: {
+      height: sizes.headerHeight,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: sizes.spacing.lg,
+      backgroundColor: colors.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.divider,
+    },
+    headerCancel: { fontSize: sizes.font.md, color: colors.textSub },
+    headerTitle: {
+      fontSize: sizes.font.lg,
+      fontFamily: fontFamily.bold,
+      color: colors.text,
+    },
+    headerSave: {
+      fontSize: sizes.font.md,
+      color: colors.primary,
+      fontFamily: fontFamily.semibold,
+    },
+    headerSaveDisabled: { opacity: 0.4 },
+    ocrBanner: {
+      backgroundColor: colors.primary + '10',
+      borderBottomWidth: 1,
+      borderBottomColor: colors.primary + '25',
+      paddingHorizontal: sizes.spacing.lg,
+      paddingVertical: sizes.spacing.sm,
+    },
+    ocrBannerText: {
+      fontSize: sizes.font.sm,
+      color: colors.primary,
+      fontFamily: fontFamily.medium,
+    },
+    content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg },
+    contentWithNext: { paddingBottom: 100 },
+    field: { gap: sizes.spacing.sm },
+    label: {
+      fontSize: sizes.font.sm,
+      fontFamily: fontFamily.semibold,
+      color: colors.textSub,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    input: {
+      height: sizes.buttonHeight.md,
+      backgroundColor: colors.surface,
+      borderRadius: sizes.radius.lg,
+      borderWidth: 1,
+      borderColor: colors.divider,
+      paddingHorizontal: sizes.spacing.md,
+      fontSize: sizes.font.md,
+      color: colors.text,
+    },
+    slotRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: sizes.spacing.xs,
+    },
+    slotLeft: { flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.sm },
+    slotLabel: { fontSize: sizes.font.md, color: colors.text },
+    timePill: {
+      paddingHorizontal: sizes.spacing.md,
+      paddingVertical: 6,
+      backgroundColor: colors.primary + '18',
+      borderRadius: sizes.radius.full,
+      borderWidth: 1,
+      borderColor: colors.primary + '44',
+    },
+    timePillText: {
+      fontSize: sizes.font.sm,
+      color: colors.primary,
+      fontFamily: fontFamily.medium,
+    },
+    dateBtn: {
+      height: sizes.buttonHeight.md,
+      backgroundColor: colors.surface,
+      borderRadius: sizes.radius.lg,
+      borderWidth: 1,
+      borderColor: colors.divider,
+      paddingHorizontal: sizes.spacing.md,
+      justifyContent: 'center',
+    },
+    dateBtnText: { fontSize: sizes.font.md, color: colors.text },
+    doneBtn: { alignItems: 'flex-end', paddingVertical: sizes.spacing.xs },
+    doneBtnText: {
+      fontSize: sizes.font.md,
+      color: colors.primary,
+      fontFamily: fontFamily.semibold,
+    },
+    endDateHint: {
+      fontSize: sizes.font.xs,
+      color: colors.textSub,
+      marginTop: 2,
+    },
+    // 다음 약품 버튼
+    nextBtnWrap: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      padding: sizes.spacing.lg,
+      paddingBottom: sizes.spacing.xl,
+      backgroundColor: colors.surface,
+      borderTopWidth: 1,
+      borderTopColor: colors.divider,
+    },
+    nextBtn: {
+      height: sizes.buttonHeight.lg,
+      backgroundColor: colors.secondary,
+      borderRadius: sizes.radius.lg,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    nextBtnDisabled: { opacity: 0.5 },
+    nextBtnText: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.bold,
+      color: colors.textInverse,
+    },
+  });

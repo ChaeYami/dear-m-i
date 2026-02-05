@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet, ViewStyle, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes } from '@/shared/theme';
 
 interface GlassCardProps {
   children: React.ReactNode;
@@ -16,28 +16,9 @@ export const GlassCard: React.FC<GlassCardProps> = ({
   onPress,
   intensity = 60,
 }) => {
-  const content = (
-    <View style={[styles.card, style]}>
-      {Platform.OS === 'ios' ? (
-        <BlurView intensity={intensity} tint="light" style={StyleSheet.absoluteFill} />
-      ) : null}
-      <View style={styles.inner}>{children}</View>
-    </View>
-  );
+  const { colors, isDark } = useTheme();
 
-  if (onPress) {
-    return (
-      <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
-        {content}
-      </TouchableOpacity>
-    );
-  }
-
-  return content;
-};
-
-const styles = StyleSheet.create({
-  card: {
+  const cardStyle: ViewStyle = {
     borderRadius: sizes.radius.xl,
     borderWidth: 1,
     borderColor: colors.glassBorder,
@@ -54,8 +35,28 @@ const styles = StyleSheet.create({
         elevation: 3,
       },
     }),
-  },
-  inner: {
-    padding: sizes.spacing.md,
-  },
-});
+  };
+
+  const content = (
+    <View style={[cardStyle, style]}>
+      {Platform.OS === 'ios' ? (
+        <BlurView
+          intensity={intensity}
+          tint={isDark ? 'dark' : 'light'}
+          style={StyleSheet.absoluteFill}
+        />
+      ) : null}
+      <View style={{ padding: sizes.spacing.md }}>{children}</View>
+    </View>
+  );
+
+  if (onPress) {
+    return (
+      <TouchableOpacity onPress={onPress} activeOpacity={0.75}>
+        {content}
+      </TouchableOpacity>
+    );
+  }
+
+  return content;
+};

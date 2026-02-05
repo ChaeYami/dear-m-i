@@ -6,7 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  
+
   Platform,
   Alert,
 } from 'react-native';
@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { useCreateSchedule, useUpdateSchedule } from '@/features/schedule/hooks/useSchedule';
 import type { ScheduleStackParamList } from '@/navigation/ScheduleNavigator';
 
@@ -33,6 +33,7 @@ const buildInitialDate = (defaultDate?: string): Date => {
 };
 
 export const ScheduleFormScreen: React.FC = () => {
+  const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
   const { schedule, defaultDate } = route.params ?? {};
@@ -79,10 +80,18 @@ export const ScheduleFormScreen: React.FC = () => {
       return;
     }
 
+    // 로컬 시간 그대로 전송 (toISOString은 UTC 변환되므로 사용 금지)
+    const y = selectedDate.getFullYear();
+    const mo = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const da = String(selectedDate.getDate()).padStart(2, '0');
+    const h = String(selectedDate.getHours()).padStart(2, '0');
+    const m = String(selectedDate.getMinutes()).padStart(2, '0');
+    const localIso = `${y}-${mo}-${da}T${h}:${m}:00`;
+
     const payload = {
       hospitalName: hospitalName.trim(),
       doctorName: doctorName.trim() || undefined,
-      scheduledAt: selectedDate.toISOString(),
+      scheduledAt: localIso,
       memo: memo.trim() || undefined,
     };
 
@@ -103,23 +112,23 @@ export const ScheduleFormScreen: React.FC = () => {
     `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <Text style={styles.headerCancel}>취소</Text>
+          <Text style={[styles.headerCancel, { color: colors.textSub }]}>취소</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{isEdit ? '일정 수정' : '일정 추가'}</Text>
+        <Text style={[styles.headerTitle, { color: colors.text, fontFamily: fontFamily.bold }]}>{isEdit ? '일정 수정' : '일정 추가'}</Text>
         <TouchableOpacity onPress={handleSave} disabled={isPending} hitSlop={12}>
-          <Text style={[styles.headerSave, isPending && styles.headerSaveDisabled]}>
+          <Text style={[styles.headerSave, { color: colors.primary, fontFamily: fontFamily.semibold }, isPending && styles.headerSaveDisabled]}>
             {isPending ? '저장 중…' : '저장'}
           </Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Field label="병원명" required>
+        <Field label="병원명" required colors={colors}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.divider, color: colors.text }]}
             placeholder="병원 이름을 입력하세요"
             placeholderTextColor={colors.textDisabled}
             value={hospitalName}
@@ -127,21 +136,21 @@ export const ScheduleFormScreen: React.FC = () => {
           />
         </Field>
 
-        <Field label="날짜">
+        <Field label="날짜" colors={colors}>
           <TouchableOpacity
-            style={styles.pickerButton}
+            style={[styles.pickerButton, { backgroundColor: colors.surface, borderColor: colors.divider }]}
             onPress={() => setShowDatePicker(true)}
           >
-            <Text style={styles.pickerText}>{formatDateDisplay(selectedDate)}</Text>
+            <Text style={[styles.pickerText, { color: colors.text }]}>{formatDateDisplay(selectedDate)}</Text>
           </TouchableOpacity>
         </Field>
 
-        <Field label="시간">
+        <Field label="시간" colors={colors}>
           <TouchableOpacity
-            style={styles.pickerButton}
+            style={[styles.pickerButton, { backgroundColor: colors.surface, borderColor: colors.divider }]}
             onPress={() => setShowTimePicker(true)}
           >
-            <Text style={styles.pickerText}>{formatTimeDisplay(selectedDate)}</Text>
+            <Text style={[styles.pickerText, { color: colors.text }]}>{formatTimeDisplay(selectedDate)}</Text>
           </TouchableOpacity>
         </Field>
 
@@ -156,7 +165,7 @@ export const ScheduleFormScreen: React.FC = () => {
         )}
         {Platform.OS === 'ios' && showDatePicker && (
           <TouchableOpacity style={styles.pickerDone} onPress={() => setShowDatePicker(false)}>
-            <Text style={styles.pickerDoneText}>완료</Text>
+            <Text style={[styles.pickerDoneText, { color: colors.primary, fontFamily: fontFamily.semibold }]}>완료</Text>
           </TouchableOpacity>
         )}
 
@@ -171,13 +180,13 @@ export const ScheduleFormScreen: React.FC = () => {
         )}
         {Platform.OS === 'ios' && showTimePicker && (
           <TouchableOpacity style={styles.pickerDone} onPress={() => setShowTimePicker(false)}>
-            <Text style={styles.pickerDoneText}>완료</Text>
+            <Text style={[styles.pickerDoneText, { color: colors.primary, fontFamily: fontFamily.semibold }]}>완료</Text>
           </TouchableOpacity>
         )}
 
-        <Field label="담당 선생님 (선택)">
+        <Field label="담당 선생님 (선택)" colors={colors}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.divider, color: colors.text }]}
             placeholder="담당 선생님 이름"
             placeholderTextColor={colors.textDisabled}
             value={doctorName}
@@ -185,9 +194,9 @@ export const ScheduleFormScreen: React.FC = () => {
           />
         </Field>
 
-        <Field label="메모 (선택)">
+        <Field label="메모 (선택)" colors={colors}>
           <TextInput
-            style={[styles.input, styles.textArea]}
+            style={[styles.input, styles.textArea, { backgroundColor: colors.surface, borderColor: colors.divider, color: colors.text }]}
             placeholder="메모를 입력하세요"
             placeholderTextColor={colors.textDisabled}
             value={memo}
@@ -202,22 +211,23 @@ export const ScheduleFormScreen: React.FC = () => {
   );
 };
 
-const Field: React.FC<{ label: string; required?: boolean; children: React.ReactNode }> = ({
+const Field: React.FC<{ label: string; required?: boolean; children: React.ReactNode; colors: any }> = ({
   label,
   required,
   children,
+  colors,
 }) => (
   <View style={styles.field}>
-    <Text style={styles.fieldLabel}>
+    <Text style={[styles.fieldLabel, { color: colors.textSub, fontFamily: fontFamily.medium }]}>
       {label}
-      {required && <Text style={styles.required}> *</Text>}
+      {required && <Text style={{ color: colors.error }}> *</Text>}
     </Text>
     {children}
   </View>
 );
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1 },
   header: {
     height: sizes.headerHeight,
     flexDirection: 'row',
@@ -227,52 +237,38 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
   },
   headerCancel: {
     fontSize: sizes.font.md,
-    color: colors.textSub,
   },
   headerSave: {
     fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.primary,
   },
   headerSaveDisabled: { opacity: 0.4 },
   content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg },
   field: { gap: sizes.spacing.xs },
   fieldLabel: {
     fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.medium,
-    color: colors.textSub,
   },
-  required: { color: colors.error },
   input: {
-    backgroundColor: colors.surfaceSolid,
     borderWidth: 1,
-    borderColor: colors.divider,
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.md,
     fontSize: sizes.font.md,
-    color: colors.text,
   },
   textArea: {
     height: 100,
     paddingTop: sizes.spacing.md,
   },
   pickerButton: {
-    backgroundColor: colors.surfaceSolid,
     borderWidth: 1,
-    borderColor: colors.divider,
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.md,
   },
   pickerText: {
     fontSize: sizes.font.md,
-    color: colors.text,
   },
   pickerDone: {
     alignItems: 'flex-end',
@@ -281,7 +277,5 @@ const styles = StyleSheet.create({
   },
   pickerDoneText: {
     fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.primary,
   },
 });

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,14 +6,14 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  
+
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { CacheService } from '@/shared/cache';
 import { CACHE_KEYS } from '@/constants/cacheKeys';
 import { useSearch, useRecentSearches } from '@/features/search/hooks/useSearch';
@@ -30,6 +30,7 @@ const formatDate = (iso: string) => {
 };
 
 export const SearchScreen: React.FC = () => {
+  const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const user = useAuthStore((s) => s.user);
   const isPremium = user?.plan === 'PREMIUM';
@@ -98,6 +99,106 @@ export const SearchScreen: React.FC = () => {
 
   const isLoading = isFetching || isDebouncing;
   const hasQuery = submitted.trim().length > 0;
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: sizes.spacing.md,
+      paddingVertical: sizes.spacing.sm,
+      gap: sizes.spacing.sm,
+      backgroundColor: colors.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.divider,
+    },
+    searchBar: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.background,
+      borderRadius: sizes.radius.lg,
+      borderWidth: 1,
+      borderColor: colors.divider,
+      paddingHorizontal: sizes.spacing.md,
+      height: 40,
+      gap: sizes.spacing.sm,
+    },
+    searchIcon: { fontSize: 14 },
+    searchInput: {
+      flex: 1,
+      fontSize: sizes.font.md,
+      color: colors.text,
+      padding: 0,
+    },
+    clearBtn: {
+      fontSize: 13,
+      color: colors.textDisabled,
+      fontFamily: fontFamily.bold,
+    },
+    cancelBtn: { paddingVertical: sizes.spacing.xs },
+    cancelText: { fontSize: sizes.font.md, color: colors.textSub },
+    content: { padding: sizes.spacing.lg, paddingBottom: 40 },
+    freeBanner: {
+      backgroundColor: colors.primary + '10',
+      borderRadius: sizes.radius.md,
+      borderWidth: 1,
+      borderColor: colors.primary + '30',
+      padding: sizes.spacing.md,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: sizes.spacing.md,
+      gap: sizes.spacing.sm,
+    },
+    freeBannerText: {
+      flex: 1,
+      fontSize: sizes.font.xs,
+      color: colors.textSub,
+      lineHeight: 18,
+    },
+    freeBannerLink: {
+      fontSize: sizes.font.xs,
+      color: colors.primary,
+      fontFamily: fontFamily.semibold,
+    },
+    spinner: { marginTop: sizes.spacing.xl },
+    emptyWrap: { marginTop: sizes.spacing.xxl, alignItems: 'center' },
+    emptyText: { fontSize: sizes.font.md, color: colors.textSub },
+    recentSection: { gap: sizes.spacing.xs },
+    recentHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: sizes.spacing.xs,
+    },
+    recentTitle: {
+      fontSize: sizes.font.sm,
+      fontFamily: fontFamily.bold,
+      color: colors.textSub,
+    },
+    recentClearAll: { fontSize: sizes.font.xs, color: colors.textDisabled },
+    recentItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: sizes.spacing.sm,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.divider,
+    },
+    recentKeyword: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: sizes.spacing.sm,
+    },
+    recentIcon: { fontSize: 13, color: colors.textDisabled },
+    recentText: { fontSize: sizes.font.md, color: colors.text },
+    recentRemove: {
+      fontSize: 13,
+      color: colors.textDisabled,
+      paddingHorizontal: sizes.spacing.xs,
+    },
+  }), [colors]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -247,103 +348,3 @@ export const SearchScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: sizes.spacing.md,
-    paddingVertical: sizes.spacing.sm,
-    gap: sizes.spacing.sm,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
-  },
-  searchBar: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    borderRadius: sizes.radius.lg,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    paddingHorizontal: sizes.spacing.md,
-    height: 40,
-    gap: sizes.spacing.sm,
-  },
-  searchIcon: { fontSize: 14 },
-  searchInput: {
-    flex: 1,
-    fontSize: sizes.font.md,
-    color: colors.text,
-    padding: 0,
-  },
-  clearBtn: {
-    fontSize: 13,
-    color: colors.textDisabled,
-    fontWeight: sizes.fontWeight.bold,
-  },
-  cancelBtn: { paddingVertical: sizes.spacing.xs },
-  cancelText: { fontSize: sizes.font.md, color: colors.textSub },
-  content: { padding: sizes.spacing.lg, paddingBottom: 40 },
-  freeBanner: {
-    backgroundColor: colors.primary + '10',
-    borderRadius: sizes.radius.md,
-    borderWidth: 1,
-    borderColor: colors.primary + '30',
-    padding: sizes.spacing.md,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: sizes.spacing.md,
-    gap: sizes.spacing.sm,
-  },
-  freeBannerText: {
-    flex: 1,
-    fontSize: sizes.font.xs,
-    color: colors.textSub,
-    lineHeight: 18,
-  },
-  freeBannerLink: {
-    fontSize: sizes.font.xs,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.semibold,
-  },
-  spinner: { marginTop: sizes.spacing.xl },
-  emptyWrap: { marginTop: sizes.spacing.xxl, alignItems: 'center' },
-  emptyText: { fontSize: sizes.font.md, color: colors.textSub },
-  recentSection: { gap: sizes.spacing.xs },
-  recentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: sizes.spacing.xs,
-  },
-  recentTitle: {
-    fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.textSub,
-  },
-  recentClearAll: { fontSize: sizes.font.xs, color: colors.textDisabled },
-  recentItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: sizes.spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
-  },
-  recentKeyword: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: sizes.spacing.sm,
-  },
-  recentIcon: { fontSize: 13, color: colors.textDisabled },
-  recentText: { fontSize: sizes.font.md, color: colors.text },
-  recentRemove: {
-    fontSize: 13,
-    color: colors.textDisabled,
-    paddingHorizontal: sizes.spacing.xs,
-  },
-});

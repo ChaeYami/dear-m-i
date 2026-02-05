@@ -5,14 +5,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   SectionList,
-  
+
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { usePrepNotes, useDeletePrepNote } from '@/features/prepnote/hooks/usePrepNote';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import type { PrepNote } from '@/shared/types/domain.types';
@@ -32,6 +32,7 @@ const formatDate = (iso: string) => {
 };
 
 export const PrepNoteListScreen: React.FC = () => {
+  const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const { data: notes = [], isLoading } = usePrepNotes();
   const { mutate: deleteNote } = useDeletePrepNote();
@@ -74,6 +75,109 @@ export const PrepNoteListScreen: React.FC = () => {
     ]);
   };
 
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: {
+      height: sizes.headerHeight,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: sizes.spacing.lg,
+    },
+    backBtn: {
+      fontSize: sizes.font.md,
+      color: colors.primary,
+      fontFamily: fontFamily.medium,
+    },
+    headerTitle: {
+      flex: 1,
+      textAlign: 'center',
+      fontSize: sizes.font.lg,
+      fontFamily: fontFamily.bold,
+      color: colors.text,
+    },
+    headerRight: { width: 48 },
+    listContent: { padding: sizes.spacing.lg, paddingBottom: 100, gap: sizes.spacing.sm },
+    sectionHeader: {
+      paddingVertical: sizes.spacing.xs,
+      marginTop: sizes.spacing.md,
+    },
+    sectionTitle: {
+      fontSize: sizes.font.xs,
+      fontFamily: fontFamily.bold,
+      color: colors.textSub,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: sizes.radius.lg,
+      padding: sizes.spacing.md,
+      borderWidth: 1,
+      borderColor: colors.divider,
+      gap: sizes.spacing.sm,
+    },
+    cardContent: {
+      fontSize: sizes.font.md,
+      color: colors.text,
+      lineHeight: 22,
+    },
+    cardFooter: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    cardDate: {
+      fontSize: sizes.font.xs,
+      color: colors.textDisabled,
+    },
+    deleteBtn: { paddingHorizontal: sizes.spacing.xs },
+    deleteBtnText: {
+      fontSize: sizes.font.xs,
+      color: colors.error,
+      fontFamily: fontFamily.medium,
+    },
+    emptyWrap: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: sizes.spacing.md,
+      paddingHorizontal: sizes.spacing.xl,
+    },
+    emptyIcon: { fontSize: 48 },
+    emptyTitle: {
+      fontSize: sizes.font.lg,
+      fontFamily: fontFamily.bold,
+      color: colors.text,
+    },
+    emptyDesc: {
+      fontSize: sizes.font.md,
+      color: colors.textSub,
+      textAlign: 'center',
+      lineHeight: 22,
+    },
+    fab: {
+      position: 'absolute',
+      bottom: sizes.tabBarSafeBottom + sizes.spacing.md,
+      right: sizes.spacing.xl,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: colors.primary,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.35,
+      shadowRadius: 8,
+      elevation: 8,
+    },
+    fabIcon: {
+      fontSize: 28,
+      color: colors.textInverse,
+      lineHeight: 32,
+    },
+  }), [colors]);
+
   if (isLoading) return <LoadingSpinner fullscreen />;
 
   return (
@@ -103,16 +207,26 @@ export const PrepNoteListScreen: React.FC = () => {
             </View>
           )}
           renderItem={({ item }) => (
-            <NoteCard
-              note={item}
+            <TouchableOpacity
+              style={styles.card}
               onPress={() =>
                 navigation.navigate('PrepNoteForm', {
                   noteId: item.id,
                   scheduleId: item.scheduleId ?? undefined,
                 })
               }
-              onDelete={() => handleDelete(item)}
-            />
+              activeOpacity={0.75}
+            >
+              <Text style={styles.cardContent} numberOfLines={3}>
+                {item.content}
+              </Text>
+              <View style={styles.cardFooter}>
+                <Text style={styles.cardDate}>{formatDate(item.updatedAt)}</Text>
+                <TouchableOpacity onPress={() => handleDelete(item)} hitSlop={8} style={styles.deleteBtn}>
+                  <Text style={styles.deleteBtnText}>삭제</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
           )}
         />
       )}
@@ -128,124 +242,3 @@ export const PrepNoteListScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
-
-const NoteCard: React.FC<{
-  note: PrepNote;
-  onPress: () => void;
-  onDelete: () => void;
-}> = ({ note, onPress, onDelete }) => (
-  <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.75}>
-    <Text style={styles.cardContent} numberOfLines={3}>
-      {note.content}
-    </Text>
-    <View style={styles.cardFooter}>
-      <Text style={styles.cardDate}>{formatDate(note.updatedAt)}</Text>
-      <TouchableOpacity onPress={onDelete} hitSlop={8} style={styles.deleteBtn}>
-        <Text style={styles.deleteBtnText}>삭제</Text>
-      </TouchableOpacity>
-    </View>
-  </TouchableOpacity>
-);
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  header: {
-    height: sizes.headerHeight,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: sizes.spacing.lg,
-  },
-  backBtn: {
-    fontSize: sizes.font.md,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.medium,
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
-  },
-  headerRight: { width: 48 },
-  listContent: { padding: sizes.spacing.lg, paddingBottom: 100, gap: sizes.spacing.sm },
-  sectionHeader: {
-    paddingVertical: sizes.spacing.xs,
-    marginTop: sizes.spacing.md,
-  },
-  sectionTitle: {
-    fontSize: sizes.font.xs,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.textSub,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: sizes.radius.lg,
-    padding: sizes.spacing.md,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    gap: sizes.spacing.sm,
-  },
-  cardContent: {
-    fontSize: sizes.font.md,
-    color: colors.text,
-    lineHeight: 22,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  cardDate: {
-    fontSize: sizes.font.xs,
-    color: colors.textDisabled,
-  },
-  deleteBtn: { paddingHorizontal: sizes.spacing.xs },
-  deleteBtnText: {
-    fontSize: sizes.font.xs,
-    color: colors.error,
-    fontWeight: sizes.fontWeight.medium,
-  },
-  emptyWrap: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: sizes.spacing.md,
-    paddingHorizontal: sizes.spacing.xl,
-  },
-  emptyIcon: { fontSize: 48 },
-  emptyTitle: {
-    fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
-  },
-  emptyDesc: {
-    fontSize: sizes.font.md,
-    color: colors.textSub,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  fab: {
-    position: 'absolute',
-    bottom: sizes.tabBarSafeBottom + sizes.spacing.md,
-    right: sizes.spacing.xl,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  fabIcon: {
-    fontSize: 28,
-    color: colors.textInverse,
-    lineHeight: 32,
-  },
-});

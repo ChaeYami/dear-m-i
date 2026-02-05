@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Linking, Platform, StyleSheet, View } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import Constants from 'expo-constants';
@@ -20,9 +20,9 @@ import { useAuthStore } from '@/features/auth/store/authStore';
 import { useSubscriptionStore } from '@/features/subscription/store/subscriptionStore';
 import { authApi } from '@/features/auth/api';
 import axiosInstance from '@/shared/api/axiosInstance';
+import { useTheme } from '@/shared/theme';
 import type { ApiResponse, AppVersionResponse } from '@/shared/types/api.types';
 
-// 포그라운드 알림 표시 설정 — 네이티브 배너 대신 InAppNotificationBanner 사용
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: false,
@@ -43,19 +43,8 @@ export type RootStackParamList = {
 
 const Stack = createStackNavigator<RootStackParamList>();
 
-/**
- * 루트 네비게이터
- *
- * 앱 시작 순서:
- * 1. GET /api/v1/app/version 호출 (버전 체크)
- *    - forceUpdate: true → 업데이트 다이얼로그 후 앱스토어 이동 (앱 진행 불가)
- * 2. SecureStore에서 토큰 복원
- * 3. 토큰이 있으면 GET /api/v1/auth/me로 유효성 확인
- *    - 유효: 사용자 정보 설정 → MainTabNavigator
- *    - 무효(401 후 refresh 실패): 토큰 삭제 → LoginScreen
- * 4. 토큰 없으면 LoginScreen
- */
 export const RootNavigator: React.FC = () => {
+  const { colors, isDark } = useTheme();
   const [isLoading, setIsLoading] = useState(true);
   const [isForceUpdateBlocked, setIsForceUpdateBlocked] = useState(false);
   const [activeNotification, setActiveNotification] = useState<Notifications.Notification | null>(null);
@@ -66,15 +55,25 @@ export const RootNavigator: React.FC = () => {
   const notificationListener = useRef<Notifications.EventSubscription | null>(null);
   const responseListener = useRef<Notifications.EventSubscription | null>(null);
 
+  const navTheme = {
+    ...(isDark ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(isDark ? DarkTheme : DefaultTheme).colors,
+      background: 'transparent',
+      card: colors.surface,
+      text: colors.text,
+      border: colors.divider,
+      primary: colors.primary,
+    },
+  };
+
   useEffect(() => {
     initializeApp();
 
-    // 포그라운드: 인앱 배너 표시
     notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
       setActiveNotification(notification);
     });
 
-    // 백그라운드/종료 상태에서 알림 탭: scheduleId 있으면 ScheduleDetail로 이동
     responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
       const data = response.notification.request.content.data as Record<string, unknown>;
       navigateToScheduleDetail(data);
@@ -86,15 +85,10 @@ export const RootNavigator: React.FC = () => {
     };
   }, []);
 
-  /**
-   * 알림 data에 scheduleId가 있으면 Schedule > ScheduleDetail로 딥링크
-   * React Navigation 중첩 navigate 패턴 사용
-   */
   const navigateToScheduleDetail = (data: Record<string, unknown>) => {
     const scheduleId = data?.scheduleId;
     if (!scheduleId || !navigationRef.isReady()) return;
 
-    // Root → Main(탭) → Schedule(스택) → ScheduleDetail
     (navigationRef.current as any)?.navigate('Main', {
       screen: 'Schedule',
       params: {
@@ -109,7 +103,6 @@ export const RootNavigator: React.FC = () => {
       await checkAppVersion();
     } catch (e) {
       if ((e as Error).message === 'force_update') return;
-      // 버전 체크 실패(404 등)는 무시하고 앱 진행
     }
     try {
       const hasToken = await restoreTokens();
@@ -128,7 +121,6 @@ export const RootNavigator: React.FC = () => {
       const { data } = await authApi.getMe();
       if (data.success && data.data) {
         setUser(data.data);
-        // 구독 상태 초기화 (user.plan과 동기화)
         fetchSubscription((plan) => {
           if (data.data && data.data.plan !== plan) {
             setUser({ ...data.data, plan });
@@ -187,16 +179,19 @@ export const RootNavigator: React.FC = () => {
     return <LoadingSpinner fullscreen />;
   }
 
+  const gradientColors: [string, string, string] = isDark
+    ? [colors.background, '#1C1830', colors.background]
+    : ['#FAF8F5', '#EEE8F8', '#F0F4F0'];
+
   return (
     <View style={styles.root}>
-      {/* 앱 전체 그라데이션 배경 */}
       <LinearGradient
-        colors={['#F7F4F0', '#EEE8F8', '#F0F4F0']}
+        colors={gradientColors}
         locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
       />
 
-      <NavigationContainer ref={navigationRef}>
+      <NavigationContainer ref={navigationRef} theme={navTheme}>
         <OfflineBanner />
         <Stack.Navigator
           screenOptions={{
@@ -226,7 +221,6 @@ export const RootNavigator: React.FC = () => {
           />
         </Stack.Navigator>
 
-        {/* 포그라운드 인앱 알림 배너 */}
         {activeNotification && (
           <InAppNotificationBanner
             notification={activeNotification}

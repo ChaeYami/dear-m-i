@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Calendar } from 'react-native-calendars';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { useMonthlySchedules } from '@/features/schedule/hooks/useSchedule';
 import type { ScheduleStackParamList } from '@/navigation/ScheduleNavigator';
 import type { HospitalSchedule } from '@/shared/types/domain.types';
@@ -52,6 +52,7 @@ const getTodayString = () => {
 };
 
 export const ScheduleTab: React.FC = () => {
+  const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const today = new Date();
   const todayStr = getTodayString();
@@ -80,7 +81,7 @@ export const ScheduleTab: React.FC = () => {
         ...marks[todayStr],
         customStyles: {
           container: { backgroundColor: colors.primaryLight + '30', borderRadius: 18 },
-          text: { color: colors.primary, fontWeight: '700' },
+          text: { color: colors.primary, fontFamily: fontFamily.bold },
         },
       };
     }
@@ -93,7 +94,7 @@ export const ScheduleTab: React.FC = () => {
       };
     }
     return marks;
-  }, [schedules, selectedDate, todayStr]);
+  }, [schedules, selectedDate, todayStr, colors]);
 
   const displaySchedules = useMemo(() => {
     if (viewMode === 'weekly') {
@@ -139,39 +140,99 @@ export const ScheduleTab: React.FC = () => {
 
   const currentMonth = `${visibleYear}-${String(visibleMonth).padStart(2, '0')}-01`;
 
+  const calendarTheme = useMemo(() => ({
+    backgroundColor: 'transparent',
+    calendarBackground: 'transparent',
+    selectedDayBackgroundColor: colors.primary,
+    selectedDayTextColor: colors.textInverse,
+    todayTextColor: colors.primary,
+    todayBackgroundColor: colors.primaryLight + '30',
+    dayTextColor: colors.text,
+    textDisabledColor: colors.textDisabled,
+    dotColor: colors.primary,
+    monthTextColor: colors.text,
+    arrowColor: colors.primary,
+    textSectionTitleColor: colors.textSub,
+    textMonthFontSize: sizes.font.lg,
+    textMonthFontWeight: '700' as const,
+    textDayHeaderFontSize: sizes.font.sm,
+    textDayHeaderFontWeight: '600' as const,
+    textDayFontSize: sizes.font.md,
+    textDayFontWeight: '400' as const,
+    'stylesheet.calendar.header': {
+      header: {
+        flexDirection: 'row' as const,
+        justifyContent: 'space-between' as const,
+        alignItems: 'center' as const,
+        paddingHorizontal: 10,
+        paddingVertical: 12,
+      },
+      dayTextAtIndex0: { color: colors.error },
+      dayTextAtIndex6: { color: colors.primary },
+    },
+  }), [colors]);
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>일정</Text>
+        <Text style={[styles.headerTitle, { color: colors.text, fontFamily: fontFamily.bold }]}>일정</Text>
         <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.todayBtn} onPress={goToToday} hitSlop={8}>
-            <Text style={styles.todayBtnText}>오늘</Text>
+          <TouchableOpacity style={[styles.todayBtn, { borderColor: colors.primary }]} onPress={goToToday} hitSlop={8}>
+            <Text style={[styles.todayBtnText, { color: colors.primary, fontFamily: fontFamily.semibold }]}>오늘</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.prepNoteBtn}
+            style={[styles.prepNoteBtn, { backgroundColor: colors.primary }]}
             onPress={() => navigation.navigate('PrepNoteList')}
             hitSlop={8}
           >
             <Ionicons name="create-outline" size={16} color={colors.textInverse} />
-            <Text style={styles.prepNoteBtnText}>준비 메모</Text>
+            <Text style={[styles.prepNoteBtnText, { color: colors.textInverse, fontFamily: fontFamily.semibold }]}>준비 메모</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      <View style={styles.viewToggle}>
+      <View style={[styles.viewToggle, { backgroundColor: colors.disabled }]}>
         <TouchableOpacity
-          style={[styles.toggleBtn, viewMode === 'monthly' && styles.toggleBtnActive]}
+          style={[
+            styles.toggleBtn,
+            viewMode === 'monthly' && {
+              backgroundColor: colors.surface,
+              shadowColor: colors.glassShadow,
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 1,
+              shadowRadius: 4,
+              elevation: 2,
+            },
+          ]}
           onPress={() => setViewMode('monthly')}
         >
-          <Text style={[styles.toggleBtnText, viewMode === 'monthly' && styles.toggleBtnTextActive]}>
+          <Text style={[
+            styles.toggleBtnText,
+            { color: colors.textSub, fontFamily: fontFamily.medium },
+            viewMode === 'monthly' && { color: colors.primary, fontFamily: fontFamily.bold },
+          ]}>
             월간
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.toggleBtn, viewMode === 'weekly' && styles.toggleBtnActive]}
+          style={[
+            styles.toggleBtn,
+            viewMode === 'weekly' && {
+              backgroundColor: colors.surface,
+              shadowColor: colors.glassShadow,
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 1,
+              shadowRadius: 4,
+              elevation: 2,
+            },
+          ]}
           onPress={() => setViewMode('weekly')}
         >
-          <Text style={[styles.toggleBtnText, viewMode === 'weekly' && styles.toggleBtnTextActive]}>
+          <Text style={[
+            styles.toggleBtnText,
+            { color: colors.textSub, fontFamily: fontFamily.medium },
+            viewMode === 'weekly' && { color: colors.primary, fontFamily: fontFamily.bold },
+          ]}>
             주간
           </Text>
         </TouchableOpacity>
@@ -195,29 +256,30 @@ export const ScheduleTab: React.FC = () => {
 
         <View style={styles.scheduleList}>
           <View style={styles.listHeader}>
-            <Text style={styles.listTitle}>
+            <Text style={[styles.listTitle, { color: colors.text, fontFamily: fontFamily.bold }]}>
               {viewMode === 'monthly'
                 ? `${visibleMonth}월 일정`
                 : `${formatDateFull(selectedDate)} 주간`}
             </Text>
-            <Text style={styles.listCount}>{displaySchedules.length}건</Text>
+            <Text style={[styles.listCount, { color: colors.textSub }]}>{displaySchedules.length}건</Text>
           </View>
 
           {groupedSchedules.length === 0 ? (
             <View style={styles.emptyWrap}>
               <Ionicons name="calendar-outline" size={36} color={colors.textDisabled} />
-              <Text style={styles.emptyText}>일정이 없어요</Text>
+              <Text style={[styles.emptyText, { color: colors.textSub }]}>일정이 없어요</Text>
             </View>
           ) : (
             groupedSchedules.map(({ date, items }) => (
               <View key={date}>
-                <Text style={styles.dateLabel}>{formatDateFull(date)}</Text>
+                <Text style={[styles.dateLabel, { color: colors.textSub, fontFamily: fontFamily.semibold }]}>{formatDateFull(date)}</Text>
                 {items.map((item) => (
                   <ScheduleListItem
                     key={item.id}
                     schedule={item}
                     isToday={date === todayStr}
                     onPress={() => navigation.navigate('ScheduleDetail', { scheduleId: item.id })}
+                    colors={colors}
                   />
                 ))}
               </View>
@@ -227,7 +289,7 @@ export const ScheduleTab: React.FC = () => {
       </ScrollView>
 
       <TouchableOpacity
-        style={styles.fab}
+        style={[styles.fab, { backgroundColor: colors.primary, shadowColor: colors.glassShadow }]}
         onPress={() => navigation.navigate('ScheduleForm', { defaultDate: selectedDate })}
         activeOpacity={0.85}
       >
@@ -241,58 +303,31 @@ const ScheduleListItem: React.FC<{
   schedule: HospitalSchedule;
   isToday: boolean;
   onPress: () => void;
-}> = ({ schedule, isToday, onPress }) => (
+  colors: any;
+}> = ({ schedule, isToday, onPress, colors }) => (
   <TouchableOpacity
-    style={[styles.listItem, isToday && styles.listItemToday]}
+    style={[
+      styles.listItem,
+      { backgroundColor: colors.surface, borderColor: colors.divider },
+      isToday && { borderColor: colors.primaryLight, backgroundColor: colors.primaryLight + '08' },
+    ]}
     onPress={onPress}
     activeOpacity={0.75}
   >
-    <View style={[styles.listItemDot, isToday && styles.listItemDotToday]} />
+    <View style={[styles.listItemDot, { backgroundColor: isToday ? colors.primary : colors.textDisabled }]} />
     <View style={styles.listItemBody}>
-      <Text style={styles.listItemHospital}>{schedule.hospitalName}</Text>
+      <Text style={[styles.listItemHospital, { color: colors.text, fontFamily: fontFamily.semibold }]}>{schedule.hospitalName}</Text>
       {schedule.doctorName && (
-        <Text style={styles.listItemDoctor}>{schedule.doctorName} 선생님</Text>
+        <Text style={[styles.listItemDoctor, { color: colors.textSub }]}>{schedule.doctorName} 선생님</Text>
       )}
     </View>
-    <Text style={styles.listItemTime}>{formatTime(schedule.scheduledAt)}</Text>
+    <Text style={[styles.listItemTime, { color: colors.textSub, fontFamily: fontFamily.medium }]}>{formatTime(schedule.scheduledAt)}</Text>
     <Ionicons name="chevron-forward" size={16} color={colors.textDisabled} />
   </TouchableOpacity>
 );
 
-const calendarTheme = {
-  backgroundColor: 'transparent',
-  calendarBackground: 'transparent',
-  selectedDayBackgroundColor: colors.primary,
-  selectedDayTextColor: colors.textInverse,
-  todayTextColor: colors.primary,
-  todayBackgroundColor: colors.primaryLight + '30',
-  dayTextColor: colors.text,
-  textDisabledColor: colors.textDisabled,
-  dotColor: colors.primary,
-  monthTextColor: colors.text,
-  arrowColor: colors.primary,
-  textSectionTitleColor: colors.textSub,
-  textMonthFontSize: sizes.font.lg,
-  textMonthFontWeight: '700' as const,
-  textDayHeaderFontSize: sizes.font.sm,
-  textDayHeaderFontWeight: '600' as const,
-  textDayFontSize: sizes.font.md,
-  textDayFontWeight: '400' as const,
-  'stylesheet.calendar.header': {
-    header: {
-      flexDirection: 'row' as const,
-      justifyContent: 'space-between' as const,
-      alignItems: 'center' as const,
-      paddingHorizontal: 10,
-      paddingVertical: 12,
-    },
-    dayTextAtIndex0: { color: colors.error },
-    dayTextAtIndex6: { color: colors.primary },
-  },
-};
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1 },
   header: {
     height: sizes.headerHeight,
     flexDirection: 'row',
@@ -302,8 +337,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: sizes.font.xl,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
   },
   headerRight: {
     flexDirection: 'row',
@@ -315,32 +348,25 @@ const styles = StyleSheet.create({
     paddingVertical: sizes.spacing.xs,
     borderRadius: sizes.radius.full,
     borderWidth: 1,
-    borderColor: colors.primary,
   },
   todayBtnText: {
     fontSize: sizes.font.sm,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.semibold,
   },
   prepNoteBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: colors.primary,
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.xs + 2,
     borderRadius: sizes.radius.full,
   },
   prepNoteBtnText: {
     fontSize: sizes.font.sm,
-    color: colors.textInverse,
-    fontWeight: sizes.fontWeight.semibold,
   },
   viewToggle: {
     flexDirection: 'row',
     marginHorizontal: sizes.spacing.lg,
     marginBottom: sizes.spacing.sm,
-    backgroundColor: colors.disabled,
     borderRadius: sizes.radius.full,
     padding: 2,
   },
@@ -350,22 +376,8 @@ const styles = StyleSheet.create({
     paddingVertical: sizes.spacing.xs + 2,
     borderRadius: sizes.radius.full,
   },
-  toggleBtnActive: {
-    backgroundColor: colors.surfaceSolid,
-    shadowColor: colors.glassShadow,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
   toggleBtnText: {
     fontSize: sizes.font.sm,
-    color: colors.textSub,
-    fontWeight: sizes.fontWeight.medium,
-  },
-  toggleBtnTextActive: {
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.bold,
   },
   scrollContent: {
     paddingBottom: sizes.tabBarSafeBottom + 80,
@@ -385,59 +397,39 @@ const styles = StyleSheet.create({
   },
   listTitle: {
     fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
   },
   listCount: {
     fontSize: sizes.font.sm,
-    color: colors.textSub,
   },
   dateLabel: {
     fontSize: sizes.font.xs,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.textSub,
     marginTop: sizes.spacing.sm,
     marginBottom: sizes.spacing.xs,
   },
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceSolid,
     borderRadius: sizes.radius.lg,
     padding: sizes.spacing.md,
     marginBottom: sizes.spacing.sm,
     gap: sizes.spacing.md,
     borderWidth: 1,
-    borderColor: colors.divider,
-  },
-  listItemToday: {
-    borderColor: colors.primaryLight,
-    backgroundColor: colors.primaryLight + '08',
   },
   listItemDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.textDisabled,
-  },
-  listItemDotToday: {
-    backgroundColor: colors.primary,
   },
   listItemBody: { flex: 1 },
   listItemHospital: {
     fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.text,
   },
   listItemDoctor: {
     fontSize: sizes.font.sm,
-    color: colors.textSub,
     marginTop: 2,
   },
   listItemTime: {
     fontSize: sizes.font.sm,
-    color: colors.textSub,
-    fontWeight: sizes.fontWeight.medium,
   },
   emptyWrap: {
     alignItems: 'center',
@@ -446,7 +438,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: sizes.font.md,
-    color: colors.textSub,
   },
   fab: {
     position: 'absolute',
@@ -455,10 +446,8 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.glassShadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
     shadowRadius: 12,

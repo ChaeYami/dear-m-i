@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  
+
   Alert,
   Platform,
   ActivityIndicator,
@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import {
   subscriptionApi,
   type WebPlanType,
@@ -34,6 +34,7 @@ type WebPaymentRouteProp = RouteProp<RootStackParamList, 'WebPayment'>;
  * 5. subscriptionStore 갱신 → PaywallScreen 닫기
  */
 export const WebPaymentScreen: React.FC = () => {
+  const { colors } = useTheme();
   const navigation = useNavigation();
   const route = useRoute<WebPaymentRouteProp>();
   const planType = route.params?.planType ?? 'MONTHLY';
@@ -176,6 +177,63 @@ export const WebPaymentScreen: React.FC = () => {
     error: errorMessage,
   };
 
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.surface },
+    center: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: sizes.spacing.xl,
+      gap: sizes.spacing.lg,
+    },
+    statusText: {
+      fontSize: sizes.font.md,
+      color: colors.textSub,
+      textAlign: 'center',
+      lineHeight: 22,
+    },
+    errorIcon: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: colors.errorLight,
+      color: colors.error,
+      fontSize: sizes.font.xxl,
+      fontFamily: fontFamily.bold,
+      textAlign: 'center',
+      lineHeight: 48,
+      overflow: 'hidden',
+    },
+    errorText: {
+      fontSize: sizes.font.md,
+      color: colors.error,
+      textAlign: 'center',
+      lineHeight: 22,
+    },
+    retryBtn: {
+      height: sizes.buttonHeight.md,
+      paddingHorizontal: sizes.spacing.xl,
+      backgroundColor: colors.primary,
+      borderRadius: sizes.radius.lg,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    retryBtnText: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.bold,
+      color: colors.textInverse,
+    },
+    closeBtn: {
+      height: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    closeBtnText: {
+      fontSize: sizes.font.sm,
+      color: colors.textSub,
+    },
+  }), [colors]);
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.center}>
@@ -208,60 +266,3 @@ export const WebPaymentScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.surface },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: sizes.spacing.xl,
-    gap: sizes.spacing.lg,
-  },
-  statusText: {
-    fontSize: sizes.font.md,
-    color: colors.textSub,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  errorIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.errorLight,
-    color: colors.error,
-    fontSize: sizes.font.xxl,
-    fontWeight: sizes.fontWeight.bold,
-    textAlign: 'center',
-    lineHeight: 48,
-    overflow: 'hidden',
-  },
-  errorText: {
-    fontSize: sizes.font.md,
-    color: colors.error,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  retryBtn: {
-    height: sizes.buttonHeight.md,
-    paddingHorizontal: sizes.spacing.xl,
-    backgroundColor: colors.primary,
-    borderRadius: sizes.radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  retryBtnText: {
-    fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.textInverse,
-  },
-  closeBtn: {
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeBtnText: {
-    fontSize: sizes.font.sm,
-    color: colors.textSub,
-  },
-});

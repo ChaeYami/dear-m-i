@@ -1,6 +1,6 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import { colors } from '@/constants';
+
 import { PrescriptionTab } from '@/features/prescription/screens/PrescriptionTab';
 import { PrescriptionUploadScreen } from '@/features/prescription/screens/PrescriptionUploadScreen';
 import { OcrResultScreen } from '@/features/prescription/screens/OcrResultScreen';
@@ -19,7 +19,7 @@ export const PrescriptionNavigator: React.FC = () => (
   <Stack.Navigator
     screenOptions={{
       headerShown: false,
-      cardStyle: { backgroundColor: colors.background },
+      cardStyle: { backgroundColor: 'transparent' },
     }}
   >
     <Stack.Screen name="PrescriptionTab" component={PrescriptionTab} />

@@ -15,7 +15,7 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { prescriptionApi } from '@/features/prescription/api';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import type { PrescriptionStackParamList } from '@/navigation/PrescriptionNavigator';
@@ -25,6 +25,7 @@ type Nav = StackNavigationProp<PrescriptionStackParamList, 'PrescriptionUpload'>
 type UploadStep = 'idle' | 'uploading_s3' | 'saving' | 'done' | 'error';
 
 export const PrescriptionUploadScreen: React.FC = () => {
+  const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const user = useAuthStore((s) => s.user);
   const isPremium = user?.plan === 'PREMIUM';
@@ -145,12 +146,12 @@ export const PrescriptionUploadScreen: React.FC = () => {
         : '';
 
     return (
-      <View style={styles.progressBox}>
+      <View style={staticStyles.progressBox}>
         {uploadStep !== 'error' && (
-          <View style={styles.progressBar}>
+          <View style={[staticStyles.progressBar, { backgroundColor: colors.divider }]}>
             <View
               style={[
-                styles.progressFill,
+                staticStyles.progressFill,
                 {
                   width: uploadStep === 'saving' ? '100%' : `${uploadProgress}%`,
                   backgroundColor:
@@ -162,8 +163,9 @@ export const PrescriptionUploadScreen: React.FC = () => {
         )}
         <Text
           style={[
-            styles.progressLabel,
-            uploadStep === 'error' && styles.errorText,
+            staticStyles.progressLabel,
+            { color: colors.textSub },
+            uploadStep === 'error' && { color: colors.error, fontFamily: fontFamily.medium },
           ]}
         >
           {label}
@@ -173,56 +175,66 @@ export const PrescriptionUploadScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[staticStyles.container, { backgroundColor: colors.background }]}>
       {/* 헤더 */}
-      <View style={styles.header}>
+      <View style={staticStyles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
           <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>처방전 등록</Text>
+        <Text style={[staticStyles.headerTitle, { fontFamily: fontFamily.bold, color: colors.text }]}>
+          처방전 등록
+        </Text>
         <View style={{ width: 48 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={staticStyles.content}>
         {/* 이미지 미리보기 / 선택 영역 */}
         <TouchableOpacity
-          style={styles.imageArea}
+          style={[staticStyles.imageArea, { borderColor: colors.divider, backgroundColor: colors.surface }]}
           onPress={showSourcePicker}
           disabled={isUploading}
           activeOpacity={0.8}
         >
           {imageAsset ? (
-            <Image source={{ uri: imageAsset.uri }} style={styles.previewImage} resizeMode="contain" />
+            <Image source={{ uri: imageAsset.uri }} style={staticStyles.previewImage} resizeMode="contain" />
           ) : (
-            <View style={styles.imagePlaceholder}>
+            <View style={staticStyles.imagePlaceholder}>
               <Ionicons name="document-outline" size={48} color={colors.textDisabled} />
-              <Text style={styles.imagePlaceholderText}>처방전 사진을 선택하세요</Text>
-              <Text style={styles.imagePlaceholderSub}>카메라 촬영 또는 갤러리</Text>
+              <Text style={[staticStyles.imagePlaceholderText, { fontFamily: fontFamily.semibold, color: colors.textSub }]}>
+                처방전 사진을 선택하세요
+              </Text>
+              <Text style={[staticStyles.imagePlaceholderSub, { color: colors.textDisabled }]}>
+                카메라 촬영 또는 갤러리
+              </Text>
             </View>
           )}
         </TouchableOpacity>
 
         {imageAsset && (
           <TouchableOpacity
-            style={styles.reSelectBtn}
+            style={staticStyles.reSelectBtn}
             onPress={showSourcePicker}
             disabled={isUploading}
           >
-            <Text style={styles.reSelectText}>다시 선택</Text>
+            <Text style={[staticStyles.reSelectText, { fontFamily: fontFamily.medium, color: colors.primary }]}>
+              다시 선택
+            </Text>
           </TouchableOpacity>
         )}
 
         {/* 처방 날짜 선택 */}
-        <View style={styles.dateField}>
-          <Text style={styles.dateLabel}>처방 날짜</Text>
+        <View style={staticStyles.dateField}>
+          <Text style={[staticStyles.dateLabel, { fontFamily: fontFamily.medium, color: colors.textSub }]}>
+            처방 날짜
+          </Text>
           <TouchableOpacity
-            style={styles.dateSelector}
+            style={[staticStyles.dateSelector, { backgroundColor: colors.surface, borderColor: colors.divider }]}
             onPress={() => setShowDatePicker(true)}
             disabled={isUploading}
             activeOpacity={0.8}
           >
             <Ionicons name="calendar-outline" size={18} color={colors.primary} />
-            <Text style={styles.dateText}>
+            <Text style={[staticStyles.dateText, { color: colors.text }]}>
               {`${prescribedDate.getFullYear()}년 ${prescribedDate.getMonth() + 1}월 ${prescribedDate.getDate()}일`}
             </Text>
           </TouchableOpacity>
@@ -240,10 +252,12 @@ export const PrescriptionUploadScreen: React.FC = () => {
           )}
           {Platform.OS === 'ios' && showDatePicker && (
             <TouchableOpacity
-              style={styles.dateDoneBtn}
+              style={staticStyles.dateDoneBtn}
               onPress={() => setShowDatePicker(false)}
             >
-              <Text style={styles.dateDoneText}>완료</Text>
+              <Text style={[staticStyles.dateDoneText, { fontFamily: fontFamily.semibold, color: colors.primary }]}>
+                완료
+              </Text>
             </TouchableOpacity>
           )}
         </View>
@@ -253,8 +267,8 @@ export const PrescriptionUploadScreen: React.FC = () => {
 
         {/* 프리미엄 안내 */}
         {!isPremium && (
-          <View style={styles.premiumNotice}>
-            <Text style={styles.premiumNoticeText}>
+          <View style={[staticStyles.premiumNotice, { backgroundColor: colors.warningLight, borderColor: colors.warning + '55' }]}>
+            <Text style={[staticStyles.premiumNoticeText, { color: colors.textSub }]}>
               처방전 OCR은 프리미엄 플랜 전용 기능입니다.
             </Text>
           </View>
@@ -263,14 +277,15 @@ export const PrescriptionUploadScreen: React.FC = () => {
         {/* 업로드 버튼 */}
         <TouchableOpacity
           style={[
-            styles.uploadBtn,
-            (!imageAsset || isUploading) && styles.uploadBtnDisabled,
+            staticStyles.uploadBtn,
+            { backgroundColor: colors.secondary },
+            (!imageAsset || isUploading) && staticStyles.uploadBtnDisabled,
           ]}
           onPress={handleUpload}
           disabled={!imageAsset || isUploading}
           activeOpacity={0.85}
         >
-          <Text style={styles.uploadBtnText}>
+          <Text style={[staticStyles.uploadBtnText, { fontFamily: fontFamily.semibold, color: colors.textInverse }]}>
             {isUploading ? '처리 중…' : isPremium ? '처방전 등록 및 OCR 분석' : '처방전 등록'}
           </Text>
         </TouchableOpacity>
@@ -279,31 +294,26 @@ export const PrescriptionUploadScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const staticStyles = StyleSheet.create({
+  container: { flex: 1 },
   header: {
     height: sizes.headerHeight,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: sizes.spacing.lg,
   },
-  backBtn: { fontSize: sizes.font.md, color: colors.primary, fontWeight: sizes.fontWeight.medium },
   headerTitle: {
     flex: 1,
     textAlign: 'center',
     fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
   },
   content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg },
   imageArea: {
     height: 300,
     borderRadius: sizes.radius.lg,
     borderWidth: 2,
-    borderColor: colors.divider,
     borderStyle: 'dashed',
     overflow: 'hidden',
-    backgroundColor: colors.surface,
   },
   previewImage: { width: '100%', height: '100%' },
   imagePlaceholder: {
@@ -312,34 +322,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: sizes.spacing.sm,
   },
-  imagePlaceholderIcon: { fontSize: 48 },
   imagePlaceholderText: {
     fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.textSub,
   },
-  imagePlaceholderSub: { fontSize: sizes.font.sm, color: colors.textDisabled },
+  imagePlaceholderSub: { fontSize: sizes.font.sm },
   reSelectBtn: { alignSelf: 'center' },
   dateField: { gap: sizes.spacing.sm },
   dateLabel: {
     fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.medium,
-    color: colors.textSub,
   },
   dateSelector: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: sizes.spacing.sm,
-    backgroundColor: colors.surfaceSolid,
     borderWidth: 1,
-    borderColor: colors.divider,
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.md,
   },
   dateText: {
     fontSize: sizes.font.md,
-    color: colors.text,
   },
   dateDoneBtn: {
     alignItems: 'flex-end',
@@ -347,42 +349,31 @@ const styles = StyleSheet.create({
   },
   dateDoneText: {
     fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.primary,
   },
   reSelectText: {
     fontSize: sizes.font.sm,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.medium,
   },
   progressBox: { gap: sizes.spacing.sm },
   progressBar: {
     height: 6,
-    backgroundColor: colors.divider,
     borderRadius: 3,
     overflow: 'hidden',
   },
   progressFill: { height: '100%', borderRadius: 3 },
   progressLabel: {
     fontSize: sizes.font.sm,
-    color: colors.textSub,
     textAlign: 'center',
   },
-  errorText: { color: colors.error, fontWeight: sizes.fontWeight.medium },
   premiumNotice: {
-    backgroundColor: colors.warningLight,
     borderRadius: sizes.radius.md,
     padding: sizes.spacing.md,
     borderWidth: 1,
-    borderColor: colors.warning + '55',
   },
   premiumNoticeText: {
     fontSize: sizes.font.sm,
-    color: colors.textSub,
     textAlign: 'center',
   },
   uploadBtn: {
-    backgroundColor: colors.secondary,
     borderRadius: sizes.radius.md,
     paddingVertical: sizes.spacing.md,
     alignItems: 'center',
@@ -390,7 +381,5 @@ const styles = StyleSheet.create({
   uploadBtnDisabled: { opacity: 0.4 },
   uploadBtnText: {
     fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.textInverse,
   },
 });

@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  
+
   ScrollView,
   Alert,
   ActivityIndicator,
@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, CompositeNavigationProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { useSubscriptionStore } from '@/features/subscription/store/subscriptionStore';
 import { useSubscription } from '@/features/subscription/hooks/useSubscription';
 import type { MyPageStackParamList } from '@/navigation/MyPageNavigator';
@@ -30,7 +30,17 @@ const formatDate = (iso?: string) => {
   return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
 };
 
+const BENEFITS = [
+  '처방전 OCR 자동 인식',
+  '약품 효능·주의사항 상세 정보',
+  '복약 일정 자동 생성',
+  '전체 상담 기록 무제한 조회',
+  'PDF 진료 기록 내보내기',
+  '상담 기록 무제한 작성',
+];
+
 export const SubscriptionManageScreen: React.FC = () => {
+  const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const { plan, expiresAt } = useSubscriptionStore();
   const { cancelSubscription, isCancelling } = useSubscription();
@@ -51,6 +61,114 @@ export const SubscriptionManageScreen: React.FC = () => {
   };
 
   const isPremium = plan === 'PREMIUM';
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: {
+      height: sizes.headerHeight,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: sizes.spacing.lg,
+    },
+    backBtn: { fontSize: sizes.font.md, color: colors.primary, fontFamily: fontFamily.medium, width: 60 },
+    headerTitle: {
+      flex: 1,
+      textAlign: 'center',
+      fontSize: sizes.font.lg,
+      fontFamily: fontFamily.bold,
+      color: colors.text,
+    },
+    content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg, paddingBottom: 40 },
+    planCard: {
+      backgroundColor: colors.surface,
+      borderRadius: sizes.radius.lg,
+      borderWidth: 1,
+      borderColor: colors.divider,
+      padding: sizes.spacing.lg,
+      gap: sizes.spacing.sm,
+    },
+    planCardPremium: {
+      borderColor: colors.primary + '55',
+      backgroundColor: colors.primary + '06',
+    },
+    planBadgeRow: { flexDirection: 'row' },
+    planBadge: {
+      backgroundColor: colors.skeleton,
+      paddingHorizontal: sizes.spacing.sm,
+      paddingVertical: 3,
+      borderRadius: sizes.radius.full,
+    },
+    planBadgePremium: { backgroundColor: colors.primary + '20' },
+    planBadgeText: {
+      fontSize: sizes.font.xs,
+      fontFamily: fontFamily.bold,
+      color: colors.textSub,
+    },
+    planBadgeTextPremium: { color: colors.primary },
+    planTitle: {
+      fontSize: sizes.font.lg,
+      fontFamily: fontFamily.bold,
+      color: colors.text,
+    },
+    planExpiry: {
+      fontSize: sizes.font.sm,
+      color: colors.textSub,
+    },
+    planDesc: {
+      fontSize: sizes.font.sm,
+      color: colors.textSub,
+      lineHeight: 20,
+    },
+    section: { gap: sizes.spacing.md },
+    sectionTitle: {
+      fontSize: sizes.font.xs,
+      fontFamily: fontFamily.bold,
+      color: colors.textSub,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    benefitList: {
+      backgroundColor: colors.surface,
+      borderRadius: sizes.radius.lg,
+      borderWidth: 1,
+      borderColor: colors.divider,
+      padding: sizes.spacing.lg,
+      gap: sizes.spacing.md,
+    },
+    benefitRow: { flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.md },
+    benefitCheck: { fontSize: sizes.font.md, color: colors.secondary, fontFamily: fontFamily.bold },
+    benefitText: { fontSize: sizes.font.md, color: colors.text, flex: 1 },
+    upgradeBtn: {
+      backgroundColor: colors.primary,
+      borderRadius: sizes.radius.lg,
+      height: sizes.buttonHeight.lg,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    upgradeBtnText: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.bold,
+      color: colors.textInverse,
+    },
+    cancelBtn: {
+      borderWidth: 1,
+      borderColor: colors.error,
+      borderRadius: sizes.radius.md,
+      paddingVertical: sizes.spacing.md,
+      alignItems: 'center',
+    },
+    cancelBtnDisabled: { opacity: 0.5 },
+    cancelBtnText: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.semibold,
+      color: colors.error,
+    },
+    cancelNote: {
+      fontSize: sizes.font.xs,
+      color: colors.textDisabled,
+      textAlign: 'center',
+    },
+  }), [colors]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -133,120 +251,3 @@ export const SubscriptionManageScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
-
-const BENEFITS = [
-  '처방전 OCR 자동 인식',
-  '약품 효능·주의사항 상세 정보',
-  '복약 일정 자동 생성',
-  '전체 상담 기록 무제한 조회',
-  'PDF 진료 기록 내보내기',
-  '상담 기록 무제한 작성',
-];
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  header: {
-    height: sizes.headerHeight,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: sizes.spacing.lg,
-  },
-  backBtn: { fontSize: sizes.font.md, color: colors.primary, fontWeight: sizes.fontWeight.medium, width: 60 },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
-  },
-  content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg, paddingBottom: 40 },
-  planCard: {
-    backgroundColor: colors.surface,
-    borderRadius: sizes.radius.lg,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    padding: sizes.spacing.lg,
-    gap: sizes.spacing.sm,
-  },
-  planCardPremium: {
-    borderColor: colors.primary + '55',
-    backgroundColor: colors.primary + '06',
-  },
-  planBadgeRow: { flexDirection: 'row' },
-  planBadge: {
-    backgroundColor: colors.skeleton,
-    paddingHorizontal: sizes.spacing.sm,
-    paddingVertical: 3,
-    borderRadius: sizes.radius.full,
-  },
-  planBadgePremium: { backgroundColor: colors.primary + '20' },
-  planBadgeText: {
-    fontSize: sizes.font.xs,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.textSub,
-  },
-  planBadgeTextPremium: { color: colors.primary },
-  planTitle: {
-    fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
-  },
-  planExpiry: {
-    fontSize: sizes.font.sm,
-    color: colors.textSub,
-  },
-  planDesc: {
-    fontSize: sizes.font.sm,
-    color: colors.textSub,
-    lineHeight: 20,
-  },
-  section: { gap: sizes.spacing.md },
-  sectionTitle: {
-    fontSize: sizes.font.xs,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.textSub,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  benefitList: {
-    backgroundColor: colors.surface,
-    borderRadius: sizes.radius.lg,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    padding: sizes.spacing.lg,
-    gap: sizes.spacing.md,
-  },
-  benefitRow: { flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.md },
-  benefitCheck: { fontSize: sizes.font.md, color: colors.secondary, fontWeight: sizes.fontWeight.bold },
-  benefitText: { fontSize: sizes.font.md, color: colors.text, flex: 1 },
-  upgradeBtn: {
-    backgroundColor: colors.primary,
-    borderRadius: sizes.radius.lg,
-    height: sizes.buttonHeight.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  upgradeBtnText: {
-    fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.textInverse,
-  },
-  cancelBtn: {
-    borderWidth: 1,
-    borderColor: colors.error,
-    borderRadius: sizes.radius.md,
-    paddingVertical: sizes.spacing.md,
-    alignItems: 'center',
-  },
-  cancelBtnDisabled: { opacity: 0.5 },
-  cancelBtnText: {
-    fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.error,
-  },
-  cancelNote: {
-    fontSize: sizes.font.xs,
-    color: colors.textDisabled,
-    textAlign: 'center',
-  },
-});

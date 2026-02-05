@@ -1,9 +1,9 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type * as Notifications from 'expo-notifications';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 
 interface Props {
   notification: Notifications.Notification;
@@ -19,6 +19,7 @@ export const InAppNotificationBanner: React.FC<Props> = ({
   onDismiss,
   onPress,
 }) => {
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const translateY = useRef(new Animated.Value(-(BANNER_HEIGHT + insets.top))).current;
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -57,72 +58,84 @@ export const InAppNotificationBanner: React.FC<Props> = ({
 
   return (
     <Animated.View
-      style={[
-        styles.container,
-        { paddingTop: insets.top + sizes.spacing.sm, transform: [{ translateY }] },
-      ]}
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 9999,
+        paddingHorizontal: sizes.spacing.md,
+        paddingBottom: sizes.spacing.sm,
+        paddingTop: insets.top + sizes.spacing.sm,
+        transform: [{ translateY }],
+      }}
     >
-      <TouchableOpacity style={styles.inner} onPress={handlePress} activeOpacity={0.9}>
-        <View style={styles.accent} />
-        <View style={styles.textWrap}>
-          {title ? <Text style={styles.title} numberOfLines={1}>{title}</Text> : null}
-          {body ? <Text style={styles.body} numberOfLines={2}>{body}</Text> : null}
+      <TouchableOpacity
+        style={[
+          {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.surface,
+            borderRadius: sizes.radius.lg,
+            minHeight: BANNER_HEIGHT,
+            paddingVertical: sizes.spacing.md,
+            paddingHorizontal: sizes.spacing.md,
+            gap: sizes.spacing.sm,
+            borderWidth: 1,
+            borderColor: colors.divider,
+          },
+          Platform.select({
+            ios: {
+              shadowColor: colors.glassShadow,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 1,
+              shadowRadius: 12,
+            },
+            android: { elevation: 8 },
+          }),
+        ]}
+        onPress={handlePress}
+        activeOpacity={0.9}
+      >
+        <View
+          style={{
+            width: 3,
+            alignSelf: 'stretch',
+            borderRadius: 2,
+            backgroundColor: colors.primary,
+          }}
+        />
+        <View style={{ flex: 1, gap: 2 }}>
+          {title ? (
+            <Text
+              style={{
+                fontFamily: fontFamily.semibold,
+                fontSize: sizes.font.md,
+                color: colors.text,
+              }}
+              numberOfLines={1}
+            >
+              {title}
+            </Text>
+          ) : null}
+          {body ? (
+            <Text
+              style={{
+                fontFamily: fontFamily.regular,
+                fontSize: sizes.font.sm,
+                color: colors.textSub,
+                lineHeight: 18,
+              }}
+              numberOfLines={2}
+            >
+              {body}
+            </Text>
+          ) : null}
         </View>
-        <TouchableOpacity style={styles.closeBtn} onPress={dismiss} hitSlop={10}>
+        <TouchableOpacity style={{ padding: 4 }} onPress={dismiss} hitSlop={10}>
           <Ionicons name="close" size={sizes.font.md} color={colors.textDisabled} />
         </TouchableOpacity>
       </TouchableOpacity>
     </Animated.View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 9999,
-    paddingHorizontal: sizes.spacing.md,
-    paddingBottom: sizes.spacing.sm,
-  },
-  inner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surfaceSolid,
-    borderRadius: sizes.radius.lg,
-    minHeight: BANNER_HEIGHT,
-    paddingVertical: sizes.spacing.md,
-    paddingHorizontal: sizes.spacing.md,
-    gap: sizes.spacing.sm,
-    ...Platform.select({
-      ios: {
-        shadowColor: colors.glassShadow,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 1,
-        shadowRadius: 12,
-      },
-      android: { elevation: 8 },
-    }),
-    borderWidth: 1,
-    borderColor: colors.divider,
-  },
-  accent: {
-    width: 3,
-    alignSelf: 'stretch',
-    borderRadius: 2,
-    backgroundColor: colors.primary,
-  },
-  textWrap: { flex: 1, gap: 2 },
-  title: {
-    fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.text,
-  },
-  body: {
-    fontSize: sizes.font.sm,
-    color: colors.textSub,
-    lineHeight: 18,
-  },
-  closeBtn: { padding: 4 },
-});

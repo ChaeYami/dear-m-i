@@ -1,6 +1,6 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import { colors } from '@/constants';
+
 import { CheckinHomeScreen } from '@/features/checkin/screens/CheckinHomeScreen';
 import { CheckinHistoryScreen } from '@/features/checkin/screens/CheckinHistoryScreen';
 
@@ -16,7 +16,7 @@ export const CheckinNavigator: React.FC = () => {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
-        cardStyle: { backgroundColor: colors.background },
+        cardStyle: { backgroundColor: 'transparent' },
       }}
     >
       <Stack.Screen name="CheckinHome" component={CheckinHomeScreen} />

@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  
+
   ScrollView,
   Platform,
   ActivityIndicator,
@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { useSubscription } from '@/features/subscription/hooks/useSubscription';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
 
@@ -29,6 +29,7 @@ const FEATURES = [
 ];
 
 export const PaywallScreen: React.FC = () => {
+  const { colors } = useTheme();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const [selected, setSelected] = useState<PlanOption>('yearly');
   const {
@@ -45,6 +46,141 @@ export const PaywallScreen: React.FC = () => {
   };
 
   const isBusy = isPurchasing || isRestoring;
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.surface },
+    closeBtn: { alignSelf: 'flex-end', padding: sizes.spacing.lg },
+    closeTxt: { fontSize: sizes.font.lg, color: colors.textSub },
+    content: { paddingHorizontal: sizes.spacing.xl, paddingBottom: sizes.spacing.xl },
+    headerSection: { alignItems: 'center', marginBottom: sizes.spacing.xl },
+    badge: {
+      fontSize: sizes.font.xs,
+      fontFamily: fontFamily.bold,
+      color: colors.secondary,
+      letterSpacing: 2,
+      marginBottom: sizes.spacing.sm,
+    },
+    title: {
+      fontSize: sizes.font.xxxl,
+      fontFamily: fontFamily.bold,
+      color: colors.text,
+      marginBottom: sizes.spacing.sm,
+      textAlign: 'center',
+    },
+    subtitle: {
+      fontSize: sizes.font.md,
+      color: colors.textSub,
+      textAlign: 'center',
+      lineHeight: 22,
+    },
+    featureList: {
+      gap: sizes.spacing.md,
+      marginBottom: sizes.spacing.xl,
+      backgroundColor: colors.background,
+      borderRadius: sizes.radius.lg,
+      padding: sizes.spacing.lg,
+    },
+    featureRow: { flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.md },
+    featureIcon: { fontSize: 18, width: 24, textAlign: 'center' },
+    featureTxt: { fontSize: sizes.font.md, color: colors.text, flex: 1 },
+    planRow: { flexDirection: 'row', gap: sizes.spacing.md },
+    planCard: {
+      flex: 1,
+      borderWidth: 2,
+      borderColor: colors.divider,
+      borderRadius: sizes.radius.lg,
+      padding: sizes.spacing.md,
+      alignItems: 'center',
+      gap: 4,
+      position: 'relative',
+    },
+    planCardSelected: {
+      borderColor: colors.primary,
+      backgroundColor: colors.primary + '08',
+    },
+    saveBadge: {
+      position: 'absolute',
+      top: -12,
+      backgroundColor: colors.secondary,
+      paddingHorizontal: sizes.spacing.sm,
+      paddingVertical: 2,
+      borderRadius: sizes.radius.full,
+    },
+    saveBadgeText: {
+      fontSize: sizes.font.xs,
+      fontFamily: fontFamily.bold,
+      color: colors.textInverse,
+    },
+    planLabel: {
+      fontSize: sizes.font.sm,
+      fontFamily: fontFamily.semibold,
+      color: colors.textSub,
+      marginTop: sizes.spacing.sm,
+    },
+    planLabelSelected: { color: colors.primary },
+    planPrice: {
+      fontSize: sizes.font.xl,
+      fontFamily: fontFamily.bold,
+      color: colors.text,
+    },
+    planPriceSelected: { color: colors.primary },
+    planUnit: {
+      fontSize: sizes.font.xs,
+      color: colors.textSub,
+    },
+    planUnitSelected: { color: colors.primary },
+    footer: {
+      paddingHorizontal: sizes.spacing.xl,
+      paddingBottom: sizes.spacing.lg,
+      paddingTop: sizes.spacing.md,
+      gap: sizes.spacing.sm,
+      borderTopWidth: 1,
+      borderTopColor: colors.divider,
+    },
+    purchaseBtn: {
+      height: sizes.buttonHeight.lg,
+      backgroundColor: colors.primary,
+      borderRadius: sizes.radius.lg,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    purchaseBtnDisabled: { opacity: 0.6 },
+    purchaseBtnText: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.bold,
+      color: colors.textInverse,
+    },
+    restoreBtn: {
+      height: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    restoreBtnText: {
+      fontSize: sizes.font.sm,
+      color: colors.textSub,
+    },
+    webPayBtn: {
+      height: sizes.buttonHeight.md,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      borderRadius: sizes.radius.lg,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    webPayBtnText: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.semibold,
+      color: colors.primary,
+    },
+    legalText: {
+      fontSize: 10,
+      color: colors.textDisabled,
+      textAlign: 'center',
+      lineHeight: 14,
+      marginTop: sizes.spacing.xs,
+    },
+  }), [colors]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -175,138 +311,3 @@ export const PaywallScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.surface },
-  closeBtn: { alignSelf: 'flex-end', padding: sizes.spacing.lg },
-  closeTxt: { fontSize: sizes.font.lg, color: colors.textSub },
-  content: { paddingHorizontal: sizes.spacing.xl, paddingBottom: sizes.spacing.xl },
-  headerSection: { alignItems: 'center', marginBottom: sizes.spacing.xl },
-  badge: {
-    fontSize: sizes.font.xs,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.secondary,
-    letterSpacing: 2,
-    marginBottom: sizes.spacing.sm,
-  },
-  title: {
-    fontSize: sizes.font.xxxl,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
-    marginBottom: sizes.spacing.sm,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: sizes.font.md,
-    color: colors.textSub,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  featureList: {
-    gap: sizes.spacing.md,
-    marginBottom: sizes.spacing.xl,
-    backgroundColor: colors.background,
-    borderRadius: sizes.radius.lg,
-    padding: sizes.spacing.lg,
-  },
-  featureRow: { flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.md },
-  featureIcon: { fontSize: 18, width: 24, textAlign: 'center' },
-  featureTxt: { fontSize: sizes.font.md, color: colors.text, flex: 1 },
-  planRow: { flexDirection: 'row', gap: sizes.spacing.md },
-  planCard: {
-    flex: 1,
-    borderWidth: 2,
-    borderColor: colors.divider,
-    borderRadius: sizes.radius.lg,
-    padding: sizes.spacing.md,
-    alignItems: 'center',
-    gap: 4,
-    position: 'relative',
-  },
-  planCardSelected: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primary + '08',
-  },
-  saveBadge: {
-    position: 'absolute',
-    top: -12,
-    backgroundColor: colors.secondary,
-    paddingHorizontal: sizes.spacing.sm,
-    paddingVertical: 2,
-    borderRadius: sizes.radius.full,
-  },
-  saveBadgeText: {
-    fontSize: sizes.font.xs,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.textInverse,
-  },
-  planLabel: {
-    fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.textSub,
-    marginTop: sizes.spacing.sm,
-  },
-  planLabelSelected: { color: colors.primary },
-  planPrice: {
-    fontSize: sizes.font.xl,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
-  },
-  planPriceSelected: { color: colors.primary },
-  planUnit: {
-    fontSize: sizes.font.xs,
-    color: colors.textSub,
-  },
-  planUnitSelected: { color: colors.primary },
-  footer: {
-    paddingHorizontal: sizes.spacing.xl,
-    paddingBottom: sizes.spacing.lg,
-    paddingTop: sizes.spacing.md,
-    gap: sizes.spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.divider,
-  },
-  purchaseBtn: {
-    height: sizes.buttonHeight.lg,
-    backgroundColor: colors.primary,
-    borderRadius: sizes.radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  purchaseBtnDisabled: { opacity: 0.6 },
-  purchaseBtnText: {
-    fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.textInverse,
-  },
-  restoreBtn: {
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  restoreBtnText: {
-    fontSize: sizes.font.sm,
-    color: colors.textSub,
-  },
-  webPayBtn: {
-    height: sizes.buttonHeight.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: sizes.radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  webPayBtnText: {
-    fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.primary,
-  },
-  legalText: {
-    fontSize: 10,
-    color: colors.textDisabled,
-    textAlign: 'center',
-    lineHeight: 14,
-    marginTop: sizes.spacing.xs,
-  },
-});

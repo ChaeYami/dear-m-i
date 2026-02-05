@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { useTranslation } from 'react-i18next';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { getEmotionColor, useEmotionLabel } from '@/shared/components/EmotionSlider';
 import { EmotionGraph } from '@/features/checkin/components/EmotionGraph';
 import { DailyCheckinForm } from '@/features/checkin/components/DailyCheckinForm';
@@ -51,6 +51,7 @@ const formatDateLabel = (dateStr: string) => {
 };
 
 export const CheckinHomeScreen: React.FC = () => {
+  const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const { t } = useTranslation('checkin');
   const emotionLabel = useEmotionLabel();
@@ -87,6 +88,204 @@ export const CheckinHomeScreen: React.FC = () => {
 
   const selectedCheckin = checkinMap.get(selectedDate) ?? null;
   const isToday = selectedDate === todayStr;
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: {
+      height: sizes.headerHeight,
+      justifyContent: 'center',
+      paddingHorizontal: sizes.spacing.lg,
+    },
+    headerTitle: {
+      fontSize: sizes.font.xl,
+      fontFamily: fontFamily.bold,
+      color: colors.text,
+    },
+    // 날짜 바
+    dateBar: {
+      paddingHorizontal: sizes.spacing.md,
+      paddingBottom: sizes.spacing.xs,
+      gap: sizes.spacing.sm,
+    },
+    dateItem: {
+      width: 46,
+      height: 46,
+      borderRadius: 23,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1.5,
+      borderColor: colors.divider,
+    },
+    dateItemHasCheckin: {
+      borderColor: colors.primary,
+    },
+    dateItemSelected: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    dateCol: {
+      alignItems: 'center',
+      gap: 3,
+    },
+    dateDayName: {
+      fontSize: 10,
+      fontFamily: fontFamily.medium,
+      color: colors.textSub,
+    },
+    dateSunday: {
+      color: colors.error,
+    },
+    dateDayNum: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.bold,
+      color: colors.text,
+    },
+    dateDayNumSelected: {
+      color: colors.textInverse,
+    },
+    // 내용
+    content: {
+      paddingHorizontal: sizes.spacing.lg,
+      paddingTop: sizes.spacing.xs,
+      gap: sizes.spacing.md,
+      paddingBottom: sizes.tabBarSafeBottom + 16,
+    },
+    selectedDateLabel: {
+      fontSize: sizes.font.sm,
+      fontFamily: fontFamily.semibold,
+      color: colors.textSub,
+    },
+    // 체크인 카드
+    checkinCard: {
+      backgroundColor: colors.surface,
+      borderRadius: sizes.radius.xl,
+      padding: sizes.spacing.lg,
+      gap: sizes.spacing.md,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.divider,
+    },
+    emptyText: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.semibold,
+      color: colors.textSub,
+      textAlign: 'center',
+    },
+    writeBtn: {
+      width: '100%',
+      height: sizes.buttonHeight.md,
+      backgroundColor: colors.primary,
+      borderRadius: sizes.radius.lg,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: sizes.spacing.sm,
+    },
+    writeBtnText: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.bold,
+      color: colors.textInverse,
+    },
+    cardTop: {
+      width: '100%',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    scoreRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: sizes.spacing.sm,
+    },
+    scoreBadge: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    scoreBadgeText: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.bold,
+      color: '#FFFFFF',
+    },
+    scoreLabel: {
+      fontSize: sizes.font.lg,
+      fontFamily: fontFamily.bold,
+    },
+    tagRow: {
+      width: '100%',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: sizes.spacing.xs,
+    },
+    tag: {
+      paddingHorizontal: sizes.spacing.sm,
+      paddingVertical: 4,
+      borderRadius: sizes.radius.full,
+      backgroundColor: colors.primaryLight + '20',
+    },
+    tagText: {
+      fontSize: sizes.font.xs,
+      color: colors.primary,
+      fontFamily: fontFamily.medium,
+    },
+    memoText: {
+      width: '100%',
+      fontSize: sizes.font.md,
+      color: colors.text,
+      lineHeight: 22,
+    },
+    metaRow: {
+      width: '100%',
+      flexDirection: 'row',
+      gap: sizes.spacing.sm,
+    },
+    metaChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: sizes.spacing.xs,
+      backgroundColor: colors.background,
+      paddingHorizontal: sizes.spacing.sm,
+      paddingVertical: sizes.spacing.xs,
+      borderRadius: sizes.radius.full,
+    },
+    metaText: {
+      fontSize: sizes.font.xs,
+      color: colors.textSub,
+      fontFamily: fontFamily.medium,
+    },
+    metaChipSuccess: {
+      backgroundColor: colors.successLight,
+    },
+    metaTextSuccess: {
+      color: colors.success,
+    },
+    // 섹션
+    section: {
+      gap: sizes.spacing.sm,
+    },
+    sectionTitle: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.bold,
+      color: colors.text,
+    },
+    // 전체 기록
+    historyLink: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surface,
+      borderRadius: sizes.radius.lg,
+      padding: sizes.spacing.md,
+      borderWidth: 1,
+      borderColor: colors.divider,
+    },
+    historyLinkText: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.semibold,
+      color: colors.primary,
+    },
+  }), [colors]);
 
   // inverted FlatList — 오늘이 자동으로 왼쪽에 표시됨
 
@@ -257,201 +456,3 @@ export const CheckinHomeScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  header: {
-    height: sizes.headerHeight,
-    justifyContent: 'center',
-    paddingHorizontal: sizes.spacing.lg,
-  },
-  headerTitle: {
-    fontSize: sizes.font.xl,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
-  },
-  // 날짜 바
-  dateBar: {
-    paddingHorizontal: sizes.spacing.md,
-    paddingBottom: sizes.spacing.xs,
-    gap: sizes.spacing.sm,
-  },
-  dateItem: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: colors.divider,
-  },
-  dateItemHasCheckin: {
-    borderColor: colors.primary,
-  },
-  dateItemSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  dateCol: {
-    alignItems: 'center',
-    gap: 3,
-  },
-  dateDayName: {
-    fontSize: 10,
-    fontWeight: sizes.fontWeight.medium,
-    color: colors.textSub,
-  },
-  dateSunday: {
-    color: colors.error,
-  },
-  dateDayNum: {
-    fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
-  },
-  dateDayNumSelected: {
-    color: colors.textInverse,
-  },
-  // 내용
-  content: {
-    paddingHorizontal: sizes.spacing.lg,
-    paddingTop: sizes.spacing.xs,
-    gap: sizes.spacing.md,
-    paddingBottom: sizes.tabBarSafeBottom + 16,
-  },
-  selectedDateLabel: {
-    fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.textSub,
-  },
-  // 체크인 카드
-  checkinCard: {
-    backgroundColor: colors.surfaceSolid,
-    borderRadius: sizes.radius.xl,
-    padding: sizes.spacing.lg,
-    gap: sizes.spacing.md,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.divider,
-  },
-  emptyText: {
-    fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.textSub,
-    textAlign: 'center',
-  },
-  writeBtn: {
-    width: '100%',
-    height: sizes.buttonHeight.md,
-    backgroundColor: colors.primary,
-    borderRadius: sizes.radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: sizes.spacing.sm,
-  },
-  writeBtnText: {
-    fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.textInverse,
-  },
-  cardTop: {
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  scoreRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: sizes.spacing.sm,
-  },
-  scoreBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  scoreBadgeText: {
-    fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.bold,
-    color: '#FFFFFF',
-  },
-  scoreLabel: {
-    fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.bold,
-  },
-  tagRow: {
-    width: '100%',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: sizes.spacing.xs,
-  },
-  tag: {
-    paddingHorizontal: sizes.spacing.sm,
-    paddingVertical: 4,
-    borderRadius: sizes.radius.full,
-    backgroundColor: colors.primaryLight + '20',
-  },
-  tagText: {
-    fontSize: sizes.font.xs,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.medium,
-  },
-  memoText: {
-    width: '100%',
-    fontSize: sizes.font.md,
-    color: colors.text,
-    lineHeight: 22,
-  },
-  metaRow: {
-    width: '100%',
-    flexDirection: 'row',
-    gap: sizes.spacing.sm,
-  },
-  metaChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: sizes.spacing.xs,
-    backgroundColor: colors.background,
-    paddingHorizontal: sizes.spacing.sm,
-    paddingVertical: sizes.spacing.xs,
-    borderRadius: sizes.radius.full,
-  },
-  metaText: {
-    fontSize: sizes.font.xs,
-    color: colors.textSub,
-    fontWeight: sizes.fontWeight.medium,
-  },
-  metaChipSuccess: {
-    backgroundColor: colors.successLight,
-  },
-  metaTextSuccess: {
-    color: colors.success,
-  },
-  // 섹션
-  section: {
-    gap: sizes.spacing.sm,
-  },
-  sectionTitle: {
-    fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
-  },
-  // 전체 기록
-  historyLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surfaceSolid,
-    borderRadius: sizes.radius.lg,
-    padding: sizes.spacing.md,
-    borderWidth: 1,
-    borderColor: colors.divider,
-  },
-  historyLinkText: {
-    fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.primary,
-  },
-});

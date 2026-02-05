@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { useTodayMedication, useCheckMedication, useDeleteMedicationSchedule } from '@/features/medication/hooks/useMedication';
 import { MedicationCard, type SlotItem } from '@/features/medication/components/MedicationCard';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
@@ -28,6 +28,7 @@ const todayStr = () => {
 };
 
 export const MedicationHomeScreen: React.FC = () => {
+  const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const { data, isLoading } = useTodayMedication();
   const { mutate: checkMedication, isPending: isChecking } = useCheckMedication();
@@ -127,6 +128,8 @@ export const MedicationHomeScreen: React.FC = () => {
   if (isLoading) return <LoadingSpinner fullscreen />;
 
   const hasAnySlots = TIME_SLOTS.some((s) => slotGroups[s].length > 0);
+
+  const styles = getStyles(colors);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -254,158 +257,159 @@ export const MedicationHomeScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  header: {
-    height: sizes.headerHeight,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: sizes.spacing.lg,
-  },
-  backBtn: {
-    fontSize: sizes.font.md,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.medium,
-    width: 48,
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.text,
-  },
-  content: { padding: sizes.spacing.lg, paddingBottom: sizes.tabBarSafeBottom + 80, gap: sizes.spacing.md },
-  summaryCard: {
-    backgroundColor: colors.surface,
-    borderRadius: sizes.radius.lg,
-    padding: sizes.spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    gap: sizes.spacing.sm,
-    marginBottom: sizes.spacing.sm,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  summaryDate: {
-    fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.text,
-  },
-  summaryRate: {
-    fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.primary,
-  },
-  progressBg: {
-    height: 8,
-    backgroundColor: colors.skeleton,
-    borderRadius: sizes.radius.full,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: colors.primary,
-    borderRadius: sizes.radius.full,
-  },
-  summaryLabel: {
-    fontSize: sizes.font.xs,
-    color: colors.textSub,
-    textAlign: 'right',
-  },
-  emptyWrap: {
-    alignItems: 'center',
-    paddingTop: 60,
-    gap: sizes.spacing.sm,
-  },
-  emptyText: {
-    fontSize: sizes.font.lg,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.textSub,
-  },
-  emptySubText: {
-    fontSize: sizes.font.sm,
-    color: colors.textDisabled,
-  },
-  historyBtn: {
-    paddingVertical: sizes.spacing.md,
-    borderRadius: sizes.radius.lg,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    marginTop: sizes.spacing.sm,
-  },
-  historyBtnText: {
-    fontSize: sizes.font.md,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.medium,
-  },
-  editBtn: {
-    fontSize: sizes.font.md,
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.semibold,
-    minWidth: 48,
-    textAlign: 'right' as const,
-  },
-  editBar: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    justifyContent: 'space-between' as const,
-    paddingHorizontal: sizes.spacing.lg,
-    paddingVertical: sizes.spacing.sm,
-    backgroundColor: colors.surfaceSolid,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
-  },
-  selectAllBtn: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    gap: sizes.spacing.sm,
-  },
-  selectAllText: {
-    fontSize: sizes.font.sm,
-    color: colors.text,
-    fontWeight: sizes.fontWeight.medium,
-  },
-  deleteSelectedBtn: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    gap: sizes.spacing.xs,
-    paddingHorizontal: sizes.spacing.md,
-    paddingVertical: sizes.spacing.sm,
-    borderRadius: sizes.radius.md,
-    backgroundColor: colors.errorLight,
-  },
-  deleteSelectedBtnDisabled: {
-    backgroundColor: colors.disabled,
-  },
-  deleteSelectedText: {
-    fontSize: sizes.font.sm,
-    color: colors.error,
-    fontWeight: sizes.fontWeight.semibold,
-  },
-  deleteSelectedTextDisabled: {
-    color: colors.textDisabled,
-  },
-  fab: {
-    position: 'absolute',
-    bottom: sizes.tabBarSafeBottom + sizes.spacing.md,
-    right: sizes.spacing.xl,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: colors.glassShadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  fabIcon: { fontSize: 28, color: colors.textInverse, lineHeight: 32 },
-});
+const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: {
+      height: sizes.headerHeight,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: sizes.spacing.lg,
+    },
+    backBtn: {
+      fontSize: sizes.font.md,
+      color: colors.primary,
+      fontFamily: fontFamily.medium,
+      width: 48,
+    },
+    headerTitle: {
+      flex: 1,
+      textAlign: 'center',
+      fontSize: sizes.font.lg,
+      fontFamily: fontFamily.bold,
+      color: colors.text,
+    },
+    content: { padding: sizes.spacing.lg, paddingBottom: sizes.tabBarSafeBottom + 80, gap: sizes.spacing.md },
+    summaryCard: {
+      backgroundColor: colors.surface,
+      borderRadius: sizes.radius.lg,
+      padding: sizes.spacing.lg,
+      borderWidth: 1,
+      borderColor: colors.divider,
+      gap: sizes.spacing.sm,
+      marginBottom: sizes.spacing.sm,
+    },
+    summaryRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    summaryDate: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.semibold,
+      color: colors.text,
+    },
+    summaryRate: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.bold,
+      color: colors.primary,
+    },
+    progressBg: {
+      height: 8,
+      backgroundColor: colors.skeleton,
+      borderRadius: sizes.radius.full,
+      overflow: 'hidden',
+    },
+    progressFill: {
+      height: '100%',
+      backgroundColor: colors.primary,
+      borderRadius: sizes.radius.full,
+    },
+    summaryLabel: {
+      fontSize: sizes.font.xs,
+      color: colors.textSub,
+      textAlign: 'right',
+    },
+    emptyWrap: {
+      alignItems: 'center',
+      paddingTop: 60,
+      gap: sizes.spacing.sm,
+    },
+    emptyText: {
+      fontSize: sizes.font.lg,
+      fontFamily: fontFamily.semibold,
+      color: colors.textSub,
+    },
+    emptySubText: {
+      fontSize: sizes.font.sm,
+      color: colors.textDisabled,
+    },
+    historyBtn: {
+      paddingVertical: sizes.spacing.md,
+      borderRadius: sizes.radius.lg,
+      borderWidth: 1,
+      borderColor: colors.divider,
+      backgroundColor: colors.surface,
+      alignItems: 'center',
+      marginTop: sizes.spacing.sm,
+    },
+    historyBtnText: {
+      fontSize: sizes.font.md,
+      color: colors.primary,
+      fontFamily: fontFamily.medium,
+    },
+    editBtn: {
+      fontSize: sizes.font.md,
+      color: colors.primary,
+      fontFamily: fontFamily.semibold,
+      minWidth: 48,
+      textAlign: 'right' as const,
+    },
+    editBar: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      justifyContent: 'space-between' as const,
+      paddingHorizontal: sizes.spacing.lg,
+      paddingVertical: sizes.spacing.sm,
+      backgroundColor: colors.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.divider,
+    },
+    selectAllBtn: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      gap: sizes.spacing.sm,
+    },
+    selectAllText: {
+      fontSize: sizes.font.sm,
+      color: colors.text,
+      fontFamily: fontFamily.medium,
+    },
+    deleteSelectedBtn: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      gap: sizes.spacing.xs,
+      paddingHorizontal: sizes.spacing.md,
+      paddingVertical: sizes.spacing.sm,
+      borderRadius: sizes.radius.md,
+      backgroundColor: colors.errorLight,
+    },
+    deleteSelectedBtnDisabled: {
+      backgroundColor: colors.disabled,
+    },
+    deleteSelectedText: {
+      fontSize: sizes.font.sm,
+      color: colors.error,
+      fontFamily: fontFamily.semibold,
+    },
+    deleteSelectedTextDisabled: {
+      color: colors.textDisabled,
+    },
+    fab: {
+      position: 'absolute',
+      bottom: sizes.tabBarSafeBottom + sizes.spacing.md,
+      right: sizes.spacing.xl,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: colors.glassShadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.35,
+      shadowRadius: 8,
+      elevation: 8,
+    },
+    fabIcon: { fontSize: 28, color: colors.textInverse, lineHeight: 32 },
+  });
