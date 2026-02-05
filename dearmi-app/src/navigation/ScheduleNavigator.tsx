@@ -10,7 +10,7 @@ import type { HospitalSchedule } from '@/shared/types/domain.types';
 
 export type ScheduleStackParamList = {
   ScheduleTab: undefined;
-  ScheduleDetail: { scheduleId: number };
+  ScheduleDetail: { scheduleId: number | string };
   ScheduleForm: { schedule?: HospitalSchedule; defaultDate?: string } | undefined;
   PrepNoteList: undefined;
   PrepNoteForm: { scheduleId?: string; noteId?: string } | undefined;

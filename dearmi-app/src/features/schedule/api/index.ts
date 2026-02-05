@@ -12,7 +12,7 @@ export const scheduleApi = {
       params: { year, month },
     }),
 
-  getScheduleDetail: (id: number) =>
+  getScheduleDetail: (id: number | string) =>
     axiosInstance.get<ApiResponse<HospitalSchedule>>(`/api/v1/schedules/${id}`),
 
   createSchedule: (data: CreateScheduleRequest) =>

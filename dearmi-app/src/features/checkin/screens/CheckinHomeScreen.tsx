@@ -18,6 +18,7 @@ import { getEmotionColor, useEmotionLabel } from '@/shared/components/EmotionSli
 import { EmotionGraph } from '@/features/checkin/components/EmotionGraph';
 import { DailyCheckinForm } from '@/features/checkin/components/DailyCheckinForm';
 import { useCheckinHistory } from '@/features/checkin/hooks/useCheckin';
+import { useTodayMedication } from '@/features/medication/hooks/useMedication';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import type { CheckinStackParamList } from '@/navigation/CheckinNavigator';
 import type { DailyCheckin } from '@/shared/types/domain.types';
@@ -61,8 +62,19 @@ export const CheckinHomeScreen: React.FC = () => {
   const dateListRef = useRef<FlatList>(null);
 
   // 30일 이력 가져오기
-  const startDate = dates[0];
+  const startDate = dates[dates.length - 1]; // inverted이므로 마지막이 가장 과거
   const { data: history, isLoading } = useCheckinHistory(startDate, todayStr);
+
+  // 오늘 복약 완료율
+  const { data: todayMed } = useTodayMedication();
+  const medCompleted = useMemo(() => {
+    if (!todayMed?.schedules?.length) return null; // 복약 일정 없으면 표시 안 함
+    const total = todayMed.schedules.reduce((sum, s) => sum + s.slots.length, 0);
+    const taken = todayMed.schedules.reduce(
+      (sum, s) => sum + s.slots.filter((sl) => sl.status === 'TAKEN').length, 0
+    );
+    return total > 0 && taken === total;
+  }, [todayMed]);
 
   // 날짜별 체크인 맵
   const checkinMap = useMemo(() => {
@@ -200,11 +212,15 @@ export const CheckinHomeScreen: React.FC = () => {
                     <Text style={styles.metaText}>{selectedCheckin.sleepHours}시간</Text>
                   </View>
                 )}
-                {selectedCheckin.tookMedication != null && (
-                  <View style={styles.metaChip}>
-                    <Ionicons name="medical-outline" size={14} color={colors.textSub} />
-                    <Text style={styles.metaText}>
-                      {selectedCheckin.tookMedication ? '복용 완료' : '미복용'}
+                {isToday && medCompleted != null && (
+                  <View style={[styles.metaChip, medCompleted && styles.metaChipSuccess]}>
+                    <Ionicons
+                      name={medCompleted ? 'checkmark-circle' : 'medical-outline'}
+                      size={14}
+                      color={medCompleted ? colors.success : colors.textSub}
+                    />
+                    <Text style={[styles.metaText, medCompleted && styles.metaTextSuccess]}>
+                      {medCompleted ? '복용 완료' : '미복용'}
                     </Text>
                   </View>
                 )}
@@ -406,6 +422,12 @@ const styles = StyleSheet.create({
     fontSize: sizes.font.xs,
     color: colors.textSub,
     fontWeight: sizes.fontWeight.medium,
+  },
+  metaChipSuccess: {
+    backgroundColor: colors.successLight,
+  },
+  metaTextSuccess: {
+    color: colors.success,
   },
   // 섹션
   section: {

@@ -19,14 +19,14 @@ export const useMonthlySchedules = (year: number, month: number) => {
 };
 
 /** 일정 상세 조회 */
-export const useScheduleDetail = (id: number) => {
+export const useScheduleDetail = (id: number | string) => {
   return useQuery({
     queryKey: QUERY_KEYS.schedule(id),
     queryFn: async () => {
       const { data } = await scheduleApi.getScheduleDetail(id);
       return data.data ?? null;
     },
-    enabled: id > 0,
+    enabled: !!id,
   });
 };
 

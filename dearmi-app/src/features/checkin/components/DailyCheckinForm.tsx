@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  Switch,
   ScrollView,
   StyleSheet,
   
@@ -44,7 +43,7 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
   const [triggerTags, setTriggerTags] = useState<string[]>(existingCheckin?.triggerTags ?? []);
   const [memo, setMemo] = useState(existingCheckin?.memo ?? '');
   const [sleepInput, setSleepInput] = useState(String(existingCheckin?.sleepHours ?? 7));
-  const [tookMedication, setTookMedication] = useState(existingCheckin?.tookMedication ?? false);
+  // 복약 여부는 복약 탭 완료율 기반 자동 — 폼에서 수동 설정 안 함
 
   const { mutate: saveCheckin, isPending } = useCreateCheckin();
 
@@ -69,7 +68,6 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
         triggerTags: triggerTags.length > 0 ? triggerTags : undefined,
         memo: memo.trim() || undefined,
         sleepHours,
-        tookMedication,
         checkedAt: targetDate,
       },
       {
@@ -166,16 +164,7 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
           </View>
         </View>
 
-        {/* 복약 여부 */}
-        <View style={styles.medRow}>
-          <Text style={styles.fieldLabel}>{t('medication_toggle')}</Text>
-          <Switch
-            value={tookMedication}
-            onValueChange={setTookMedication}
-            trackColor={{ false: colors.disabled, true: colors.primaryLight }}
-            thumbColor={tookMedication ? colors.primary : '#f4f3f4'}
-          />
-        </View>
+        {/* 복약 여부 — 복약 탭 완료율 기반으로 자동 설정 (수동 토글 제거) */}
       </ScrollView>
 
       {/* 하단 등록 버튼 */}

@@ -19,18 +19,21 @@ const PERIOD_KEYS: Record<Period, string> = {
   all: 'period_all',
 };
 
+const toLocalDateStr = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 const getStartDate = (period: Period): string | undefined => {
   if (period === 'all') return undefined;
   const d = new Date();
   if (period === '7d') d.setDate(d.getDate() - 6);
   else if (period === '1m') d.setMonth(d.getMonth() - 1);
   else if (period === '3m') d.setMonth(d.getMonth() - 3);
-  return d.toISOString().split('T')[0];
+  return toLocalDateStr(d);
 };
 
 const formatLabel = (dateStr: string) => {
-  const d = new Date(dateStr);
-  return `${d.getMonth() + 1}/${d.getDate()}`;
+  const [, mo, da] = dateStr.split('-');
+  return `${Number(mo)}/${Number(da)}`;
 };
 
 export const EmotionGraph: React.FC = () => {
@@ -40,7 +43,7 @@ export const EmotionGraph: React.FC = () => {
   const [period, setPeriod] = useState<Period>('7d');
 
   const startDate = getStartDate(period);
-  const endDate = new Date().toISOString().split('T')[0];
+  const endDate = toLocalDateStr(new Date());
   const { data: history } = useCheckinHistory(startDate, endDate);
 
   const checkins = history?.content ?? [];

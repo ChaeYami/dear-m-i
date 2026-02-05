@@ -22,8 +22,10 @@ type ViewMode = 'monthly' | 'weekly';
 const toDateString = (iso: string) => iso.split('T')[0];
 
 const formatTime = (iso: string) => {
-  const d = new Date(iso);
-  return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+  // ISO 문자열에서 직접 시/분 추출 (타임존 변환 방지)
+  const timePart = iso.includes('T') ? iso.split('T')[1] : iso;
+  const [h, m] = timePart.split(':');
+  return `${h}:${m}`;
 };
 
 const formatDateFull = (dateStr: string) => {

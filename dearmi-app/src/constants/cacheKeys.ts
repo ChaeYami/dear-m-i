@@ -39,7 +39,7 @@ export const QUERY_KEYS = {
 
   // 일정
   monthlySchedules: (year: number, month: number) => ['schedules', year, month] as const,
-  schedule: (id: number) => ['schedule', id] as const,
+  schedule: (id: number | string) => ['schedule', id] as const,
 
   // 타임라인 (상담 기록 + 처방전 혼합)
   timeline: () => ['timeline'] as const,

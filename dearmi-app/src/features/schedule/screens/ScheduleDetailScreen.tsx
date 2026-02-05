@@ -23,11 +23,11 @@ type RootNav = any;
 type Route = RouteProp<ScheduleStackParamList, 'ScheduleDetail'>;
 
 const formatDateTime = (iso: string) => {
-  const d = new Date(iso);
-  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일  ${d
-    .getHours()
-    .toString()
-    .padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+  // ISO 문자열에서 직접 파싱 (타임존 변환 방지)
+  const [datePart, timePart] = iso.split('T');
+  const [y, mo, da] = datePart.split('-');
+  const [h, m] = (timePart ?? '00:00').split(':');
+  return `${y}년 ${Number(mo)}월 ${Number(da)}일  ${h}:${m}`;
 };
 
 export const ScheduleDetailScreen: React.FC = () => {
