@@ -16,6 +16,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { EmotionSlider } from '@/shared/components/EmotionSlider';
 import { useCreateRecord, useUpdateRecord, useRecordDetail, useRecentSchedules } from '@/features/record/hooks/useRecord';
 import { usePrepNotesBySchedule } from '@/features/prepnote/hooks/usePrepNote';
@@ -158,17 +159,13 @@ export const RecordFormScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <Text style={[styles.headerCancel, { color: colors.textSub }]}>취소</Text>
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>{isEdit ? '기록 수정' : '기록 작성'}</Text>
-        <TouchableOpacity onPress={handleSave} disabled={isPending} hitSlop={12}>
-          <Text style={[styles.headerSave, isPending && styles.headerSaveDisabled, { color: colors.primary }]}>
-            {isPending ? '저장 중…' : '저장'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader
+        variant="form"
+        title={isEdit ? '기록 수정' : '기록 작성'}
+        onCancel={() => navigation.goBack()}
+        onSave={handleSave}
+        saveDisabled={isPending}
+      />
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {checkinSummary && checkinSummary.totalCheckins > 0 && (
@@ -438,23 +435,6 @@ const formatDate = (iso: string) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    height: sizes.headerHeight,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: sizes.spacing.lg,
-  },
-  headerTitle: {
-    fontSize: sizes.font.lg,
-    fontFamily: fontFamily.bold,
-  },
-  headerCancel: { fontSize: sizes.font.md },
-  headerSave: {
-    fontSize: sizes.font.md,
-    fontFamily: fontFamily.semibold,
-  },
-  headerSaveDisabled: { opacity: 0.4 },
   content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg, paddingBottom: 40 },
   field: { gap: sizes.spacing.sm },
   fieldLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

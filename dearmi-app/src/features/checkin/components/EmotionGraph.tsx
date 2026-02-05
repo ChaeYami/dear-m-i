@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-nati
 import { Ionicons } from '@expo/vector-icons';
 import { LineChart } from 'react-native-chart-kit';
 import { useTranslation } from 'react-i18next';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { getEmotionColor } from '@/shared/components/EmotionSlider';
 import { useCheckinHistory } from '@/features/checkin/hooks/useCheckin';
 import { useAuthStore } from '@/features/auth/store/authStore';
@@ -37,6 +37,7 @@ const formatLabel = (dateStr: string) => {
 };
 
 export const EmotionGraph: React.FC = () => {
+  const { colors } = useTheme();
   const { t } = useTranslation('checkin');
   const plan = useAuthStore((s) => s.user?.plan);
   const isPremium = plan === 'PREMIUM';
@@ -64,15 +65,15 @@ export const EmotionGraph: React.FC = () => {
 
   if (sorted.length === 0) {
     return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>{t('graph_empty')}</Text>
-        <Text style={styles.emptySubText}>{t('graph_empty_desc')}</Text>
+      <View style={[styles.emptyContainer, { backgroundColor: colors.surface }]}>
+        <Text style={[styles.emptyText, { color: colors.textSub }]}>{t('graph_empty')}</Text>
+        <Text style={[styles.emptySubText, { color: colors.textDisabled }]}>{t('graph_empty_desc')}</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <View style={styles.periodRow}>
         {(['7d', '1m', '3m', 'all'] as Period[]).map((p) => {
           const locked = !isPremium && p !== '7d' && p !== '1m';
@@ -80,7 +81,7 @@ export const EmotionGraph: React.FC = () => {
           return (
             <TouchableOpacity
               key={p}
-              style={[styles.periodBtn, isActive && styles.periodBtnActive]}
+              style={[styles.periodBtn, { backgroundColor: colors.background }, isActive && { backgroundColor: colors.primaryLight + '25' }]}
               onPress={() => !locked && setPeriod(p)}
               activeOpacity={locked ? 1 : 0.7}
             >
@@ -88,8 +89,9 @@ export const EmotionGraph: React.FC = () => {
                 <Text
                   style={[
                     styles.periodBtnText,
-                    isActive && styles.periodBtnTextActive,
-                    locked && styles.periodBtnTextLocked,
+                    { color: colors.textSub },
+                    isActive && { color: colors.primary, fontFamily: fontFamily.bold },
+                    locked && { color: colors.textDisabled },
                   ]}
                 >
                   {t(PERIOD_KEYS[p])}
@@ -115,9 +117,9 @@ export const EmotionGraph: React.FC = () => {
         fromZero={false}
         segments={4}
         chartConfig={{
-          backgroundColor: colors.surfaceSolid,
-          backgroundGradientFrom: colors.surfaceSolid,
-          backgroundGradientTo: colors.surfaceSolid,
+          backgroundColor: colors.surface,
+          backgroundGradientFrom: colors.surface,
+          backgroundGradientTo: colors.surface,
           decimalPlaces: 0,
           color: () => avgColor,
           labelColor: () => colors.textSub,
@@ -140,10 +142,10 @@ export const EmotionGraph: React.FC = () => {
 
       <View style={styles.avgRow}>
         <View style={[styles.avgDot, { backgroundColor: avgColor }]} />
-        <Text style={styles.avgText}>
+        <Text style={[styles.avgText, { color: colors.text }]}>
           {t('avg_score', { score: avgScore.toFixed(1) })}
         </Text>
-        <Text style={styles.avgCount}>{t('days_recorded', { count: sorted.length })}</Text>
+        <Text style={[styles.avgCount, { color: colors.textSub }]}>{t('days_recorded', { count: sorted.length })}</Text>
       </View>
     </View>
   );
@@ -151,7 +153,6 @@ export const EmotionGraph: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.surfaceSolid,
     borderRadius: sizes.radius.lg,
     padding: sizes.spacing.md,
     gap: sizes.spacing.md,
@@ -164,11 +165,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 6,
     borderRadius: sizes.radius.full,
-    backgroundColor: colors.background,
     alignItems: 'center',
-  },
-  periodBtnActive: {
-    backgroundColor: colors.primaryLight + '25',
   },
   periodBtnInner: {
     flexDirection: 'row',
@@ -177,15 +174,7 @@ const styles = StyleSheet.create({
   },
   periodBtnText: {
     fontSize: sizes.font.xs,
-    color: colors.textSub,
-    fontWeight: sizes.fontWeight.medium,
-  },
-  periodBtnTextActive: {
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.bold,
-  },
-  periodBtnTextLocked: {
-    color: colors.textDisabled,
+    fontFamily: fontFamily.medium,
   },
   chart: {
     borderRadius: sizes.radius.md,
@@ -203,15 +192,12 @@ const styles = StyleSheet.create({
   },
   avgText: {
     fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.text,
+    fontFamily: fontFamily.semibold,
   },
   avgCount: {
     fontSize: sizes.font.xs,
-    color: colors.textSub,
   },
   emptyContainer: {
-    backgroundColor: colors.surfaceSolid,
     borderRadius: sizes.radius.lg,
     padding: sizes.spacing.xl,
     alignItems: 'center',
@@ -219,11 +205,9 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.semibold,
-    color: colors.textSub,
+    fontFamily: fontFamily.semibold,
   },
   emptySubText: {
     fontSize: sizes.font.sm,
-    color: colors.textDisabled,
   },
 });

@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
 import type { MedicationLogStatus } from '@/shared/types/domain.types';
 
 interface Props {
@@ -25,40 +26,122 @@ export const TimeSlotRow: React.FC<Props> = ({
   onTaken,
   onSkipped,
 }) => {
+  const { colors } = useTheme();
   const isTaken = status === 'TAKEN';
   const isSkipped = status === 'SKIPPED';
 
   return (
-    <View style={styles.row}>
-      <TouchableOpacity style={styles.info} onPress={onDrugPress} onLongPress={onDelete} activeOpacity={0.7}>
-        <View style={styles.drugNameRow}>
-          <Text style={styles.drugName} numberOfLines={1}>{drugName}</Text>
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 10,
+        paddingHorizontal: sizes.spacing.md,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.divider,
+        gap: sizes.spacing.sm,
+      }}
+    >
+      <AnimatedPressable
+        onPress={onDrugPress}
+        onLongPress={onDelete}
+        style={{ flex: 1 }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <Text
+            style={{
+              fontFamily: fontFamily.medium,
+              fontSize: sizes.font.md,
+              color: colors.text,
+            }}
+            numberOfLines={1}
+          >
+            {drugName}
+          </Text>
           <Ionicons name="chevron-forward" size={14} color={colors.textDisabled} />
         </View>
-        {dosage ? <Text style={styles.dosage}>{dosage}</Text> : null}
-      </TouchableOpacity>
+        {dosage ? (
+          <Text
+            style={{
+              fontFamily: fontFamily.regular,
+              fontSize: sizes.font.xs,
+              color: colors.textSub,
+              marginTop: 2,
+            }}
+          >
+            {dosage}
+          </Text>
+        ) : null}
+      </AnimatedPressable>
 
       {isPending ? (
         <ActivityIndicator size="small" color={colors.primary} />
       ) : (
-        <View style={styles.actions}>
+        <View style={{ flexDirection: 'row', gap: 6 }}>
           <TouchableOpacity
-            style={[styles.btn, isTaken && styles.btnTaken]}
+            style={[
+              {
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+                paddingHorizontal: 14,
+                paddingVertical: 8,
+                borderRadius: sizes.radius.full,
+                borderWidth: 1.5,
+                borderColor: colors.divider,
+                backgroundColor: colors.surface,
+                minWidth: 64,
+                justifyContent: 'center',
+              },
+              isTaken && {
+                backgroundColor: colors.successLight,
+                borderColor: colors.success,
+              },
+            ]}
             onPress={onTaken}
             activeOpacity={0.75}
           >
-            {isTaken && <Ionicons name="checkmark" size={14} color={colors.success} />}
-            <Text style={[styles.btnText, isTaken && styles.btnTextActive]}>
+            {isTaken && <Ionicons name="checkmark-circle" size={15} color={colors.success} />}
+            <Text
+              style={{
+                fontFamily: fontFamily.semibold,
+                fontSize: sizes.font.sm,
+                color: isTaken ? colors.success : colors.textSub,
+              }}
+            >
               복용
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.btn, isSkipped && styles.btnSkipped]}
+            style={[
+              {
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingHorizontal: 14,
+                paddingVertical: 8,
+                borderRadius: sizes.radius.full,
+                borderWidth: 1.5,
+                borderColor: colors.divider,
+                backgroundColor: colors.surface,
+                minWidth: 64,
+                justifyContent: 'center',
+              },
+              isSkipped && {
+                backgroundColor: colors.disabled,
+                borderColor: colors.textDisabled,
+              },
+            ]}
             onPress={onSkipped}
             activeOpacity={0.75}
           >
-            <Text style={[styles.btnText, isSkipped && styles.btnTextSkipped]}>
+            <Text
+              style={{
+                fontFamily: fontFamily.semibold,
+                fontSize: sizes.font.sm,
+                color: isSkipped ? colors.textDisabled : colors.textSub,
+              }}
+            >
               건너뜀
             </Text>
           </TouchableOpacity>
@@ -67,67 +150,3 @@ export const TimeSlotRow: React.FC<Props> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: sizes.spacing.sm,
-    paddingHorizontal: sizes.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
-    gap: sizes.spacing.sm,
-  },
-  info: { flex: 1 },
-  drugNameRow: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    gap: 4,
-  },
-  drugName: {
-    fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.medium,
-    color: colors.text,
-  },
-  dosage: {
-    fontSize: sizes.font.xs,
-    color: colors.textSub,
-    marginTop: 2,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: sizes.spacing.xs,
-  },
-  btn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: sizes.spacing.sm,
-    paddingVertical: 6,
-    borderRadius: sizes.radius.md,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    backgroundColor: colors.surfaceSolid,
-    minWidth: 58,
-    justifyContent: 'center',
-  },
-  btnTaken: {
-    backgroundColor: colors.successLight,
-    borderColor: colors.success,
-  },
-  btnSkipped: {
-    backgroundColor: colors.skeleton,
-    borderColor: colors.textDisabled,
-  },
-  btnText: {
-    fontSize: sizes.font.xs,
-    fontWeight: sizes.fontWeight.medium,
-    color: colors.textSub,
-  },
-  btnTextActive: {
-    color: colors.success,
-  },
-  btnTextSkipped: {
-    color: colors.textDisabled,
-  },
-});

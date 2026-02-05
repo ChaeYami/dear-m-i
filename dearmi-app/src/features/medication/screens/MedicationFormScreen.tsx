@@ -12,11 +12,14 @@ import {
   Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import { ScreenHeader } from '@/shared/components/ScreenHeader';
+import { softShadow } from '@/shared/theme/shadows';
+import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
 import { useCreateMedicationSchedule } from '@/features/medication/hooks/useMedication';
 import { useMedicationDetail } from '@/features/prescription/hooks/usePrescription';
 import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
@@ -185,20 +188,13 @@ export const MedicationFormScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* 헤더 */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <Text style={styles.headerCancel}>취소</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>
-          {isFromOcr ? '복약 알림 설정' : '복약 일정 등록'}
-        </Text>
-        <TouchableOpacity onPress={handleSave} disabled={isPending} hitSlop={12}>
-          <Text style={[styles.headerSave, isPending && styles.headerSaveDisabled]}>
-            {isPending ? '저장 중…' : '저장'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader
+        variant="form"
+        title={isFromOcr ? '복약 알림 설정' : '복약 일정 등록'}
+        onCancel={() => navigation.goBack()}
+        onSave={handleSave}
+        saveDisabled={isPending}
+      />
 
       {/* OCR 진행 배너 */}
       {isFromOcr && (
@@ -218,7 +214,7 @@ export const MedicationFormScreen: React.FC = () => {
         keyboardShouldPersistTaps="handled"
       >
         {/* 약품명 */}
-        <View style={styles.field}>
+        <View style={styles.fieldCard}>
           <Text style={styles.label}>약품명 *</Text>
           <TextInput
             style={styles.input}
@@ -230,7 +226,7 @@ export const MedicationFormScreen: React.FC = () => {
         </View>
 
         {/* 용량 */}
-        <View style={styles.field}>
+        <View style={styles.fieldCard}>
           <Text style={styles.label}>용량</Text>
           <TextInput
             style={styles.input}
@@ -242,7 +238,7 @@ export const MedicationFormScreen: React.FC = () => {
         </View>
 
         {/* 복약 시간대 */}
-        <View style={styles.field}>
+        <View style={styles.fieldCard}>
           <Text style={styles.label}>복약 시간대</Text>
           {TIME_SLOTS.map((s) => (
             <View key={s.key} style={styles.slotRow}>
@@ -250,10 +246,21 @@ export const MedicationFormScreen: React.FC = () => {
                 <Switch
                   value={activeSlots[s.key]}
                   onValueChange={() => toggleSlot(s.key)}
-                  trackColor={{ false: colors.divider, true: colors.primary + '80' }}
+                  trackColor={{ false: colors.divider, true: colors.primaryLight }}
                   thumbColor={activeSlots[s.key] ? colors.primary : colors.textDisabled}
                 />
-                <Text style={styles.slotLabel}>{s.label}</Text>
+                <AnimatedPressable
+                  onPress={() => toggleSlot(s.key)}
+                  style={[
+                    styles.slotPill,
+                    activeSlots[s.key] && styles.slotPillActive,
+                  ]}
+                >
+                  <Text style={[
+                    styles.slotLabel,
+                    activeSlots[s.key] && styles.slotLabelActive,
+                  ]}>{s.label}</Text>
+                </AnimatedPressable>
               </View>
               {activeSlots[s.key] && (
                 <>
@@ -278,7 +285,7 @@ export const MedicationFormScreen: React.FC = () => {
         </View>
 
         {/* 시작일 */}
-        <View style={styles.field}>
+        <View style={styles.fieldCard}>
           <Text style={styles.label}>시작일</Text>
           <TouchableOpacity style={styles.dateBtn} onPress={() => setShowDatePicker(true)}>
             <Text style={styles.dateBtnText}>{formatDateDisplay(startDate)}</Text>
@@ -299,7 +306,7 @@ export const MedicationFormScreen: React.FC = () => {
         </View>
 
         {/* 투약 일수 */}
-        <View style={styles.field}>
+        <View style={styles.fieldCard}>
           <Text style={styles.label}>투약 일수</Text>
           <TextInput
             style={styles.input}
@@ -313,21 +320,37 @@ export const MedicationFormScreen: React.FC = () => {
             <Text style={styles.endDateHint}>종료일: {formatDateDisplay(endDate)}</Text>
           )}
         </View>
+
+        {/* 저장 버튼 (full-width pill gradient) */}
+        <AnimatedPressable onPress={handleSave} disabled={isPending}>
+          <LinearGradient
+            colors={[colors.primaryVivid, colors.primaryVividDark]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[styles.saveBtn, isPending && styles.saveBtnDisabled]}
+          >
+            <Text style={styles.saveBtnText}>
+              {isPending ? '저장 중...' : '저장하기'}
+            </Text>
+          </LinearGradient>
+        </AnimatedPressable>
       </ScrollView>
 
       {/* 다음 약품 버튼 (OCR 흐름) */}
       {showNextButton && (
         <View style={styles.nextBtnWrap}>
-          <TouchableOpacity
-            style={[styles.nextBtn, isPending && styles.nextBtnDisabled]}
-            onPress={handleSaveAndNext}
-            disabled={isPending}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.nextBtnText}>
-              {isPending ? '저장 중…' : `다음: ${nextMed.drugName} 설정하기 →`}
-            </Text>
-          </TouchableOpacity>
+          <AnimatedPressable onPress={handleSaveAndNext} disabled={isPending}>
+            <LinearGradient
+              colors={[colors.secondary, colors.secondaryLight]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={[styles.nextBtn, isPending && styles.nextBtnDisabled]}
+            >
+              <Text style={styles.nextBtnText}>
+                {isPending ? '저장 중...' : `다음: ${nextMed.drugName} 설정하기 \u2192`}
+              </Text>
+            </LinearGradient>
+          </AnimatedPressable>
         </View>
       )}
     </SafeAreaView>
@@ -337,43 +360,29 @@ export const MedicationFormScreen: React.FC = () => {
 const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    header: {
-      height: sizes.headerHeight,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: sizes.spacing.lg,
-      backgroundColor: colors.surface,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.divider,
-    },
-    headerCancel: { fontSize: sizes.font.md, color: colors.textSub },
-    headerTitle: {
-      fontSize: sizes.font.lg,
-      fontFamily: fontFamily.bold,
-      color: colors.text,
-    },
-    headerSave: {
-      fontSize: sizes.font.md,
-      color: colors.primary,
-      fontFamily: fontFamily.semibold,
-    },
-    headerSaveDisabled: { opacity: 0.4 },
     ocrBanner: {
-      backgroundColor: colors.primary + '10',
-      borderBottomWidth: 1,
-      borderBottomColor: colors.primary + '25',
+      backgroundColor: colors.primaryMuted,
+      borderRadius: sizes.radius.xxl,
+      marginHorizontal: sizes.spacing.lg,
+      marginTop: sizes.spacing.sm,
       paddingHorizontal: sizes.spacing.lg,
-      paddingVertical: sizes.spacing.sm,
+      paddingVertical: sizes.spacing.md,
+      ...softShadow(colors),
     },
     ocrBannerText: {
       fontSize: sizes.font.sm,
       color: colors.primary,
       fontFamily: fontFamily.medium,
     },
-    content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg },
+    content: { padding: sizes.spacing.lg, gap: sizes.spacing.md },
     contentWithNext: { paddingBottom: 100 },
-    field: { gap: sizes.spacing.sm },
+    fieldCard: {
+      gap: sizes.spacing.sm,
+      backgroundColor: colors.surface,
+      borderRadius: sizes.radius.xxl,
+      padding: sizes.spacing.lg,
+      ...softShadow(colors),
+    },
     label: {
       fontSize: sizes.font.sm,
       fontFamily: fontFamily.semibold,
@@ -383,7 +392,7 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
     },
     input: {
       height: sizes.buttonHeight.md,
-      backgroundColor: colors.surface,
+      backgroundColor: colors.background,
       borderRadius: sizes.radius.lg,
       borderWidth: 1,
       borderColor: colors.divider,
@@ -398,14 +407,29 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
       paddingVertical: sizes.spacing.xs,
     },
     slotLeft: { flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.sm },
-    slotLabel: { fontSize: sizes.font.md, color: colors.text },
+    slotPill: {
+      paddingHorizontal: sizes.spacing.md,
+      paddingVertical: 4,
+      borderRadius: sizes.radius.full,
+      backgroundColor: 'transparent',
+    },
+    slotPillActive: {
+      backgroundColor: colors.primaryMuted,
+    },
+    slotLabel: {
+      fontSize: sizes.font.md,
+      color: colors.textSub,
+      fontFamily: fontFamily.medium,
+    },
+    slotLabelActive: {
+      color: colors.primary,
+      fontFamily: fontFamily.semibold,
+    },
     timePill: {
       paddingHorizontal: sizes.spacing.md,
       paddingVertical: 6,
-      backgroundColor: colors.primary + '18',
+      backgroundColor: colors.primaryMuted,
       borderRadius: sizes.radius.full,
-      borderWidth: 1,
-      borderColor: colors.primary + '44',
     },
     timePillText: {
       fontSize: sizes.font.sm,
@@ -414,7 +438,7 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
     },
     dateBtn: {
       height: sizes.buttonHeight.md,
-      backgroundColor: colors.surface,
+      backgroundColor: colors.background,
       borderRadius: sizes.radius.lg,
       borderWidth: 1,
       borderColor: colors.divider,
@@ -433,6 +457,19 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
       color: colors.textSub,
       marginTop: 2,
     },
+    // 저장 버튼
+    saveBtn: {
+      height: sizes.buttonHeight.lg,
+      borderRadius: sizes.radius.full,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    saveBtnDisabled: { opacity: 0.5 },
+    saveBtnText: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.bold,
+      color: colors.textInverse,
+    },
     // 다음 약품 버튼
     nextBtnWrap: {
       position: 'absolute',
@@ -442,13 +479,13 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
       padding: sizes.spacing.lg,
       paddingBottom: sizes.spacing.xl,
       backgroundColor: colors.surface,
-      borderTopWidth: 1,
-      borderTopColor: colors.divider,
+      borderTopLeftRadius: sizes.radius.xxl,
+      borderTopRightRadius: sizes.radius.xxl,
+      ...softShadow(colors),
     },
     nextBtn: {
       height: sizes.buttonHeight.lg,
-      backgroundColor: colors.secondary,
-      borderRadius: sizes.radius.lg,
+      borderRadius: sizes.radius.full,
       alignItems: 'center',
       justifyContent: 'center',
     },

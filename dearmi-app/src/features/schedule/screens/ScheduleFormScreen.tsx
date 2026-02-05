@@ -15,6 +15,7 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { useCreateSchedule, useUpdateSchedule } from '@/features/schedule/hooks/useSchedule';
 import type { ScheduleStackParamList } from '@/navigation/ScheduleNavigator';
 
@@ -113,17 +114,13 @@ export const ScheduleFormScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <Text style={[styles.headerCancel, { color: colors.textSub }]}>취소</Text>
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text, fontFamily: fontFamily.bold }]}>{isEdit ? '일정 수정' : '일정 추가'}</Text>
-        <TouchableOpacity onPress={handleSave} disabled={isPending} hitSlop={12}>
-          <Text style={[styles.headerSave, { color: colors.primary, fontFamily: fontFamily.semibold }, isPending && styles.headerSaveDisabled]}>
-            {isPending ? '저장 중…' : '저장'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader
+        variant="form"
+        title={isEdit ? '일정 수정' : '일정 추가'}
+        onCancel={() => navigation.goBack()}
+        onSave={handleSave}
+        saveDisabled={isPending}
+      />
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Field label="병원명" required colors={colors}>
@@ -228,23 +225,6 @@ const Field: React.FC<{ label: string; required?: boolean; children: React.React
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    height: sizes.headerHeight,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: sizes.spacing.lg,
-  },
-  headerTitle: {
-    fontSize: sizes.font.lg,
-  },
-  headerCancel: {
-    fontSize: sizes.font.md,
-  },
-  headerSave: {
-    fontSize: sizes.font.md,
-  },
-  headerSaveDisabled: { opacity: 0.4 },
   content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg },
   field: { gap: sizes.spacing.xs },
   fieldLabel: {

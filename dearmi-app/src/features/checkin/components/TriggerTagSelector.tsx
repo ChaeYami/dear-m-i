@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 
 interface TriggerTagSelectorProps {
   selectedTags: string[];
@@ -13,6 +13,7 @@ export const TriggerTagSelector: React.FC<TriggerTagSelectorProps> = ({
   selectedTags,
   onChangeTags,
 }) => {
+  const { colors } = useTheme();
   const { t } = useTranslation('checkin');
   const [customInput, setCustomInput] = useState('');
 
@@ -51,11 +52,19 @@ export const TriggerTagSelector: React.FC<TriggerTagSelectorProps> = ({
           return (
             <TouchableOpacity
               key={tag}
-              style={[styles.chip, isSelected && styles.chipSelected]}
+              style={[
+                styles.chip,
+                { backgroundColor: colors.background, borderColor: colors.divider },
+                isSelected && { backgroundColor: colors.primaryLight + '25', borderColor: colors.primary },
+              ]}
               onPress={() => toggleTag(tag)}
               activeOpacity={0.75}
             >
-              <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
+              <Text style={[
+                styles.chipText,
+                { color: colors.textSub },
+                isSelected && { color: colors.primary, fontFamily: fontFamily.semibold },
+              ]}>
                 {tag}
               </Text>
             </TouchableOpacity>
@@ -65,7 +74,7 @@ export const TriggerTagSelector: React.FC<TriggerTagSelectorProps> = ({
 
       <View style={styles.customRow}>
         <TextInput
-          style={styles.customInput}
+          style={[styles.customInput, { backgroundColor: colors.surface, borderColor: colors.divider, color: colors.text }]}
           placeholder={t('custom_input')}
           placeholderTextColor={colors.textDisabled}
           value={customInput}
@@ -76,11 +85,11 @@ export const TriggerTagSelector: React.FC<TriggerTagSelectorProps> = ({
           maxLength={20}
         />
         <TouchableOpacity
-          style={[styles.addBtn, !customInput.trim() && styles.addBtnDisabled]}
+          style={[styles.addBtn, { backgroundColor: colors.primary }, !customInput.trim() && styles.addBtnDisabled]}
           onPress={addCustomTag}
           disabled={!customInput.trim()}
         >
-          <Text style={styles.addBtnText}>{t('common:add')}</Text>
+          <Text style={[styles.addBtnText, { color: colors.textInverse }]}>{t('common:add')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -89,11 +98,11 @@ export const TriggerTagSelector: React.FC<TriggerTagSelectorProps> = ({
           {selectedTags.filter(isCustomTag).map((tag) => (
             <TouchableOpacity
               key={tag}
-              style={styles.customChip}
+              style={[styles.customChip, { backgroundColor: colors.secondaryLight + '25' }]}
               onPress={() => toggleTag(tag)}
               activeOpacity={0.75}
             >
-              <Text style={styles.customChipText}>{tag}</Text>
+              <Text style={[styles.customChipText, { color: colors.secondary }]}>{tag}</Text>
               <Ionicons name="close-circle" size={14} color={colors.secondary} />
             </TouchableOpacity>
           ))}
@@ -114,21 +123,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: 6,
     borderRadius: sizes.radius.full,
-    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: colors.divider,
-  },
-  chipSelected: {
-    backgroundColor: colors.primaryLight + '25',
-    borderColor: colors.primary,
   },
   chipText: {
     fontSize: sizes.font.sm,
-    color: colors.textSub,
-  },
-  chipTextSelected: {
-    color: colors.primary,
-    fontWeight: sizes.fontWeight.semibold,
   },
   customRow: {
     flexDirection: 'row',
@@ -136,26 +134,21 @@ const styles = StyleSheet.create({
   },
   customInput: {
     flex: 1,
-    backgroundColor: colors.surfaceSolid,
     borderWidth: 1,
-    borderColor: colors.divider,
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.sm,
     fontSize: sizes.font.md,
-    color: colors.text,
   },
   addBtn: {
-    backgroundColor: colors.primary,
     borderRadius: sizes.radius.md,
     paddingHorizontal: sizes.spacing.md,
     justifyContent: 'center',
   },
   addBtnDisabled: { opacity: 0.4 },
   addBtnText: {
-    color: colors.textInverse,
     fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.semibold,
+    fontFamily: fontFamily.semibold,
   },
   customTags: {
     flexDirection: 'row',
@@ -165,7 +158,6 @@ const styles = StyleSheet.create({
   customChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.secondaryLight + '25',
     paddingHorizontal: sizes.spacing.sm,
     paddingVertical: 4,
     borderRadius: sizes.radius.full,
@@ -173,7 +165,6 @@ const styles = StyleSheet.create({
   },
   customChipText: {
     fontSize: sizes.font.xs,
-    color: colors.secondary,
-    fontWeight: sizes.fontWeight.medium,
+    fontFamily: fontFamily.medium,
   },
 });

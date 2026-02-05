@@ -13,7 +13,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { CompositeNavigationProp } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import { softShadow } from '@/shared/theme/shadows';
+import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
+import { ScreenHeader } from '@/shared/components/ScreenHeader';
+import { useResetStackOnTabFocus } from '@/shared/hooks/useResetStackOnTabFocus';
 import { useTimeline } from '@/features/record/hooks/useRecord';
 import { getEmotionColor } from '@/shared/components/EmotionSlider';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
@@ -47,65 +52,89 @@ const toSections = (items: TimelineItem[]): Section[] => {
   return Array.from(map.entries()).map(([title, data]) => ({ title, data }));
 };
 
-const RecordCard: React.FC<{ item: TimelineRecord }> = ({ item }) => {
+const RecordCard: React.FC<{ item: TimelineRecord; onPress: () => void }> = ({ item, onPress }) => {
   const { colors } = useTheme();
+  const emotionColor = item.emotionScore !== undefined ? getEmotionColor(item.emotionScore) : colors.primary;
+
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, shadowColor: colors.glassShadow }]}>
-      <View style={styles.cardHeader}>
-        {item.hospitalName && (
-          <Text style={[styles.cardHospital, { color: colors.primary }]}>{item.hospitalName}</Text>
-        )}
-        {item.emotionScore !== undefined && (
-          <View style={[styles.emotionBadge, { backgroundColor: getEmotionColor(item.emotionScore) + '22' }]}>
-            <Text style={[styles.emotionScore, { color: getEmotionColor(item.emotionScore) }]}>
-              {item.emotionScore}점
-            </Text>
-          </View>
-        )}
+    <View style={styles.timelineRow}>
+      {/* Timeline line + dot */}
+      <View style={styles.timelineLeft}>
+        <View style={[styles.timelineDot, { backgroundColor: emotionColor }]} />
+        <View style={[styles.timelineLine, { backgroundColor: colors.divider }]} />
       </View>
 
-      {item.emotionScore !== undefined && (
-        <EmotionBar score={item.emotionScore} />
-      )}
-
-      <Text style={[styles.cardContent, { color: colors.text }]} numberOfLines={3}>
-        {item.content}
-      </Text>
-
-      {item.tags && item.tags.length > 0 && (
-        <View style={styles.tagRow}>
-          {item.tags.map((tag) => (
-            <View key={tag} style={[styles.tag, { backgroundColor: colors.primaryLight + '25' }]}>
-              <Text style={[styles.tagText, { color: colors.primary }]}>#{tag}</Text>
+      <AnimatedPressable
+        onPress={onPress}
+        style={[styles.card, { backgroundColor: colors.surface }, softShadow(colors)]}
+      >
+        <View style={styles.cardHeader}>
+          {item.hospitalName && (
+            <Text style={[styles.cardHospital, { color: colors.primary }]}>{item.hospitalName}</Text>
+          )}
+          {item.emotionScore !== undefined && (
+            <View style={[styles.emotionBadge, { backgroundColor: emotionColor + '20', borderColor: emotionColor + '40' }]}>
+              <Text style={[styles.emotionScore, { color: emotionColor }]}>
+                {item.emotionScore}점
+              </Text>
             </View>
-          ))}
+          )}
         </View>
-      )}
+
+        {item.emotionScore !== undefined && (
+          <EmotionBar score={item.emotionScore} />
+        )}
+
+        <Text style={[styles.cardContent, { color: colors.text }]} numberOfLines={3}>
+          {item.content}
+        </Text>
+
+        {item.tags && item.tags.length > 0 && (
+          <View style={styles.tagRow}>
+            {item.tags.map((tag) => (
+              <View key={tag} style={[styles.tag, { backgroundColor: colors.primaryLight + '25' }]}>
+                <Text style={[styles.tagText, { color: colors.primary }]}>#{tag}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+      </AnimatedPressable>
     </View>
   );
 };
 
-const PrescriptionCard: React.FC<{ item: TimelinePrescription }> = ({ item }) => {
+const PrescriptionCard: React.FC<{ item: TimelinePrescription; onPress: () => void }> = ({ item, onPress }) => {
   const { colors } = useTheme();
   return (
-    <View style={[styles.card, styles.prescriptionCard, { backgroundColor: colors.surface, shadowColor: colors.glassShadow, borderLeftColor: colors.secondary }]}>
-      <View style={styles.cardHeader}>
-        <View style={[styles.prescriptionBadge, { backgroundColor: colors.secondaryLight + '30' }]}>
-          <Text style={[styles.prescriptionBadgeText, { color: colors.secondary }]}>처방전</Text>
+    <View style={styles.timelineRow}>
+      {/* Timeline line + dot */}
+      <View style={styles.timelineLeft}>
+        <View style={[styles.timelineDot, { backgroundColor: colors.secondary }]} />
+        <View style={[styles.timelineLine, { backgroundColor: colors.divider }]} />
+      </View>
+
+      <AnimatedPressable
+        onPress={onPress}
+        style={[styles.card, styles.prescriptionCard, { backgroundColor: colors.surface, borderLeftColor: colors.secondary }, softShadow(colors)]}
+      >
+        <View style={styles.cardHeader}>
+          <View style={[styles.prescriptionBadge, { backgroundColor: colors.secondaryLight + '30' }]}>
+            <Text style={[styles.prescriptionBadgeText, { color: colors.secondary }]}>처방전</Text>
+          </View>
+          {item.hospitalName && (
+            <Text style={[styles.cardHospital, { color: colors.primary }]}>{item.hospitalName}</Text>
+          )}
         </View>
-        {item.hospitalName && (
-          <Text style={[styles.cardHospital, { color: colors.primary }]}>{item.hospitalName}</Text>
+        <View style={styles.prescriptionMedRow}>
+          <Ionicons name="medical-outline" size={16} color={colors.text} />
+          <Text style={[styles.prescriptionMedCount, { color: colors.text }]}>약품 {item.medicationCount}종</Text>
+        </View>
+        {item.prescribedAt && (
+          <Text style={[styles.prescriptionDate, { color: colors.textSub }]}>
+            처방일: {item.prescribedAt.split('T')[0]}
+          </Text>
         )}
-      </View>
-      <View style={styles.prescriptionMedRow}>
-        <Ionicons name="medical-outline" size={16} color={colors.text} />
-        <Text style={[styles.prescriptionMedCount, { color: colors.text }]}>약품 {item.medicationCount}종</Text>
-      </View>
-      {item.prescribedAt && (
-        <Text style={[styles.prescriptionDate, { color: colors.textSub }]}>
-          처방일: {item.prescribedAt.split('T')[0]}
-        </Text>
-      )}
+      </AnimatedPressable>
     </View>
   );
 };
@@ -128,6 +157,7 @@ const EmotionBar: React.FC<{ score: number }> = ({ score }) => {
 };
 
 export const RecordTab: React.FC = () => {
+  useResetStackOnTabFocus();
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const isPremium = useAuthStore((s) => s.user?.plan === 'PREMIUM');
@@ -152,17 +182,20 @@ export const RecordTab: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>진료 기록</Text>
-        <TouchableOpacity
-          style={[styles.prescriptionBtn, { backgroundColor: colors.primary }]}
-          onPress={() => navigation.navigate('PrescriptionList' as any)}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="medkit-outline" size={16} color={colors.textInverse} />
-          <Text style={[styles.prescriptionBtnText, { color: colors.textInverse }]}>처방 목록</Text>
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader
+        variant="tab"
+        title="진료 기록"
+        rightContent={
+          <TouchableOpacity
+            style={[styles.prescriptionBtn, { backgroundColor: colors.primary }]}
+            onPress={() => navigation.navigate('PrescriptionList' as any)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="medkit-outline" size={16} color={colors.textInverse} />
+            <Text style={[styles.prescriptionBtnText, { color: colors.textInverse }]}>처방 목록</Text>
+          </TouchableOpacity>
+        }
+      />
 
       {!isPremium && (
         <View style={[styles.freeBanner, { backgroundColor: colors.warningLight, borderBottomColor: colors.warning + '30' }]}>
@@ -182,17 +215,18 @@ export const RecordTab: React.FC = () => {
         sections={sections}
         keyExtractor={(item) => `${item.type}-${item.id}`}
         renderSectionHeader={({ section }) => (
-          <View style={[styles.sectionHeader, { backgroundColor: colors.background, borderBottomColor: colors.divider }]}>
-            <Text style={[styles.sectionHeaderText, { color: colors.textSub }]}>
+          <View style={[styles.sectionHeader, { backgroundColor: colors.background }]}>
+            <View style={[styles.sectionAccent, { backgroundColor: colors.primary }]} />
+            <Text style={[styles.sectionHeaderText, { color: colors.text }]}>
               {formatSectionTitle(section.title)}
             </Text>
           </View>
         )}
         renderItem={({ item }) =>
           item.type === 'record' ? (
-            <RecordCard item={item as TimelineRecord} />
+            <RecordCard item={item as TimelineRecord} onPress={() => {}} />
           ) : (
-            <PrescriptionCard item={item as TimelinePrescription} />
+            <PrescriptionCard item={item as TimelinePrescription} onPress={() => {}} />
           )
         }
         onEndReached={handleEndReached}
@@ -215,13 +249,19 @@ export const RecordTab: React.FC = () => {
         stickySectionHeadersEnabled
       />
 
-      <TouchableOpacity
-        style={[styles.fab, { backgroundColor: colors.primary, shadowColor: colors.glassShadow }]}
+      <AnimatedPressable
         onPress={() => navigation.navigate('RecordForm', undefined)}
-        activeOpacity={0.85}
+        style={[styles.fab]}
       >
-        <Ionicons name="add" size={28} color={colors.textInverse} />
-      </TouchableOpacity>
+        <LinearGradient
+          colors={[colors.primaryVivid, colors.primaryVividDark]}
+          style={styles.fabGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <Ionicons name="add" size={30} color={colors.textInverse} />
+        </LinearGradient>
+      </AnimatedPressable>
     </SafeAreaView>
   );
 };
@@ -267,6 +307,7 @@ const styles = StyleSheet.create({
   },
   freeBannerText: {
     fontSize: sizes.font.sm,
+    fontFamily: fontFamily.regular,
     flex: 1,
   },
   freeBannerUpgrade: {
@@ -276,25 +317,55 @@ const styles = StyleSheet.create({
   },
   listContent: { paddingBottom: sizes.tabBarSafeBottom + 20 },
   emptyContainer: { flexGrow: 1 },
+
+  // Section headers with accent bar
   sectionHeader: {
     paddingHorizontal: sizes.spacing.lg,
-    paddingVertical: sizes.spacing.sm,
-    borderBottomWidth: 1,
+    paddingVertical: sizes.spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sizes.spacing.sm,
+  },
+  sectionAccent: {
+    width: 3,
+    height: 18,
+    borderRadius: 1.5,
   },
   sectionHeaderText: {
-    fontSize: sizes.font.sm,
-    fontFamily: fontFamily.semibold,
+    fontSize: sizes.font.md,
+    fontFamily: fontFamily.bold,
   },
+
+  // Timeline layout
+  timelineRow: {
+    flexDirection: 'row',
+    paddingRight: sizes.spacing.lg,
+    paddingLeft: sizes.spacing.md,
+  },
+  timelineLeft: {
+    width: 24,
+    alignItems: 'center',
+    paddingTop: sizes.spacing.md + 4,
+  },
+  timelineDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  timelineLine: {
+    width: 2,
+    flex: 1,
+    marginTop: 4,
+    borderRadius: 1,
+  },
+
+  // Cards
   card: {
-    marginHorizontal: sizes.spacing.lg,
+    flex: 1,
     marginTop: sizes.spacing.md,
-    borderRadius: sizes.radius.xl,
-    padding: sizes.spacing.md,
+    borderRadius: sizes.radius.xxl,
+    padding: sizes.spacing.lg,
     gap: sizes.spacing.sm,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 8,
-    elevation: 2,
   },
   prescriptionCard: {
     borderLeftWidth: 3,
@@ -310,9 +381,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   emotionBadge: {
-    paddingHorizontal: sizes.spacing.sm,
-    paddingVertical: 2,
+    paddingHorizontal: sizes.spacing.md,
+    paddingVertical: 4,
     borderRadius: sizes.radius.full,
+    borderWidth: 1,
   },
   emotionScore: {
     fontSize: sizes.font.xs,
@@ -329,6 +401,7 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     fontSize: sizes.font.sm,
+    fontFamily: fontFamily.regular,
     lineHeight: 20,
   },
   tagRow: {
@@ -362,9 +435,11 @@ const styles = StyleSheet.create({
   },
   prescriptionMedCount: {
     fontSize: sizes.font.md,
+    fontFamily: fontFamily.medium,
   },
   prescriptionDate: {
     fontSize: sizes.font.sm,
+    fontFamily: fontFamily.regular,
   },
   footerSpinner: { marginVertical: sizes.spacing.lg },
   emptyWrap: {
@@ -372,7 +447,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: sizes.spacing.sm,
-    paddingTop: 120,
   },
   emptyText: {
     fontSize: sizes.font.lg,
@@ -380,19 +454,23 @@ const styles = StyleSheet.create({
   },
   emptySubText: {
     fontSize: sizes.font.sm,
+    fontFamily: fontFamily.regular,
   },
+
+  // FAB
   fab: {
     position: 'absolute',
     bottom: sizes.tabBarSafeBottom + sizes.spacing.md,
     right: sizes.spacing.xl,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+  },
+  fabGradient: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 12,
-    elevation: 8,
   },
 });

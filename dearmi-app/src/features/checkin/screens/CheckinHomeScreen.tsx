@@ -13,7 +13,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { useTranslation } from 'react-i18next';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import { softShadow } from '@/shared/theme/shadows';
+import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
+import { ScreenHeader } from '@/shared/components/ScreenHeader';
+import { useResetStackOnTabFocus } from '@/shared/hooks/useResetStackOnTabFocus';
 import { getEmotionColor, useEmotionLabel } from '@/shared/components/EmotionSlider';
 import { EmotionGraph } from '@/features/checkin/components/EmotionGraph';
 import { DailyCheckinForm } from '@/features/checkin/components/DailyCheckinForm';
@@ -51,6 +56,7 @@ const formatDateLabel = (dateStr: string) => {
 };
 
 export const CheckinHomeScreen: React.FC = () => {
+  useResetStackOnTabFocus();
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const { t } = useTranslation('checkin');
@@ -89,6 +95,21 @@ export const CheckinHomeScreen: React.FC = () => {
   const selectedCheckin = checkinMap.get(selectedDate) ?? null;
   const isToday = selectedDate === todayStr;
 
+  const dynamicStyles = useMemo(() => ({
+    dateItemToday: {
+      borderColor: colors.primary + '50',
+      borderWidth: 2,
+    },
+    dateItemHasCheckin: {
+      borderColor: colors.primary,
+    },
+    dateItemSelected: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+      ...softShadow(colors),
+    },
+  }), [colors]);
+
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     header: {
@@ -104,28 +125,21 @@ export const CheckinHomeScreen: React.FC = () => {
     // 날짜 바
     dateBar: {
       paddingHorizontal: sizes.spacing.md,
-      paddingBottom: sizes.spacing.xs,
+      paddingBottom: sizes.spacing.sm,
       gap: sizes.spacing.sm,
     },
     dateItem: {
-      width: 46,
-      height: 46,
-      borderRadius: 23,
+      width: 48,
+      height: 48,
+      borderRadius: sizes.radius.full,
       alignItems: 'center',
       justifyContent: 'center',
       borderWidth: 1.5,
       borderColor: colors.divider,
     },
-    dateItemHasCheckin: {
-      borderColor: colors.primary,
-    },
-    dateItemSelected: {
-      backgroundColor: colors.primary,
-      borderColor: colors.primary,
-    },
     dateCol: {
       alignItems: 'center',
-      gap: 3,
+      gap: 4,
     },
     dateDayName: {
       fontSize: 10,
@@ -146,8 +160,8 @@ export const CheckinHomeScreen: React.FC = () => {
     // 내용
     content: {
       paddingHorizontal: sizes.spacing.lg,
-      paddingTop: sizes.spacing.xs,
-      gap: sizes.spacing.md,
+      paddingTop: sizes.spacing.sm,
+      gap: sizes.spacing.lg,
       paddingBottom: sizes.tabBarSafeBottom + 16,
     },
     selectedDateLabel: {
@@ -158,12 +172,10 @@ export const CheckinHomeScreen: React.FC = () => {
     // 체크인 카드
     checkinCard: {
       backgroundColor: colors.surface,
-      borderRadius: sizes.radius.xl,
-      padding: sizes.spacing.lg,
+      borderRadius: sizes.radius.xxl,
+      padding: 20,
       gap: sizes.spacing.md,
       alignItems: 'center',
-      borderWidth: 1,
-      borderColor: colors.divider,
     },
     emptyText: {
       fontSize: sizes.font.md,
@@ -171,11 +183,10 @@ export const CheckinHomeScreen: React.FC = () => {
       color: colors.textSub,
       textAlign: 'center',
     },
-    writeBtn: {
+    writeBtnGradient: {
       width: '100%',
       height: sizes.buttonHeight.md,
-      backgroundColor: colors.primary,
-      borderRadius: sizes.radius.lg,
+      borderRadius: sizes.radius.full,
       alignItems: 'center',
       justifyContent: 'center',
       marginTop: sizes.spacing.sm,
@@ -194,17 +205,26 @@ export const CheckinHomeScreen: React.FC = () => {
     scoreRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: sizes.spacing.sm,
+      gap: sizes.spacing.md,
     },
-    scoreBadge: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+    // Emotion circle — larger with ring
+    emotionCircleOuter: {
+      width: 52,
+      height: 52,
+      borderRadius: 26,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 2.5,
+    },
+    emotionCircleInner: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
       alignItems: 'center',
       justifyContent: 'center',
     },
     scoreBadgeText: {
-      fontSize: sizes.font.md,
+      fontSize: sizes.font.lg,
       fontFamily: fontFamily.bold,
       color: '#FFFFFF',
     },
@@ -219,10 +239,10 @@ export const CheckinHomeScreen: React.FC = () => {
       gap: sizes.spacing.xs,
     },
     tag: {
-      paddingHorizontal: sizes.spacing.sm,
-      paddingVertical: 4,
+      paddingHorizontal: sizes.spacing.md,
+      paddingVertical: 6,
       borderRadius: sizes.radius.full,
-      backgroundColor: colors.primaryLight + '20',
+      backgroundColor: colors.primaryMuted,
     },
     tagText: {
       fontSize: sizes.font.xs,
@@ -232,6 +252,7 @@ export const CheckinHomeScreen: React.FC = () => {
     memoText: {
       width: '100%',
       fontSize: sizes.font.md,
+      fontFamily: fontFamily.regular,
       color: colors.text,
       lineHeight: 22,
     },
@@ -275,10 +296,8 @@ export const CheckinHomeScreen: React.FC = () => {
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: colors.surface,
-      borderRadius: sizes.radius.lg,
+      borderRadius: sizes.radius.xxl,
       padding: sizes.spacing.md,
-      borderWidth: 1,
-      borderColor: colors.divider,
     },
     historyLinkText: {
       fontSize: sizes.font.md,
@@ -293,10 +312,7 @@ export const CheckinHomeScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* 헤더 */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>{t('title')}</Text>
-      </View>
+      <ScreenHeader variant="tab" title={t('title')} />
 
       {/* 날짜 스크롤 바 */}
       <FlatList
@@ -314,6 +330,7 @@ export const CheckinHomeScreen: React.FC = () => {
           const isSelected = item === selectedDate;
           const hasCheckin = checkinMap.has(item);
           const isSunday = d.getDay() === 0;
+          const isItemToday = item === todayStr;
 
           return (
             <View style={styles.dateCol}>
@@ -326,8 +343,9 @@ export const CheckinHomeScreen: React.FC = () => {
               <TouchableOpacity
                 style={[
                   styles.dateItem,
-                  hasCheckin && !isSelected && styles.dateItemHasCheckin,
-                  isSelected && styles.dateItemSelected,
+                  isItemToday && !isSelected && dynamicStyles.dateItemToday,
+                  hasCheckin && !isSelected && dynamicStyles.dateItemHasCheckin,
+                  isSelected && dynamicStyles.dateItemSelected,
                 ]}
                 onPress={() => setSelectedDate(item)}
                 activeOpacity={0.7}
@@ -354,19 +372,30 @@ export const CheckinHomeScreen: React.FC = () => {
         </Text>
 
         {/* 체크인 카드 */}
-        <View style={styles.checkinCard}>
+        <AnimatedPressable
+          onPress={() => selectedCheckin ? setShowForm(true) : undefined}
+          disabled={!selectedCheckin}
+          style={[styles.checkinCard, softShadow(colors)]}
+        >
           {!selectedCheckin ? (
             <>
               <Ionicons name="create-outline" size={36} color={colors.textDisabled} />
               <Text style={styles.emptyText}>기록이 없어요</Text>
               <TouchableOpacity
-                style={styles.writeBtn}
                 onPress={() => setShowForm(true)}
                 activeOpacity={0.85}
+                style={{ width: '100%' }}
               >
-                <Text style={styles.writeBtnText}>
-                  {isToday ? t('write_today') : `${formatDateLabel(selectedDate)} 기록하기`}
-                </Text>
+                <LinearGradient
+                  colors={[colors.primaryVivid, colors.primaryVividDark]}
+                  style={styles.writeBtnGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Text style={styles.writeBtnText}>
+                    {isToday ? t('write_today') : `${formatDateLabel(selectedDate)} 기록하기`}
+                  </Text>
+                </LinearGradient>
               </TouchableOpacity>
             </>
           ) : (
@@ -374,9 +403,19 @@ export const CheckinHomeScreen: React.FC = () => {
               <View style={styles.cardTop}>
                 <View style={styles.scoreRow}>
                   <View
-                    style={[styles.scoreBadge, { backgroundColor: getEmotionColor(selectedCheckin.emotionScore) }]}
+                    style={[
+                      styles.emotionCircleOuter,
+                      {
+                        borderColor: getEmotionColor(selectedCheckin.emotionScore) + '40',
+                        ...softShadow(colors),
+                      },
+                    ]}
                   >
-                    <Text style={styles.scoreBadgeText}>{selectedCheckin.emotionScore}</Text>
+                    <View
+                      style={[styles.emotionCircleInner, { backgroundColor: getEmotionColor(selectedCheckin.emotionScore) }]}
+                    >
+                      <Text style={styles.scoreBadgeText}>{selectedCheckin.emotionScore}</Text>
+                    </View>
                   </View>
                   <Text style={[styles.scoreLabel, { color: getEmotionColor(selectedCheckin.emotionScore) }]}>
                     {emotionLabel(selectedCheckin.emotionScore)}
@@ -426,7 +465,7 @@ export const CheckinHomeScreen: React.FC = () => {
               </View>
             </>
           )}
-        </View>
+        </AnimatedPressable>
 
         {/* 감정 그래프 */}
         <View style={styles.section}>
@@ -435,14 +474,13 @@ export const CheckinHomeScreen: React.FC = () => {
         </View>
 
         {/* 전체 기록 보기 */}
-        <TouchableOpacity
-          style={styles.historyLink}
+        <AnimatedPressable
           onPress={() => navigation.navigate('CheckinHistory')}
-          activeOpacity={0.7}
+          style={[styles.historyLink, softShadow(colors)]}
         >
           <Text style={styles.historyLinkText}>{t('view_all')}</Text>
           <Ionicons name="chevron-forward" size={16} color={colors.primary} />
-        </TouchableOpacity>
+        </AnimatedPressable>
       </ScrollView>
 
       {/* 체크인 폼 모달 */}

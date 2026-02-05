@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { useCreatePrepNote, useUpdatePrepNote, usePrepNotes } from '@/features/prepnote/hooks/usePrepNote';
 import { useRecentSchedules } from '@/features/record/hooks/useRecord';
 import type { ScheduleStackParamList } from '@/navigation/ScheduleNavigator';
@@ -80,28 +81,6 @@ export const PrepNoteFormScreen: React.FC = () => {
 
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    header: {
-      height: sizes.headerHeight,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: sizes.spacing.lg,
-      backgroundColor: colors.surface,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.divider,
-    },
-    headerCancel: { fontSize: sizes.font.md, color: colors.textSub },
-    headerTitle: {
-      fontSize: sizes.font.lg,
-      fontFamily: fontFamily.bold,
-      color: colors.text,
-    },
-    headerSave: {
-      fontSize: sizes.font.md,
-      fontFamily: fontFamily.semibold,
-      color: colors.primary,
-    },
-    headerSaveDisabled: { opacity: 0.4 },
     content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg, paddingBottom: 40 },
     field: { gap: sizes.spacing.sm },
     label: {
@@ -163,19 +142,13 @@ export const PrepNoteFormScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <Text style={styles.headerCancel}>취소</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>
-          {isEdit ? '메모 수정' : '준비 메모 작성'}
-        </Text>
-        <TouchableOpacity onPress={handleSave} disabled={isPending} hitSlop={12}>
-          <Text style={[styles.headerSave, isPending && styles.headerSaveDisabled]}>
-            {isPending ? '저장 중…' : '저장'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader
+        variant="form"
+        title={isEdit ? '메모 수정' : '준비 메모 작성'}
+        onCancel={() => navigation.goBack()}
+        onSave={handleSave}
+        saveDisabled={isPending}
+      />
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {/* 일정 연결 (수정 모드에서는 비활성) */}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 
 /** 키워드 하이라이팅 */
 export const HighlightText: React.FC<{
@@ -9,6 +9,8 @@ export const HighlightText: React.FC<{
   style?: object;
   numberOfLines?: number;
 }> = ({ text, keyword, style, numberOfLines }) => {
+  const { colors } = useTheme();
+
   if (!keyword.trim()) {
     return (
       <Text style={style} numberOfLines={numberOfLines}>
@@ -24,7 +26,7 @@ export const HighlightText: React.FC<{
     <Text style={style} numberOfLines={numberOfLines}>
       {parts.map((part, i) =>
         part.toLowerCase() === keyword.toLowerCase() ? (
-          <Text key={i} style={highlightStyle.mark}>
+          <Text key={i} style={{ color: colors.primary, fontWeight: '700' as const, backgroundColor: colors.primary + '18' }}>
             {part}
           </Text>
         ) : (
@@ -35,21 +37,16 @@ export const HighlightText: React.FC<{
   );
 };
 
-const highlightStyle = StyleSheet.create({
-  mark: {
-    color: colors.primary,
-    fontWeight: '700' as const,
-    backgroundColor: colors.primary + '18',
-  },
-});
-
 /** 섹션 헤더 */
-export const SectionHeader: React.FC<{ title: string; count: number }> = ({ title, count }) => (
-  <View style={styles.sectionHeader}>
-    <Text style={styles.sectionTitle}>{title}</Text>
-    <Text style={styles.sectionCount}>{count}건</Text>
-  </View>
-);
+export const SectionHeader: React.FC<{ title: string; count: number }> = ({ title, count }) => {
+  const { colors } = useTheme();
+  return (
+    <View style={styles.sectionHeader}>
+      <Text style={[styles.sectionTitle, { color: colors.textSub }]}>{title}</Text>
+      <Text style={[styles.sectionCount, { color: colors.textDisabled }]}>{count}건</Text>
+    </View>
+  );
+};
 
 /** 개별 결과 카드 */
 export const ResultCard: React.FC<{
@@ -57,17 +54,24 @@ export const ResultCard: React.FC<{
   keyword: string;
   meta?: string;
   onPress: () => void;
-}> = ({ content, keyword, meta, onPress }) => (
-  <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.75}>
-    <HighlightText
-      text={content}
-      keyword={keyword}
-      style={styles.cardContent}
-      numberOfLines={3}
-    />
-    {meta && <Text style={styles.cardMeta}>{meta}</Text>}
-  </TouchableOpacity>
-);
+}> = ({ content, keyword, meta, onPress }) => {
+  const { colors } = useTheme();
+  return (
+    <TouchableOpacity
+      style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.divider }]}
+      onPress={onPress}
+      activeOpacity={0.75}
+    >
+      <HighlightText
+        text={content}
+        keyword={keyword}
+        style={[styles.cardContent, { color: colors.text }]}
+        numberOfLines={3}
+      />
+      {meta && <Text style={[styles.cardMeta, { color: colors.textDisabled }]}>{meta}</Text>}
+    </TouchableOpacity>
+  );
+};
 
 const styles = StyleSheet.create({
   sectionHeader: {
@@ -80,31 +84,25 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: sizes.font.sm,
-    fontWeight: sizes.fontWeight.bold,
-    color: colors.textSub,
+    fontFamily: fontFamily.bold,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   sectionCount: {
     fontSize: sizes.font.xs,
-    color: colors.textDisabled,
   },
   card: {
-    backgroundColor: colors.surface,
     borderRadius: sizes.radius.md,
     padding: sizes.spacing.md,
     borderWidth: 1,
-    borderColor: colors.divider,
     marginBottom: sizes.spacing.sm,
     gap: sizes.spacing.xs,
   },
   cardContent: {
     fontSize: sizes.font.md,
-    color: colors.text,
     lineHeight: 22,
   },
   cardMeta: {
     fontSize: sizes.font.xs,
-    color: colors.textDisabled,
   },
 });

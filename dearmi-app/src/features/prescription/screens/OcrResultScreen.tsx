@@ -11,11 +11,11 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { CompositeNavigationProp } from '@react-navigation/native';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import {
   usePrescriptionDetail,
   useSavePrescription,
@@ -274,29 +274,25 @@ export const OcrResultScreen: React.FC = () => {
   return (
     <SafeAreaView style={[staticStyles.container, { backgroundColor: colors.background }]}>
       {/* 헤더 */}
-      <View style={staticStyles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <Ionicons name="chevron-back" size={24} color={colors.primary} />
-        </TouchableOpacity>
-        <Text style={[staticStyles.headerTitle, { fontFamily: fontFamily.bold, color: colors.text }]}>
-          OCR 결과
-        </Text>
-        {showEditor ? (
-          <TouchableOpacity onPress={handleSave} disabled={isSaving} hitSlop={12}>
-            <Text
-              style={[
-                staticStyles.saveBtn,
-                { fontFamily: fontFamily.semibold, color: colors.primary },
-                isSaving && staticStyles.saveBtnDisabled,
-              ]}
-            >
-              {isSaving ? '저장 중…' : '저장'}
-            </Text>
-          </TouchableOpacity>
-        ) : (
-          <View style={{ width: 48 }} />
-        )}
-      </View>
+      <ScreenHeader
+        variant="back"
+        title="OCR 결과"
+        rightContent={
+          showEditor ? (
+            <TouchableOpacity onPress={handleSave} disabled={isSaving} hitSlop={12}>
+              <Text
+                style={[
+                  staticStyles.saveBtn,
+                  { fontFamily: fontFamily.semibold, color: colors.primary },
+                  isSaving && staticStyles.saveBtnDisabled,
+                ]}
+              >
+                {isSaving ? '저장 중…' : '저장'}
+              </Text>
+            </TouchableOpacity>
+          ) : undefined
+        }
+      />
 
       {/* 본문 */}
       {isLoading || ocrStatus === 'PENDING' || ocrStatus === 'PROCESSING' ? (
@@ -371,17 +367,6 @@ export const OcrResultScreen: React.FC = () => {
 
 const staticStyles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    height: sizes.headerHeight,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: sizes.spacing.lg,
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: sizes.font.lg,
-  },
   saveBtn: {
     fontSize: sizes.font.md,
   },

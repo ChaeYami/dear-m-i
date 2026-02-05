@@ -2,12 +2,10 @@ import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-
   LayoutAnimation,
   Platform,
   UIManager,
@@ -17,6 +15,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import { softShadow } from '@/shared/theme/shadows';
+import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
 import {
   usePagedPrescriptions,
   useDeletePrescription,
@@ -42,26 +42,42 @@ const MedicationRow: React.FC<{
   onPress: () => void;
   colors: ReturnType<typeof useTheme>['colors'];
 }> = ({ med, onPress, colors }) => (
-  <TouchableOpacity
-    style={[
-      staticStyles.medRow,
-      { borderBottomColor: colors.divider },
-    ]}
+  <AnimatedPressable
     onPress={onPress}
-    activeOpacity={0.75}
+    style={{
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: sizes.spacing.md,
+      paddingHorizontal: sizes.spacing.lg,
+      gap: sizes.spacing.sm,
+    }}
   >
-    <View style={staticStyles.medRowLeft}>
-      <Text style={[staticStyles.medName, { fontFamily: fontFamily.medium, color: colors.text }]}>
+    <View style={{
+      width: 36,
+      height: 36,
+      borderRadius: 12,
+      backgroundColor: colors.primaryMuted,
+      alignItems: 'center',
+      justifyContent: 'center',
+    }}>
+      <Ionicons name="medical-outline" size={16} color={colors.primary} />
+    </View>
+    <View style={{ flex: 1 }}>
+      <Text style={{ fontFamily: fontFamily.medium, fontSize: sizes.font.md, color: colors.text }}>
         {med.medicationName}
       </Text>
-      <Text style={[staticStyles.medSub, { color: colors.textSub }]}>
+      <Text style={{ fontSize: sizes.font.xs, fontFamily: fontFamily.regular, color: colors.textSub, marginTop: 2 }}>
         {[med.dosage, med.frequency, med.durationDays !== undefined ? `${med.durationDays}일` : undefined]
           .filter(Boolean)
           .join(' · ') || '정보 없음'}
       </Text>
     </View>
-    <Ionicons name="chevron-forward" size={18} color={colors.textDisabled} />
-  </TouchableOpacity>
+    <Ionicons name="chevron-forward" size={16} color={colors.textDisabled} />
+  </AnimatedPressable>
+);
+
+const MedicationDivider: React.FC<{ colors: any }> = ({ colors }) => (
+  <View style={{ height: 1, backgroundColor: colors.divider, marginHorizontal: sizes.spacing.lg }} />
 );
 
 const PrescriptionCard: React.FC<{
@@ -72,40 +88,66 @@ const PrescriptionCard: React.FC<{
   onDelete: () => void;
   onViewOcr: () => void;
   colors: ReturnType<typeof useTheme>['colors'];
-}> = ({ item, expanded, onToggle, onMedPress, onDelete, onViewOcr, colors }) => {
-  const OCR_STATUS_CONFIG: Record<OcrStatus, { label: string; color: string }> = {
-    PENDING: { label: '분석 대기', color: colors.warning },
-    PROCESSING: { label: '분석 중', color: colors.primary },
-    COMPLETED: { label: '분석 완료', color: colors.success },
-    FAILED: { label: '인식 실패', color: colors.error },
+  shadow: object;
+}> = ({ item, expanded, onToggle, onMedPress, onDelete, onViewOcr, colors, shadow }) => {
+  const OCR_STATUS_CONFIG: Record<OcrStatus, { label: string; color: string; bg: string }> = {
+    PENDING: { label: '분석 대기', color: colors.warning, bg: colors.warningLight },
+    PROCESSING: { label: '분석 중', color: colors.primary, bg: colors.primaryMuted },
+    COMPLETED: { label: '분석 완료', color: colors.success, bg: colors.successLight },
+    FAILED: { label: '인식 실패', color: colors.error, bg: colors.errorLight },
   };
 
   const statusCfg = item.ocrStatus ? OCR_STATUS_CONFIG[item.ocrStatus] : null;
   const isPending = item.ocrStatus === 'PENDING' || item.ocrStatus === 'PROCESSING';
 
   return (
-    <View style={[staticStyles.card, { backgroundColor: colors.surface, borderColor: colors.divider }]}>
-      <TouchableOpacity style={staticStyles.cardHeader} onPress={onToggle} activeOpacity={0.8}>
-        <View style={staticStyles.cardHeaderLeft}>
-          <Text style={[staticStyles.cardDate, { color: colors.textSub }]}>{formatDate(item.prescribedAt)}</Text>
-          <Text style={[staticStyles.cardHospital, { fontFamily: fontFamily.semibold, color: colors.text }]}>
+    <AnimatedPressable onPress={onToggle} style={[
+      {
+        backgroundColor: colors.surface,
+        borderRadius: sizes.radius.xxl,
+        overflow: 'hidden',
+      },
+      shadow,
+    ]}>
+      {/* Card header */}
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: sizes.spacing.lg,
+        gap: sizes.spacing.sm,
+      }}>
+        <View style={{ flex: 1, gap: sizes.spacing.xs }}>
+          <Text style={{ fontSize: sizes.font.sm, fontFamily: fontFamily.regular, color: colors.textSub }}>
+            {formatDate(item.prescribedAt)}
+          </Text>
+          <Text style={{ fontFamily: fontFamily.semibold, fontSize: sizes.font.md, color: colors.text }}>
             {item.hospitalName ?? '병원명 미상'}
           </Text>
         </View>
-        <View style={staticStyles.cardHeaderRight}>
+        <View style={{ alignItems: 'flex-end', gap: sizes.spacing.xs }}>
           {statusCfg && (
-            <View style={[staticStyles.statusBadge, { backgroundColor: statusCfg.color + '20' }]}>
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: statusCfg.bg,
+              paddingHorizontal: 12,
+              paddingVertical: 4,
+              borderRadius: sizes.radius.full,
+              gap: 4,
+            }}>
               {isPending && (
-                <ActivityIndicator size="small" color={statusCfg.color} style={staticStyles.statusSpinner} />
+                <ActivityIndicator size="small" color={statusCfg.color} style={{ transform: [{ scale: 0.7 }] }} />
               )}
-              <Text style={[staticStyles.statusText, { fontFamily: fontFamily.semibold, color: statusCfg.color }]}>
+              <Text style={{ fontFamily: fontFamily.semibold, fontSize: sizes.font.xs, color: statusCfg.color }}>
                 {statusCfg.label}
               </Text>
             </View>
           )}
-          <View style={staticStyles.medCountRow}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
             <Ionicons name="medical-outline" size={14} color={colors.textSub} />
-            <Text style={[staticStyles.medCount, { color: colors.textSub }]}>{item.medications.length}종</Text>
+            <Text style={{ fontSize: sizes.font.xs, fontFamily: fontFamily.regular, color: colors.textSub }}>
+              {item.medications.length}종
+            </Text>
           </View>
           <Ionicons
             name={expanded ? 'chevron-up' : 'chevron-down'}
@@ -113,54 +155,79 @@ const PrescriptionCard: React.FC<{
             color={colors.textDisabled}
           />
         </View>
-      </TouchableOpacity>
+      </View>
 
+      {/* Accordion content */}
       {expanded && (
-        <View style={[staticStyles.accordion, { borderTopColor: colors.divider }]}>
+        <View style={{ borderTopWidth: 1, borderTopColor: colors.divider }}>
           {item.medications.length === 0 ? (
-            <Text style={[staticStyles.noMedText, { color: colors.textDisabled }]}>
+            <Text style={{
+              fontSize: sizes.font.sm,
+              fontFamily: fontFamily.regular,
+              color: colors.textDisabled,
+              textAlign: 'center',
+              paddingVertical: sizes.spacing.lg,
+            }}>
               등록된 약품이 없습니다
             </Text>
           ) : (
-            item.medications.map((med) => (
-              <MedicationRow
-                key={med.id}
-                med={med}
-                onPress={() => onMedPress(med)}
-                colors={colors}
-              />
+            item.medications.map((med, idx) => (
+              <React.Fragment key={med.id}>
+                <MedicationRow
+                  med={med}
+                  onPress={() => onMedPress(med)}
+                  colors={colors}
+                />
+                {idx < item.medications.length - 1 && <MedicationDivider colors={colors} />}
+              </React.Fragment>
             ))
           )}
 
-          <View style={[staticStyles.cardActions, { backgroundColor: colors.background }]}>
+          {/* Action buttons */}
+          <View style={{
+            flexDirection: 'row',
+            padding: sizes.spacing.md,
+            gap: sizes.spacing.sm,
+            backgroundColor: colors.background,
+            borderBottomLeftRadius: sizes.radius.xxl,
+            borderBottomRightRadius: sizes.radius.xxl,
+          }}>
             {(item.ocrStatus === 'FAILED' || item.ocrStatus === 'COMPLETED') && (
               <TouchableOpacity
-                style={[
-                  staticStyles.actionBtn,
-                  { backgroundColor: colors.surface, borderColor: colors.divider },
-                ]}
+                style={{
+                  flex: 1,
+                  paddingVertical: sizes.spacing.sm + 2,
+                  borderRadius: sizes.radius.full,
+                  alignItems: 'center',
+                  backgroundColor: colors.surface,
+                  borderWidth: 1,
+                  borderColor: colors.divider,
+                }}
                 onPress={onViewOcr}
               >
-                <Text style={[staticStyles.actionBtnText, { fontFamily: fontFamily.medium, color: colors.primary }]}>
+                <Text style={{ fontFamily: fontFamily.medium, fontSize: sizes.font.sm, color: colors.primary }}>
                   OCR 결과 보기
                 </Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity
-              style={[
-                staticStyles.actionBtn,
-                { backgroundColor: colors.surface, borderColor: colors.error + '55' },
-              ]}
+              style={{
+                flex: 1,
+                paddingVertical: sizes.spacing.sm + 2,
+                borderRadius: sizes.radius.full,
+                alignItems: 'center',
+                backgroundColor: colors.errorLight,
+              }}
               onPress={onDelete}
             >
-              <Text style={[staticStyles.deleteActionBtnText, { fontFamily: fontFamily.medium, color: colors.error }]}>
+              <Text style={{ fontFamily: fontFamily.medium, fontSize: sizes.font.sm, color: colors.error }}>
                 삭제
               </Text>
             </TouchableOpacity>
           </View>
         </View>
       )}
-    </View>
+    </AnimatedPressable>
   );
 };
 
@@ -172,6 +239,7 @@ export const PrescriptionTab: React.FC = () => {
   const { mutate: deletePrescription } = useDeletePrescription();
 
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+  const shadow = softShadow(colors);
 
   const prescriptions = useMemo(
     () => data?.pages.flatMap((p) => p.content) ?? [],
@@ -197,12 +265,23 @@ export const PrescriptionTab: React.FC = () => {
   if (isLoading) return <LoadingSpinner fullscreen />;
 
   return (
-    <SafeAreaView style={[staticStyles.container, { backgroundColor: colors.background }]}>
-      <View style={staticStyles.header}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={{
+        height: sizes.headerHeight,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: sizes.spacing.lg,
+      }}>
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
           <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={[staticStyles.headerTitle, { fontFamily: fontFamily.bold, color: colors.text }]}>
+        <Text style={{
+          flex: 1,
+          textAlign: 'center',
+          fontSize: sizes.font.xl,
+          fontFamily: fontFamily.bold,
+          color: colors.text,
+        }}>
           처방 목록
         </Text>
         <View style={{ width: 24 }} />
@@ -212,7 +291,9 @@ export const PrescriptionTab: React.FC = () => {
         data={prescriptions}
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={
-          prescriptions.length === 0 ? staticStyles.emptyContainer : staticStyles.listContent
+          prescriptions.length === 0
+            ? { flexGrow: 1 }
+            : { padding: sizes.spacing.lg, gap: sizes.spacing.md, paddingBottom: sizes.tabBarSafeBottom + 20 }
         }
         renderItem={({ item }) => (
           <PrescriptionCard
@@ -230,6 +311,7 @@ export const PrescriptionTab: React.FC = () => {
               navigation.navigate('OcrResult', { prescriptionId: item.id })
             }
             colors={colors}
+            shadow={shadow}
           />
         )}
         onEndReached={() => {
@@ -238,15 +320,21 @@ export const PrescriptionTab: React.FC = () => {
         onEndReachedThreshold={0.3}
         ListFooterComponent={
           isFetchingNextPage ? (
-            <ActivityIndicator color={colors.primary} style={staticStyles.footerSpinner} />
+            <ActivityIndicator color={colors.primary} style={{ marginVertical: sizes.spacing.lg }} />
           ) : null
         }
         ListEmptyComponent={
-          <View style={staticStyles.emptyWrap}>
-            <Text style={[staticStyles.emptyText, { fontFamily: fontFamily.semibold, color: colors.textSub }]}>
+          <View style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: sizes.spacing.sm,
+            paddingTop: 120,
+          }}>
+            <Text style={{ fontSize: sizes.font.lg, fontFamily: fontFamily.semibold, color: colors.textSub }}>
               처방전이 없어요
             </Text>
-            <Text style={[staticStyles.emptySubText, { color: colors.textDisabled }]}>
+            <Text style={{ fontSize: sizes.font.sm, fontFamily: fontFamily.regular, color: colors.textDisabled }}>
               처방전을 촬영해서 등록해보세요
             </Text>
           </View>
@@ -254,7 +342,22 @@ export const PrescriptionTab: React.FC = () => {
       />
 
       <TouchableOpacity
-        style={[staticStyles.fab, { backgroundColor: colors.primary, shadowColor: colors.glassShadow }]}
+        style={{
+          position: 'absolute',
+          bottom: sizes.tabBarSafeBottom + sizes.spacing.md,
+          right: sizes.spacing.xl,
+          width: 56,
+          height: 56,
+          borderRadius: 28,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: colors.primary,
+          shadowColor: colors.glassShadow,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 1,
+          shadowRadius: 12,
+          elevation: 8,
+        }}
         onPress={() => navigation.navigate('PrescriptionUpload')}
         activeOpacity={0.85}
       >
@@ -263,112 +366,3 @@ export const PrescriptionTab: React.FC = () => {
     </SafeAreaView>
   );
 };
-
-const staticStyles = StyleSheet.create({
-  container: { flex: 1 },
-  header: {
-    height: sizes.headerHeight,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: sizes.spacing.lg,
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: sizes.font.xl,
-  },
-  listContent: { padding: sizes.spacing.lg, gap: sizes.spacing.md, paddingBottom: sizes.tabBarSafeBottom + 20 },
-  emptyContainer: { flexGrow: 1 },
-  card: {
-    borderRadius: sizes.radius.lg,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: sizes.spacing.md,
-    gap: sizes.spacing.sm,
-  },
-  cardHeaderLeft: { flex: 1, gap: sizes.spacing.xs },
-  cardDate: { fontSize: sizes.font.sm },
-  cardHospital: {
-    fontSize: sizes.font.md,
-  },
-  cardHeaderRight: { alignItems: 'flex-end', gap: sizes.spacing.xs },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: sizes.spacing.sm,
-    paddingVertical: 2,
-    borderRadius: sizes.radius.full,
-    gap: 4,
-  },
-  statusSpinner: { transform: [{ scale: 0.7 }] },
-  statusText: { fontSize: sizes.font.xs },
-  medCountRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  medCount: { fontSize: sizes.font.xs },
-  accordion: {
-    borderTopWidth: 1,
-  },
-  medRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: sizes.spacing.md,
-    paddingHorizontal: sizes.spacing.md,
-    borderBottomWidth: 1,
-    gap: sizes.spacing.sm,
-  },
-  medRowLeft: { flex: 1 },
-  medName: {
-    fontSize: sizes.font.md,
-  },
-  medSub: { fontSize: sizes.font.xs, marginTop: 2 },
-  noMedText: {
-    fontSize: sizes.font.sm,
-    textAlign: 'center',
-    paddingVertical: sizes.spacing.lg,
-  },
-  cardActions: {
-    flexDirection: 'row',
-    padding: sizes.spacing.sm,
-    gap: sizes.spacing.sm,
-  },
-  actionBtn: {
-    flex: 1,
-    paddingVertical: sizes.spacing.sm,
-    borderRadius: sizes.radius.md,
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  actionBtnText: {
-    fontSize: sizes.font.sm,
-  },
-  deleteActionBtnText: { fontSize: sizes.font.sm },
-  footerSpinner: { marginVertical: sizes.spacing.lg },
-  emptyWrap: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: sizes.spacing.sm,
-    paddingTop: 120,
-  },
-  emptyText: {
-    fontSize: sizes.font.lg,
-  },
-  emptySubText: { fontSize: sizes.font.sm },
-  fab: {
-    position: 'absolute',
-    bottom: sizes.tabBarSafeBottom + sizes.spacing.md,
-    right: sizes.spacing.xl,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-});

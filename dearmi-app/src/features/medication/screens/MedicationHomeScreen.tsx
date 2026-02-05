@@ -10,11 +10,16 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import { softShadow, floatingShadow } from '@/shared/theme/shadows';
+import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
 import { useTodayMedication, useCheckMedication, useDeleteMedicationSchedule } from '@/features/medication/hooks/useMedication';
 import { MedicationCard, type SlotItem } from '@/features/medication/components/MedicationCard';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
+import { ScreenHeader } from '@/shared/components/ScreenHeader';
+import { useResetStackOnTabFocus } from '@/shared/hooks/useResetStackOnTabFocus';
 import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
 import type { TimeSlotType } from '@/shared/types/domain.types';
 
@@ -28,6 +33,7 @@ const todayStr = () => {
 };
 
 export const MedicationHomeScreen: React.FC = () => {
+  useResetStackOnTabFocus();
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const { data, isLoading } = useTodayMedication();
@@ -133,27 +139,27 @@ export const MedicationHomeScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* 헤더 */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>복약 관리</Text>
-        {hasAnySlots ? (
-          <TouchableOpacity
-            onPress={() => {
-              if (isEditMode) {
-                setIsEditMode(false);
-                setSelectedIds(new Set());
-              } else {
-                setIsEditMode(true);
-              }
-            }}
-            hitSlop={8}
-          >
-            <Text style={styles.editBtn}>{isEditMode ? '완료' : '편집'}</Text>
-          </TouchableOpacity>
-        ) : (
-          <View style={{ width: 48 }} />
-        )}
-      </View>
+      <ScreenHeader
+        variant="tab"
+        title="복약 관리"
+        rightContent={
+          hasAnySlots ? (
+            <TouchableOpacity
+              onPress={() => {
+                if (isEditMode) {
+                  setIsEditMode(false);
+                  setSelectedIds(new Set());
+                } else {
+                  setIsEditMode(true);
+                }
+              }}
+              hitSlop={8}
+            >
+              <Text style={styles.editBtn}>{isEditMode ? '완료' : '편집'}</Text>
+            </TouchableOpacity>
+          ) : undefined
+        }
+      />
 
       {/* 편집 모드: 전체 선택 + 삭제 바 */}
       {isEditMode && (
@@ -198,13 +204,24 @@ export const MedicationHomeScreen: React.FC = () => {
             </Text>
           </View>
           <View style={styles.progressBg}>
-            <View style={[styles.progressFill, { width: `${Math.round(completionRate * 100)}%` }]} />
+            <LinearGradient
+              colors={[colors.secondary, colors.secondaryLight]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={[
+                styles.progressFill,
+                { width: `${Math.round(completionRate * 100)}%` },
+              ]}
+            />
           </View>
-          <Text style={styles.summaryLabel}>
+          <Text style={styles.summaryPercent}>
             {totalSlots === 0
               ? '오늘 복약 일정이 없습니다'
-              : `${Math.round(completionRate * 100)}% 완료`}
+              : `${Math.round(completionRate * 100)}%`}
           </Text>
+          {totalSlots > 0 && (
+            <Text style={styles.summaryLabel}>완료</Text>
+          )}
         </View>
 
         {/* 시간대별 카드 */}
@@ -216,33 +233,36 @@ export const MedicationHomeScreen: React.FC = () => {
         ) : (
           TIME_SLOTS.map((slot) =>
             slotGroups[slot].length > 0 ? (
-              <MedicationCard
+              <AnimatedPressable
                 key={slot}
-                timeSlot={slot}
-                items={slotGroups[slot]}
-                pendingScheduleIds={pendingIds}
-                isEditMode={isEditMode}
-                selectedIds={selectedIds}
-                onToggleSelect={toggleSelect}
-                onDrugPress={(scheduleId, drugName) =>
-                  navigation.navigate('MedicationScheduleDetail', { scheduleId, drugName })
-                }
-                onDelete={(scheduleId, drugName) => handleDelete(scheduleId, drugName)}
-                onTaken={(scheduleId) => handleCheck(scheduleId, 'TAKEN', slot)}
-                onSkipped={(scheduleId) => handleCheck(scheduleId, 'SKIPPED', slot)}
-              />
+                style={styles.medicationCardWrap}
+              >
+                <MedicationCard
+                  timeSlot={slot}
+                  items={slotGroups[slot]}
+                  pendingScheduleIds={pendingIds}
+                  isEditMode={isEditMode}
+                  selectedIds={selectedIds}
+                  onToggleSelect={toggleSelect}
+                  onDrugPress={(scheduleId, drugName) =>
+                    navigation.navigate('MedicationScheduleDetail', { scheduleId, drugName })
+                  }
+                  onDelete={(scheduleId, drugName) => handleDelete(scheduleId, drugName)}
+                  onTaken={(scheduleId) => handleCheck(scheduleId, 'TAKEN', slot)}
+                  onSkipped={(scheduleId) => handleCheck(scheduleId, 'SKIPPED', slot)}
+                />
+              </AnimatedPressable>
             ) : null
           )
         )}
 
         {/* 복약 이력 버튼 */}
-        <TouchableOpacity
+        <AnimatedPressable
           style={styles.historyBtn}
           onPress={() => navigation.navigate('MedicationHistory')}
-          activeOpacity={0.8}
         >
           <Text style={styles.historyBtnText}>복약 이력 보기</Text>
-        </TouchableOpacity>
+        </AnimatedPressable>
       </ScrollView>
 
       {/* FAB */}
@@ -251,7 +271,14 @@ export const MedicationHomeScreen: React.FC = () => {
         onPress={() => navigation.navigate('MedicationForm', {})}
         activeOpacity={0.85}
       >
-        <Ionicons name="add" size={28} color={colors.textInverse} />
+        <LinearGradient
+          colors={[colors.primaryVivid, colors.primaryVividDark]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.fabGradient}
+        >
+          <Ionicons name="add" size={30} color={colors.textInverse} />
+        </LinearGradient>
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -260,32 +287,12 @@ export const MedicationHomeScreen: React.FC = () => {
 const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    header: {
-      height: sizes.headerHeight,
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: sizes.spacing.lg,
-    },
-    backBtn: {
-      fontSize: sizes.font.md,
-      color: colors.primary,
-      fontFamily: fontFamily.medium,
-      width: 48,
-    },
-    headerTitle: {
-      flex: 1,
-      textAlign: 'center',
-      fontSize: sizes.font.lg,
-      fontFamily: fontFamily.bold,
-      color: colors.text,
-    },
     content: { padding: sizes.spacing.lg, paddingBottom: sizes.tabBarSafeBottom + 80, gap: sizes.spacing.md },
     summaryCard: {
       backgroundColor: colors.surface,
-      borderRadius: sizes.radius.lg,
-      padding: sizes.spacing.lg,
-      borderWidth: 1,
-      borderColor: colors.divider,
+      borderRadius: sizes.radius.xxl,
+      padding: sizes.spacing.lg + 4,
+      ...softShadow(colors),
       gap: sizes.spacing.sm,
       marginBottom: sizes.spacing.sm,
     },
@@ -305,20 +312,31 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
       color: colors.primary,
     },
     progressBg: {
-      height: 8,
-      backgroundColor: colors.skeleton,
-      borderRadius: sizes.radius.full,
+      height: 10,
+      backgroundColor: colors.divider,
+      borderRadius: 5,
       overflow: 'hidden',
     },
     progressFill: {
       height: '100%',
-      backgroundColor: colors.primary,
-      borderRadius: sizes.radius.full,
+      borderRadius: 5,
+    },
+    summaryPercent: {
+      fontSize: sizes.font.xxl,
+      fontFamily: fontFamily.bold,
+      color: colors.secondary,
+      textAlign: 'right',
     },
     summaryLabel: {
       fontSize: sizes.font.xs,
       color: colors.textSub,
       textAlign: 'right',
+      marginTop: -4,
+    },
+    medicationCardWrap: {
+      borderRadius: sizes.radius.xxl,
+      ...softShadow(colors),
+      overflow: 'hidden',
     },
     emptyWrap: {
       alignItems: 'center',
@@ -336,10 +354,9 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
     },
     historyBtn: {
       paddingVertical: sizes.spacing.md,
-      borderRadius: sizes.radius.lg,
-      borderWidth: 1,
-      borderColor: colors.divider,
+      borderRadius: sizes.radius.xxl,
       backgroundColor: colors.surface,
+      ...softShadow(colors),
       alignItems: 'center',
       marginTop: sizes.spacing.sm,
     },
@@ -360,10 +377,12 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
       alignItems: 'center' as const,
       justifyContent: 'space-between' as const,
       paddingHorizontal: sizes.spacing.lg,
-      paddingVertical: sizes.spacing.sm,
+      paddingVertical: sizes.spacing.md,
+      marginHorizontal: sizes.spacing.md,
+      marginTop: sizes.spacing.xs,
       backgroundColor: colors.surface,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.divider,
+      borderRadius: sizes.radius.xxl,
+      ...softShadow(colors),
     },
     selectAllBtn: {
       flexDirection: 'row' as const,
@@ -381,7 +400,7 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
       gap: sizes.spacing.xs,
       paddingHorizontal: sizes.spacing.md,
       paddingVertical: sizes.spacing.sm,
-      borderRadius: sizes.radius.md,
+      borderRadius: sizes.radius.full,
       backgroundColor: colors.errorLight,
     },
     deleteSelectedBtnDisabled: {
@@ -399,17 +418,17 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
       position: 'absolute',
       bottom: sizes.tabBarSafeBottom + sizes.spacing.md,
       right: sizes.spacing.xl,
-      width: 56,
-      height: 56,
-      borderRadius: 28,
-      backgroundColor: colors.primary,
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      ...floatingShadow(colors),
+    },
+    fabGradient: {
+      width: 60,
+      height: 60,
+      borderRadius: 30,
       alignItems: 'center',
       justifyContent: 'center',
-      shadowColor: colors.glassShadow,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.35,
-      shadowRadius: 8,
-      elevation: 8,
     },
     fabIcon: { fontSize: 28, color: colors.textInverse, lineHeight: 32 },
   });

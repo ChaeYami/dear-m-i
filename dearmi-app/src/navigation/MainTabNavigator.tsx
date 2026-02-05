@@ -22,11 +22,11 @@ export type MainTabParamList = {
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 const TAB_ICONS: Record<string, { focused: keyof typeof Ionicons.glyphMap; unfocused: keyof typeof Ionicons.glyphMap }> = {
-  Schedule:     { focused: 'calendar',         unfocused: 'calendar-outline' },
-  Checkin:      { focused: 'heart',            unfocused: 'heart-outline' },
-  Record:       { focused: 'document-text',    unfocused: 'document-text-outline' },
-  Medication:   { focused: 'medical',          unfocused: 'medical-outline' },
-  MyPage:       { focused: 'person',           unfocused: 'person-outline' },
+  Schedule:   { focused: 'calendar',      unfocused: 'calendar-outline' },
+  Checkin:    { focused: 'heart',         unfocused: 'heart-outline' },
+  Record:     { focused: 'document-text', unfocused: 'document-text-outline' },
+  Medication: { focused: 'medical',       unfocused: 'medical-outline' },
+  MyPage:     { focused: 'person',        unfocused: 'person-outline' },
 };
 
 export const MainTabNavigator: React.FC = () => {
@@ -47,46 +47,46 @@ export const MainTabNavigator: React.FC = () => {
           height: sizes.tabBarHeight,
           borderRadius: 32,
           backgroundColor: isDark
-            ? 'rgba(30, 27, 46, 0.92)'
-            : 'rgba(255, 255, 255, 0.92)',
+            ? 'rgba(30, 27, 46, 0.94)'
+            : 'rgba(255, 255, 255, 0.94)',
           borderWidth: 1,
           borderColor: colors.glassBorder,
           borderTopWidth: 0,
           elevation: 8,
           shadowColor: isDark ? '#000' : colors.glassShadow,
           shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: isDark ? 0.4 : 0.12,
+          shadowOpacity: isDark ? 0.4 : 0.15,
           shadowRadius: 16,
           paddingHorizontal: 4,
         },
         tabBarLabelStyle: {
-          fontFamily: fontFamily.medium,
-          fontSize: 9,
+          fontFamily: fontFamily.semibold,
+          fontSize: 10,
           marginBottom: 6,
         },
         tabBarIconStyle: {
-          marginTop: 6,
+          marginTop: 4,
         },
         tabBarIcon: ({ focused, color }) => {
           const icons = TAB_ICONS[route.name] ?? TAB_ICONS.Schedule;
           return (
             <View style={{ alignItems: 'center' }}>
+              <Ionicons
+                name={focused ? icons.focused : icons.unfocused}
+                size={focused ? 24 : 20}
+                color={color}
+              />
               {focused && (
                 <View
                   style={{
-                    width: 4,
-                    height: 4,
-                    borderRadius: 2,
+                    width: 20,
+                    height: 3,
+                    borderRadius: 1.5,
                     backgroundColor: colors.primary,
-                    marginBottom: 2,
+                    marginTop: 3,
                   }}
                 />
               )}
-              <Ionicons
-                name={focused ? icons.focused : icons.unfocused}
-                size={focused ? 22 : 20}
-                color={color}
-              />
             </View>
           );
         },

@@ -10,8 +10,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Calendar } from 'react-native-calendars';
 import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import { softShadow, floatingShadow } from '@/shared/theme/shadows';
+import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
+import { ScreenHeader } from '@/shared/components/ScreenHeader';
+import { useResetStackOnTabFocus } from '@/shared/hooks/useResetStackOnTabFocus';
 import { useMonthlySchedules } from '@/features/schedule/hooks/useSchedule';
 import type { ScheduleStackParamList } from '@/navigation/ScheduleNavigator';
 import type { HospitalSchedule } from '@/shared/types/domain.types';
@@ -52,8 +58,10 @@ const getTodayString = () => {
 };
 
 export const ScheduleTab: React.FC = () => {
+  useResetStackOnTabFocus();
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
+  const { t } = useTranslation('common');
   const today = new Date();
   const todayStr = getTodayString();
   const [viewMode, setViewMode] = useState<ViewMode>('monthly');
@@ -140,13 +148,17 @@ export const ScheduleTab: React.FC = () => {
 
   const currentMonth = `${visibleYear}-${String(visibleMonth).padStart(2, '0')}-01`;
 
+  const isPast = useCallback((iso: string) => {
+    return toDateString(iso) < todayStr;
+  }, [todayStr]);
+
   const calendarTheme = useMemo(() => ({
     backgroundColor: 'transparent',
     calendarBackground: 'transparent',
     selectedDayBackgroundColor: colors.primary,
     selectedDayTextColor: colors.textInverse,
     todayTextColor: colors.primary,
-    todayBackgroundColor: colors.primaryLight + '30',
+    todayBackgroundColor: colors.primaryMuted,
     dayTextColor: colors.text,
     textDisabledColor: colors.textDisabled,
     dotColor: colors.primary,
@@ -154,29 +166,43 @@ export const ScheduleTab: React.FC = () => {
     arrowColor: colors.primary,
     textSectionTitleColor: colors.textSub,
     textMonthFontSize: sizes.font.lg,
-    textMonthFontWeight: '700' as const,
+    textMonthFontFamily: fontFamily.bold,
     textDayHeaderFontSize: sizes.font.sm,
-    textDayHeaderFontWeight: '600' as const,
-    textDayFontSize: sizes.font.md,
-    textDayFontWeight: '400' as const,
+    textDayHeaderFontFamily: fontFamily.semibold,
+    textDayFontSize: sizes.font.md + 1,
+    textDayFontFamily: fontFamily.medium,
     'stylesheet.calendar.header': {
       header: {
         flexDirection: 'row' as const,
         justifyContent: 'space-between' as const,
         alignItems: 'center' as const,
         paddingHorizontal: 10,
-        paddingVertical: 12,
+        paddingVertical: 14,
       },
       dayTextAtIndex0: { color: colors.error },
       dayTextAtIndex6: { color: colors.primary },
+    },
+    'stylesheet.day.basic': {
+      base: {
+        width: 40,
+        height: 40,
+        alignItems: 'center' as const,
+        justifyContent: 'center' as const,
+        borderRadius: 14,
+      },
+      selected: {
+        borderRadius: 14,
+      },
+      today: {
+        borderRadius: 14,
+      },
     },
   }), [colors]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: colors.text, fontFamily: fontFamily.bold }]}>일정</Text>
-        <View style={styles.headerRight}>
+      <ScreenHeader variant="tab" title={t('tab_schedule')} rightContent={
+        <>
           <TouchableOpacity style={[styles.todayBtn, { borderColor: colors.primary }]} onPress={goToToday} hitSlop={8}>
             <Text style={[styles.todayBtnText, { color: colors.primary, fontFamily: fontFamily.semibold }]}>오늘</Text>
           </TouchableOpacity>
@@ -188,8 +214,8 @@ export const ScheduleTab: React.FC = () => {
             <Ionicons name="create-outline" size={16} color={colors.textInverse} />
             <Text style={[styles.prepNoteBtnText, { color: colors.textInverse, fontFamily: fontFamily.semibold }]}>준비 메모</Text>
           </TouchableOpacity>
-        </View>
-      </View>
+        </>
+      } />
 
       <View style={[styles.viewToggle, { backgroundColor: colors.disabled }]}>
         <TouchableOpacity
@@ -261,23 +287,27 @@ export const ScheduleTab: React.FC = () => {
                 ? `${visibleMonth}월 일정`
                 : `${formatDateFull(selectedDate)} 주간`}
             </Text>
-            <Text style={[styles.listCount, { color: colors.textSub }]}>{displaySchedules.length}건</Text>
+            <Text style={[styles.listCount, { color: colors.textSub, fontFamily: fontFamily.medium }]}>{displaySchedules.length}건</Text>
           </View>
 
           {groupedSchedules.length === 0 ? (
-            <View style={styles.emptyWrap}>
-              <Ionicons name="calendar-outline" size={36} color={colors.textDisabled} />
-              <Text style={[styles.emptyText, { color: colors.textSub }]}>일정이 없어요</Text>
+            <View style={[styles.emptyWrap, { backgroundColor: colors.surface, borderRadius: sizes.radius.xxl }, softShadow(colors)]}>
+              <Ionicons name="calendar-outline" size={48} color={colors.primaryLight} />
+              <Text style={[styles.emptyTitle, { color: colors.textSub, fontFamily: fontFamily.semibold }]}>일정이 없어요</Text>
+              <Text style={[styles.emptySubText, { color: colors.textDisabled, fontFamily: fontFamily.medium }]}>
+                새 일정을 추가해 보세요
+              </Text>
             </View>
           ) : (
             groupedSchedules.map(({ date, items }) => (
-              <View key={date}>
+              <View key={date} style={styles.dateGroup}>
                 <Text style={[styles.dateLabel, { color: colors.textSub, fontFamily: fontFamily.semibold }]}>{formatDateFull(date)}</Text>
                 {items.map((item) => (
                   <ScheduleListItem
                     key={item.id}
                     schedule={item}
                     isToday={date === todayStr}
+                    isPast={isPast(item.scheduledAt)}
                     onPress={() => navigation.navigate('ScheduleDetail', { scheduleId: item.id })}
                     colors={colors}
                   />
@@ -288,13 +318,20 @@ export const ScheduleTab: React.FC = () => {
         </View>
       </ScrollView>
 
-      <TouchableOpacity
-        style={[styles.fab, { backgroundColor: colors.primary, shadowColor: colors.glassShadow }]}
+      <AnimatedPressable
         onPress={() => navigation.navigate('ScheduleForm', { defaultDate: selectedDate })}
-        activeOpacity={0.85}
+        style={[styles.fab, floatingShadow(colors)]}
+        scaleValue={0.92}
       >
-        <Ionicons name="add" size={28} color={colors.textInverse} />
-      </TouchableOpacity>
+        <LinearGradient
+          colors={[colors.primaryVivid, colors.primaryVividDark]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.fabGradient}
+        >
+          <Ionicons name="add" size={30} color={colors.textInverse} />
+        </LinearGradient>
+      </AnimatedPressable>
     </SafeAreaView>
   );
 };
@@ -302,28 +339,35 @@ export const ScheduleTab: React.FC = () => {
 const ScheduleListItem: React.FC<{
   schedule: HospitalSchedule;
   isToday: boolean;
+  isPast: boolean;
   onPress: () => void;
   colors: any;
-}> = ({ schedule, isToday, onPress, colors }) => (
-  <TouchableOpacity
+}> = ({ schedule, isToday, isPast, onPress, colors }) => (
+  <AnimatedPressable
+    onPress={onPress}
     style={[
       styles.listItem,
-      { backgroundColor: colors.surface, borderColor: colors.divider },
-      isToday && { borderColor: colors.primaryLight, backgroundColor: colors.primaryLight + '08' },
+      { backgroundColor: colors.surface },
+      softShadow(colors),
+      isToday && { backgroundColor: colors.primaryMuted },
     ]}
-    onPress={onPress}
-    activeOpacity={0.75}
   >
-    <View style={[styles.listItemDot, { backgroundColor: isToday ? colors.primary : colors.textDisabled }]} />
+    <View
+      style={[
+        styles.listItemBar,
+        { backgroundColor: isPast ? colors.secondary : colors.primary },
+        isToday && { backgroundColor: colors.primary },
+      ]}
+    />
     <View style={styles.listItemBody}>
       <Text style={[styles.listItemHospital, { color: colors.text, fontFamily: fontFamily.semibold }]}>{schedule.hospitalName}</Text>
       {schedule.doctorName && (
-        <Text style={[styles.listItemDoctor, { color: colors.textSub }]}>{schedule.doctorName} 선생님</Text>
+        <Text style={[styles.listItemDoctor, { color: colors.textSub, fontFamily: fontFamily.medium }]}>{schedule.doctorName} 선생님</Text>
       )}
     </View>
     <Text style={[styles.listItemTime, { color: colors.textSub, fontFamily: fontFamily.medium }]}>{formatTime(schedule.scheduledAt)}</Text>
     <Ionicons name="chevron-forward" size={16} color={colors.textDisabled} />
-  </TouchableOpacity>
+  </AnimatedPressable>
 );
 
 const styles = StyleSheet.create({
@@ -393,7 +437,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: sizes.spacing.sm,
+    paddingVertical: sizes.spacing.md,
   },
   listTitle: {
     fontSize: sizes.font.md,
@@ -401,24 +445,26 @@ const styles = StyleSheet.create({
   listCount: {
     fontSize: sizes.font.sm,
   },
+  dateGroup: {
+    gap: sizes.spacing.sm,
+  },
   dateLabel: {
     fontSize: sizes.font.xs,
     marginTop: sizes.spacing.sm,
-    marginBottom: sizes.spacing.xs,
   },
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: sizes.radius.lg,
+    borderRadius: sizes.radius.xxl,
     padding: sizes.spacing.md,
-    marginBottom: sizes.spacing.sm,
     gap: sizes.spacing.md,
-    borderWidth: 1,
+    overflow: 'hidden',
   },
-  listItemDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+  listItemBar: {
+    width: 4,
+    height: '70%',
+    borderRadius: 2,
+    minHeight: 32,
   },
   listItemBody: { flex: 1 },
   listItemHospital: {
@@ -433,25 +479,32 @@ const styles = StyleSheet.create({
   },
   emptyWrap: {
     alignItems: 'center',
-    paddingVertical: sizes.spacing.xxl,
+    paddingVertical: sizes.spacing.xxl + 8,
+    paddingHorizontal: sizes.spacing.lg,
     gap: sizes.spacing.sm,
+    marginTop: sizes.spacing.sm,
   },
-  emptyText: {
+  emptyTitle: {
     fontSize: sizes.font.md,
+    marginTop: sizes.spacing.xs,
+  },
+  emptySubText: {
+    fontSize: sizes.font.sm,
   },
   fab: {
     position: 'absolute',
     bottom: sizes.tabBarSafeBottom + sizes.spacing.md,
     right: sizes.spacing.xl,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    zIndex: 5,
+  },
+  fabGradient: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 12,
-    elevation: 8,
-    zIndex: 5,
   },
 });

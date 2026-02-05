@@ -1,44 +1,38 @@
 import React from 'react';
-import { View, TouchableOpacity, ViewStyle, Platform } from 'react-native';
+import { View, ViewStyle } from 'react-native';
 import { useTheme, sizes } from '@/shared/theme';
+import { softShadow } from '@/shared/theme/shadows';
+import { AnimatedPressable } from './AnimatedPressable';
 
 interface CardProps {
   children: React.ReactNode;
   onPress?: () => void;
+  onLongPress?: () => void;
   style?: ViewStyle;
+  noPadding?: boolean;
 }
 
-export const Card: React.FC<CardProps> = ({ children, onPress, style }) => {
+export const Card: React.FC<CardProps> = ({ children, onPress, onLongPress, style, noPadding }) => {
   const { colors } = useTheme();
 
   const cardStyle: ViewStyle = {
     backgroundColor: colors.card,
-    borderRadius: sizes.radius.xl,
-    padding: sizes.spacing.md,
+    borderRadius: sizes.radius.xxl,
+    padding: noPadding ? 0 : sizes.spacing.lg,
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    ...Platform.select({
-      ios: {
-        shadowColor: colors.glassShadow,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 1,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    ...softShadow(colors),
   };
 
-  if (onPress) {
+  if (onPress || onLongPress) {
     return (
-      <TouchableOpacity
+      <AnimatedPressable
         onPress={onPress}
-        activeOpacity={0.75}
+        onLongPress={onLongPress}
         style={[cardStyle, style]}
       >
         {children}
-      </TouchableOpacity>
+      </AnimatedPressable>
     );
   }
 

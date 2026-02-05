@@ -50,6 +50,9 @@ export interface ThemeColors {
   primaryLight: string;
   primaryDark: string;
   primaryMuted: string;
+  /** FAB·CTA 그라데이션용 — 다크에서도 생생한 색상 유지 */
+  primaryVivid: string;
+  primaryVividDark: string;
 
   // ── 보조색 ──────────────────────────────
   secondary: string;
@@ -101,6 +104,8 @@ export const lightColors: ThemeColors = {
   primaryLight: palette.lavender300,
   primaryDark: palette.lavender700,
   primaryMuted: palette.lavender100,
+  primaryVivid: palette.lavender500,
+  primaryVividDark: palette.lavender700,
 
   secondary: palette.sage500,
   secondaryLight: palette.sage300,
@@ -140,42 +145,46 @@ export const darkColors: ThemeColors = {
   surface: '#1E1B2E',
   surfaceElevated: '#272440',
 
-  primary: palette.lavender400,
-  primaryLight: palette.lavender300,
-  primaryDark: palette.lavender600,
-  primaryMuted: 'rgba(139, 126, 189, 0.15)',
+  // 다크에서는 채도를 낮추고 밝기를 줄여서 눈 부담 감소
+  primary: '#8A80B0',
+  primaryLight: '#9E96C0',
+  primaryDark: '#6B6394',
+  primaryMuted: 'rgba(138, 128, 176, 0.12)',
+  // FAB·CTA는 다크에서도 생생하게 유지
+  primaryVivid: '#9B8ED0',
+  primaryVividDark: '#7B6EB8',
 
-  secondary: palette.sage400,
-  secondaryLight: palette.sage300,
+  secondary: '#7BAA98',
+  secondaryLight: '#95BFB0',
 
-  text: '#EDE9F6',
-  textSub: '#9B95B0',
-  textDisabled: '#5A5572',
+  text: '#E2DDF0',
+  textSub: '#918CA6',
+  textDisabled: '#524D68',
   textInverse: palette.lavender900,
 
-  emotionLow: '#E8A5A5',
-  emotionMid: '#F0C97A',
-  emotionHigh: '#8BC4A8',
+  emotionLow: '#D49999',
+  emotionMid: '#DEBB76',
+  emotionHigh: '#80B89C',
 
-  error: '#E88A90',
-  errorLight: 'rgba(232, 138, 144, 0.15)',
-  warning: '#F0C97A',
-  warningLight: 'rgba(240, 201, 122, 0.15)',
-  success: '#8BC4A8',
-  successLight: 'rgba(139, 196, 168, 0.15)',
+  error: '#D48088',
+  errorLight: 'rgba(212, 128, 136, 0.12)',
+  warning: '#DEB870',
+  warningLight: 'rgba(222, 184, 112, 0.12)',
+  success: '#80B89C',
+  successLight: 'rgba(128, 184, 156, 0.12)',
 
-  disabled: '#3A3650',
-  skeleton: '#2E2A42',
+  disabled: '#35314A',
+  skeleton: '#2A2640',
 
-  glassBorder: 'rgba(169, 155, 212, 0.2)',
+  glassBorder: 'rgba(148, 140, 186, 0.14)',
   glassBlur: 'rgba(30, 27, 46, 0.6)',
-  glassShadow: 'rgba(0, 0, 0, 0.3)',
-  shadowOuter: 'rgba(0, 0, 0, 0.2)',
+  glassShadow: 'rgba(0, 0, 0, 0.25)',
+  shadowOuter: 'rgba(0, 0, 0, 0.15)',
 
-  divider: 'rgba(169, 155, 212, 0.12)',
+  divider: 'rgba(148, 140, 186, 0.10)',
 
   card: '#1E1B2E',
-  cardBorder: 'rgba(169, 155, 212, 0.1)',
+  cardBorder: 'rgba(148, 140, 186, 0.08)',
 };
 
 // 하위 호환을 위한 레거시 export (점진적 마이그레이션용)

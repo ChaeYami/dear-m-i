@@ -1,16 +1,22 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
   Platform,
-
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import { softShadow } from '@/shared/theme/shadows';
 import { useLogin } from '@/features/auth/hooks/useLogin';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 
@@ -20,6 +26,19 @@ export const LoginScreen: React.FC = () => {
   const { loginWithGoogle, loginWithApple, loginWithDev, isLoading, error, clearError } = useLogin();
   const isDev = __DEV__;
 
+  // -- Entry animation shared values --
+  const translateY = useSharedValue(30);
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    translateY.value = withSpring(0, {
+      damping: 20,
+      stiffness: 90,
+      mass: 1,
+    });
+    opacity.value = withTiming(1, { duration: 600 });
+  }, []);
+
   useEffect(() => {
     if (error) {
       const timer = setTimeout(clearError, 4000);
@@ -27,167 +46,259 @@ export const LoginScreen: React.FC = () => {
     }
   }, [error, clearError]);
 
-  const styles = useMemo(() => StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-      justifyContent: 'space-between',
-      paddingVertical: sizes.spacing.xxl,
-      paddingHorizontal: sizes.spacing.xl,
-    },
-    header: {
-      alignItems: 'center',
-      marginTop: sizes.spacing.xxl,
-    },
-    logoCircle: {
-      width: 80,
-      height: 80,
-      borderRadius: 40,
-      backgroundColor: colors.primaryLight,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: sizes.spacing.md,
-    },
-    logoText: {
-      fontSize: 40,
-      fontFamily: fontFamily.bold,
-      color: colors.textInverse,
-    },
-    appName: {
-      fontSize: sizes.font.xxxl,
-      fontFamily: fontFamily.bold,
-      color: colors.text,
-      marginBottom: sizes.spacing.xs,
-    },
-    tagline: {
-      fontSize: sizes.font.md,
-      color: colors.textSub,
-    },
-    buttonArea: {
-      gap: sizes.spacing.md,
-    },
-    errorBox: {
-      backgroundColor: colors.errorLight,
-      borderRadius: sizes.radius.md,
-      padding: sizes.spacing.md,
-      marginBottom: sizes.spacing.sm,
-    },
-    errorText: {
-      color: colors.error,
-      fontSize: sizes.font.sm,
-      textAlign: 'center',
-    },
-    socialButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.divider,
-      borderRadius: sizes.radius.lg,
-      paddingVertical: sizes.spacing.md,
-      paddingHorizontal: sizes.spacing.lg,
-      gap: sizes.spacing.md,
-    },
-    appleButton: {
-      backgroundColor: '#1A1825',
-      borderColor: 'transparent',
-    },
-    socialIconPlaceholder: {
-      width: 24,
-      height: 24,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    socialButtonText: {
-      flex: 1,
-      textAlign: 'center',
-      fontSize: sizes.font.md,
-      fontFamily: fontFamily.semibold,
-      color: colors.text,
-    },
-    appleButtonText: {
-      color: colors.textInverse,
-    },
-    devButton: {
-      borderWidth: 1,
-      borderColor: colors.warning,
-      borderRadius: sizes.radius.md,
-      borderStyle: 'dashed' as const,
-      paddingVertical: sizes.spacing.sm,
-      alignItems: 'center' as const,
-    },
-    devButtonText: {
-      fontSize: sizes.font.sm,
-      color: colors.warning,
-      fontFamily: fontFamily.medium,
-    },
-    terms: {
-      fontSize: sizes.font.xs,
-      color: colors.textDisabled,
-      textAlign: 'center',
-      lineHeight: 18,
-    },
-  }), [colors]);
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+    opacity: opacity.value,
+  }));
 
   if (isLoading) {
     return <LoadingSpinner fullscreen />;
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.logoCircle}>
-          <Text style={styles.logoText}>M</Text>
-        </View>
-        <Text style={styles.appName}>Dear Mi</Text>
-        <Text style={styles.tagline}>{t('app_tagline')}</Text>
-      </View>
-
-      <View style={styles.buttonArea}>
-        {error && (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
-
-        <TouchableOpacity
-          style={styles.socialButton}
-          onPress={loginWithGoogle}
-          activeOpacity={0.85}
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
+      <Animated.View
+        style={[
+          {
+            flex: 1,
+            justifyContent: 'space-between',
+            paddingVertical: sizes.spacing.xxl,
+            paddingHorizontal: sizes.spacing.xl,
+          },
+          animatedStyle,
+        ]}
+      >
+        {/* -- Top: Logo + App Name -- */}
+        <View
+          style={{
+            alignItems: 'center',
+            marginTop: sizes.spacing.xxl * 1.5,
+          }}
         >
-          <View style={styles.socialIconPlaceholder}>
-            <Ionicons name="logo-google" size={20} color="#4285F4" />
+          {/* Gradient blob behind logo */}
+          <View
+            style={{
+              width: 160,
+              height: 160,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: sizes.spacing.lg,
+            }}
+          >
+            <LinearGradient
+              colors={[colors.primaryLight, colors.primary]}
+              start={{ x: 0.2, y: 0 }}
+              end={{ x: 0.8, y: 1 }}
+              style={{
+                position: 'absolute',
+                width: 160,
+                height: 160,
+                borderRadius: 80,
+                opacity: 0.3,
+              }}
+            />
+            <View
+              style={{
+                width: 100,
+                height: 100,
+                borderRadius: 50,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: colors.primary,
+                ...softShadow(colors),
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 48,
+                  fontFamily: fontFamily.bold,
+                  color: colors.textInverse,
+                }}
+              >
+                M
+              </Text>
+            </View>
           </View>
-          <Text style={styles.socialButtonText}>{t('continue_google')}</Text>
-        </TouchableOpacity>
 
-        {Platform.OS === 'ios' && (
+          <Text
+            style={{
+              fontSize: sizes.font.xxxl + 4,
+              fontFamily: fontFamily.bold,
+              color: colors.text,
+              letterSpacing: 1.5,
+              marginBottom: sizes.spacing.sm,
+            }}
+          >
+            Dear Mi
+          </Text>
+
+          <Text
+            style={{
+              fontSize: sizes.font.md,
+              fontFamily: fontFamily.regular,
+              color: colors.textSub,
+              letterSpacing: 0.3,
+            }}
+          >
+            {t('app_tagline')}
+          </Text>
+        </View>
+
+        {/* -- Middle: Buttons -- */}
+        <View style={{ gap: sizes.spacing.lg, paddingHorizontal: sizes.spacing.sm }}>
+          {error && (
+            <View
+              style={{
+                backgroundColor: colors.errorLight,
+                borderRadius: sizes.radius.xl,
+                padding: sizes.spacing.lg,
+                marginBottom: sizes.spacing.xs,
+              }}
+            >
+              <Text
+                style={{
+                  color: colors.error,
+                  fontSize: sizes.font.sm,
+                  fontFamily: fontFamily.medium,
+                  textAlign: 'center',
+                  lineHeight: 20,
+                }}
+              >
+                {error}
+              </Text>
+            </View>
+          )}
+
+          {/* Google button */}
           <TouchableOpacity
-            style={[styles.socialButton, styles.appleButton]}
-            onPress={loginWithApple}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: colors.surface,
+              borderWidth: 1,
+              borderColor: colors.divider,
+              borderRadius: sizes.radius.full,
+              height: 56,
+              paddingHorizontal: sizes.spacing.lg,
+              ...softShadow(colors),
+            }}
+            onPress={loginWithGoogle}
             activeOpacity={0.85}
           >
-            <View style={styles.socialIconPlaceholder}>
-              <Ionicons name="logo-apple" size={20} color={colors.textInverse} />
+            <View
+              style={{
+                width: 24,
+                height: 24,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Ionicons name="logo-google" size={20} color="#4285F4" />
             </View>
-            <Text style={[styles.socialButtonText, styles.appleButtonText]}>
-              {t('continue_apple')}
+            <Text
+              style={{
+                flex: 1,
+                textAlign: 'center',
+                fontSize: sizes.font.md,
+                fontFamily: fontFamily.semibold,
+                color: colors.text,
+                marginRight: 24,
+              }}
+            >
+              {t('continue_google')}
             </Text>
           </TouchableOpacity>
-        )}
-      </View>
 
-      {isDev && (
-        <TouchableOpacity
-          style={styles.devButton}
-          onPress={loginWithDev}
-          activeOpacity={0.7}
+          {/* Apple button (iOS only) */}
+          {Platform.OS === 'ios' && (
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: '#1A1825',
+                borderWidth: 1,
+                borderColor: 'transparent',
+                borderRadius: sizes.radius.full,
+                height: 56,
+                paddingHorizontal: sizes.spacing.lg,
+                ...softShadow(colors),
+              }}
+              onPress={loginWithApple}
+              activeOpacity={0.85}
+            >
+              <View
+                style={{
+                  width: 24,
+                  height: 24,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Ionicons name="logo-apple" size={20} color="#FFFFFF" />
+              </View>
+              <Text
+                style={{
+                  flex: 1,
+                  textAlign: 'center',
+                  fontSize: sizes.font.md,
+                  fontFamily: fontFamily.semibold,
+                  color: '#FFFFFF',
+                  marginRight: 24,
+                }}
+              >
+                {t('continue_apple')}
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Dev login button */}
+          {isDev && (
+            <TouchableOpacity
+              style={{
+                borderWidth: 1,
+                borderColor: colors.warning,
+                borderRadius: sizes.radius.full,
+                borderStyle: 'dashed' as const,
+                height: 44,
+                alignItems: 'center' as const,
+                justifyContent: 'center' as const,
+              }}
+              onPress={loginWithDev}
+              activeOpacity={0.7}
+            >
+              <Text
+                style={{
+                  fontSize: sizes.font.sm,
+                  color: colors.warning,
+                  fontFamily: fontFamily.medium,
+                }}
+              >
+                Dev Login (test@test.com)
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* -- Bottom: Terms -- */}
+        <Text
+          style={{
+            fontSize: sizes.font.xs,
+            fontFamily: fontFamily.regular,
+            color: colors.textDisabled,
+            textAlign: 'center',
+            lineHeight: 16,
+            paddingHorizontal: sizes.spacing.lg,
+            marginTop: sizes.spacing.lg,
+          }}
         >
-          <Text style={styles.devButtonText}>Dev Login (test@test.com)</Text>
-        </TouchableOpacity>
-      )}
-
-      <Text style={styles.terms}>{t('terms_agreement')}</Text>
+          {t('terms_agreement')}
+        </Text>
+      </Animated.View>
     </SafeAreaView>
   );
 };

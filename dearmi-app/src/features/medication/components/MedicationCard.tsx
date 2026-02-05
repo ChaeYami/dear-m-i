@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, sizes } from '@/constants';
+import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { TimeSlotRow } from './TimeSlotRow';
 import type { TimeSlotType, MedicationLogStatus } from '@/shared/types/domain.types';
 
@@ -58,18 +58,19 @@ export const MedicationCard: React.FC<Props> = ({
   onTaken,
   onSkipped,
 }) => {
+  const { colors } = useTheme();
   const accentColor = SLOT_COLORS[timeSlot];
   const notifyTime = items[0]?.notifyTime;
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.divider }]}>
       {/* 섹션 헤더 */}
-      <View style={[styles.header, { borderLeftColor: accentColor }]}>
+      <View style={[styles.header, { borderLeftColor: accentColor, backgroundColor: colors.background }]}>
         <Text style={[styles.slotLabel, { color: accentColor }]}>
           {SLOT_LABELS[timeSlot]}
         </Text>
         {notifyTime ? (
-          <Text style={styles.slotTime}>{formatTime(notifyTime)}</Text>
+          <Text style={[styles.slotTime, { color: colors.textSub }]}>{formatTime(notifyTime)}</Text>
         ) : null}
       </View>
 
@@ -109,10 +110,8 @@ export const MedicationCard: React.FC<Props> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
     borderRadius: sizes.radius.lg,
     borderWidth: 1,
-    borderColor: colors.divider,
     overflow: 'hidden',
     marginBottom: sizes.spacing.md,
   },
@@ -122,16 +121,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.sm,
     borderLeftWidth: 4,
-    backgroundColor: colors.background,
     gap: sizes.spacing.sm,
   },
   slotLabel: {
     fontSize: sizes.font.md,
-    fontWeight: sizes.fontWeight.bold,
+    fontFamily: fontFamily.bold,
   },
   slotTime: {
     fontSize: sizes.font.sm,
-    color: colors.textSub,
   },
   rowWrap: {
     flexDirection: 'row',
