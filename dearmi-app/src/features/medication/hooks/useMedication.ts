@@ -13,6 +13,17 @@ export const useTodayMedication = (date?: string) =>
     },
   });
 
+/** 사용자의 모든 복약 일정 (캘린더 마킹용) */
+export const useAllMedicationSchedules = (enabled: boolean = true) =>
+  useQuery({
+    queryKey: QUERY_KEYS.allMedicationSchedules(),
+    queryFn: async () => {
+      const { data } = await medicationApi.listAll();
+      return data.data ?? [];
+    },
+    enabled,
+  });
+
 /** 복약 일정 등록 */
 export const useCreateMedicationSchedule = () => {
   const queryClient = useQueryClient();
@@ -20,6 +31,7 @@ export const useCreateMedicationSchedule = () => {
     mutationFn: (req: CreateMedicationScheduleRequest) => medicationApi.create(req),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['todayMedication'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.allMedicationSchedules() });
     },
   });
 };
@@ -31,6 +43,7 @@ export const useDeleteMedicationSchedule = () => {
     mutationFn: (id: string) => medicationApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['todayMedication'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.allMedicationSchedules() });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.medicationLogs() });
     },
   });

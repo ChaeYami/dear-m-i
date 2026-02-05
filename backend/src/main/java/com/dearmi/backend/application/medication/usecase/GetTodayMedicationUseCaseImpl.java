@@ -39,11 +39,9 @@ public class GetTodayMedicationUseCaseImpl implements GetTodayMedicationUseCase 
     public TodayMedicationResult getForDate(UUID userId, LocalDate date) {
         List<MedicationSchedule> schedules =
                 medicationScheduleRepository.findActiveForDateAndUserId(date, userId);
-
         List<ScheduleWithLogs> result = schedules.stream()
                 .map(s -> toScheduleWithLogs(s, date))
                 .toList();
-
         return new TodayMedicationResult(result);
     }
 

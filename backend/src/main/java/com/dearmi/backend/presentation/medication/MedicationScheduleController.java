@@ -24,6 +24,7 @@ import java.util.UUID;
 public class MedicationScheduleController {
 
     private final GetTodayMedicationUseCase getTodayMedicationUseCase;
+    private final ListMedicationSchedulesUseCase listMedicationSchedulesUseCase;
     private final CreateMedicationScheduleUseCase createMedicationScheduleUseCase;
     private final UpdateMedicationScheduleUseCase updateMedicationScheduleUseCase;
     private final DeleteMedicationScheduleUseCase deleteMedicationScheduleUseCase;
@@ -32,6 +33,18 @@ public class MedicationScheduleController {
     private final GetMedicationStatsUseCase getMedicationStatsUseCase;
     private final GetMedicationScheduleDrugInfoUseCase getMedicationScheduleDrugInfoUseCase;
     private final MedicationDrugInfoService medicationDrugInfoService;
+
+    /** GET /api/v1/medication-schedules/all — 사용자의 모든 (삭제되지 않은) 복약 일정 (캘린더 마킹용) */
+    @GetMapping("/all")
+    public ApiResponse<java.util.List<MedicationScheduleResponse>> listAll(
+            @AuthenticatedUserId UUID userId
+    ) {
+        return ApiResponse.success(
+                listMedicationSchedulesUseCase.listAll(userId).stream()
+                        .map(MedicationScheduleResponse::from)
+                        .toList()
+        );
+    }
 
     /** GET /api/v1/medication-schedules?date= — 특정 날짜(기본값=오늘) 복약 현황 */
     @GetMapping

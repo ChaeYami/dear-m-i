@@ -6,16 +6,15 @@ import {
   SectionList,
   TouchableOpacity,
   Modal,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { CompositeNavigationProp } from '@react-navigation/native';
-import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { Calendar } from 'react-native-calendars';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
-import { useMedicationHistory } from '@/features/medication/hooks/useMedication';
+import { useMedicationHistory, useAllMedicationSchedules } from '@/features/medication/hooks/useMedication';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
@@ -57,26 +56,62 @@ export const MedicationHistoryScreen: React.FC = () => {
   };
 
   const { data: history, isLoading } = useMedicationHistory();
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [pickerDate, setPickerDate] = useState<Date>(new Date());
+  const [showCalendar, setShowCalendar] = useState(false);
+  const { data: allSchedules = [] } = useAllMedicationSchedules(showCalendar);
 
-  const toLocalDateStr = (d: Date) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const todayStr = useMemo(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }, []);
 
-  const handlePickDate = (_: DateTimePickerEvent, date?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowDatePicker(false);
-      if (date) {
-        navigation.navigate('MedicationHome', { date: toLocalDateStr(date) });
+  // 복약 일정 기간 마킹 — 각 schedule 의 startDate~endDate 범위 셀 배경 하이라이트
+  const markedDates = useMemo(() => {
+    const marks: Record<string, any> = {};
+    const fillBg = colors.primaryLight + '30';
+    for (const s of allSchedules) {
+      const start = s.startDate;
+      const end = s.endDate ?? todayStr;
+      if (!start) continue;
+      const startD = new Date(start);
+      const endD = new Date(end);
+      // 미래 날짜는 markin 하지 않음 (최대 today)
+      const todayD = new Date(todayStr);
+      const lastD = endD > todayD ? todayD : endD;
+      const cur = new Date(startD);
+      while (cur <= lastD) {
+        const ds = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}-${String(cur.getDate()).padStart(2, '0')}`;
+        if (!marks[ds]) {
+          marks[ds] = {
+            customStyles: {
+              container: { backgroundColor: fillBg },
+              text: { color: colors.text, fontFamily: fontFamily.medium },
+            },
+          };
+        }
+        cur.setDate(cur.getDate() + 1);
       }
-      return;
     }
-    if (date) setPickerDate(date);
-  };
+    // 오늘 강조 (테두리)
+    marks[todayStr] = {
+      ...(marks[todayStr] ?? {}),
+      customStyles: {
+        ...(marks[todayStr]?.customStyles ?? {}),
+        container: {
+          ...(marks[todayStr]?.customStyles?.container ?? {}),
+          borderWidth: 1.5,
+          borderColor: colors.primary,
+          borderRadius: 18,
+        },
+        text: { color: colors.primary, fontFamily: fontFamily.bold },
+      },
+    };
+    return marks;
+  }, [allSchedules, todayStr, colors]);
 
-  const confirmIosDate = () => {
-    setShowDatePicker(false);
-    navigation.navigate('MedicationHome', { date: toLocalDateStr(pickerDate) });
+  const handlePickDate = (day: { dateString: string }) => {
+    if (day.dateString > todayStr) return; // 미래 차단
+    setShowCalendar(false);
+    navigation.navigate('MedicationHome', { date: day.dateString });
   };
 
   const sections = useMemo<Section[]>(() => {
@@ -109,10 +144,7 @@ export const MedicationHistoryScreen: React.FC = () => {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>복약 이력</Text>
         <TouchableOpacity
-          onPress={() => {
-            setPickerDate(new Date());
-            setShowDatePicker(true);
-          }}
+          onPress={() => setShowCalendar(true)}
           hitSlop={12}
           style={styles.headerRightBtn}
         >
@@ -176,44 +208,49 @@ export const MedicationHistoryScreen: React.FC = () => {
         }
       />
 
-      {/* 날짜 선택기 (이력 없는 과거 날짜 직접 진입) */}
-      {showDatePicker && Platform.OS === 'android' && (
-        <DateTimePicker
-          value={pickerDate}
-          mode="date"
-          display="default"
-          maximumDate={new Date()}
-          onChange={handlePickDate}
-        />
-      )}
-      {Platform.OS === 'ios' && (
-        <Modal
-          visible={showDatePicker}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowDatePicker(false)}
+      {/* 날짜 선택 캘린더 (복약 일정 기간 하이라이트) */}
+      <Modal
+        visible={showCalendar}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCalendar(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowCalendar(false)}
         >
-          <TouchableOpacity
-            style={styles.modalOverlay}
-            activeOpacity={1}
-            onPress={() => setShowDatePicker(false)}
-          >
-            <View style={styles.modalSheet}>
-              <DateTimePicker
-                value={pickerDate}
-                mode="date"
-                display="spinner"
-                maximumDate={new Date()}
-                onChange={handlePickDate}
-                themeVariant="light"
-              />
-              <TouchableOpacity style={styles.modalConfirmBtn} onPress={confirmIosDate}>
-                <Text style={styles.modalConfirmText}>확인</Text>
+          <TouchableOpacity activeOpacity={1} style={styles.modalSheet} onPress={() => {}}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalHeaderTitle}>날짜 선택</Text>
+              <TouchableOpacity onPress={() => setShowCalendar(false)} hitSlop={12}>
+                <Ionicons name="close" size={22} color={colors.text} />
               </TouchableOpacity>
             </View>
+            <Calendar
+              current={todayStr}
+              maxDate={todayStr}
+              onDayPress={handlePickDate}
+              markingType="custom"
+              markedDates={markedDates}
+              theme={{
+                backgroundColor: 'transparent',
+                calendarBackground: 'transparent',
+                todayTextColor: colors.primary,
+                dayTextColor: colors.text,
+                textDisabledColor: colors.textDisabled,
+                monthTextColor: colors.text,
+                arrowColor: colors.primary,
+                textSectionTitleColor: colors.textSub,
+                textMonthFontFamily: fontFamily.bold,
+                textDayHeaderFontFamily: fontFamily.semibold,
+                textDayFontFamily: fontFamily.medium,
+              }}
+            />
+            <Text style={styles.modalHint}>색칠된 날짜는 복약 일정이 있던 기간이에요</Text>
           </TouchableOpacity>
-        </Modal>
-      )}
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -251,23 +288,31 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
     },
     modalSheet: {
       backgroundColor: colors.surface,
-      paddingTop: sizes.spacing.md,
+      paddingTop: sizes.spacing.sm,
       paddingBottom: sizes.spacing.xl,
+      paddingHorizontal: sizes.spacing.md,
       borderTopLeftRadius: sizes.radius.xxl,
       borderTopRightRadius: sizes.radius.xxl,
+    },
+    modalHeader: {
+      flexDirection: 'row',
       alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: sizes.spacing.md,
+      paddingTop: sizes.spacing.sm,
+      paddingBottom: sizes.spacing.xs,
     },
-    modalConfirmBtn: {
-      marginTop: sizes.spacing.md,
-      paddingVertical: sizes.spacing.md,
-      paddingHorizontal: sizes.spacing.xxl,
-      backgroundColor: colors.primary,
-      borderRadius: sizes.radius.full,
-    },
-    modalConfirmText: {
-      fontSize: sizes.font.md,
+    modalHeaderTitle: {
+      fontSize: sizes.font.lg,
       fontFamily: fontFamily.bold,
-      color: colors.textInverse,
+      color: colors.text,
+    },
+    modalHint: {
+      marginTop: sizes.spacing.sm,
+      paddingHorizontal: sizes.spacing.md,
+      fontSize: sizes.font.xs,
+      color: colors.textSub,
+      textAlign: 'center',
     },
     freeBanner: {
       backgroundColor: colors.warningLight,

@@ -73,6 +73,7 @@ export const QUERY_KEYS = {
 
   // 복약 관리
   todayMedication: (date?: string) => ['todayMedication', date ?? null] as const,
+  allMedicationSchedules: () => ['allMedicationSchedules'] as const,
   medicationLogs: (startDate?: string, endDate?: string) =>
     ['medicationLogs', startDate, endDate] as const,
   medicationStats: (startDate?: string, endDate?: string) =>

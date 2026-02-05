@@ -17,6 +17,10 @@ export const medicationApi = {
       params: date ? { date } : undefined,
     }),
 
+  /** GET /api/v1/medication-schedules/all — 사용자의 모든 복약 일정 (캘린더 마킹용) */
+  listAll: () =>
+    axiosInstance.get<ApiResponse<MedicationSchedule[]>>('/api/v1/medication-schedules/all'),
+
   /** POST /api/v1/medication-schedules — 복약 일정 등록 */
   create: (data: CreateMedicationScheduleRequest) =>
     axiosInstance.post<ApiResponse<MedicationSchedule>>('/api/v1/medication-schedules', data),
