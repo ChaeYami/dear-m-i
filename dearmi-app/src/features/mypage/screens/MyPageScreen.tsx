@@ -10,7 +10,6 @@ import {
 import Constants from 'expo-constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, CompositeNavigationProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { useTranslation } from 'react-i18next';
@@ -98,11 +97,6 @@ export const MyPageScreen: React.FC = () => {
       StyleSheet.create({
         container: { flex: 1, backgroundColor: colors.background },
         content: { paddingBottom: tabBarSafeBottom + 16 },
-        gradientStrip: {
-          height: 80,
-          borderBottomLeftRadius: 32,
-          borderBottomRightRadius: 32,
-        },
         profileCard: {
           backgroundColor: colors.surface,
           borderRadius: sizes.radius.xxl,
@@ -248,18 +242,6 @@ export const MyPageScreen: React.FC = () => {
       <ScreenHeader variant="tab" title={t('mypage_title')} hasNotification />
 
       <ScrollView contentContainerStyle={styles.content} {...scrollHandlers}>
-        {/* Gradient strip at top */}
-        <LinearGradient
-          colors={
-            isDark
-              ? [colors.surfaceElevated, colors.primaryMuted]
-              : [colors.primaryLight, colors.primary]
-          }
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.gradientStrip}
-        />
-
         {/* Profile card */}
         <View style={[styles.profileCard, shadow]}>
           <View
