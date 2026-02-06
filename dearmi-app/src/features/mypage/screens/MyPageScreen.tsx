@@ -96,7 +96,7 @@ export const MyPageScreen: React.FC = () => {
     () =>
       StyleSheet.create({
         container: { flex: 1, backgroundColor: colors.background },
-        content: { paddingBottom: tabBarSafeBottom + 16 },
+        content: { paddingTop: sizes.spacing.md, paddingBottom: tabBarSafeBottom + 16 },
         profileCard: {
           backgroundColor: colors.surface,
           borderRadius: sizes.radius.xxl,
@@ -104,7 +104,6 @@ export const MyPageScreen: React.FC = () => {
           flexDirection: 'row',
           alignItems: 'center',
           gap: sizes.spacing.md,
-          marginTop: -28,
           marginHorizontal: sizes.spacing.lg,
         },
         avatar: {
