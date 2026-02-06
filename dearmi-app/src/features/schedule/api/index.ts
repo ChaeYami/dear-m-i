@@ -22,9 +22,9 @@ export const scheduleApi = {
   createSchedule: (data: CreateScheduleRequest) =>
     axiosInstance.post<ApiResponse<HospitalSchedule>>('/api/v1/schedules', data),
 
-  updateSchedule: (id: number, data: UpdateScheduleRequest) =>
+  updateSchedule: (id: string, data: UpdateScheduleRequest) =>
     axiosInstance.put<ApiResponse<HospitalSchedule>>(`/api/v1/schedules/${id}`, data),
 
-  deleteSchedule: (id: number) =>
+  deleteSchedule: (id: string) =>
     axiosInstance.delete<ApiResponse<void>>(`/api/v1/schedules/${id}`),
 };

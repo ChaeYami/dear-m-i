@@ -18,6 +18,7 @@ public record MedicationHistoryResponse(
     public record LogDto(
             UUID logId,
             UUID scheduleId,
+            String drugName,
             LocalDate logDate,
             String timeSlot,
             String status,
@@ -27,7 +28,7 @@ public record MedicationHistoryResponse(
     public static MedicationHistoryResponse from(MedicationHistoryResult result) {
         List<LogDto> logs = result.logs().stream()
                 .map(l -> new LogDto(
-                        l.logId(), l.scheduleId(), l.logDate(),
+                        l.logId(), l.scheduleId(), l.drugName(), l.logDate(),
                         l.timeSlot(), l.status(), l.takenAt()))
                 .toList();
         return new MedicationHistoryResponse(result.startDate(), result.endDate(), logs);

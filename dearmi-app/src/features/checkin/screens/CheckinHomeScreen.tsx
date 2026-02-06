@@ -20,6 +20,7 @@ import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { useResetStackOnTabFocus } from '@/shared/hooks/useResetStackOnTabFocus';
 import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
+import { useTabBarScrollHide } from '@/shared/hooks/useTabBarScrollHide';
 import { getEmotionColor, useEmotionLabel } from '@/shared/components/EmotionSlider';
 import { EmotionGraph } from '@/features/checkin/components/EmotionGraph';
 import { DailyCheckinForm } from '@/features/checkin/components/DailyCheckinForm';
@@ -63,6 +64,7 @@ export const CheckinHomeScreen: React.FC = () => {
   const { t } = useTranslation('checkin');
   const emotionLabel = useEmotionLabel();
   const tabBarSafeBottom = useTabBarSafeBottom();
+  const scrollHandlers = useTabBarScrollHide();
 
   const todayStr = getTodayStr();
   const dates = useMemo(() => generateDates(30), []);
@@ -319,7 +321,7 @@ export const CheckinHomeScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScreenHeader variant="tab" title={t('title')} />
+      <ScreenHeader variant="tab" title={t('title')} hasNotification />
 
       {/* 날짜 스크롤 바 */}
       <FlatList
@@ -373,6 +375,7 @@ export const CheckinHomeScreen: React.FC = () => {
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        {...scrollHandlers}
       >
         {/* 선택된 날짜 라벨 */}
         <Text style={styles.selectedDateLabel}>

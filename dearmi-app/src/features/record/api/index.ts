@@ -15,7 +15,7 @@ export const recordApi = {
     }),
 
   /** 상담 기록 상세 */
-  getRecord: (id: number) =>
+  getRecord: (id: string) =>
     axiosInstance.get<ApiResponse<CounselingRecord>>(`/api/v1/records/${id}`),
 
   /** 상담 기록 생성 */
@@ -23,11 +23,11 @@ export const recordApi = {
     axiosInstance.post<ApiResponse<CounselingRecord>>('/api/v1/records', data),
 
   /** 상담 기록 수정 */
-  updateRecord: (id: number, data: UpdateRecordRequest) =>
+  updateRecord: (id: string, data: UpdateRecordRequest) =>
     axiosInstance.put<ApiResponse<CounselingRecord>>(`/api/v1/records/${id}`, data),
 
   /** 상담 기록 삭제 */
-  deleteRecord: (id: number) =>
+  deleteRecord: (id: string) =>
     axiosInstance.delete<ApiResponse<void>>(`/api/v1/records/${id}`),
 
   /**

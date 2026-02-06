@@ -276,7 +276,7 @@ export const OcrResultScreen: React.FC = () => {
       {/* 헤더 */}
       <ScreenHeader
         variant="back"
-        title="OCR 결과"
+        title="자동 인식 결과"
         rightContent={
           showEditor ? (
             <TouchableOpacity onPress={handleSave} disabled={isSaving} hitSlop={12}>

@@ -4,6 +4,7 @@ import type {
   TodayMedication,
   MedicationSchedule,
   CreateMedicationScheduleRequest,
+  UpdateMedicationScheduleRequest,
   CheckMedicationRequest,
   MedicationLogItem,
   MedicationHistory,
@@ -24,6 +25,10 @@ export const medicationApi = {
   /** POST /api/v1/medication-schedules — 복약 일정 등록 */
   create: (data: CreateMedicationScheduleRequest) =>
     axiosInstance.post<ApiResponse<MedicationSchedule>>('/api/v1/medication-schedules', data),
+
+  /** PUT /api/v1/medication-schedules/{id} — 복약 일정 수정 */
+  update: (id: string, data: UpdateMedicationScheduleRequest) =>
+    axiosInstance.put<ApiResponse<MedicationSchedule>>(`/api/v1/medication-schedules/${id}`, data),
 
   /** DELETE /api/v1/medication-schedules/{id} — 복약 일정 삭제 */
   delete: (id: string) =>

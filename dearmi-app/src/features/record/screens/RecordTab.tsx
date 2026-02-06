@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
-
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,13 +14,15 @@ import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { CompositeNavigationProp } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { softShadow } from '@/shared/theme/shadows';
 import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { useResetStackOnTabFocus } from '@/shared/hooks/useResetStackOnTabFocus';
 import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
-import { useTimeline } from '@/features/record/hooks/useRecord';
+import { useTabBarScrollHide } from '@/shared/hooks/useTabBarScrollHide';
+import { useTimeline, useDeleteRecord } from '@/features/record/hooks/useRecord';
 import { getEmotionColor } from '@/shared/components/EmotionSlider';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import { useAuthStore } from '@/features/auth/store/authStore';
@@ -45,10 +47,18 @@ const formatRecordDate = (item: RecordSummary): { label: string; isConsulted: bo
   return { label: formatted, isConsulted: item.consultedAt != null };
 };
 
-const RecordCard: React.FC<{ item: RecordSummary; onPress: () => void }> = ({ item, onPress }) => {
+const RecordCard: React.FC<{ item: RecordSummary; onPress: () => void; onDelete: () => void }> = ({ item, onPress, onDelete }) => {
   const { colors } = useTheme();
   const emotionColor = item.emotionScore !== undefined ? getEmotionColor(item.emotionScore) : colors.primary;
   const { label: dateLabel, isConsulted } = formatRecordDate(item);
+
+  const handleMore = () => {
+    Alert.alert('진료 기록', '', [
+      { text: '수정', onPress },
+      { text: '삭제', style: 'destructive', onPress: onDelete },
+      { text: '취소', style: 'cancel' },
+    ]);
+  };
 
   return (
     <View style={styles.timelineRow}>
@@ -60,6 +70,7 @@ const RecordCard: React.FC<{ item: RecordSummary; onPress: () => void }> = ({ it
 
       <AnimatedPressable
         onPress={onPress}
+        onLongPress={handleMore}
         style={[styles.card, { backgroundColor: colors.surface }, softShadow(colors)]}
       >
         {/* 날짜 라인 */}
@@ -71,6 +82,9 @@ const RecordCard: React.FC<{ item: RecordSummary; onPress: () => void }> = ({ it
           <Text style={[styles.dateLabelKind, { color: colors.textDisabled }]}>
             {isConsulted ? '진료일' : '작성일'}
           </Text>
+          <TouchableOpacity onPress={handleMore} hitSlop={12} style={styles.moreBtn}>
+            <Ionicons name="ellipsis-vertical" size={16} color={colors.textSub} />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.cardHeader}>
@@ -131,8 +145,19 @@ export const RecordTab: React.FC = () => {
   useResetStackOnTabFocus();
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
+  const { t } = useTranslation('record');
   const isPremium = useAuthStore((s) => s.user?.plan === 'PREMIUM');
   const tabBarSafeBottom = useTabBarSafeBottom();
+  const scrollHandlers = useTabBarScrollHide();
+  const { mutate: deleteRecord } = useDeleteRecord();
+
+  const handleDeleteRecord = (id: string) => {
+    Alert.alert('기록 삭제', '이 진료 기록을 삭제할까요?', [
+      { text: '취소', style: 'cancel' },
+      { text: '삭제', style: 'destructive', onPress: () => deleteRecord(id) },
+    ]);
+  };
+
   const {
     data,
     fetchNextPage,
@@ -155,20 +180,18 @@ export const RecordTab: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScreenHeader
-        variant="tab"
-        title="진료 기록"
-        rightContent={
-          <TouchableOpacity
-            style={[styles.prescriptionBtn, { backgroundColor: colors.primary }]}
-            onPress={() => navigation.navigate('PrescriptionList' as any)}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="medkit-outline" size={16} color={colors.textInverse} />
-            <Text style={[styles.prescriptionBtnText, { color: colors.textInverse }]}>처방 목록</Text>
-          </TouchableOpacity>
-        }
-      />
+      <ScreenHeader variant="tab" title={t('title')} hasNotification />
+
+      <View style={styles.toolRow}>
+        <TouchableOpacity
+          style={[styles.prescriptionBtn, { backgroundColor: colors.primaryMuted, borderColor: colors.primary + '33' }]}
+          onPress={() => navigation.navigate('PrescriptionList' as any)}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="medkit-outline" size={14} color={colors.primary} />
+          <Text style={[styles.prescriptionBtnText, { color: colors.primary }]}>처방 목록</Text>
+        </TouchableOpacity>
+      </View>
 
       {!isPremium && (
         <View style={[styles.freeBanner, { backgroundColor: colors.warningLight, borderBottomColor: colors.warning + '30' }]}>
@@ -188,10 +211,15 @@ export const RecordTab: React.FC = () => {
         data={items}
         keyExtractor={(item) => `record-${item.id}`}
         renderItem={({ item }) => (
-          <RecordCard item={item} onPress={() => {}} />
+          <RecordCard
+            item={item}
+            onPress={() => navigation.navigate('RecordDetail', { recordId: item.id })}
+            onDelete={() => handleDeleteRecord(item.id)}
+          />
         )}
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.3}
+        {...scrollHandlers}
         ListFooterComponent={
           isFetchingNextPage ? (
             <ActivityIndicator
@@ -239,6 +267,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: sizes.spacing.lg,
   },
+  toolRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: sizes.spacing.lg,
+    paddingBottom: sizes.spacing.sm,
+  },
   prescriptionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -246,6 +280,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: sizes.spacing.md,
     paddingVertical: sizes.spacing.xs + 2,
     borderRadius: sizes.radius.full,
+    borderWidth: 1,
   },
   prescriptionBtnText: {
     fontSize: sizes.font.sm,
@@ -345,6 +380,10 @@ const styles = StyleSheet.create({
   dateLabelKind: {
     fontSize: 10,
     marginLeft: 2,
+    flex: 1,
+  },
+  moreBtn: {
+    padding: 4,
   },
   cardHeader: {
     flexDirection: 'row',

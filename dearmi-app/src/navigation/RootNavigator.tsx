@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Linking, Platform, StyleSheet, View } from 'react-native';
+import { Alert, Image, Linking, Platform, StyleSheet, View } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -199,7 +199,7 @@ export const RootNavigator: React.FC = () => {
   }
 
   const gradientColors: [string, string, string] = isDark
-    ? [colors.background, '#1C1830', colors.background]
+    ? [colors.background, colors.surface, colors.background]
     : ['#FAF8F5', '#EEE8F8', '#F0F4F0'];
 
   return (
@@ -208,6 +208,11 @@ export const RootNavigator: React.FC = () => {
         colors={gradientColors}
         locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
+      />
+      <Image
+        source={require('../../assets/paper-texture.png')}
+        resizeMode="repeat"
+        style={[StyleSheet.absoluteFill, { opacity: isDark ? 0.04 : 0.06 }]}
       />
 
       <NavigationContainer ref={navigationRef} theme={navTheme}>

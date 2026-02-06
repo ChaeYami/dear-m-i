@@ -141,26 +141,26 @@ export const lightColors: ThemeColors = {
 };
 
 export const darkColors: ThemeColors = {
-  background: '#141220',
-  surface: '#1E1B2E',
-  surfaceElevated: '#272440',
+  // 카톡 다크톤: 네이비/퍼플 탈피, 중성 그레이 기반
+  background: '#17181C',
+  surface: '#1F2125',
+  surfaceElevated: '#2A2D32',
 
-  // 다크에서는 채도를 낮추고 밝기를 줄여서 눈 부담 감소
-  primary: '#8A80B0',
-  primaryLight: '#9E96C0',
-  primaryDark: '#6B6394',
-  primaryMuted: 'rgba(138, 128, 176, 0.12)',
-  // FAB·CTA는 다크에서도 생생하게 유지
-  primaryVivid: '#9B8ED0',
-  primaryVividDark: '#7B6EB8',
+  // 포인트 컬러는 라벤더 유지 (브랜드)
+  primary: '#A99BD4',
+  primaryLight: '#C0B5E2',
+  primaryDark: '#8B7EBD',
+  primaryMuted: 'rgba(169, 155, 212, 0.14)',
+  primaryVivid: '#B8AEDD',
+  primaryVividDark: '#8B7EBD',
 
-  secondary: '#7BAA98',
-  secondaryLight: '#95BFB0',
+  secondary: '#8BC4A8',
+  secondaryLight: '#A8D5BC',
 
-  text: '#E2DDF0',
-  textSub: '#918CA6',
-  textDisabled: '#524D68',
-  textInverse: palette.lavender900,
+  text: '#ECECEE',
+  textSub: '#9EA0A6',
+  textDisabled: '#5C5E63',
+  textInverse: '#17181C',
 
   emotionLow: '#D49999',
   emotionMid: '#DEBB76',
@@ -173,18 +173,18 @@ export const darkColors: ThemeColors = {
   success: '#80B89C',
   successLight: 'rgba(128, 184, 156, 0.12)',
 
-  disabled: '#35314A',
-  skeleton: '#2A2640',
+  disabled: '#35373C',
+  skeleton: '#2A2C30',
 
-  glassBorder: 'rgba(148, 140, 186, 0.14)',
-  glassBlur: 'rgba(30, 27, 46, 0.6)',
-  glassShadow: 'rgba(0, 0, 0, 0.25)',
-  shadowOuter: 'rgba(0, 0, 0, 0.15)',
+  glassBorder: 'rgba(255, 255, 255, 0.08)',
+  glassBlur: 'rgba(31, 33, 37, 0.6)',
+  glassShadow: 'rgba(0, 0, 0, 0.35)',
+  shadowOuter: 'rgba(0, 0, 0, 0.22)',
 
-  divider: 'rgba(148, 140, 186, 0.10)',
+  divider: 'rgba(255, 255, 255, 0.08)',
 
-  card: '#1E1B2E',
-  cardBorder: 'rgba(148, 140, 186, 0.08)',
+  card: '#1F2125',
+  cardBorder: 'rgba(255, 255, 255, 0.06)',
 };
 
 // 하위 호환을 위한 레거시 export (점진적 마이그레이션용)

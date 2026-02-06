@@ -60,6 +60,7 @@ public class CreateMedicationScheduleUseCaseImpl implements CreateMedicationSche
                 .prescriptionMedicationId(command.prescriptionMedicationId())
                 .drugName(resolvedDrugName)
                 .dosage(resolvedDosage)
+                .drugCategory(command.drugCategory())
                 .timesPerDay(command.timesPerDay())
                 .startDate(command.startDate())
                 .endDate(command.endDate())

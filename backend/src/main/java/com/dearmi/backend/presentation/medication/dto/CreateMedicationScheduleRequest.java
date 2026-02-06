@@ -10,6 +10,7 @@ public record CreateMedicationScheduleRequest(
         UUID prescriptionMedicationId,          // nullable — 있으면 약품 정보 pre-fill
         String drugName,                        // prescriptionMedicationId 없을 때 필수
         String dosage,
+        String drugCategory,                    // nullable — 약 종류 (항우울제, 수면진정제 등)
         Short timesPerDay,
         LocalDate startDate,
         LocalDate endDate,

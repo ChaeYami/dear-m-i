@@ -88,7 +88,7 @@ export const PrescriptionUploadScreen: React.FC = () => {
     if (!isPremium) {
       Alert.alert(
         '프리미엄 기능',
-        '처방전 OCR은 프리미엄 플랜 전용 기능입니다.',
+        '처방전 자동 인식은 프리미엄 플랜 전용 기능입니다.',
         [{ text: '확인' }]
       );
       return;
@@ -140,7 +140,7 @@ export const PrescriptionUploadScreen: React.FC = () => {
       uploadStep === 'uploading_s3'
         ? `이미지 업로드 중… ${uploadProgress}%`
         : uploadStep === 'saving'
-        ? 'OCR 분석 요청 중…'
+        ? '자동 인식 중…'
         : uploadStep === 'error'
         ? errorMsg
         : '';
@@ -269,7 +269,7 @@ export const PrescriptionUploadScreen: React.FC = () => {
         {!isPremium && (
           <View style={[staticStyles.premiumNotice, { backgroundColor: colors.warningLight, borderColor: colors.warning + '55' }]}>
             <Text style={[staticStyles.premiumNoticeText, { color: colors.textSub }]}>
-              처방전 OCR은 프리미엄 플랜 전용 기능입니다.
+              처방전 자동 인식은 프리미엄 플랜 전용 기능입니다.
             </Text>
           </View>
         )}
@@ -286,7 +286,7 @@ export const PrescriptionUploadScreen: React.FC = () => {
           activeOpacity={0.85}
         >
           <Text style={[staticStyles.uploadBtnText, { fontFamily: fontFamily.semibold, color: colors.textInverse }]}>
-            {isUploading ? '처리 중…' : isPremium ? '처방전 등록 및 OCR 분석' : '처방전 등록'}
+            {isUploading ? '처리 중…' : isPremium ? '처방전 등록 및 자동 인식' : '처방전 등록'}
           </Text>
         </TouchableOpacity>
       </ScrollView>

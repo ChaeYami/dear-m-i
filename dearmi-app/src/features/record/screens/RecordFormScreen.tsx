@@ -47,13 +47,13 @@ export const RecordFormScreen: React.FC = () => {
   const isPremium = user?.plan === 'PREMIUM';
   const contentLimit = isPremium ? undefined : FREE_CONTENT_LIMIT;
 
-  const { data: existingRecord, isLoading: isLoadingRecord } = useRecordDetail(recordId ?? 0);
+  const { data: existingRecord, isLoading: isLoadingRecord } = useRecordDetail(recordId ?? '');
   const { data: recentSchedules = [] } = useRecentSchedules('PAST');
   const { mutate: createRecord, isPending: isCreating } = useCreateRecord();
   const { mutate: updateRecord, isPending: isUpdating } = useUpdateRecord();
   const isPending = isCreating || isUpdating;
 
-  const [selectedScheduleId, setSelectedScheduleId] = useState<number | undefined>(
+  const [selectedScheduleId, setSelectedScheduleId] = useState<string | undefined>(
     scheduleIdFromNav ?? existingRecord?.scheduleId
   );
   const [emotionScore, setEmotionScore] = useState<number>(
@@ -479,7 +479,7 @@ export const RecordFormScreen: React.FC = () => {
             {rxDone ? (
               <View style={[styles.rxDoneBox, { backgroundColor: colors.successLight }]}>
                 <Ionicons name="checkmark-circle" size={20} color={colors.success} />
-                <Text style={[styles.rxDoneText, { color: colors.success }]}>처방전이 등록되었습니다. OCR 분석이 진행됩니다.</Text>
+                <Text style={[styles.rxDoneText, { color: colors.success }]}>처방전이 등록되었습니다. 자동 인식이 진행됩니다.</Text>
               </View>
             ) : rxImage ? (
               <View style={[styles.rxPreviewWrap, { borderColor: colors.divider }]}>
@@ -498,7 +498,7 @@ export const RecordFormScreen: React.FC = () => {
                     ) : (
                       <>
                         <Ionicons name="cloud-upload-outline" size={16} color={colors.textInverse} />
-                        <Text style={[styles.rxUploadBtnText, { color: colors.textInverse }]}>업로드 및 OCR</Text>
+                        <Text style={[styles.rxUploadBtnText, { color: colors.textInverse }]}>업로드 및 자동 인식</Text>
                       </>
                     )}
                   </TouchableOpacity>

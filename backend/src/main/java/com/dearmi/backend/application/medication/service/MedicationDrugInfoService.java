@@ -45,15 +45,15 @@ public class MedicationDrugInfoService {
         try {
             Optional<DrugInfoDto> info = drugInfoPort.searchByName(schedule.getDrugName());
             if (info.isPresent()) {
-                schedule.updateDrugInfo(info.get().effect(), info.get().usage(), info.get().caution(), info.get().manufacturer(), info.get().itemSeq());
+                schedule.updateDrugInfo(info.get().effect(), info.get().usage(), info.get().caution(), null, info.get().manufacturer(), info.get().itemSeq());
                 log.info("약품 정보 저장 완료: scheduleId={}, drugName={}", scheduleId, schedule.getDrugName());
             } else {
-                schedule.updateDrugInfo(null, null, null, null, null);
+                schedule.updateDrugInfo(null, null, null, null, null, null);
                 log.info("약품 정보 미발견: scheduleId={}, drugName={}", scheduleId, schedule.getDrugName());
             }
             medicationScheduleRepository.save(schedule);
         } catch (Exception e) {
-            schedule.updateDrugInfo(null, null, null, null, null);
+            schedule.updateDrugInfo(null, null, null, null, null, null);
             medicationScheduleRepository.save(schedule);
             log.warn("약품 정보 조회 실패: scheduleId={}, error={}", scheduleId, e.getMessage());
         }

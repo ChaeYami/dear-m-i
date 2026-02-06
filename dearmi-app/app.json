@@ -46,10 +46,10 @@
         "expo-font",
         {
           "fonts": [
-            "./assets/fonts/SUIT-Regular.ttf",
-            "./assets/fonts/SUIT-Medium.ttf",
-            "./assets/fonts/SUIT-SemiBold.ttf",
-            "./assets/fonts/SUIT-Bold.ttf"
+            "./assets/fonts/Pretendard-Regular.ttf",
+            "./assets/fonts/Pretendard-Medium.ttf",
+            "./assets/fonts/Pretendard-SemiBold.ttf",
+            "./assets/fonts/Pretendard-Bold.ttf"
           ]
         }
       ]

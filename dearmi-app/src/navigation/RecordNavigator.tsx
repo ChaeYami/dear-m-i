@@ -2,6 +2,7 @@ import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 
 import { RecordTab } from '@/features/record/screens/RecordTab';
+import { RecordDetailScreen } from '@/features/record/screens/RecordDetailScreen';
 import { RecordFormScreen } from '@/features/record/screens/RecordFormScreen';
 import { PrescriptionTab } from '@/features/prescription/screens/PrescriptionTab';
 import { PrescriptionUploadScreen } from '@/features/prescription/screens/PrescriptionUploadScreen';
@@ -10,7 +11,8 @@ import { MedicationDetailScreen } from '@/features/prescription/screens/Medicati
 
 export type RecordStackParamList = {
   RecordTab: undefined;
-  RecordForm: { scheduleId?: number; recordId?: number } | undefined;
+  RecordDetail: { recordId: string };
+  RecordForm: { scheduleId?: string; recordId?: string } | undefined;
   PrescriptionList: undefined;
   PrescriptionUpload: undefined;
   OcrResult: { prescriptionId: number };
@@ -28,6 +30,7 @@ export const RecordNavigator: React.FC = () => {
       }}
     >
       <Stack.Screen name="RecordTab" component={RecordTab} />
+      <Stack.Screen name="RecordDetail" component={RecordDetailScreen} />
       <Stack.Screen name="RecordForm" component={RecordFormScreen} />
       <Stack.Screen name="PrescriptionList" component={PrescriptionTab} />
       <Stack.Screen name="PrescriptionUpload" component={PrescriptionUploadScreen} />

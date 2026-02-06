@@ -31,7 +31,7 @@ public class CheckMedicationUseCaseImpl implements CheckMedicationUseCase {
         }
 
         // ④ 원칙: 복약 일정 소유권 검증
-        medicationScheduleRepository
+        var schedule = medicationScheduleRepository
                 .findByIdAndUserIdAndDeletedAtIsNull(command.scheduleId(), command.userId())
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
@@ -62,6 +62,6 @@ public class CheckMedicationUseCaseImpl implements CheckMedicationUseCase {
             log = medicationLogRepository.save(log);
         }
 
-        return MedicationLogResult.from(log);
+        return MedicationLogResult.from(log, schedule.getDrugName());
     }
 }

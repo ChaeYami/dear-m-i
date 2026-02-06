@@ -62,6 +62,10 @@ public class MedicationSchedule extends BaseTimeEntity {
     @Builder.Default
     private Boolean bedtime = false;
 
+    /** 약 종류 (항우울제, 수면진정제 등) — 사용자 입력 또는 e약은요 자동 채움 */
+    @Column(name = "drug_category", length = 100)
+    private String drugCategory;
+
     // 약품 상세 정보 (e약은요 캐시)
     @Column(name = "drug_effect", columnDefinition = "text")
     private String drugEffect;
@@ -95,23 +99,25 @@ public class MedicationSchedule extends BaseTimeEntity {
     @Column(name = "bedtime_time")
     private LocalTime bedtimeTime;
 
-    public void updateDrugInfo(String drugEffect, String drugUsage, String drugCaution, String manufacturer, String itemSeq) {
+    public void updateDrugInfo(String drugEffect, String drugUsage, String drugCaution, String drugCategory, String manufacturer, String itemSeq) {
         this.drugEffect = drugEffect;
         this.drugUsage = drugUsage;
         this.drugCaution = drugCaution;
+        this.drugCategory = drugCategory;
         this.itemSeq = itemSeq;
         this.manufacturer = manufacturer;
         this.drugInfoFetchedAt = java.time.LocalDateTime.now();
     }
 
     public void update(
-            String drugName, String dosage, Short timesPerDay,
+            String drugName, String dosage, String drugCategory, Short timesPerDay,
             LocalDate startDate, LocalDate endDate,
             Boolean morning, Boolean afternoon, Boolean evening, Boolean bedtime,
             LocalTime morningTime, LocalTime afternoonTime, LocalTime eveningTime, LocalTime bedtimeTime
     ) {
         this.drugName = drugName;
         this.dosage = dosage;
+        this.drugCategory = drugCategory;
         this.timesPerDay = timesPerDay;
         this.startDate = startDate;
         this.endDate = endDate;

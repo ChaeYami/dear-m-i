@@ -27,6 +27,7 @@ public class UpdateMedicationScheduleUseCaseImpl implements UpdateMedicationSche
         schedule.update(
                 command.drugName(),
                 command.dosage(),
+                command.drugCategory(),
                 command.timesPerDay(),
                 command.startDate(),
                 command.endDate(),

@@ -49,7 +49,7 @@ const PAGES: Page[] = [
   },
   {
     icon: 'document-text-outline',
-    title: '처방전 OCR (PREMIUM)',
+    title: '처방전 자동 인식 (PREMIUM)',
     description:
       '처방전을 사진으로 찍으면 약품 정보를 자동으로 인식해요.\n복약 일정도 한 번에 등록할 수 있어요.',
   },

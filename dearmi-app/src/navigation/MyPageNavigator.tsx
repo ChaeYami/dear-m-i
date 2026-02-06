@@ -6,6 +6,10 @@ import { NotificationSettingsScreen } from '@/features/notification/screens/Noti
 import { SubscriptionManageScreen } from '@/features/subscription/screens/SubscriptionManageScreen';
 import { LanguageSettingsScreen } from '@/features/mypage/screens/LanguageSettingsScreen';
 import { ThemeSettingsScreen } from '@/features/mypage/screens/ThemeSettingsScreen';
+import { AccountScreen } from '@/features/mypage/screens/AccountScreen';
+import { NoticeListScreen } from '@/features/mypage/screens/NoticeListScreen';
+import { FaqScreen } from '@/features/mypage/screens/FaqScreen';
+import { LegalScreen } from '@/features/mypage/screens/LegalScreen';
 
 export type MyPageStackParamList = {
   MyPageTab: undefined;
@@ -13,6 +17,10 @@ export type MyPageStackParamList = {
   LanguageSettings: undefined;
   ThemeSettings: undefined;
   SubscriptionManage: undefined;
+  Account: undefined;
+  NoticeList: undefined;
+  Faq: undefined;
+  Legal: { kind: 'terms' | 'privacy' | 'licenses' };
 };
 
 const Stack = createStackNavigator<MyPageStackParamList>();
@@ -29,5 +37,9 @@ export const MyPageNavigator: React.FC = () => (
     <Stack.Screen name="LanguageSettings" component={LanguageSettingsScreen} />
     <Stack.Screen name="ThemeSettings" component={ThemeSettingsScreen} />
     <Stack.Screen name="SubscriptionManage" component={SubscriptionManageScreen} />
+    <Stack.Screen name="Account" component={AccountScreen} />
+    <Stack.Screen name="NoticeList" component={NoticeListScreen} />
+    <Stack.Screen name="Faq" component={FaqScreen} />
+    <Stack.Screen name="Legal" component={LegalScreen} />
   </Stack.Navigator>
 );

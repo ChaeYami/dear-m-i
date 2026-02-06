@@ -59,7 +59,7 @@ export const useCreateSchedule = () => {
       const previous = queryClient.getQueryData<HospitalSchedule[]>(queryKey);
 
       const optimistic: HospitalSchedule = {
-        id: -Date.now(), // 임시 id (서버 응답으로 교체됨)
+        id: `temp-${Date.now()}`, // 임시 id (서버 응답으로 교체됨)
         ...payload,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -96,7 +96,7 @@ export const useUpdateSchedule = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: UpdateScheduleRequest }) =>
+    mutationFn: ({ id, data }: { id: string; data: UpdateScheduleRequest }) =>
       scheduleApi.updateSchedule(id, data),
 
     onMutate: async ({ id, data }) => {
@@ -163,7 +163,7 @@ export const useDeleteSchedule = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id }: { id: number; year: number; month: number }) =>
+    mutationFn: ({ id }: { id: string; year: number; month: number }) =>
       scheduleApi.deleteSchedule(id),
 
     onSettled: (_data, _err, { year, month }) => {

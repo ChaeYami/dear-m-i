@@ -20,7 +20,7 @@ import type { RootStackParamList } from '@/navigation/RootNavigator';
 type PlanOption = 'monthly' | 'yearly';
 
 const FEATURES = [
-  { icon: 'document-text-outline', text: '처방전 OCR 자동 인식' },
+  { icon: 'document-text-outline', text: '처방전 자동 인식' },
   { icon: 'medical-outline', text: '약품 효능·주의사항 상세 정보' },
   { icon: 'notifications-outline', text: '복약 일정 자동 생성' },
   { icon: 'calendar-outline', text: '전체 상담 기록 무제한 조회' },
@@ -202,7 +202,7 @@ export const PaywallScreen: React.FC = () => {
           <Text style={styles.badge}>PREMIUM</Text>
           <Text style={styles.title}>DearMI 프리미엄</Text>
           <Text style={styles.subtitle}>
-            처방전 OCR, 약품 정보, 전체 기록 조회까지{'\n'}
+            처방전 자동 인식, 약품 정보, 전체 기록 조회까지{'\n'}
             건강 관리를 더 스마트하게
           </Text>
         </View>

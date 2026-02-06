@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
@@ -17,6 +18,7 @@ import axiosInstance from '@/shared/api/axiosInstance';
 import { SkeletonLoader } from '@/shared/components/SkeletonLoader';
 import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
 
+type Nav = StackNavigationProp<MedicationStackParamList, 'MedicationScheduleDetail'>;
 type Route = RouteProp<MedicationStackParamList, 'MedicationScheduleDetail'>;
 
 interface DrugInfoResponse {
@@ -97,7 +99,7 @@ const parseSections = (text: string | null): Array<{ title: string; content: str
 
 export const MedicationScheduleDetailScreen: React.FC = () => {
   const { colors } = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation<Nav>();
   const { scheduleId, drugName } = useRoute<Route>().params;
   const tabBarSafeBottom = useTabBarSafeBottom();
   const { data: info, isLoading } = useMedicationScheduleDrugInfo(scheduleId);
@@ -112,9 +114,17 @@ export const MedicationScheduleDetailScreen: React.FC = () => {
           <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>{drugName}</Text>
-        <TouchableOpacity onPress={() => refreshDrugInfo()} disabled={isRefreshing} hitSlop={12}>
-          <Ionicons name="refresh" size={22} color={isRefreshing ? colors.textDisabled : colors.primary} />
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('MedicationForm', { scheduleId })}
+            hitSlop={12}
+          >
+            <Ionicons name="create-outline" size={22} color={colors.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => refreshDrugInfo()} disabled={isRefreshing} hitSlop={12}>
+            <Ionicons name="refresh" size={22} color={isRefreshing ? colors.textDisabled : colors.primary} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -283,6 +293,11 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBott
       fontSize: sizes.font.lg,
       fontFamily: fontFamily.bold,
       color: colors.text,
+    },
+    headerRight: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      gap: sizes.spacing.md,
     },
     content: {
       padding: sizes.spacing.lg,

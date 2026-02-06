@@ -40,12 +40,13 @@
   "char_limit_message": "Free plan allows up to {{limit}} characters.",
   "save_failed": "Save Failed",
   "try_again_later": "Please try again later.",
-  "tab_schedule": "Schedule",
+  "tab_schedule": "Appointments",
   "tab_record": "Records",
   "tab_checkin": "Check-in",
   "tab_prescription": "Rx",
+  "tab_medication": "Meds",
   "tab_mypage": "My",
   "premium_gate_title": "Premium Feature",
-  "premium_gate_desc": "Unlock prescription OCR, drug info,\nmedication management and more\nwith the Premium plan.",
+  "premium_gate_desc": "Unlock prescription auto-scan, drug info,\nmedication management and more\nwith the Premium plan.",
   "placeholder": "{{label}} coming soon"
 }

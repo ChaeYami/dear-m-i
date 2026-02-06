@@ -29,14 +29,14 @@ export const useTimeline = () => {
 };
 
 /** 상담 기록 상세 */
-export const useRecordDetail = (id: number) => {
+export const useRecordDetail = (id: string) => {
   return useQuery({
     queryKey: QUERY_KEYS.record(id),
     queryFn: async () => {
       const { data } = await recordApi.getRecord(id);
       return data.data ?? null;
     },
-    enabled: id > 0,
+    enabled: !!id,
   });
 };
 
@@ -70,7 +70,7 @@ export const useCreateRecord = () => {
 export const useUpdateRecord = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: UpdateRecordRequest }) =>
+    mutationFn: ({ id, data }: { id: string; data: UpdateRecordRequest }) =>
       recordApi.updateRecord(id, data),
     onSuccess: (_res, { id }) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.timeline() });
@@ -83,7 +83,7 @@ export const useUpdateRecord = () => {
 export const useDeleteRecord = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => recordApi.deleteRecord(id),
+    mutationFn: (id: string) => recordApi.deleteRecord(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.timeline() });
     },

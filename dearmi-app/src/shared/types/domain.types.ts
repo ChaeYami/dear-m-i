@@ -21,7 +21,7 @@ export interface User {
 
 /** 병원 일정 */
 export interface HospitalSchedule {
-  id: number;
+  id: string;
   hospitalName: string;
   doctorName?: string;
   scheduledAt: string; // ISO 8601 datetime
@@ -43,8 +43,8 @@ export type UpdateScheduleRequest = Partial<CreateScheduleRequest>;
 
 /** 상담 기록 */
 export interface CounselingRecord {
-  id: number;
-  scheduleId?: number;
+  id: string;
+  scheduleId?: string;
   hospitalName?: string; // 연결된 일정의 병원명 (백엔드 조인)
   content: string;
   emotionScore?: number;
@@ -56,7 +56,7 @@ export interface CounselingRecord {
 
 /** 상담 기록 생성 요청 */
 export interface CreateRecordRequest {
-  scheduleId?: number;
+  scheduleId?: string;
   content: string;
   emotionScore?: number;
   tags?: string[];
@@ -232,6 +232,8 @@ export interface MedicationSchedule {
   prescriptionMedicationId?: string;
   drugName: string;
   dosage?: string;
+  drugCategory?: string;
+  drugCaution?: string;
   timesPerDay?: number;
   startDate?: string;
   endDate?: string;
@@ -250,6 +252,7 @@ export interface CreateMedicationScheduleRequest {
   prescriptionMedicationId?: string;
   drugName?: string;
   dosage?: string;
+  drugCategory?: string;
   timesPerDay?: number;
   startDate?: string;  // YYYY-MM-DD
   endDate?: string;
@@ -263,6 +266,8 @@ export interface CreateMedicationScheduleRequest {
   bedtimeTime?: string;
 }
 
+export type UpdateMedicationScheduleRequest = Omit<CreateMedicationScheduleRequest, 'prescriptionMedicationId'>;
+
 /** POST /api/v1/medication-schedules/{id}/logs 요청 */
 export interface CheckMedicationRequest {
   logDate: string; // YYYY-MM-DD
@@ -274,6 +279,7 @@ export interface CheckMedicationRequest {
 export interface MedicationLogItem {
   logId: string;
   scheduleId: string;
+  drugName: string;
   logDate: string; // YYYY-MM-DD
   timeSlot: TimeSlotType;
   status: MedicationLogStatus;

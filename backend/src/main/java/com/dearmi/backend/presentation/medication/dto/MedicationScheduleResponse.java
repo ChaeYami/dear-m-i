@@ -13,6 +13,8 @@ public record MedicationScheduleResponse(
         UUID prescriptionMedicationId,
         String drugName,
         String dosage,
+        String drugCategory,
+        String drugCaution,
         Short timesPerDay,
         LocalDate startDate,
         LocalDate endDate,
@@ -28,7 +30,8 @@ public record MedicationScheduleResponse(
     public static MedicationScheduleResponse from(MedicationScheduleResult r) {
         return new MedicationScheduleResponse(
                 r.id(), r.prescriptionMedicationId(),
-                r.drugName(), r.dosage(), r.timesPerDay(),
+                r.drugName(), r.dosage(), r.drugCategory(), r.drugCaution(),
+                r.timesPerDay(),
                 r.startDate(), r.endDate(),
                 r.morning(), r.afternoon(), r.evening(), r.bedtime(),
                 r.morningTime(), r.afternoonTime(), r.eveningTime(), r.bedtimeTime()

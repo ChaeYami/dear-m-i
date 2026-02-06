@@ -207,7 +207,7 @@ const PrescriptionCard: React.FC<{
                 onPress={onViewOcr}
               >
                 <Text style={{ fontFamily: fontFamily.medium, fontSize: sizes.font.sm, color: colors.primary }}>
-                  OCR 결과 보기
+                  자동 인식 결과 보기
                 </Text>
               </TouchableOpacity>
             )}

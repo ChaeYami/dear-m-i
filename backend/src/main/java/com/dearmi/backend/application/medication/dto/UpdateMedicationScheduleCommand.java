@@ -9,6 +9,7 @@ public record UpdateMedicationScheduleCommand(
         UUID scheduleId,
         String drugName,
         String dosage,
+        String drugCategory,             // nullable — 약 종류 (항우울제, 수면진정제 등)
         Short timesPerDay,
         LocalDate startDate,
         LocalDate endDate,

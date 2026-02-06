@@ -20,7 +20,7 @@ import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { softShadow } from '@/shared/theme/shadows';
 import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
-import { useCreateMedicationSchedule } from '@/features/medication/hooks/useMedication';
+import { useCreateMedicationSchedule, useUpdateMedicationSchedule, useAllMedicationSchedules } from '@/features/medication/hooks/useMedication';
 import { useMedicationDetail } from '@/features/prescription/hooks/usePrescription';
 import { useUnsavedChangesWarning } from '@/shared/hooks/useUnsavedChangesWarning';
 import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
@@ -53,6 +53,7 @@ export const MedicationFormScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const params = useRoute<Route>().params ?? {};
   const {
+    scheduleId: editScheduleId,
     prescriptionMedicationId,
     drugName: drugNameParam,
     dosage: dosageParam,
@@ -61,15 +62,25 @@ export const MedicationFormScreen: React.FC = () => {
     remainingMeds,
   } = params;
 
+  const isEdit = Boolean(editScheduleId);
+
   // API pre-fill — prescriptionMedicationId 있을 때만 (직접 파라미터 없을 때)
   const { data: prefill } = useMedicationDetail(
     prescriptionMedicationId && !drugNameParam ? Number(prescriptionMedicationId) : 0
   );
 
+  // 편집 모드: 기존 일정 가져오기
+  const { data: allSchedules = [] } = useAllMedicationSchedules(isEdit);
+  const existingSchedule = isEdit
+    ? allSchedules.find((s) => s.id === editScheduleId)
+    : undefined;
+
   const { mutate: create, isPending } = useCreateMedicationSchedule();
+  const { mutate: update, isPending: isUpdating } = useUpdateMedicationSchedule();
 
   const [drugName, setDrugName] = useState(drugNameParam ?? '');
   const [dosage, setDosage] = useState(dosageParam ?? '');
+  const [drugCategory, setDrugCategory] = useState('');
   const [durationDays, setDurationDays] = useState(
     totalDaysParam !== undefined ? String(totalDaysParam) : ''
   );
@@ -104,6 +115,41 @@ export const MedicationFormScreen: React.FC = () => {
     }
   }, [prefill]);
 
+  // 편집 모드: 기존 데이터로 폼 초기화
+  const [editHydrated, setEditHydrated] = useState(false);
+  useEffect(() => {
+    if (!isEdit || !existingSchedule || editHydrated) return;
+    setDrugName(existingSchedule.drugName ?? '');
+    setDosage(existingSchedule.dosage ?? '');
+    setDrugCategory(existingSchedule.drugCategory ?? '');
+    if (existingSchedule.startDate) setStartDate(new Date(existingSchedule.startDate));
+    if (existingSchedule.startDate && existingSchedule.endDate) {
+      const start = new Date(existingSchedule.startDate);
+      const end = new Date(existingSchedule.endDate);
+      const diff = Math.round((end.getTime() - start.getTime()) / 86400000) + 1;
+      setDurationDays(String(diff));
+    }
+    setActiveSlots({
+      MORNING: existingSchedule.morning,
+      AFTERNOON: existingSchedule.afternoon,
+      EVENING: existingSchedule.evening,
+      BEDTIME: existingSchedule.bedtime,
+    });
+    const parseTime = (t?: string) => {
+      if (!t) return null;
+      const [h, m] = t.split(':').map(Number);
+      const d = new Date(); d.setHours(h, m, 0, 0);
+      return d;
+    };
+    setSlotTimes((prev) => ({
+      MORNING: parseTime(existingSchedule.morningTime) ?? prev.MORNING,
+      AFTERNOON: parseTime(existingSchedule.afternoonTime) ?? prev.AFTERNOON,
+      EVENING: parseTime(existingSchedule.eveningTime) ?? prev.EVENING,
+      BEDTIME: parseTime(existingSchedule.bedtimeTime) ?? prev.BEDTIME,
+    }));
+    setEditHydrated(true);
+  }, [isEdit, existingSchedule, editHydrated]);
+
   const endDate =
     durationDays && !isNaN(Number(durationDays))
       ? addDays(startDate, Number(durationDays) - 1)
@@ -128,6 +174,7 @@ export const MedicationFormScreen: React.FC = () => {
       : undefined,
     drugName: drugName.trim(),
     dosage: dosage.trim() || undefined,
+    drugCategory: drugCategory.trim() || undefined,
     startDate: toLocalDateStr(startDate),
     endDate: endDate ? toLocalDateStr(endDate) : undefined,
     morning: activeSlots.MORNING,
@@ -149,6 +196,10 @@ export const MedicationFormScreen: React.FC = () => {
       Alert.alert('시간대 선택', '복약 시간대를 하나 이상 선택해 주세요.');
       return false;
     }
+    if (!durationDays.trim() || isNaN(Number(durationDays)) || Number(durationDays) <= 0) {
+      Alert.alert('필수 입력', '투약 일수를 입력해 주세요.');
+      return false;
+    }
     return true;
   };
 
@@ -162,7 +213,12 @@ export const MedicationFormScreen: React.FC = () => {
 
   const handleSave = () => {
     if (!validate()) return;
-    create(buildPayload(), { onSuccess: () => markSavedAndExit() });
+    if (isEdit && editScheduleId) {
+      const { prescriptionMedicationId: _, ...payload } = buildPayload();
+      update({ id: editScheduleId, data: payload }, { onSuccess: () => markSavedAndExit() });
+    } else {
+      create(buildPayload(), { onSuccess: () => markSavedAndExit() });
+    }
   };
 
   /** OCR 흐름: 저장 후 다음 약품으로 이동 */
@@ -199,7 +255,7 @@ export const MedicationFormScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <ScreenHeader
         variant="form"
-        title={isFromOcr ? '복약 알림 설정' : '복약 일정 등록'}
+        title={isFromOcr ? '복약 알림 설정' : isEdit ? '복약 일정 수정' : '복약 일정 등록'}
         onCancel={() => navigation.goBack()}
         onSave={handleSave}
         saveDisabled={isPending}
@@ -242,6 +298,18 @@ export const MedicationFormScreen: React.FC = () => {
             value={dosage}
             onChangeText={setDosage}
             placeholder="예: 100mg"
+            placeholderTextColor={colors.textDisabled}
+          />
+        </View>
+
+        {/* 약 종류 */}
+        <View style={styles.fieldCard}>
+          <Text style={styles.label}>약 종류</Text>
+          <TextInput
+            style={styles.input}
+            value={drugCategory}
+            onChangeText={setDrugCategory}
+            placeholder="예: 항우울제, 수면진정제"
             placeholderTextColor={colors.textDisabled}
           />
         </View>
@@ -316,7 +384,7 @@ export const MedicationFormScreen: React.FC = () => {
 
         {/* 투약 일수 */}
         <View style={styles.fieldCard}>
-          <Text style={styles.label}>투약 일수</Text>
+          <Text style={styles.label}>투약 일수 *</Text>
           <TextInput
             style={styles.input}
             value={durationDays}

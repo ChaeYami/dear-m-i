@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
@@ -7,7 +7,10 @@ import { useTheme, sizes, fontFamily } from '@/shared/theme';
 interface TabHeaderProps {
   variant: 'tab';
   title: string;
+  /** 알림 벨 앞쪽(왼쪽)에 렌더할 추가 우측 컨텐츠 */
   rightContent?: React.ReactNode;
+  /** 알림 빨간 점 인디케이터 */
+  hasNotification?: boolean;
 }
 
 interface BackHeaderProps {
@@ -29,12 +32,23 @@ interface FormHeaderProps {
 
 type ScreenHeaderProps = TabHeaderProps | BackHeaderProps | FormHeaderProps;
 
+const BRAND_LOGO = require('../../../assets/icon.png');
+
 export const ScreenHeader: React.FC<ScreenHeaderProps> = (props) => {
   const { colors } = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const { variant, title } = props;
 
   if (variant === 'tab') {
+    const handleBellPress = () => {
+      const parent = navigation.getParent();
+      if (parent) {
+        parent.navigate('MyPage', { screen: 'NotificationSettings' });
+      } else {
+        navigation.navigate('NotificationSettings' as never);
+      }
+    };
+
     return (
       <View
         style={{
@@ -45,21 +59,64 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = (props) => {
           paddingHorizontal: sizes.spacing.lg,
         }}
       >
-        <Text
-          style={{
-            fontFamily: fontFamily.bold,
-            fontSize: sizes.font.xxl,
-            color: colors.text,
-            letterSpacing: -0.3,
-          }}
-        >
-          {title}
-        </Text>
-        {props.rightContent && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.sm }}>
-            {props.rightContent}
-          </View>
-        )}
+        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 0 }}>
+          <Image
+            source={BRAND_LOGO}
+            style={{
+              width: 26,
+              height: 26,
+              borderRadius: 7,
+              marginRight: sizes.spacing.sm,
+            }}
+            resizeMode="cover"
+          />
+          <Text
+            style={{
+              fontFamily: fontFamily.bold,
+              fontSize: sizes.font.lg,
+              color: colors.text,
+              letterSpacing: -0.2,
+              flexShrink: 1,
+            }}
+            numberOfLines={1}
+          >
+            {title}
+          </Text>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.sm }}>
+          {props.rightContent}
+          <TouchableOpacity
+            onPress={handleBellPress}
+            hitSlop={8}
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 19,
+              backgroundColor: colors.surface,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: 1,
+              borderColor: colors.cardBorder,
+            }}
+          >
+            <Ionicons name="notifications-outline" size={20} color={colors.text} />
+            {props.hasNotification ? (
+              <View
+                style={{
+                  position: 'absolute',
+                  top: 8,
+                  right: 9,
+                  width: 8,
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: colors.error,
+                  borderWidth: 1.5,
+                  borderColor: colors.surface,
+                }}
+              />
+            ) : null}
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }

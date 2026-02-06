@@ -47,7 +47,7 @@ export const QUERY_KEYS = {
 
   // 상담 기록
   records: () => ['records'] as const,
-  record: (id: number) => ['record', id] as const,
+  record: (id: string) => ['record', id] as const,
 
   // 최근 일정 (RecordForm/PrepNoteForm 드롭다운용)
   recentSchedules: (direction: 'PAST' | 'FUTURE' = 'PAST') =>

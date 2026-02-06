@@ -31,7 +31,7 @@ const formatDate = (iso?: string) => {
 };
 
 const BENEFITS = [
-  '처방전 OCR 자동 인식',
+  '처방전 자동 인식',
   '약품 효능·주의사항 상세 정보',
   '복약 일정 자동 생성',
   '전체 상담 기록 무제한 조회',

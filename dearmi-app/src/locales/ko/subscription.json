@@ -1,8 +1,8 @@
 {
   "paywall_badge": "PREMIUM",
   "paywall_title": "DearMI 프리미엄",
-  "paywall_subtitle": "처방전 OCR, 약품 정보, 전체 기록 조회까지\n건강 관리를 더 스마트하게",
-  "feature_ocr": "처방전 OCR 자동 인식",
+  "paywall_subtitle": "처방전 자동 인식, 약품 정보, 전체 기록 조회까지\n건강 관리를 더 스마트하게",
+  "feature_ocr": "처방전 자동 인식",
   "feature_drug_info": "약품 효능·주의사항 상세 정보",
   "feature_med_schedule": "복약 일정 자동 생성",
   "feature_unlimited_records": "전체 상담 기록 무제한 조회",

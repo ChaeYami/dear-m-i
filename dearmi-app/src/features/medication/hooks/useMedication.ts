@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/constants/cacheKeys';
 import { medicationApi } from '@/features/medication/api/medicationApi';
-import type { CreateMedicationScheduleRequest, CheckMedicationRequest } from '@/shared/types/domain.types';
+import type { CreateMedicationScheduleRequest, UpdateMedicationScheduleRequest, CheckMedicationRequest } from '@/shared/types/domain.types';
 
 /** 특정 날짜(기본=오늘) 복약 현황 */
 export const useTodayMedication = (date?: string) =>
@@ -29,6 +29,19 @@ export const useCreateMedicationSchedule = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (req: CreateMedicationScheduleRequest) => medicationApi.create(req),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todayMedication'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.allMedicationSchedules() });
+    },
+  });
+};
+
+/** 복약 일정 수정 */
+export const useUpdateMedicationSchedule = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateMedicationScheduleRequest }) =>
+      medicationApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['todayMedication'] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.allMedicationSchedules() });

@@ -1,8 +1,8 @@
 {
   "paywall_badge": "PREMIUM",
   "paywall_title": "DearMI Premium",
-  "paywall_subtitle": "Prescription OCR, drug info, full record access\nSmarter health management",
-  "feature_ocr": "Prescription OCR recognition",
+  "paywall_subtitle": "Prescription auto-scan, drug info, full record access\nSmarter health management",
+  "feature_ocr": "Prescription auto-scan",
   "feature_drug_info": "Detailed drug info & precautions",
   "feature_med_schedule": "Auto medication scheduling",
   "feature_unlimited_records": "Unlimited record access",
