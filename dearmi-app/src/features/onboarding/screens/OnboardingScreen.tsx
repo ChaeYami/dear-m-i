@@ -15,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import { GlassCard } from '@/shared/components/GlassCard';
 import { CacheService } from '@/shared/cache/CacheService';
 import { CACHE_KEYS } from '@/constants/cacheKeys';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
@@ -90,12 +91,19 @@ export const OnboardingScreen: React.FC = () => {
 
   const isLastPage = currentPage === PAGES.length - 1;
 
-  const gradientColors: [string, string] = isDark
-    ? [colors.background, colors.primaryMuted]
-    : [colors.primaryLight, colors.primary];
+  const bgGradientColors: [string, string, string] = isDark
+    ? [colors.background, colors.surfaceElevated, colors.background]
+    : ['#F7F4F0', '#EEE8F8', '#F7F4F0'];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <LinearGradient
+      colors={bgGradientColors}
+      locations={[0, 0.5, 1]}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 1 }}
+      style={styles.container}
+    >
+    <SafeAreaView style={styles.container}>
       {/* 헤더: 닫기 + 다시 보지 않기 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={closeOnly} hitSlop={12} style={styles.headerLeftBtn}>
@@ -116,14 +124,11 @@ export const OnboardingScreen: React.FC = () => {
       >
         {PAGES.map((page, idx) => (
           <View key={idx} style={[styles.page, { width: SCREEN_WIDTH }]}>
-            <LinearGradient
-              colors={gradientColors}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.iconCircle}
-            >
-              <Ionicons name={page.icon} size={64} color={colors.textInverse} />
-            </LinearGradient>
+            <GlassCard style={styles.iconCard} intensity={40}>
+              <View style={styles.iconInner}>
+                <Ionicons name={page.icon} size={48} color={colors.primary} />
+              </View>
+            </GlassCard>
             <Text style={[styles.title, { color: colors.text }]}>{page.title}</Text>
             <Text style={[styles.description, { color: colors.textSub }]}>{page.description}</Text>
           </View>
@@ -138,7 +143,7 @@ export const OnboardingScreen: React.FC = () => {
               key={idx}
               style={[
                 styles.dot,
-                { backgroundColor: idx === currentPage ? colors.primary : colors.divider },
+                { backgroundColor: idx === currentPage ? colors.primary : colors.primaryMuted },
                 idx === currentPage && styles.dotActive,
               ]}
             />
@@ -146,7 +151,6 @@ export const OnboardingScreen: React.FC = () => {
         </View>
 
         <TouchableOpacity
-          style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
           onPress={() => {
             if (isLastPage) {
               closeOnly();
@@ -155,13 +159,30 @@ export const OnboardingScreen: React.FC = () => {
             }
           }}
           activeOpacity={0.85}
+          style={styles.primaryBtn}
         >
-          <Text style={[styles.primaryBtnText, { color: colors.textInverse }]}>
-            {isLastPage ? '시작하기' : '다음'}
-          </Text>
+          {isLastPage ? (
+            <LinearGradient
+              colors={[colors.primaryVivid, colors.primaryVividDark]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.primaryBtnGradient}
+            >
+              <Text style={[styles.primaryBtnText, { color: colors.textInverse }]}>
+                시작하기
+              </Text>
+            </LinearGradient>
+          ) : (
+            <View style={[styles.primaryBtnGradient, { backgroundColor: colors.primary }]}>
+              <Text style={[styles.primaryBtnText, { color: colors.textInverse }]}>
+                다음
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
     </SafeAreaView>
+    </LinearGradient>
   );
 };
 
@@ -187,13 +208,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: sizes.spacing.xxl,
     gap: sizes.spacing.lg,
   },
-  iconCircle: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
+  iconCard: {
+    marginBottom: sizes.spacing.lg,
+    borderRadius: sizes.radius.xxl,
+  },
+  iconInner: {
+    width: 100,
+    height: 100,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: sizes.spacing.lg,
   },
   title: {
     fontSize: sizes.font.xxl,
@@ -225,6 +248,10 @@ const styles = StyleSheet.create({
     width: 24,
   },
   primaryBtn: {
+    borderRadius: sizes.radius.full,
+    overflow: 'hidden',
+  },
+  primaryBtnGradient: {
     height: sizes.buttonHeight.lg,
     borderRadius: sizes.radius.full,
     alignItems: 'center',

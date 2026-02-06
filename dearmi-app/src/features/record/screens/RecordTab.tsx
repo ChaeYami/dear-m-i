@@ -71,8 +71,18 @@ const RecordCard: React.FC<{ item: RecordSummary; onPress: () => void; onDelete:
       <AnimatedPressable
         onPress={onPress}
         onLongPress={handleMore}
-        style={[styles.card, { backgroundColor: colors.surface }, softShadow(colors)]}
+        style={[styles.card, { backgroundColor: colors.surface, overflow: 'hidden' }, softShadow(colors)]}
       >
+        {/* 감정 컬러 세로 라인 */}
+        {item.emotionScore !== undefined && (
+          <View
+            style={[
+              styles.emotionLine,
+              { backgroundColor: emotionColor },
+            ]}
+          />
+        )}
+
         {/* 날짜 라인 */}
         <View style={styles.dateRow}>
           <Ionicons name="calendar-outline" size={13} color={colors.textSub} />
@@ -364,7 +374,17 @@ const styles = StyleSheet.create({
     marginTop: sizes.spacing.md,
     borderRadius: sizes.radius.xxl,
     padding: sizes.spacing.lg,
+    paddingLeft: sizes.spacing.lg + 4,
     gap: sizes.spacing.sm,
+  },
+  emotionLine: {
+    position: 'absolute',
+    left: 0,
+    top: '15%',
+    bottom: '15%',
+    width: 4,
+    borderTopRightRadius: 2,
+    borderBottomRightRadius: 2,
   },
   prescriptionCard: {
     borderLeftWidth: 3,

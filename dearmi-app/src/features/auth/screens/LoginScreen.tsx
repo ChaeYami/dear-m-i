@@ -16,7 +16,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
-import { softShadow } from '@/shared/theme/shadows';
+import { softShadow, subtleShadow } from '@/shared/theme/shadows';
 import { useLogin } from '@/features/auth/hooks/useLogin';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 
@@ -56,10 +56,16 @@ export const LoginScreen: React.FC = () => {
   }
 
   return (
+    <LinearGradient
+      colors={['#F7F4F0', '#EEE8F8', '#F0F4F0']}
+      locations={[0, 0.5, 1]}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 1 }}
+      style={{ flex: 1 }}
+    >
     <SafeAreaView
       style={{
         flex: 1,
-        backgroundColor: colors.background,
       }}
     >
       <Animated.View
@@ -147,6 +153,18 @@ export const LoginScreen: React.FC = () => {
           >
             {t('app_tagline')}
           </Text>
+
+          <Text
+            style={{
+              fontSize: sizes.font.sm,
+              fontFamily: fontFamily.regular,
+              color: colors.textDisabled,
+              letterSpacing: 1,
+              marginTop: sizes.spacing.xs,
+            }}
+          >
+            {t('app_subtitle')}
+          </Text>
         </View>
 
         {/* -- Middle: Buttons -- */}
@@ -181,11 +199,11 @@ export const LoginScreen: React.FC = () => {
               alignItems: 'center',
               backgroundColor: colors.surface,
               borderWidth: 1,
-              borderColor: colors.divider,
+              borderColor: colors.glassBorder,
               borderRadius: sizes.radius.full,
               height: 56,
               paddingHorizontal: sizes.spacing.lg,
-              ...softShadow(colors),
+              ...subtleShadow(colors),
             }}
             onPress={loginWithGoogle}
             activeOpacity={0.85}
@@ -300,5 +318,6 @@ export const LoginScreen: React.FC = () => {
         </Text>
       </Animated.View>
     </SafeAreaView>
+    </LinearGradient>
   );
 };

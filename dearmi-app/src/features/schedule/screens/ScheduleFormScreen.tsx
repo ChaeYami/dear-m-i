@@ -15,6 +15,8 @@ import type { StackNavigationProp } from '@react-navigation/stack';
 import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
+import { GlassCard } from '@/shared/components/GlassCard';
+import { SectionTitle } from '@/shared/components/SectionTitle';
 import { useCreateSchedule, useUpdateSchedule } from '@/features/schedule/hooks/useSchedule';
 import { useUnsavedChangesWarning } from '@/shared/hooks/useUnsavedChangesWarning';
 import type { ScheduleStackParamList } from '@/navigation/ScheduleNavigator';
@@ -111,33 +113,55 @@ export const ScheduleFormScreen: React.FC = () => {
       />
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Field label="병원명" required colors={colors}>
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.divider, color: colors.text }]}
-            placeholder="병원 이름을 입력하세요"
-            placeholderTextColor={colors.textDisabled}
-            value={hospitalName}
-            onChangeText={setHospitalName}
-          />
-        </Field>
+        {/* 병원 정보 섹션 */}
+        <GlassCard intensity={40} style={styles.sectionCard}>
+          <SectionTitle size="sm">병원 정보</SectionTitle>
+          <View style={styles.sectionFields}>
+            <Field label="병원명" required colors={colors}>
+              <TextInput
+                style={[styles.input, { backgroundColor: 'transparent', borderColor: colors.divider, color: colors.text }]}
+                placeholder="병원 이름을 입력하세요"
+                placeholderTextColor={colors.textDisabled}
+                value={hospitalName}
+                onChangeText={setHospitalName}
+              />
+            </Field>
 
-        <Field label="날짜" colors={colors}>
-          <TouchableOpacity
-            style={[styles.pickerButton, { backgroundColor: colors.surface, borderColor: colors.divider }]}
-            onPress={() => setShowDatePicker(true)}
-          >
-            <Text style={[styles.pickerText, { color: colors.text }]}>{formatDateDisplay(selectedDate)}</Text>
-          </TouchableOpacity>
-        </Field>
+            <Field label="담당 선생님 (선택)" colors={colors}>
+              <TextInput
+                style={[styles.input, { backgroundColor: 'transparent', borderColor: colors.divider, color: colors.text }]}
+                placeholder="담당 선생님 이름"
+                placeholderTextColor={colors.textDisabled}
+                value={doctorName}
+                onChangeText={setDoctorName}
+              />
+            </Field>
+          </View>
+        </GlassCard>
 
-        <Field label="시간" colors={colors}>
-          <TouchableOpacity
-            style={[styles.pickerButton, { backgroundColor: colors.surface, borderColor: colors.divider }]}
-            onPress={() => setShowTimePicker(true)}
-          >
-            <Text style={[styles.pickerText, { color: colors.text }]}>{formatTimeDisplay(selectedDate)}</Text>
-          </TouchableOpacity>
-        </Field>
+        {/* 일정 섹션 */}
+        <GlassCard intensity={40} style={styles.sectionCard}>
+          <SectionTitle size="sm">일정</SectionTitle>
+          <View style={styles.sectionFields}>
+            <Field label="날짜" colors={colors}>
+              <TouchableOpacity
+                style={[styles.pickerButton, { backgroundColor: 'transparent', borderColor: colors.divider }]}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Text style={[styles.pickerText, { color: colors.text }]}>{formatDateDisplay(selectedDate)}</Text>
+              </TouchableOpacity>
+            </Field>
+
+            <Field label="시간" colors={colors}>
+              <TouchableOpacity
+                style={[styles.pickerButton, { backgroundColor: 'transparent', borderColor: colors.divider }]}
+                onPress={() => setShowTimePicker(true)}
+              >
+                <Text style={[styles.pickerText, { color: colors.text }]}>{formatTimeDisplay(selectedDate)}</Text>
+              </TouchableOpacity>
+            </Field>
+          </View>
+        </GlassCard>
 
         <DatePickerModal
           visible={showDatePicker}
@@ -169,28 +193,24 @@ export const ScheduleFormScreen: React.FC = () => {
           onClose={() => setShowTimePicker(false)}
         />
 
-        <Field label="담당 선생님 (선택)" colors={colors}>
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.divider, color: colors.text }]}
-            placeholder="담당 선생님 이름"
-            placeholderTextColor={colors.textDisabled}
-            value={doctorName}
-            onChangeText={setDoctorName}
-          />
-        </Field>
-
-        <Field label="메모 (선택)" colors={colors}>
-          <TextInput
-            style={[styles.input, styles.textArea, { backgroundColor: colors.surface, borderColor: colors.divider, color: colors.text }]}
-            placeholder="메모를 입력하세요"
-            placeholderTextColor={colors.textDisabled}
-            value={memo}
-            onChangeText={setMemo}
-            multiline
-            numberOfLines={4}
-            textAlignVertical="top"
-          />
-        </Field>
+        {/* 메모 섹션 */}
+        <GlassCard intensity={40} style={styles.sectionCard}>
+          <SectionTitle size="sm">메모</SectionTitle>
+          <View style={styles.sectionFields}>
+            <Field label="메모 (선택)" colors={colors}>
+              <TextInput
+                style={[styles.input, styles.textArea, { backgroundColor: 'transparent', borderColor: colors.divider, color: colors.text }]}
+                placeholder="메모를 입력하세요"
+                placeholderTextColor={colors.textDisabled}
+                value={memo}
+                onChangeText={setMemo}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+            </Field>
+          </View>
+        </GlassCard>
       </ScrollView>
     </SafeAreaView>
   );
@@ -213,7 +233,14 @@ const Field: React.FC<{ label: string; required?: boolean; children: React.React
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg },
+  content: { padding: sizes.spacing.lg, gap: sizes.spacing.md },
+  sectionCard: {
+    borderRadius: sizes.radius.xl,
+  },
+  sectionFields: {
+    gap: sizes.spacing.sm,
+    marginTop: sizes.spacing.sm,
+  },
   field: { gap: sizes.spacing.xs },
   fieldLabel: {
     fontSize: sizes.font.sm,
