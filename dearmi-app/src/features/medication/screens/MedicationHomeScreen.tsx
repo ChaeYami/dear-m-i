@@ -307,9 +307,9 @@ export const MedicationHomeScreen: React.FC = () => {
               }
             }}
             hitSlop={8}
-            style={[styles.editChip, { borderColor: colors.primary + '33', backgroundColor: colors.primaryMuted }]}
+            style={[styles.editChip, { borderColor: colors.accent + '33', backgroundColor: colors.accentMuted }]}
           >
-            <Ionicons name={isEditMode ? 'checkmark' : 'create-outline'} size={14} color={colors.primary} />
+            <Ionicons name={isEditMode ? 'checkmark' : 'create-outline'} size={14} color={colors.accent} />
             <Text style={styles.editChipText}>{isEditMode ? '완료' : '편집'}</Text>
           </TouchableOpacity>
         </View>
@@ -701,7 +701,7 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBott
     },
     editChipText: {
       fontSize: sizes.font.sm,
-      color: colors.primary,
+      color: colors.accent,
       fontFamily: fontFamily.semibold,
     },
     editBar: {
