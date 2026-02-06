@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import {
   View,
   Text,
+  Image,
   TouchableOpacity,
   Platform,
 } from 'react-native';
@@ -86,50 +87,16 @@ export const LoginScreen: React.FC = () => {
             marginTop: sizes.spacing.xxl * 1.5,
           }}
         >
-          {/* Gradient blob behind logo */}
-          <View
+          {/* App logo */}
+          <Image
+            source={require('@/../assets/icon.png')}
             style={{
-              width: 160,
-              height: 160,
-              alignItems: 'center',
-              justifyContent: 'center',
+              width: 140,
+              height: 140,
               marginBottom: sizes.spacing.lg,
             }}
-          >
-            <LinearGradient
-              colors={[colors.primaryLight, colors.primary]}
-              start={{ x: 0.2, y: 0 }}
-              end={{ x: 0.8, y: 1 }}
-              style={{
-                position: 'absolute',
-                width: 160,
-                height: 160,
-                borderRadius: 80,
-                opacity: 0.3,
-              }}
-            />
-            <View
-              style={{
-                width: 100,
-                height: 100,
-                borderRadius: 50,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: colors.primary,
-                ...softShadow(colors),
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 48,
-                  fontFamily: fontFamily.bold,
-                  color: colors.textInverse,
-                }}
-              >
-                M
-              </Text>
-            </View>
-          </View>
+            resizeMode="contain"
+          />
 
           <Text
             style={{
