@@ -9,8 +9,7 @@ export interface NotificationSettings {
 }
 
 export interface RegisterTokenRequest {
-  token: string;
-  platform: 'ios' | 'android';
+  fcmToken: string;
 }
 
 const notificationApi = {

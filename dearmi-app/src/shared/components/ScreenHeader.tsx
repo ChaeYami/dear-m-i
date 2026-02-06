@@ -32,7 +32,7 @@ interface FormHeaderProps {
 
 type ScreenHeaderProps = TabHeaderProps | BackHeaderProps | FormHeaderProps;
 
-const BRAND_LOGO = require('../../../assets/icon.png');
+const BRAND_LOGO = require('../../../assets/banner-icon.png');
 
 export const ScreenHeader: React.FC<ScreenHeaderProps> = (props) => {
   const { colors } = useTheme();

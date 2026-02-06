@@ -42,13 +42,15 @@ export const useFcmSetup = () => {
     }
 
     try {
+      console.log('[FCM] 토큰 획득 시도...');
       const tokenData = await Notifications.getDevicePushTokenAsync();
+      console.log('[FCM] 토큰 획득 성공:', tokenData.data?.substring(0, 20) + '...');
       await notificationApi.registerToken({
-        token: tokenData.data,
-        platform: Platform.OS as 'ios' | 'android',
+        fcmToken: tokenData.data,
       });
-    } catch {
-      // 토큰 등록 실패 시 조용히 무시 (앱 동작에 영향 없음)
+      console.log('[FCM] 서버 등록 성공');
+    } catch (e) {
+      console.error('[FCM] 실패:', e);
     }
   };
 };
