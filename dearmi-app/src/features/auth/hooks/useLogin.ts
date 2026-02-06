@@ -27,9 +27,7 @@ export const useLogin = () => {
     setError(null);
 
     try {
-      // OAuth는 에뮬레이터 브라우저에서 열리므로 localhost 사용 (10.0.2.2는 앱 내부 전용)
-      const oauthBase = process.env.EXPO_PUBLIC_OAUTH_URL ?? process.env.EXPO_PUBLIC_API_URL;
-      const authUrl = `${oauthBase}/oauth2/authorization/${provider}`;
+      const authUrl = `${process.env.EXPO_PUBLIC_API_URL}/oauth2/authorization/${provider}`;
       const redirectUri = 'dearmi://auth';
 
       const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
