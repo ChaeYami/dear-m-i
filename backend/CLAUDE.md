@@ -80,6 +80,11 @@ TOSS_SECRET_KEY
 - `counseling_records.consulted_at` (LocalDate, nullable) — 일정 미연결 기록의 진료일.
 - 일정 연결 시 `hospital_schedules.scheduled_at` 우선 사용.
 
+### 약품 분류 (V11)
+- `medication_schedules.drug_category` (VARCHAR(100), nullable) — 약품 분류 (예: 항우울제, 수면제 등).
+- `MedicationScheduleResponse` 에 `drugCategory`, `drugCaution` 필드 포함.
+- `MedicationLogResult` 에 `drugName` 필드 포함 — 이력 조회 시 약품명 직접 반환.
+
 ### JSON 배열 컬럼 (tags)
 - `common/converter/TagsJsonConverter`: `List<String>` ↔ JSON.
 - 컬럼 `TEXT`/`VARCHAR`, JPA 에서 `@Convert(converter = TagsJsonConverter.class)`.

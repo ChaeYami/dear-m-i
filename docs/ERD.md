@@ -1,6 +1,6 @@
 # DearMI — Entity Relationship Diagram
 
-> V1 ~ V6 마이그레이션 기준 전체 DB 스키마
+> V1 ~ V11 마이그레이션 기준 전체 DB 스키마
 >
 > 공통 컬럼(`created_at`, `updated_at`)은 모든 테이블에 존재하나 가독성을 위해 생략.
 > `deleted_at`은 소프트 삭제 대상 테이블만 별도 표기.
@@ -107,6 +107,7 @@ erDiagram
         UUID prescription_id FK "SET NULL"
         UUID prescription_medication_id FK "SET NULL"
         VARCHAR drug_name
+        VARCHAR drug_category "nullable, V11"
         VARCHAR dosage
         SMALLINT times_per_day
         DATE start_date

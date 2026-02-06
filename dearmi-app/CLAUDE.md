@@ -52,8 +52,8 @@ RootNavigator (Stack)
 ├── Auth: AuthNavigator → LoginScreen
 ├── Main: MainTabNavigator (custom tab bar — 라벨 없는 아이콘만)
 │   ├── Schedule  → ScheduleNavigator
-│   ├── Checkin   → CheckinNavigator           ← 초기 탭 (initialRouteName)
-│   ├── Record    → RecordNavigator (PrescriptionList/Upload/OcrResult/MedicationDetail 포함)
+│   ├── Record    → RecordNavigator (RecordTab → RecordDetail → RecordForm, PrescriptionList/Upload/OcrResult/MedicationDetail 포함)
+│   ├── Checkin   → CheckinNavigator           ← 초기 탭 (center, initialRouteName)
 │   ├── Medication→ MedicationNavigator
 │   └── MyPage    → MyPageNavigator
 ├── Paywall (modal)
@@ -130,12 +130,17 @@ OcrResultScreen 저장 → Alert
 | `EmotionSlider` | 1–10. red≤3 / amber≤6 / green≤10. `getEmotionColor(score)` export |
 | `AnimatedPressable` | 터치 시 scale 애니메이션 |
 | `InAppNotificationBanner` | 포그라운드 알림 슬라이드인 (3초 자동 해제) |
+| `CustomAlert` | Alert.alert 대체 커스텀 모달 (앱 전체 통일 디자인) |
+| `TimePickerModal` | @quidone/react-native-wheel-picker 기반 시간 선택 모달 |
+| `SectionTitle` | 섹션 제목 공통 컴포넌트 |
+| `DatePickerModal` | 재사용 가능 날짜 선택 모달 (highlightedDates/maxDate 옵션) |
+| `TabBarVisibilityContext` | 탭바 표시/숨김 제어 Context |
 
 ## 테마 시스템 (`src/shared/theme/`)
 - `ThemeProvider` 가 라이트/다크 모드 토글. `useTheme()` 로 `{ colors, isDark }` 사용.
 - `colors.ts` — 라이트/다크 팔레트. `sizes.ts` — spacing/font/radius/icon/buttonHeight/`tabBarHeight: 64`.
 - `softShadow / floatingShadow / subtleShadow` 는 colors 받아서 ViewStyle 반환.
-- 폰트: SUIT (fontFamily.regular/medium/semibold/bold).
+- 폰트: Pretendard (fontFamily.regular/medium/semibold/bold).
 
 ## React Query 키
 실제 키는 `src/constants/cacheKeys.ts` 의 `QUERY_KEYS` 를 직접 참조 (스테일 방지).
@@ -143,12 +148,13 @@ OcrResultScreen 저장 → Alert
 변경/추가 시 mutation 의 `invalidateQueries` 매핑도 함께 업데이트.
 
 ## 주요 패키지
-설치됨: `expo-web-browser`, `@react-native-community/datetimepicker`, `react-native-calendars`,
+설치됨: `expo-web-browser`, `@quidone/react-native-wheel-picker`, `react-native-calendars`,
 `expo-image-picker`, `expo-secure-store`, `react-native-mmkv`, `@react-native-community/netinfo`,
 `@tanstack/react-query ^5`, `zustand ^5`, `expo-notifications`, `expo-device`,
 `i18next` + `react-i18next`, `expo-localization`, `react-native-chart-kit`,
 `expo-linear-gradient`, `react-native-iap`.
 
+미사용: `@react-native-community/datetimepicker` (설치는 되어 있으나 CustomAlert/DatePickerModal/TimePickerModal 로 대체됨).
 미설치: `expo-local-authentication` (생체인증), iOS/Android 위젯 라이브러리.
 
 ## 자주 하는 실수

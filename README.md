@@ -21,6 +21,7 @@
 | 앱 상태 관리 | Zustand + React Query | ^5 / ^5 |
 | 앱 로컬 저장 | react-native-mmkv + expo-secure-store | |
 | 앱 다국어 | i18next + expo-localization | |
+| 앱 커스텀 피커 | @quidone/react-native-wheel-picker | |
 | 앱 결제 | react-native-iap (iOS IAP + Android Play Billing) | ^14 |
 | 백엔드 | Spring Boot + JPA + QueryDSL + Flyway | 3.5.0 |
 | 인증 | Spring Security OAuth2 (Google/Apple) + JWT | |

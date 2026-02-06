@@ -426,6 +426,9 @@ components:
           format: uuid
         drugName:
           type: string
+        drugCategory:
+          type: string
+          description: 약품 분류 (예: 항우울제, 수면제)
         dosage:
           type: string
         timesPerDay:
@@ -467,6 +470,9 @@ components:
       properties:
         drugName:
           type: string
+        drugCategory:
+          type: string
+          description: 약품 분류 (예: 항우울제, 수면제)
         dosage:
           type: string
         timesPerDay:
@@ -509,6 +515,12 @@ components:
           format: uuid
         drugName:
           type: string
+        drugCategory:
+          type: string
+          description: 약품 분류 (예: 항우울제, 수면제)
+        drugCaution:
+          type: string
+          description: 약품 주의사항 (prescription_medications 에서 조회)
         dosage:
           type: string
         timesPerDay:
@@ -563,6 +575,9 @@ components:
         scheduleId:
           type: string
           format: uuid
+        drugName:
+          type: string
+          description: 복약 일정의 약품명
         logDate:
           type: string
           format: date
