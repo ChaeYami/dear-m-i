@@ -57,7 +57,7 @@ export const LoginScreen: React.FC = () => {
 
   return (
     <LinearGradient
-      colors={['#F7F4F0', '#EEE8F8', '#F0F4F0']}
+      colors={['#F7F4F0', '#EEE8F8', '#FDF5F2']}
       locations={[0, 0.5, 1]}
       start={{ x: 0.5, y: 0 }}
       end={{ x: 0.5, y: 1 }}

@@ -55,7 +55,7 @@ export const TriggerTagSelector: React.FC<TriggerTagSelectorProps> = ({
               style={[
                 styles.chip,
                 { backgroundColor: colors.background, borderColor: colors.divider },
-                isSelected && { backgroundColor: colors.primaryLight + '25', borderColor: colors.primary },
+                isSelected && { backgroundColor: colors.accentMuted, borderColor: colors.accent },
               ]}
               onPress={() => toggleTag(tag)}
               activeOpacity={0.75}
@@ -63,7 +63,7 @@ export const TriggerTagSelector: React.FC<TriggerTagSelectorProps> = ({
               <Text style={[
                 styles.chipText,
                 { color: colors.textSub },
-                isSelected && { color: colors.primary, fontFamily: fontFamily.semibold },
+                isSelected && { color: colors.accent, fontFamily: fontFamily.semibold },
               ]}>
                 {tag}
               </Text>
@@ -98,12 +98,12 @@ export const TriggerTagSelector: React.FC<TriggerTagSelectorProps> = ({
           {selectedTags.filter(isCustomTag).map((tag) => (
             <TouchableOpacity
               key={tag}
-              style={[styles.customChip, { backgroundColor: colors.secondaryLight + '25' }]}
+              style={[styles.customChip, { backgroundColor: colors.accentMuted }]}
               onPress={() => toggleTag(tag)}
               activeOpacity={0.75}
             >
-              <Text style={[styles.customChipText, { color: colors.secondary }]}>{tag}</Text>
-              <Ionicons name="close-circle" size={14} color={colors.secondary} />
+              <Text style={[styles.customChipText, { color: colors.accent }]}>{tag}</Text>
+              <Ionicons name="close-circle" size={14} color={colors.accent} />
             </TouchableOpacity>
           ))}
         </View>

@@ -114,8 +114,8 @@ export const RecordDetailScreen: React.FC = () => {
             <Text style={styles.sectionLabel}>태그</Text>
             <View style={styles.tagRow}>
               {record.tags.map((tag) => (
-                <View key={tag} style={[styles.tag, { backgroundColor: colors.primaryLight + '25' }]}>
-                  <Text style={[styles.tagText, { color: colors.primary }]}>#{tag}</Text>
+                <View key={tag} style={[styles.tag, { backgroundColor: colors.accentMuted }]}>
+                  <Text style={[styles.tagText, { color: colors.accent }]}>#{tag}</Text>
                 </View>
               ))}
             </View>

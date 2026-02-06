@@ -19,6 +19,13 @@ const palette = {
   lavender900: '#2D2840',
 
   // ── 세이지 스펙트럼 ──────────────────
+  blush100: '#FDF5F2',
+  blush200: '#F9DDD6',
+  blush300: '#F4C5BA',
+  blush400: '#E8A99D',
+  blush500: '#D9908A',
+
+  // ── 세이지 스펙트럼 ──────────────────
   sage300: '#A8C8BB',
   sage400: '#8BC4A8',
   sage500: '#7EAD9B',
@@ -57,6 +64,11 @@ export interface ThemeColors {
   // ── 보조색 ──────────────────────────────
   secondary: string;
   secondaryLight: string;
+
+  // ── 악센트 (블러시 핑크) ────────────────
+  accent: string;
+  accentLight: string;
+  accentMuted: string;
 
   // ── 텍스트 ─────────────────────────────
   text: string;
@@ -110,6 +122,10 @@ export const lightColors: ThemeColors = {
   secondary: palette.sage500,
   secondaryLight: palette.sage300,
 
+  accent: '#C9847B',
+  accentLight: palette.blush300,
+  accentMuted: '#FAEAE5',
+
   text: palette.lavender900,
   textSub: '#8C879E',
   textDisabled: '#BDB9CC',
@@ -156,6 +172,10 @@ export const darkColors: ThemeColors = {
 
   secondary: '#8BC4A8',
   secondaryLight: '#A8D5BC',
+
+  accent: '#E8B5AC',
+  accentLight: '#D4A49C',
+  accentMuted: 'rgba(232, 181, 172, 0.20)',
 
   text: '#ECECEE',
   textSub: '#9EA0A6',

@@ -57,8 +57,8 @@ const HighlightText: React.FC<{
             key={i}
             style={{
               fontFamily: fontFamily.bold,
-              color: colors.primary,
-              backgroundColor: colors.primaryMuted,
+              color: colors.accent,
+              backgroundColor: colors.accentMuted,
               borderRadius: 4,
             }}
           >
@@ -180,7 +180,7 @@ export const SearchScreen: React.FC = () => {
     cancelText: { fontSize: sizes.font.md, fontFamily: fontFamily.medium, color: colors.textSub },
     content: { padding: sizes.spacing.lg, paddingBottom: 40 },
     freeBanner: {
-      backgroundColor: colors.primaryMuted,
+      backgroundColor: colors.accentMuted,
       borderRadius: sizes.radius.xxl,
       padding: sizes.spacing.md,
       flexDirection: 'row',

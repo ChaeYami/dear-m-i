@@ -56,12 +56,12 @@ const MenuItem: React.FC<MenuItemProps> = ({ icon, label, onPress, right, colors
         width: 32,
         height: 32,
         borderRadius: 10,
-        backgroundColor: colors.primaryMuted,
+        backgroundColor: colors.accentMuted,
         alignItems: 'center',
         justifyContent: 'center',
       }}
     >
-      <Ionicons name={icon} size={18} color={colors.primary} />
+      <Ionicons name={icon} size={18} color={colors.accent} />
     </View>
     <Text
       style={{

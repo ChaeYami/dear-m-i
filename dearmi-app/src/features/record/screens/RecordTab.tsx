@@ -123,8 +123,8 @@ const RecordCard: React.FC<{ item: RecordSummary; onPress: () => void; onDelete:
         {item.tags && item.tags.length > 0 && (
           <View style={styles.tagRow}>
             {item.tags.map((tag) => (
-              <View key={tag} style={[styles.tag, { backgroundColor: colors.primaryLight + '25' }]}>
-                <Text style={[styles.tagText, { color: colors.primary }]}>#{tag}</Text>
+              <View key={tag} style={[styles.tag, { backgroundColor: colors.accentMuted }]}>
+                <Text style={[styles.tagText, { color: colors.accent }]}>#{tag}</Text>
               </View>
             ))}
           </View>
@@ -194,12 +194,12 @@ export const RecordTab: React.FC = () => {
 
       <View style={styles.toolRow}>
         <TouchableOpacity
-          style={[styles.prescriptionBtn, { backgroundColor: colors.primaryMuted, borderColor: colors.primary + '33' }]}
+          style={[styles.prescriptionBtn, { backgroundColor: colors.accentMuted, borderColor: colors.accent + '33' }]}
           onPress={() => navigation.navigate('PrescriptionList' as any)}
           activeOpacity={0.8}
         >
-          <Ionicons name="medkit-outline" size={14} color={colors.primary} />
-          <Text style={[styles.prescriptionBtnText, { color: colors.primary }]}>처방 목록</Text>
+          <Ionicons name="medkit-outline" size={14} color={colors.accent} />
+          <Text style={[styles.prescriptionBtnText, { color: colors.accent }]}>처방 목록</Text>
         </TouchableOpacity>
       </View>
 
@@ -281,6 +281,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     paddingHorizontal: sizes.spacing.lg,
+    paddingTop: sizes.spacing.xs,
     paddingBottom: sizes.spacing.sm,
   },
   prescriptionBtn: {

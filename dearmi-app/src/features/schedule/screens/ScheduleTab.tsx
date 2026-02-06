@@ -183,11 +183,11 @@ export const ScheduleTab: React.FC = () => {
         <View style={styles.toolRow}>
           <TouchableOpacity
             onPress={() => navigation.navigate('PrepNoteList')}
-            style={[styles.prepNoteChip, { backgroundColor: colors.primaryMuted, borderColor: colors.primary + '33' }]}
+            style={[styles.prepNoteChip, { backgroundColor: colors.accentMuted, borderColor: colors.accent + '33' }]}
             hitSlop={8}
           >
-            <Ionicons name="create-outline" size={14} color={colors.primary} />
-            <Text style={[styles.prepNoteChipText, { color: colors.primary, fontFamily: fontFamily.semibold }]}>
+            <Ionicons name="create-outline" size={14} color={colors.accent} />
+            <Text style={[styles.prepNoteChipText, { color: colors.accent, fontFamily: fontFamily.semibold }]}>
               준비 메모
             </Text>
           </TouchableOpacity>

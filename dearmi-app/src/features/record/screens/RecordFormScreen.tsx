@@ -458,12 +458,12 @@ export const RecordFormScreen: React.FC = () => {
               {tags.map((tag) => (
                 <TouchableOpacity
                   key={tag}
-                  style={[styles.tagChip, { backgroundColor: colors.primaryLight + '25' }]}
+                  style={[styles.tagChip, { backgroundColor: colors.accentMuted }]}
                   onPress={() => handleRemoveTag(tag)}
                   activeOpacity={0.75}
                 >
-                  <Text style={[styles.tagChipText, { color: colors.primary }]}>#{tag}</Text>
-                  <Ionicons name="close-circle" size={14} color={colors.primary} />
+                  <Text style={[styles.tagChipText, { color: colors.accent }]}>#{tag}</Text>
+                  <Ionicons name="close-circle" size={14} color={colors.accent} />
                 </TouchableOpacity>
               ))}
             </View>

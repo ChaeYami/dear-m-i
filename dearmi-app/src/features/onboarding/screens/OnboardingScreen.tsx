@@ -93,7 +93,7 @@ export const OnboardingScreen: React.FC = () => {
 
   const bgGradientColors: [string, string, string] = isDark
     ? [colors.background, colors.surfaceElevated, colors.background]
-    : ['#F7F4F0', '#EEE8F8', '#F7F4F0'];
+    : ['#F7F4F0', '#EEE8F8', '#FDF5F2'];
 
   return (
     <LinearGradient
