@@ -65,16 +65,15 @@ const formatHistoryDate = (dateStr: string) => {
   return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
 };
 
-interface HistoryDrugGroup {
-  drugName: string;
-  scheduleId: string;
-  logs: MedicationLogItem[]; // 시간대별 로그 (MORNING, AFTERNOON, ...)
+interface HistorySlotGroup {
+  timeSlot: TimeSlotType;
+  logs: MedicationLogItem[];
 }
 
 interface HistorySection {
   title: string;
   date: string;
-  drugs: HistoryDrugGroup[];
+  slots: HistorySlotGroup[];
   takenCount: number;
   totalCount: number;
 }
@@ -198,7 +197,7 @@ export const MedicationHomeScreen: React.FC = () => {
   const [, mo, da] = selectedDate.split('-').map(Number);
   const dateLabel = isToday ? `${mo}월 ${da}일` : `${mo}월 ${da}일 (지난 기록)`;
 
-  // ── 복약 이력 (날짜 → 약별 그룹) ──
+  // ── 복약 이력 (날짜 → 시간대별 그룹) ──
   const historySections = useMemo<HistorySection[]>(() => {
     if (!history?.logs) return [];
     // 1. 날짜별 그룹
@@ -208,20 +207,21 @@ export const MedicationHomeScreen: React.FC = () => {
       list.push(log);
       dateMap.set(log.logDate, list);
     }
-    // 2. 각 날짜 내에서 약(scheduleId)별 그룹
+    // 2. 각 날짜 내에서 시간대별 그룹 (아침→점심→저녁→취침전 순서 보장)
     return Array.from(dateMap.entries()).map(([date, logs]) => {
-      const drugMap = new Map<string, HistoryDrugGroup>();
+      const slotMap = new Map<TimeSlotType, MedicationLogItem[]>();
       for (const log of logs) {
-        const key = log.scheduleId;
-        if (!drugMap.has(key)) {
-          drugMap.set(key, { drugName: log.drugName || '', scheduleId: key, logs: [] });
-        }
-        drugMap.get(key)!.logs.push(log);
+        const list = slotMap.get(log.timeSlot) ?? [];
+        list.push(log);
+        slotMap.set(log.timeSlot, list);
       }
+      const slots: HistorySlotGroup[] = TIME_SLOTS
+        .filter((s) => slotMap.has(s))
+        .map((s) => ({ timeSlot: s, logs: slotMap.get(s)! }));
       return {
         title: formatHistoryDate(date),
         date,
-        drugs: Array.from(drugMap.values()),
+        slots,
         takenCount: logs.filter((l) => l.status === 'TAKEN').length,
         totalCount: logs.length,
       };
@@ -481,46 +481,51 @@ export const MedicationHomeScreen: React.FC = () => {
                     </View>
                   </TouchableOpacity>
 
-                  {/* 약별 그룹 카드 */}
-                  {section.drugs.map((drug) => (
-                    <View key={drug.scheduleId} style={[styles.historyCard, softShadow(colors)]}>
-                      {/* 약 이름 헤더 */}
-                      <View style={styles.historyDrugHeader}>
-                        <Ionicons name="medical-outline" size={14} color={colors.primary} />
-                        <Text style={styles.historyDrugTitle} numberOfLines={1}>{drug.drugName || '알 수 없는 약'}</Text>
-                      </View>
-                      <View style={styles.historyDivider} />
-                      {/* 시간대별 상태 행 */}
-                      {drug.logs.map((item) => {
-                        const statusCfg = STATUS_CONFIG[item.status];
-                        return (
-                          <TouchableOpacity
-                            key={item.logId}
-                            style={styles.historySlotRow}
-                            activeOpacity={0.7}
-                            onPress={() => {
-                              Alert.alert(
-                                '복약 기록 수정',
-                                `${drug.drugName || ''} · ${HISTORY_SLOT_LABELS[item.timeSlot]}`,
-                                [
-                                  { text: '복용', onPress: () => handleCheck(item.scheduleId, 'TAKEN', item.timeSlot, item.logDate) },
-                                  { text: '건너뜀', onPress: () => handleCheck(item.scheduleId, 'SKIPPED', item.timeSlot, item.logDate) },
-                                  { text: '취소', style: 'cancel' },
-                                ]
-                              );
-                            }}
-                          >
-                            <Text style={styles.historySlotLabel}>{HISTORY_SLOT_LABELS[item.timeSlot]}</Text>
-                            <View style={[styles.historyStatusBadge, { backgroundColor: statusCfg.color + '18' }]}>
-                              <Text style={[styles.historyStatusText, { color: statusCfg.color }]}>
-                                {statusCfg.label}
+                  {/* 시간대별 그룹 카드 */}
+                  <View style={[styles.historyCard, softShadow(colors)]}>
+                    {section.slots.map((slot, sIdx) => (
+                      <View key={slot.timeSlot}>
+                        {sIdx > 0 && <View style={styles.historyDivider} />}
+                        {/* 시간대 헤더 */}
+                        <View style={styles.historySlotHeader}>
+                          <Text style={[styles.historySlotHeaderText, { color: SLOT_COLORS[slot.timeSlot] }]}>
+                            {HISTORY_SLOT_LABELS[slot.timeSlot]}
+                          </Text>
+                        </View>
+                        {/* 약별 행 */}
+                        {slot.logs.map((item) => {
+                          const statusCfg = STATUS_CONFIG[item.status];
+                          return (
+                            <TouchableOpacity
+                              key={item.logId}
+                              style={styles.historyDrugRow}
+                              activeOpacity={0.7}
+                              onPress={() => {
+                                Alert.alert(
+                                  item.drugName || '',
+                                  `${HISTORY_SLOT_LABELS[item.timeSlot]} 상태를 변경합니다.`,
+                                  [
+                                    { text: '복용', onPress: () => handleCheck(item.scheduleId, 'TAKEN', item.timeSlot, item.logDate) },
+                                    { text: '건너뜀', onPress: () => handleCheck(item.scheduleId, 'SKIPPED', item.timeSlot, item.logDate) },
+                                    { text: '취소', style: 'cancel' },
+                                  ]
+                                );
+                              }}
+                            >
+                              <Text style={styles.historyDrugTitle} numberOfLines={1}>
+                                {item.drugName || '알 수 없는 약'}
                               </Text>
-                            </View>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                  ))}
+                              <View style={[styles.historyStatusBadge, { backgroundColor: statusCfg.color + '18' }]}>
+                                <Text style={[styles.historyStatusText, { color: statusCfg.color }]}>
+                                  {statusCfg.label}
+                                </Text>
+                              </View>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    ))}
+                  </View>
                 </View>
               ))
             )}
@@ -819,30 +824,28 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBott
       backgroundColor: colors.divider,
       marginHorizontal: sizes.spacing.lg,
     },
-    historyDrugHeader: {
-      flexDirection: 'row' as const,
-      alignItems: 'center' as const,
-      gap: sizes.spacing.xs,
+    historySlotHeader: {
       paddingHorizontal: sizes.spacing.lg,
       paddingTop: sizes.spacing.md,
-      paddingBottom: sizes.spacing.sm,
+      paddingBottom: sizes.spacing.xs,
     },
-    historyDrugTitle: {
+    historySlotHeaderText: {
       fontSize: sizes.font.sm,
-      fontFamily: fontFamily.semibold,
-      color: colors.text,
-      flex: 1,
+      fontFamily: fontFamily.bold,
     },
-    historySlotRow: {
+    historyDrugRow: {
       flexDirection: 'row' as const,
       alignItems: 'center' as const,
       justifyContent: 'space-between' as const,
       paddingHorizontal: sizes.spacing.lg,
       paddingVertical: sizes.spacing.sm,
+      gap: sizes.spacing.sm,
     },
-    historySlotLabel: {
+    historyDrugTitle: {
       fontSize: sizes.font.sm,
-      color: colors.textSub,
+      fontFamily: fontFamily.regular,
+      color: colors.text,
+      flex: 1,
     },
     historyStatusBadge: {
       paddingHorizontal: sizes.spacing.sm,

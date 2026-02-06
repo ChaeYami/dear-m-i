@@ -9,6 +9,7 @@ import '@/locales/i18n';
 import { RootNavigator } from '@/navigation/RootNavigator';
 import { queryClient } from '@/shared/api/queryClient';
 import { ThemeProvider, useTheme } from '@/shared/theme';
+import { CustomAlertProvider } from '@/shared/components/CustomAlert';
 
 // 모든 Text/TextInput에 SUIT-Regular 기본 적용
 const defaultTextStyle = { fontFamily: 'Pretendard-Regular' };
@@ -46,8 +47,10 @@ export default function App() {
     <SafeAreaProvider>
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
-          <StatusBarThemed />
-          <RootNavigator />
+          <CustomAlertProvider>
+            <StatusBarThemed />
+            <RootNavigator />
+          </CustomAlertProvider>
         </QueryClientProvider>
       </ThemeProvider>
     </SafeAreaProvider>
