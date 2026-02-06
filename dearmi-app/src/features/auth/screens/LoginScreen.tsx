@@ -107,7 +107,7 @@ export const LoginScreen: React.FC = () => {
               marginBottom: sizes.spacing.sm,
             }}
           >
-            Dear Mi
+            DearMI
           </Text>
 
           <Text
