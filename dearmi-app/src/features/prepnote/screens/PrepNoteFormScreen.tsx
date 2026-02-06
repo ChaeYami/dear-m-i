@@ -6,13 +6,12 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { useCreatePrepNote, useUpdatePrepNote, usePrepNotes } from '@/features/prepnote/hooks/usePrepNote';
@@ -68,7 +67,7 @@ export const PrepNoteFormScreen: React.FC = () => {
 
   const handleSave = () => {
     if (!content.trim()) {
-      Alert.alert('필수 입력', '내용을 입력해 주세요.');
+      customAlert('필수 입력', '내용을 입력해 주세요.');
       return;
     }
 

@@ -5,12 +5,12 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { softShadow } from '@/shared/theme/shadows';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
@@ -35,7 +35,7 @@ export const RecordDetailScreen: React.FC = () => {
   const { mutate: deleteRecord } = useDeleteRecord();
 
   const handleDelete = () => {
-    Alert.alert('기록 삭제', '이 진료 기록을 삭제할까요?', [
+    customAlert('기록 삭제', '이 진료 기록을 삭제할까요?', [
       { text: '취소', style: 'cancel' },
       {
         text: '삭제',

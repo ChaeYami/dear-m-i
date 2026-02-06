@@ -6,16 +6,15 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-
-  Platform,
-  Alert,
   Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { DatePickerModal } from '@/features/schedule/components/DatePickerModal';
+import { TimePickerModal } from '@/shared/components/TimePickerModal';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { softShadow } from '@/shared/theme/shadows';
@@ -155,16 +154,6 @@ export const MedicationFormScreen: React.FC = () => {
       ? addDays(startDate, Number(durationDays) - 1)
       : null;
 
-  const handleDateChange = (_: DateTimePickerEvent, date?: Date) => {
-    if (Platform.OS === 'android') setShowDatePicker(false);
-    if (date) setStartDate(date);
-  };
-
-  const handleTimeChange = (slot: TimeSlotType) => (_: DateTimePickerEvent, date?: Date) => {
-    if (Platform.OS === 'android') setShowTimePicker(null);
-    if (date) setSlotTimes((prev) => ({ ...prev, [slot]: date }));
-  };
-
   const toggleSlot = (slot: TimeSlotType) =>
     setActiveSlots((prev) => ({ ...prev, [slot]: !prev[slot] }));
 
@@ -189,15 +178,15 @@ export const MedicationFormScreen: React.FC = () => {
 
   const validate = (): boolean => {
     if (!drugName.trim()) {
-      Alert.alert('필수 입력', '약품명을 입력해 주세요.');
+      customAlert('필수 입력', '약품명을 입력해 주세요.');
       return false;
     }
     if (!Object.values(activeSlots).some(Boolean)) {
-      Alert.alert('시간대 선택', '복약 시간대를 하나 이상 선택해 주세요.');
+      customAlert('시간대 선택', '복약 시간대를 하나 이상 선택해 주세요.');
       return false;
     }
     if (!durationDays.trim() || isNaN(Number(durationDays)) || Number(durationDays) <= 0) {
-      Alert.alert('필수 입력', '투약 일수를 입력해 주세요.');
+      customAlert('필수 입력', '투약 일수를 입력해 주세요.');
       return false;
     }
     return true;
@@ -340,26 +329,35 @@ export const MedicationFormScreen: React.FC = () => {
                 </AnimatedPressable>
               </View>
               {activeSlots[s.key] && (
-                <>
-                  <TouchableOpacity
-                    style={styles.timePill}
-                    onPress={() => setShowTimePicker(s.key)}
-                  >
-                    <Text style={styles.timePillText}>{formatTimeDisplay(slotTimes[s.key])}</Text>
-                  </TouchableOpacity>
-                  {showTimePicker === s.key && (
-                    <DateTimePicker
-                      value={slotTimes[s.key]}
-                      mode="time"
-                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                      onChange={handleTimeChange(s.key)}
-                    />
-                  )}
-                </>
+                <TouchableOpacity
+                  style={styles.timePill}
+                  onPress={() => setShowTimePicker(s.key)}
+                >
+                  <Text style={styles.timePillText}>{formatTimeDisplay(slotTimes[s.key])}</Text>
+                </TouchableOpacity>
               )}
             </View>
           ))}
         </View>
+
+        {/* 시간 선택 모달 */}
+        {showTimePicker && (
+          <TimePickerModal
+            visible
+            initialHour={slotTimes[showTimePicker].getHours()}
+            initialMinute={slotTimes[showTimePicker].getMinutes()}
+            onConfirm={(h, m) => {
+              const slot = showTimePicker;
+              setShowTimePicker(null);
+              setSlotTimes((prev) => {
+                const d = new Date(prev[slot]);
+                d.setHours(h, m, 0, 0);
+                return { ...prev, [slot]: d };
+              });
+            }}
+            onClose={() => setShowTimePicker(null)}
+          />
+        )}
 
         {/* 시작일 */}
         <View style={styles.fieldCard}>
@@ -367,19 +365,15 @@ export const MedicationFormScreen: React.FC = () => {
           <TouchableOpacity style={styles.dateBtn} onPress={() => setShowDatePicker(true)}>
             <Text style={styles.dateBtnText}>{formatDateDisplay(startDate)}</Text>
           </TouchableOpacity>
-          {showDatePicker && (
-            <DateTimePicker
-              value={startDate}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={handleDateChange}
-            />
-          )}
-          {Platform.OS === 'ios' && showDatePicker && (
-            <TouchableOpacity style={styles.doneBtn} onPress={() => setShowDatePicker(false)}>
-              <Text style={styles.doneBtnText}>완료</Text>
-            </TouchableOpacity>
-          )}
+          <DatePickerModal
+            visible={showDatePicker}
+            initialDate={startDate.toISOString().split('T')[0]}
+            onConfirm={(dateStr) => {
+              setShowDatePicker(false);
+              setStartDate(new Date(dateStr + 'T00:00:00'));
+            }}
+            onClose={() => setShowDatePicker(false)}
+          />
         </View>
 
         {/* 투약 일수 */}

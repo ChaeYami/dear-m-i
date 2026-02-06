@@ -6,14 +6,13 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-
-  Platform,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { DatePickerModal } from '@/features/schedule/components/DatePickerModal';
+import { TimePickerModal } from '@/shared/components/TimePickerModal';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { useCreateSchedule, useUpdateSchedule } from '@/features/schedule/hooks/useSchedule';
@@ -63,31 +62,10 @@ export const ScheduleFormScreen: React.FC = () => {
 
   const { markSavedAndExit } = useUnsavedChangesWarning({ isDirty });
 
-  const handleDateChange = (_: DateTimePickerEvent, date?: Date) => {
-    if (Platform.OS === 'android') setShowDatePicker(false);
-    if (date) {
-      setSelectedDate((prev) => {
-        const next = new Date(date);
-        next.setHours(prev.getHours(), prev.getMinutes());
-        return next;
-      });
-    }
-  };
-
-  const handleTimeChange = (_: DateTimePickerEvent, date?: Date) => {
-    if (Platform.OS === 'android') setShowTimePicker(false);
-    if (date) {
-      setSelectedDate((prev) => {
-        const next = new Date(prev);
-        next.setHours(date.getHours(), date.getMinutes());
-        return next;
-      });
-    }
-  };
 
   const handleSave = () => {
     if (!hospitalName.trim()) {
-      Alert.alert('필수 입력', '병원명을 입력해 주세요.');
+      customAlert('필수 입력', '병원명을 입력해 주세요.');
       return;
     }
 
@@ -161,35 +139,35 @@ export const ScheduleFormScreen: React.FC = () => {
           </TouchableOpacity>
         </Field>
 
-        {showDatePicker && (
-          <DateTimePicker
-            value={selectedDate}
-            mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={handleDateChange}
-            onTouchCancel={() => setShowDatePicker(false)}
-          />
-        )}
-        {Platform.OS === 'ios' && showDatePicker && (
-          <TouchableOpacity style={styles.pickerDone} onPress={() => setShowDatePicker(false)}>
-            <Text style={[styles.pickerDoneText, { color: colors.primary, fontFamily: fontFamily.semibold }]}>완료</Text>
-          </TouchableOpacity>
-        )}
+        <DatePickerModal
+          visible={showDatePicker}
+          initialDate={selectedDate.toISOString().split('T')[0]}
+          onConfirm={(dateStr) => {
+            setShowDatePicker(false);
+            const [y, m, d] = dateStr.split('-').map(Number);
+            setSelectedDate((prev) => {
+              const next = new Date(prev);
+              next.setFullYear(y, m - 1, d);
+              return next;
+            });
+          }}
+          onClose={() => setShowDatePicker(false)}
+        />
 
-        {showTimePicker && (
-          <DateTimePicker
-            value={selectedDate}
-            mode="time"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={handleTimeChange}
-            onTouchCancel={() => setShowTimePicker(false)}
-          />
-        )}
-        {Platform.OS === 'ios' && showTimePicker && (
-          <TouchableOpacity style={styles.pickerDone} onPress={() => setShowTimePicker(false)}>
-            <Text style={[styles.pickerDoneText, { color: colors.primary, fontFamily: fontFamily.semibold }]}>완료</Text>
-          </TouchableOpacity>
-        )}
+        <TimePickerModal
+          visible={showTimePicker}
+          initialHour={selectedDate.getHours()}
+          initialMinute={selectedDate.getMinutes()}
+          onConfirm={(h, m) => {
+            setShowTimePicker(false);
+            setSelectedDate((prev) => {
+              const next = new Date(prev);
+              next.setHours(h, m);
+              return next;
+            });
+          }}
+          onClose={() => setShowTimePicker(false)}
+        />
 
         <Field label="담당 선생님 (선택)" colors={colors}>
           <TextInput

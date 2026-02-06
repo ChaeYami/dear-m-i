@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { customAlert } from '@/shared/components/CustomAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -25,20 +26,20 @@ export const AccountScreen: React.FC = () => {
   const shadow = softShadow(colors);
 
   const handleLogout = () => {
-    Alert.alert(t('auth:logout'), t('auth:logout_confirm'), [
+    customAlert(t('auth:logout'), t('auth:logout_confirm'), [
       { text: t('common:cancel'), style: 'cancel' },
       { text: t('auth:logout'), style: 'destructive', onPress: () => logout() },
     ]);
   };
 
   const handleDeleteAccount = () => {
-    Alert.alert(t('auth:delete_account'), t('auth:delete_account_confirm'), [
+    customAlert(t('auth:delete_account'), t('auth:delete_account_confirm'), [
       { text: t('common:cancel'), style: 'cancel' },
       {
         text: t('auth:delete_account'),
         style: 'destructive',
         onPress: () => {
-          Alert.alert(t('common:error'), '탈퇴 API가 아직 연결되지 않았습니다.');
+          customAlert(t('common:error'), '탈퇴 API가 아직 연결되지 않았습니다.');
         },
       },
     ]);

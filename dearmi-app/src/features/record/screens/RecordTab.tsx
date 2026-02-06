@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +14,7 @@ import type { StackNavigationProp } from '@react-navigation/stack';
 import { CompositeNavigationProp } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
+import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { softShadow } from '@/shared/theme/shadows';
 import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
@@ -53,7 +53,7 @@ const RecordCard: React.FC<{ item: RecordSummary; onPress: () => void; onDelete:
   const { label: dateLabel, isConsulted } = formatRecordDate(item);
 
   const handleMore = () => {
-    Alert.alert('진료 기록', '', [
+    customAlert('진료 기록', '', [
       { text: '수정', onPress },
       { text: '삭제', style: 'destructive', onPress: onDelete },
       { text: '취소', style: 'cancel' },
@@ -152,7 +152,7 @@ export const RecordTab: React.FC = () => {
   const { mutate: deleteRecord } = useDeleteRecord();
 
   const handleDeleteRecord = (id: string) => {
-    Alert.alert('기록 삭제', '이 진료 기록을 삭제할까요?', [
+    customAlert('기록 삭제', '이 진료 기록을 삭제할까요?', [
       { text: '취소', style: 'cancel' },
       { text: '삭제', style: 'destructive', onPress: () => deleteRecord(id) },
     ]);

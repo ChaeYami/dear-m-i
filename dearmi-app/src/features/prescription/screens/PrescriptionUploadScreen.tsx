@@ -5,16 +5,16 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
-  Alert,
   Platform,
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
+import { DatePickerModal } from '@/features/schedule/components/DatePickerModal';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { prescriptionApi } from '@/features/prescription/api';
 import { useAuthStore } from '@/features/auth/store/authStore';
@@ -52,14 +52,14 @@ export const PrescriptionUploadScreen: React.FC = () => {
     if (source === 'camera') {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('권한 필요', '카메라 접근 권한이 필요합니다.');
+        customAlert('권한 필요', '카메라 접근 권한이 필요합니다.');
         return;
       }
       result = await ImagePicker.launchCameraAsync(options);
     } else {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('권한 필요', '갤러리 접근 권한이 필요합니다.');
+        customAlert('권한 필요', '갤러리 접근 권한이 필요합니다.');
         return;
       }
       result = await ImagePicker.launchImageLibraryAsync(options);
@@ -73,7 +73,7 @@ export const PrescriptionUploadScreen: React.FC = () => {
   };
 
   const showSourcePicker = () => {
-    Alert.alert('사진 선택', '', [
+    customAlert('사진 선택', '', [
       { text: '카메라로 촬영', onPress: () => pickImage('camera') },
       { text: '갤러리에서 선택', onPress: () => pickImage('gallery') },
       { text: '취소', style: 'cancel' },
@@ -86,7 +86,7 @@ export const PrescriptionUploadScreen: React.FC = () => {
     if (!imageAsset) return;
 
     if (!isPremium) {
-      Alert.alert(
+      customAlert(
         '프리미엄 기능',
         '처방전 자동 인식은 프리미엄 플랜 전용 기능입니다.',
         [{ text: '확인' }]
@@ -238,28 +238,16 @@ export const PrescriptionUploadScreen: React.FC = () => {
               {`${prescribedDate.getFullYear()}년 ${prescribedDate.getMonth() + 1}월 ${prescribedDate.getDate()}일`}
             </Text>
           </TouchableOpacity>
-          {showDatePicker && (
-            <DateTimePicker
-              value={prescribedDate}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              maximumDate={new Date()}
-              onChange={(_: DateTimePickerEvent, date?: Date) => {
-                if (Platform.OS === 'android') setShowDatePicker(false);
-                if (date) setPrescribedDate(date);
-              }}
-            />
-          )}
-          {Platform.OS === 'ios' && showDatePicker && (
-            <TouchableOpacity
-              style={staticStyles.dateDoneBtn}
-              onPress={() => setShowDatePicker(false)}
-            >
-              <Text style={[staticStyles.dateDoneText, { fontFamily: fontFamily.semibold, color: colors.primary }]}>
-                완료
-              </Text>
-            </TouchableOpacity>
-          )}
+          <DatePickerModal
+            visible={showDatePicker}
+            initialDate={prescribedDate.toISOString().split('T')[0]}
+            maxDate={new Date().toISOString().split('T')[0]}
+            onConfirm={(dateStr) => {
+              setShowDatePicker(false);
+              setPrescribedDate(new Date(dateStr + 'T00:00:00'));
+            }}
+            onClose={() => setShowDatePicker(false)}
+          />
         </View>
 
         {/* 진행 상태 */}

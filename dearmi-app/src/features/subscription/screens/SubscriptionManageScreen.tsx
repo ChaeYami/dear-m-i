@@ -6,13 +6,13 @@ import {
   StyleSheet,
 
   ScrollView,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, CompositeNavigationProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { useSubscriptionStore } from '@/features/subscription/store/subscriptionStore';
 import { useSubscription } from '@/features/subscription/hooks/useSubscription';
@@ -46,7 +46,7 @@ export const SubscriptionManageScreen: React.FC = () => {
   const { cancelSubscription, isCancelling } = useSubscription();
 
   const handleCancel = () => {
-    Alert.alert(
+    customAlert(
       '구독 취소',
       '프리미엄 구독을 취소하시겠습니까?\n만료일까지는 계속 이용할 수 있습니다.',
       [

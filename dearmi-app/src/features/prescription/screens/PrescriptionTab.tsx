@@ -5,7 +5,6 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   LayoutAnimation,
   Platform,
   UIManager,
@@ -14,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { softShadow } from '@/shared/theme/shadows';
 import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
@@ -258,7 +258,7 @@ export const PrescriptionTab: React.FC = () => {
   };
 
   const handleDelete = (item: Prescription) => {
-    Alert.alert('처방전 삭제', '이 처방전을 삭제할까요?', [
+    customAlert('처방전 삭제', '이 처방전을 삭제할까요?', [
       { text: '취소', style: 'cancel' },
       { text: '삭제', style: 'destructive', onPress: () => deletePrescription(item.id) },
     ]);

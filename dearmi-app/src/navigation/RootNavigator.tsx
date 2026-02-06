@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Image, Linking, Platform, StyleSheet, View } from 'react-native';
+import { Image, Linking, Platform, StyleSheet, View } from 'react-native';
+import { customAlert } from '@/shared/components/CustomAlert';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -168,7 +169,7 @@ export const RootNavigator: React.FC = () => {
       setIsForceUpdateBlocked(true);
       setIsLoading(false);
 
-      Alert.alert(
+      customAlert(
         t('update_required'),
         updateMessage || t('update_message'),
         [
@@ -177,17 +178,15 @@ export const RootNavigator: React.FC = () => {
             onPress: () => {
               Linking.openURL(storeUrl);
               setTimeout(() => {
-                Alert.alert(
+                customAlert(
                   t('update_required'),
                   updateMessage || t('update_message'),
-                  [{ text: t('update'), onPress: () => Linking.openURL(storeUrl) }],
-                  { cancelable: false }
+                  [{ text: t('update'), onPress: () => Linking.openURL(storeUrl) }]
                 );
               }, 1000);
             },
           },
-        ],
-        { cancelable: false }
+        ]
       );
 
       throw new Error('force_update');

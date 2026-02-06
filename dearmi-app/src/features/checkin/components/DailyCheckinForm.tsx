@@ -6,13 +6,12 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { EmotionSlider } from '@/shared/components/EmotionSlider';
 import { TriggerTagSelector } from '@/features/checkin/components/TriggerTagSelector';
@@ -57,7 +56,7 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
 
   const handleSave = () => {
     if (memoLimit && memo.length > memoLimit) {
-      Alert.alert(t('common:char_limit_exceeded'), t('common:char_limit_message', { limit: memoLimit }));
+      customAlert(t('common:char_limit_exceeded'), t('common:char_limit_message', { limit: memoLimit }));
       return;
     }
 
@@ -73,7 +72,7 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
       },
       {
         onSuccess: () => onClose(),
-        onError: () => Alert.alert(t('common:save_failed'), t('common:try_again_later')),
+        onError: () => customAlert(t('common:save_failed'), t('common:try_again_later')),
       }
     );
   };

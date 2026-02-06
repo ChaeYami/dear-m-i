@@ -7,16 +7,16 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
-  Alert,
   ActivityIndicator,
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { DatePickerModal } from '@/features/schedule/components/DatePickerModal';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { EmotionSlider } from '@/shared/components/EmotionSlider';
@@ -108,12 +108,12 @@ export const RecordFormScreen: React.FC = () => {
 
   // ─── 처방전 첨부 ─────────────────────────────────────────────
   const pickRxImage = async () => {
-    Alert.alert('처방전 사진', '', [
+    customAlert('처방전 사진', '', [
       {
         text: '카메라로 촬영',
         onPress: async () => {
           const { status } = await ImagePicker.requestCameraPermissionsAsync();
-          if (status !== 'granted') { Alert.alert('권한 필요', '카메라 접근 권한이 필요합니다.'); return; }
+          if (status !== 'granted') { customAlert('권한 필요', '카메라 접근 권한이 필요합니다.'); return; }
           const r = await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.85 });
           if (!r.canceled && r.assets.length > 0) setRxImage(r.assets[0]);
         },
@@ -122,7 +122,7 @@ export const RecordFormScreen: React.FC = () => {
         text: '갤러리에서 선택',
         onPress: async () => {
           const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-          if (status !== 'granted') { Alert.alert('권한 필요', '갤러리 접근 권한이 필요합니다.'); return; }
+          if (status !== 'granted') { customAlert('권한 필요', '갤러리 접근 권한이 필요합니다.'); return; }
           const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.85 });
           if (!r.canceled && r.assets.length > 0) setRxImage(r.assets[0]);
         },
@@ -143,7 +143,7 @@ export const RecordFormScreen: React.FC = () => {
       await prescriptionApi.createPrescription({ s3Key, prescribedAt: today });
       setRxDone(true);
     } catch (e) {
-      Alert.alert('처방전 업로드 실패', e instanceof Error ? e.message : '다시 시도해 주세요.');
+      customAlert('처방전 업로드 실패', e instanceof Error ? e.message : '다시 시도해 주세요.');
     } finally {
       setRxUploading(false);
     }
@@ -163,11 +163,11 @@ export const RecordFormScreen: React.FC = () => {
 
   const handleSave = () => {
     if (!content.trim()) {
-      Alert.alert('필수 입력', '내용을 입력해 주세요.');
+      customAlert('필수 입력', '내용을 입력해 주세요.');
       return;
     }
     if (contentLimit && content.length > contentLimit) {
-      Alert.alert('글자 수 초과', `무료 플랜은 ${contentLimit}자까지 입력할 수 있습니다.`);
+      customAlert('글자 수 초과', `무료 플랜은 ${contentLimit}자까지 입력할 수 있습니다.`);
       return;
     }
 
@@ -360,18 +360,16 @@ export const RecordFormScreen: React.FC = () => {
                 <Ionicons name="calendar-outline" size={18} color={colors.textSub} />
               </View>
             </TouchableOpacity>
-            {showDatePicker && (
-              <DateTimePicker
-                value={consultedAt ?? new Date()}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'inline' : 'default'}
-                maximumDate={new Date()}
-                onChange={(_, date) => {
-                  setShowDatePicker(Platform.OS === 'ios');
-                  if (date) setConsultedAt(date);
-                }}
-              />
-            )}
+            <DatePickerModal
+              visible={showDatePicker}
+              initialDate={(consultedAt ?? new Date()).toISOString().split('T')[0]}
+              maxDate={new Date().toISOString().split('T')[0]}
+              onConfirm={(dateStr) => {
+                setShowDatePicker(false);
+                setConsultedAt(new Date(dateStr + 'T00:00:00'));
+              }}
+              onClose={() => setShowDatePicker(false)}
+            />
           </View>
         )}
 

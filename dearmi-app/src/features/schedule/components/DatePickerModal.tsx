@@ -7,8 +7,9 @@ interface Props {
   visible: boolean;
   initialDate: string;
   /** 일정이 있는 날짜 (YYYY-MM-DD) 집합 */
-  highlightedDates: Set<string>;
-  todayStr: string;
+  highlightedDates?: Set<string>;
+  todayStr?: string;
+  maxDate?: string;
   onConfirm: (date: string) => void;
   onClose: () => void;
 }
@@ -23,13 +24,15 @@ const formatPickedDate = (dateStr: string) => {
 export const DatePickerModal: React.FC<Props> = ({
   visible,
   initialDate,
-  highlightedDates,
+  highlightedDates = new Set(),
   todayStr,
+  maxDate,
   onConfirm,
   onClose,
 }) => {
   const { colors } = useTheme();
   const [picked, setPicked] = useState(initialDate);
+  const today = todayStr ?? new Date().toISOString().split('T')[0];
 
   useEffect(() => {
     if (visible) setPicked(initialDate);
@@ -46,10 +49,10 @@ export const DatePickerModal: React.FC<Props> = ({
       };
     });
     // 오늘 — 테두리만
-    const isPickedToday = picked === todayStr;
+    const isPickedToday = picked === today;
     if (!isPickedToday) {
-      marks[todayStr] = {
-        ...(marks[todayStr] ?? {}),
+      marks[today] = {
+        ...(marks[today] ?? {}),
         customStyles: {
           container: { borderWidth: 1.5, borderColor: colors.primary, borderRadius: 18 },
           text: { color: colors.primary, fontFamily: fontFamily.bold },
@@ -72,7 +75,7 @@ export const DatePickerModal: React.FC<Props> = ({
     }
     // 일정 있는 날 점 표시 (선택/오늘 아닌 날만)
     highlightedDates.forEach((d) => {
-      if (d !== picked && d !== todayStr && marks[d]) {
+      if (d !== picked && d !== today && marks[d]) {
         marks[d].customStyles.container = {
           ...marks[d].customStyles.container,
           backgroundColor: colors.primaryLight + '25',
@@ -81,7 +84,7 @@ export const DatePickerModal: React.FC<Props> = ({
       }
     });
     return marks;
-  }, [highlightedDates, picked, todayStr, colors]);
+  }, [highlightedDates, picked, today, colors]);
 
   const calendarTheme = useMemo(
     () => ({
@@ -122,6 +125,7 @@ export const DatePickerModal: React.FC<Props> = ({
           <View style={[styles.divider, { backgroundColor: colors.divider }]} />
           <Calendar
             current={picked}
+            maxDate={maxDate}
             markingType="custom"
             markedDates={markedDates}
             onDayPress={(day) => setPicked(day.dateString)}

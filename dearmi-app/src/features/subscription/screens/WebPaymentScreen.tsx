@@ -3,8 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-
-  Alert,
   Platform,
   ActivityIndicator,
   TouchableOpacity,
@@ -12,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
+import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import {
   subscriptionApi,
@@ -47,7 +46,7 @@ export const WebPaymentScreen: React.FC = () => {
 
   useEffect(() => {
     if (Platform.OS !== 'android') {
-      Alert.alert('오류', '웹 결제는 Android에서만 사용할 수 있습니다.');
+      customAlert('오류', '웹 결제는 Android에서만 사용할 수 있습니다.');
       navigation.goBack();
       return;
     }
@@ -147,7 +146,7 @@ export const WebPaymentScreen: React.FC = () => {
             setUser({ ...user, plan: 'PREMIUM' });
           }
 
-          Alert.alert('결제 완료', '프리미엄 구독이 활성화되었습니다.', [
+          customAlert('결제 완료', '프리미엄 구독이 활성화되었습니다.', [
             {
               text: '확인',
               onPress: () => {

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Platform, Alert } from 'react-native';
+import { Platform } from 'react-native';
+import { customAlert } from '@/shared/components/CustomAlert';
 import { useMutation } from '@tanstack/react-query';
 import {
   initConnection,
@@ -85,7 +86,7 @@ export const useSubscription = () => {
       }
     } catch (err: any) {
       if (err?.code !== ErrorCode.UserCancelled) {
-        Alert.alert('결제 오류', '결제 처리 중 오류가 발생했습니다. 다시 시도해 주세요.');
+        customAlert('결제 오류', '결제 처리 중 오류가 발생했습니다. 다시 시도해 주세요.');
       }
     } finally {
       setIsPurchasing(false);
@@ -99,16 +100,16 @@ export const useSubscription = () => {
       await ensureIapConnection();
       const history = await getAvailablePurchases();
       if (!history || history.length === 0) {
-        Alert.alert('복원 완료', '복원할 구매 내역이 없습니다.');
+        customAlert('복원 완료', '복원할 구매 내역이 없습니다.');
         return;
       }
       const latest = history[history.length - 1];
       if (latest) {
         await verifyAndSync(latest);
-        Alert.alert('복원 완료', '구독이 복원되었습니다.');
+        customAlert('복원 완료', '구독이 복원되었습니다.');
       }
     } catch {
-      Alert.alert('복원 실패', '구매 내역을 복원할 수 없습니다. 잠시 후 다시 시도해 주세요.');
+      customAlert('복원 실패', '구매 내역을 복원할 수 없습니다. 잠시 후 다시 시도해 주세요.');
     } finally {
       setIsRestoring(false);
     }
@@ -118,10 +119,10 @@ export const useSubscription = () => {
     mutationFn: () => subscriptionApi.cancel(),
     onSuccess: () => {
       syncPlanToUser('FREE', undefined);
-      Alert.alert('구독 취소', '구독이 취소되었습니다.');
+      customAlert('구독 취소', '구독이 취소되었습니다.');
     },
     onError: () => {
-      Alert.alert('오류', '구독 취소 중 오류가 발생했습니다.');
+      customAlert('오류', '구독 취소 중 오류가 발생했습니다.');
     },
   });
 

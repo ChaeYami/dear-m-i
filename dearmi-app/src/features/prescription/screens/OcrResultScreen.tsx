@@ -6,7 +6,6 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  Alert,
 
   ActivityIndicator,
 } from 'react-native';
@@ -14,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { CompositeNavigationProp } from '@react-navigation/native';
+import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import {
@@ -189,7 +189,7 @@ export const OcrResultScreen: React.FC = () => {
 
   const handleSave = () => {
     if (!isPremium) {
-      Alert.alert(
+      customAlert(
         '프리미엄 전용',
         '처방전 저장은 프리미엄 플랜에서 이용할 수 있습니다.',
         [
@@ -201,7 +201,7 @@ export const OcrResultScreen: React.FC = () => {
     }
     const invalid = medications.some((m) => !m.medicationName.trim());
     if (invalid) {
-      Alert.alert('입력 오류', '약품명을 모두 입력해 주세요.');
+      customAlert('입력 오류', '약품명을 모두 입력해 주세요.');
       return;
     }
 
@@ -232,7 +232,7 @@ export const OcrResultScreen: React.FC = () => {
         totalDays: m.durationDays ? Number(m.durationDays) : undefined,
       }));
 
-    Alert.alert(
+    customAlert(
       '복약 알림을 설정할까요?',
       '처방 약품으로 복약 알림을 설정하면\n약 먹는 시간을 놓치지 않아요.',
       [

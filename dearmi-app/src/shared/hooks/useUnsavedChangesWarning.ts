@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Alert } from 'react-native';
+import { customAlert } from '@/shared/components/CustomAlert';
 import {
   useNavigation,
   usePreventRemove,
@@ -40,7 +40,7 @@ export const useUnsavedChangesWarning = ({
 
   // 1. 스택 pop (헤더 백, 하드웨어 백, 제스처 스와이프)
   usePreventRemove(isDirty && !exitIntent, ({ data }) => {
-    Alert.alert(title, message, [
+    customAlert(title, message, [
       { text: '계속 작성', style: 'cancel' },
       {
         text: '나가기',
@@ -60,7 +60,7 @@ export const useUnsavedChangesWarning = ({
           doNavigate();
           return;
         }
-        Alert.alert(title, message, [
+        customAlert(title, message, [
           { text: '계속 작성', style: 'cancel' },
           {
             text: '나가기',

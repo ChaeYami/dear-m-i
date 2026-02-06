@@ -5,13 +5,12 @@ import {
   StyleSheet,
   TouchableOpacity,
   SectionList,
-
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { usePrepNotes, useDeletePrepNote } from '@/features/prepnote/hooks/usePrepNote';
 import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
@@ -67,7 +66,7 @@ export const PrepNoteListScreen: React.FC = () => {
   }, [notes]);
 
   const handleDelete = (note: PrepNote) => {
-    Alert.alert('메모 삭제', '이 준비 메모를 삭제할까요?', [
+    customAlert('메모 삭제', '이 준비 메모를 삭제할까요?', [
       { text: '취소', style: 'cancel' },
       {
         text: '삭제',
