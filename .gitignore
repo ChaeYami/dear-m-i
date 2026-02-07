@@ -1,0 +1,77 @@
+# ============================================================
+# DearMI 모노레포 .gitignore
+# ============================================================
+
+# ────────────────────────────────────────────────────────────
+# 보안 / 시크릿 (절대 커밋 금지)
+# ────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.production
+.env.*
+!.env.example
+*.pem
+*.key
+*.jks
+*.p8
+*.p12
+*.mobileprovision
+google-services.json
+GoogleService-Info.plist
+firebase-adminsdk*.json
+
+# ────────────────────────────────────────────────────────────
+# Backend (Spring Boot / Gradle)
+# ────────────────────────────────────────────────────────────
+backend/.gradle/
+backend/build/
+backend/out/
+backend/bin/
+backend/*.log
+backend/hs_err_pid*.log
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# VS Code
+.vscode/
+
+# Spring Boot
+backend/src/main/resources/application-prod-secret.yml
+
+# QueryDSL 생성 Q클래스
+backend/build/generated/
+
+# ────────────────────────────────────────────────────────────
+# App (React Native / Expo)
+# ────────────────────────────────────────────────────────────
+dearmi-app/node_modules/
+dearmi-app/.expo/
+dearmi-app/dist/
+dearmi-app/web-build/
+dearmi-app/expo-env.d.ts
+dearmi-app/.metro-health-check*
+dearmi-app/*.tsbuildinfo
+
+# 생성된 네이티브 폴더 (EAS managed workflow)
+dearmi-app/ios/
+dearmi-app/android/
+
+# ────────────────────────────────────────────────────────────
+# OS / 에디터
+# ────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# ────────────────────────────────────────────────────────────
+# 로그
+# ────────────────────────────────────────────────────────────
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*

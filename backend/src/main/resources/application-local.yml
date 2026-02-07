@@ -1,24 +1,12 @@
 # ============================================================
 # Local 개발 환경 설정
-# 민감한 값은 모두 .env 파일에서 환경변수로 주입 (Git 커밋 금지)
-# .env 파일이 없다면: cp .env.example .env 후 값 채우기
+# ⚠️ 이 파일은 Git에 커밋되어도 되지만 실제 운영 정보는 절대 포함 금지
 # ============================================================
 spring:
-  security:
-    oauth2:
-      client:
-        registration:
-          google:
-            client-id: ${GOOGLE_CLIENT_ID}
-            client-secret: ${GOOGLE_CLIENT_SECRET}
-          apple:
-            client-id: ${APPLE_CLIENT_ID}
-            client-secret: ${APPLE_CLIENT_SECRET}
-
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: jdbc:postgresql://localhost:5432/dearmidb
+    username: postgres
+    password: local1234
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 5
@@ -30,10 +18,11 @@ spring:
       hibernate:
         format_sql: true
 
+  # Flyway 로컬 설정
   flyway:
-    url: ${DB_URL}
-    user: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: jdbc:postgresql://localhost:5432/dearmidb
+    user: postgres
+    password: local1234
 
 # 로컬 환경 상세 로깅
 logging:
@@ -42,35 +31,8 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.orm.jdbc.bind: TRACE
 
-# AWS (로컬 테스트용 — S3 호출 시 실제 키 필요)
-aws:
-  s3:
-    bucket: ${AWS_S3_BUCKET}
-    region: ${AWS_REGION:ap-northeast-2}
-  credentials:
-    access-key: ${AWS_ACCESS_KEY}
-    secret-key: ${AWS_SECRET_KEY}
-
-# 약학정보원 API
-drug-info:
-  api-key: ${DRUG_INFO_API_KEY}
-  api-url: https://apis.data.go.kr/1471000/DrbEasyDrugInfoService
-
-# Claude API
-claude:
-  api-key: ${CLAUDE_API_KEY}
-  api-url: https://api.anthropic.com/v1/messages
-
-# 암호화 키
-encryption:
-  key: ${ENCRYPTION_KEY}
-
-# FCM (로컬 테스트용 플레이스홀더 — 실제 서비스 계정 JSON으로 교체)
-fcm:
-  service-account-key: ${FCM_SERVICE_ACCOUNT_KEY:REPLACE_ME_FCM_SERVICE_ACCOUNT_KEY_JSON}
-
-# JWT
+# JWT 설정 (로컬 테스트용 - 운영에서는 환경변수로 주입)
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:local-dev-secret-key-must-be-at-least-256-bits-long-for-hs256}
   access-token-expiry-ms: 3600000    # 1시간
   refresh-token-expiry-ms: 604800000 # 7일

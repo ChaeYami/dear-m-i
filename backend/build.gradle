@@ -148,3 +148,25 @@ bootRun {
         }
     }
 }
+
+// .env 파일 자동 로드 (로컬 개발용)
+def loadDotEnv = { task ->
+    def envFile = file('.env')
+    if (envFile.exists()) {
+        envFile.readLines().each { line ->
+            line = line.trim()
+            if (line && !line.startsWith('#')) {
+                def idx = line.indexOf('=')
+                if (idx > 0) {
+                    def key = line.substring(0, idx).trim()
+                    def value = line.substring(idx + 1).trim()
+                    task.environment(key, value)
+                }
+            }
+        }
+    }
+}
+
+bootRun {
+    loadDotEnv(it)
+}

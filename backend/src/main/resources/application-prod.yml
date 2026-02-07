@@ -41,4 +41,4 @@ jwt:
 aws:
   region: ${AWS_REGION:ap-northeast-2}
   s3:
-    bucket-name: ${S3_BUCKET_NAME}
+    bucket-name: ${AWS_S3_BUCKET}

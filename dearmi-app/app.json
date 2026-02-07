@@ -1,12 +1,11 @@
 {
   "expo": {
-    "name": "DearMI",
+    "name": "dearmi-app",
     "slug": "dearmi-app",
     "version": "1.0.0",
-    "scheme": "dearmi",
     "orientation": "portrait",
-    "icon": "./assets/app-icon.png",
-    "userInterfaceStyle": "automatic",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -14,47 +13,21 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.chloee0033.dearmiapp"
+      "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/app-icon.png",
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
-      "package": "com.chloee0033.dearmiapp",
-      "googleServicesFile": "./google-services.json"
+      "predictiveBackGestureEnabled": false
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-web-browser",
-      "@react-native-community/datetimepicker",
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/notification-icon.png",
-          "color": "#6C63FF",
-          "sounds": [],
-          "mode": "production"
-        }
-      ],
-      "expo-localization",
-      "expo-secure-store",
-      [
-        "expo-font",
-        {
-          "fonts": [
-            "./assets/fonts/Pretendard-Regular.ttf",
-            "./assets/fonts/Pretendard-Medium.ttf",
-            "./assets/fonts/Pretendard-SemiBold.ttf",
-            "./assets/fonts/Pretendard-Bold.ttf"
-          ]
-        }
-      ]
+      "expo-localization"
     ]
   }
 }
