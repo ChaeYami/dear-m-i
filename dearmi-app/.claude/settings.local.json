@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node node_modules/expo-modules-autolinking/bin/expo-modules-autolinking react-native-config)",
+      "Bash(node node_modules/expo-modules-autolinking/bin/expo-modules-autolinking react-native-config --json)"
+    ]
+  }
+}

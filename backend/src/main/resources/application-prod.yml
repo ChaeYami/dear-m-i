@@ -3,6 +3,9 @@
 # ⚠️ 모든 민감 정보는 환경변수로 주입 - 하드코딩 절대 금지
 # 환경변수 주입 방법: ECS Task Definition, K8s Secret, AWS Secrets Manager 등
 # ============================================================
+server:
+  forward-headers-strategy: native   # ALB X-Forwarded-Proto 인식 → redirect_uri https 생성
+
 spring:
   datasource:
     url: ${DB_URL}                  # 예: jdbc:postgresql://rds-host:5432/dearmidb
