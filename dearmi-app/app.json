@@ -6,7 +6,7 @@
     "scheme": "dearmi",
     "orientation": "portrait",
     // "icon": "./assets/icon.png",
-    "icon": "./assets/app-icon.png",
+    "icon": "./assets/adaptive-icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
