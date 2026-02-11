@@ -128,7 +128,7 @@ export const PrescriptionUploadScreen: React.FC = () => {
 
       // Step 4: OCR 결과 화면으로 이동
       setUploadStep('done');
-      navigation.replace('OcrResult', { prescriptionId: createRes.data.id });
+      navigation.replace('OcrResult', { prescriptionId: createRes.data.prescriptionId });
     } catch (e) {
       setUploadStep('error');
       setErrorMsg(e instanceof Error ? e.message : '업로드 중 오류가 발생했습니다.');

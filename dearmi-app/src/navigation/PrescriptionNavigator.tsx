@@ -9,7 +9,7 @@ import { MedicationDetailScreen } from '@/features/prescription/screens/Medicati
 export type PrescriptionStackParamList = {
   PrescriptionTab: undefined;
   PrescriptionUpload: undefined;
-  OcrResult: { prescriptionId: number };
+  OcrResult: { prescriptionId: string };
   MedicationDetail: { medicationId: number; medicationName: string };
 };
 

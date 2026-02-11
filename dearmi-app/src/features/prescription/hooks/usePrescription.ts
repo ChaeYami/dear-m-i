@@ -44,7 +44,7 @@ export const useMedicationDetail = (id: number) =>
  * - poll=true 이면 PENDING/PROCESSING 상태일 때 2초마다 재요청
  * - COMPLETED/FAILED 또는 90초 초과 시 폴링 중단
  */
-export const usePrescriptionDetail = (id: number, poll = false) => {
+export const usePrescriptionDetail = (id: string, poll = false) => {
   const startTime = Date.now();
 
   return useQuery({
@@ -53,7 +53,7 @@ export const usePrescriptionDetail = (id: number, poll = false) => {
       const { data } = await prescriptionApi.getPrescription(id);
       return data.data ?? null;
     },
-    enabled: id > 0,
+    enabled: !!id,
     staleTime: 0,
     refetchInterval: (query) => {
       if (!poll) return false;
@@ -69,7 +69,7 @@ export const usePrescriptionDetail = (id: number, poll = false) => {
 export const useSavePrescription = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: SavePrescriptionRequest }) =>
+    mutationFn: ({ id, data }: { id: string; data: SavePrescriptionRequest }) =>
       prescriptionApi.savePrescription(id, data),
     onSuccess: (_res, { id }) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.prescription(id) });
@@ -83,7 +83,7 @@ export const useSavePrescription = () => {
 export const useDeletePrescription = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => prescriptionApi.deletePrescription(id),
+    mutationFn: (id: string) => prescriptionApi.deletePrescription(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.prescriptions() });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.timeline() });

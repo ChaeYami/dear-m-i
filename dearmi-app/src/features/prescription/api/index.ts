@@ -48,7 +48,7 @@ export const prescriptionApi = {
 
   /** 처방전 등록 (S3 업로드 완료 후 백엔드에 메타데이터 저장) */
   createPrescription: (data: CreatePrescriptionRequest) =>
-    axiosInstance.post<ApiResponse<Prescription>>('/api/v1/prescriptions', data),
+    axiosInstance.post<ApiResponse<{ prescriptionId: string }>>('/api/v1/prescriptions', data),
 
   /** 처방전 목록 (단순) */
   getPrescriptions: () =>
@@ -65,14 +65,14 @@ export const prescriptionApi = {
     axiosInstance.get<ApiResponse<PrescriptionMedication>>(`/api/v1/prescription-medications/${id}`),
 
   /** 처방전 상세 (OCR 상태 포함) */
-  getPrescription: (id: number) =>
+  getPrescription: (id: string) =>
     axiosInstance.get<ApiResponse<Prescription>>(`/api/v1/prescriptions/${id}`),
 
   /** OCR 결과 확인 후 저장 (약품 목록 수정 포함) */
-  savePrescription: (id: number, data: SavePrescriptionRequest) =>
+  savePrescription: (id: string, data: SavePrescriptionRequest) =>
     axiosInstance.put<ApiResponse<Prescription>>(`/api/v1/prescriptions/${id}`, data),
 
   /** 처방전 삭제 */
-  deletePrescription: (id: number) =>
+  deletePrescription: (id: string) =>
     axiosInstance.delete<ApiResponse<void>>(`/api/v1/prescriptions/${id}`),
 };

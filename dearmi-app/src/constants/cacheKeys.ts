@@ -55,7 +55,7 @@ export const QUERY_KEYS = {
 
   // 처방전
   prescriptions: () => ['prescriptions'] as const,
-  prescription: (id: number) => ['prescription', id] as const,
+  prescription: (id: string) => ['prescription', id] as const,
   medicationDetail: (id: number) => ['medication', id] as const,
 
   // 통합 검색
