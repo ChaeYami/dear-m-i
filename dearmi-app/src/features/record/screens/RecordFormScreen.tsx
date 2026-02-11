@@ -135,10 +135,12 @@ export const RecordFormScreen: React.FC = () => {
     if (!rxImage || !isPremium) return;
     setRxUploading(true);
     try {
-      const { data: presignedRes } = await prescriptionApi.getPresignedUrl();
+      const mimeType = rxImage.mimeType ?? 'image/jpeg';
+      const ext = mimeType === 'image/png' ? 'png' : 'jpg';
+      const { data: presignedRes } = await prescriptionApi.getPresignedUrl(`prescription.${ext}`, mimeType);
       if (!presignedRes.success || !presignedRes.data) throw new Error('업로드 URL 발급 실패');
       const { s3Key, uploadUrl } = presignedRes.data;
-      await prescriptionApi.uploadToS3(uploadUrl, rxImage.uri, rxImage.mimeType ?? 'image/jpeg', () => {});
+      await prescriptionApi.uploadToS3(uploadUrl, rxImage.uri, mimeType, () => {});
       const today = new Date().toISOString().split('T')[0];
       await prescriptionApi.createPrescription({ s3Key, prescribedAt: today });
       setRxDone(true);

@@ -9,8 +9,11 @@ import type {
 
 export const prescriptionApi = {
   /** Presigned URL 발급 */
-  getPresignedUrl: () =>
-    axiosInstance.post<ApiResponse<PresignedUrlResponse>>('/api/v1/prescriptions/presigned-url'),
+  getPresignedUrl: (fileName: string, contentType: string) =>
+    axiosInstance.post<ApiResponse<PresignedUrlResponse>>('/api/v1/prescriptions/presigned-url', {
+      fileName,
+      contentType,
+    }),
 
   /**
    * S3 직접 업로드 (presigned PUT)

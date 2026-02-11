@@ -100,14 +100,18 @@ export const PrescriptionUploadScreen: React.FC = () => {
 
     try {
       // Step 1: Presigned URL 발급
-      const { data: presignedRes } = await prescriptionApi.getPresignedUrl();
+      const mimeType = imageAsset.mimeType ?? 'image/jpeg';
+      const ext = mimeType === 'image/png' ? 'png' : 'jpg';
+      const { data: presignedRes } = await prescriptionApi.getPresignedUrl(
+        `prescription.${ext}`,
+        mimeType
+      );
       if (!presignedRes.success || !presignedRes.data) {
         throw new Error('업로드 URL을 받지 못했습니다.');
       }
       const { s3Key, uploadUrl } = presignedRes.data;
 
       // Step 2: S3 직접 업로드
-      const mimeType = imageAsset.mimeType ?? 'image/jpeg';
       await prescriptionApi.uploadToS3(uploadUrl, imageAsset.uri, mimeType, setUploadProgress);
 
       // Step 3: 백엔드에 처방전 등록
