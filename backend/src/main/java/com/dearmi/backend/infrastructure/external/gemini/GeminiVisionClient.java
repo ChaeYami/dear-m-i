@@ -9,9 +9,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.ReactorClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -51,9 +53,13 @@ public class GeminiVisionClient implements PrescriptionOcrPort {
 
             String url = apiUrl + "?key=" + apiKey;
 
+            ReactorClientHttpRequestFactory factory = new ReactorClientHttpRequestFactory();
+            factory.setReadTimeout(Duration.ofSeconds(60));
+
             RestClient restClient = RestClient.builder()
                     .baseUrl(url)
                     .defaultHeader("content-type", "application/json")
+                    .requestFactory(factory)
                     .build();
 
             GeminiResponse response = restClient.post()
