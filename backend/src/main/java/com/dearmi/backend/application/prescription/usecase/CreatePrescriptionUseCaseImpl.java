@@ -9,6 +9,8 @@ import com.dearmi.backend.infrastructure.security.PlanRequired;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.UUID;
 
@@ -32,9 +34,16 @@ public class CreatePrescriptionUseCaseImpl implements CreatePrescriptionUseCase 
 
         Prescription saved = prescriptionRepository.save(prescription);
 
-        // @Async: 트랜잭션 커밋 후 별도 스레드에서 OCR 처리
-        ocrProcessorService.processAsync(saved.getId(), saved.getS3Key());
+        // 트랜잭션 커밋 완료 후 OCR 시작 — 커밋 전 @Async 호출 시 DB에서 처방전을 찾지 못하는 문제 방지
+        UUID prescriptionId = saved.getId();
+        String s3Key = saved.getS3Key();
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                ocrProcessorService.processAsync(prescriptionId, s3Key);
+            }
+        });
 
-        return saved.getId();
+        return prescriptionId;
     }
 }
