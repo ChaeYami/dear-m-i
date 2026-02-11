@@ -1,4 +1,4 @@
-package com.dearmi.backend.infrastructure.external.claude;
+package com.dearmi.backend.infrastructure.external.gemini;
 
 import com.dearmi.backend.application.prescription.dto.OcrMedicationItem;
 import com.dearmi.backend.application.prescription.port.PrescriptionOcrPort;
@@ -19,20 +19,16 @@ import java.util.Map;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ClaudeVisionClient implements PrescriptionOcrPort {
+public class GeminiVisionClient implements PrescriptionOcrPort {
 
     private final S3Service s3Service;
     private final ObjectMapper objectMapper;
 
-    @Value("${claude.api-key}")
+    @Value("${gemini.api-key}")
     private String apiKey;
 
-    @Value("${claude.api-url}")
+    @Value("${gemini.api-url}")
     private String apiUrl;
-
-    private static final String MODEL = "claude-opus-4-5";
-    private static final int MAX_TOKENS = 1024;
-    private static final String ANTHROPIC_VERSION = "2023-06-01";
 
     private static final String PROMPT =
             "이 처방전 이미지에서 약품 정보를 추출해줘.\n" +
@@ -44,40 +40,32 @@ public class ClaudeVisionClient implements PrescriptionOcrPort {
     public List<OcrMedicationItem> analyze(String s3Key) {
         try {
             byte[] imageBytes = s3Service.getObjectBytes(s3Key);
-            String mediaType = detectMediaType(s3Key);
+            String mimeType = detectMimeType(s3Key);
             String base64Data = Base64.getEncoder().encodeToString(imageBytes);
 
-            Map<String, Object> imageSource = Map.of(
-                    "type", "base64",
-                    "media_type", mediaType,
-                    "data", base64Data
-            );
-            Map<String, Object> imageContent = Map.of("type", "image", "source", imageSource);
-            Map<String, Object> textContent = Map.of("type", "text", "text", PROMPT);
-            Map<String, Object> message = Map.of("role", "user", "content", List.of(imageContent, textContent));
-            Map<String, Object> body = Map.of(
-                    "model", MODEL,
-                    "max_tokens", MAX_TOKENS,
-                    "messages", List.of(message)
-            );
+            Map<String, Object> inlineData = Map.of("mime_type", mimeType, "data", base64Data);
+            Map<String, Object> imagePart = Map.of("inline_data", inlineData);
+            Map<String, Object> textPart = Map.of("text", PROMPT);
+            Map<String, Object> content = Map.of("parts", List.of(imagePart, textPart));
+            Map<String, Object> body = Map.of("contents", List.of(content));
+
+            String url = apiUrl + "?key=" + apiKey;
 
             RestClient restClient = RestClient.builder()
-                    .baseUrl(apiUrl)
-                    .defaultHeader("x-api-key", apiKey)
-                    .defaultHeader("anthropic-version", ANTHROPIC_VERSION)
+                    .baseUrl(url)
                     .defaultHeader("content-type", "application/json")
                     .build();
 
-            ClaudeResponse response = restClient.post()
+            GeminiResponse response = restClient.post()
                     .body(body)
                     .retrieve()
-                    .body(ClaudeResponse.class);
+                    .body(GeminiResponse.class);
 
-            if (response == null || response.content() == null || response.content().isEmpty()) {
-                throw new PrescriptionOcrException("Claude API 응답이 비어있습니다");
+            if (response == null || response.candidates() == null || response.candidates().isEmpty()) {
+                throw new PrescriptionOcrException("Gemini API 응답이 비어있습니다");
             }
 
-            String responseText = response.content().get(0).text();
+            String responseText = response.candidates().get(0).content().parts().get(0).text();
             return parseOcrResult(responseText);
 
         } catch (PrescriptionOcrException e) {
@@ -91,7 +79,6 @@ public class ClaudeVisionClient implements PrescriptionOcrPort {
     private List<OcrMedicationItem> parseOcrResult(String json) {
         try {
             String trimmed = json.strip();
-            // JSON 배열 부분만 추출 (혹시 앞뒤에 텍스트가 있을 경우)
             int start = trimmed.indexOf('[');
             int end = trimmed.lastIndexOf(']');
             if (start == -1 || end == -1) {
@@ -104,7 +91,7 @@ public class ClaudeVisionClient implements PrescriptionOcrPort {
         }
     }
 
-    private String detectMediaType(String s3Key) {
+    private String detectMimeType(String s3Key) {
         String lower = s3Key.toLowerCase();
         if (lower.endsWith(".png")) return "image/png";
         if (lower.endsWith(".gif")) return "image/gif";

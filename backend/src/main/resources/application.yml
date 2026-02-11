@@ -76,10 +76,10 @@ drug-info:
   api-key: ${DRUG_INFO_API_KEY}
   api-url: https://apis.data.go.kr/1471000/DrbEasyDrugInfoService
 
-# Claude API 설정 (처방전 OCR)
-claude:
-  api-key: ${CLAUDE_API_KEY}
-  api-url: https://api.anthropic.com/v1/messages
+# Gemini API 설정 (처방전 OCR)
+gemini:
+  api-key: ${GEMINI_API_KEY}
+  api-url: https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent
 
 # 암호화 설정 (상담 기록 content AES-256-GCM)
 encryption:
