@@ -111,7 +111,7 @@ Android 에뮬레이터에서 백엔드 접속 시: `http://10.0.2.2:8080`
 | `DB_USERNAME` / `DB_PASSWORD` | DB 자격증명 |
 | `JWT_SECRET` | JWT 서명 키 |
 | `ENCRYPTION_KEY` | 진료 기록 AES-256-GCM 암호화 키 |
-| `CLAUDE_API_KEY` | Claude Vision API 키 (OCR) |
+| `GEMINI_API_KEY` | Claude Vision API 키 (OCR) |
 | `DRUG_INFO_API_KEY` | e약은요 API 서비스 키 |
 | `AWS_S3_BUCKET` / `AWS_REGION` | S3 버킷 & 리전 (기본: `ap-northeast-2`) |
 | `AWS_ACCESS_KEY` / `AWS_SECRET_KEY` | AWS 자격증명 |

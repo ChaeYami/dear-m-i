@@ -57,7 +57,7 @@ cp backend/.env.example backend/.env   # 값 채우기
 DB_URL, DB_USERNAME, DB_PASSWORD
 JWT_SECRET
 ENCRYPTION_KEY                              # 진료 기록 AES-256-GCM
-CLAUDE_API_KEY                              # Vision OCR
+GEMINI_API_KEY                              # Vision OCR
 DRUG_INFO_API_KEY                           # e약은요
 AWS_S3_BUCKET, AWS_ACCESS_KEY, AWS_SECRET_KEY, AWS_REGION
 GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET

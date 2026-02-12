@@ -1,0 +1,11 @@
+# .easignore — EAS 빌드 시 .gitignore 대신 사용
+# google-services.json은 여기서 제외하지 않아 빌드에 포함됨
+
+node_modules/
+.expo/
+dist/
+web-build/
+ios/
+android/
+.DS_Store
+*.log

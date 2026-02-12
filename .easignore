@@ -1,0 +1,37 @@
+# .easignore — EAS 빌드 시 .gitignore 대신 사용
+# google-services.json은 빌드에 포함
+
+# Backend (빌드에 불필요)
+backend/
+
+# Node modules
+node_modules/
+dearmi-app/node_modules/
+
+# Expo
+dearmi-app/.expo/
+dearmi-app/dist/
+dearmi-app/web-build/
+dearmi-app/ios/
+dearmi-app/android/
+
+# OS
+.DS_Store
+*.log
+
+# IDE
+.idea/
+.vscode/
+
+# Secrets (google-services.json 제외)
+.env
+.env.local
+.env.production
+*.pem
+*.key
+*.jks
+*.p8
+*.p12
+*.mobileprovision
+GoogleService-Info.plist
+firebase-adminsdk*.json

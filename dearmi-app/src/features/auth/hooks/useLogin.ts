@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Platform } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { authApi } from '@/features/auth/api';
 
@@ -22,6 +24,13 @@ export const useLogin = () => {
   const [error, setError] = useState<string | null>(null);
   const { setTokens, setUser } = useAuthStore();
 
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      WebBrowser.warmUpAsync();
+      return () => { WebBrowser.coolDownAsync(); };
+    }
+  }, []);
+
   const loginWithProvider = async (provider: 'google' | 'apple') => {
     setIsLoading(true);
     setError(null);
@@ -30,7 +39,21 @@ export const useLogin = () => {
       const authUrl = `${process.env.EXPO_PUBLIC_API_URL}/oauth2/authorization/${provider}`;
       const redirectUri = 'dearmi://auth';
 
-      const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
+      let result: WebBrowser.WebBrowserAuthSessionResult;
+      try {
+        result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
+      } catch {
+        // Custom Tabs 실패 시 기본 브라우저로 fallback
+        const urlPromise = new Promise<string>((resolve) => {
+          const sub = Linking.addEventListener('url', ({ url }) => {
+            sub.remove();
+            resolve(url);
+          });
+        });
+        await Linking.openURL(authUrl);
+        const url = await urlPromise;
+        result = { type: 'success', url };
+      }
 
       if (result.type === 'cancel' || result.type === 'dismiss') {
         return;
