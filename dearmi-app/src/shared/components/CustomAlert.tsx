@@ -104,10 +104,11 @@ const AlertModal: React.FC<{
   }, []);
 
   const handlePress = useCallback((btn?: AlertButton) => {
+    const callback = () => onDismiss(btn);
     backdropOpacity.value = withTiming(0, { duration: 150 });
     cardScale.value = withTiming(0.95, { duration: 120 });
     cardOpacity.value = withTiming(0, { duration: 120 }, () => {
-      runOnJS(onDismiss)(btn);
+      runOnJS(callback)();
     });
   }, [onDismiss]);
 

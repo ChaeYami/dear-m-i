@@ -47,3 +47,8 @@ dist/
 # generated native folders
 /ios
 /android
+
+# EAS build artifacts
+*.apk
+*.aab
+*.ipa

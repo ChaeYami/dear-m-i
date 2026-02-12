@@ -43,6 +43,13 @@
         }
       ],
       "expo-localization",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "처방전 사진을 선택하기 위해 갤러리 접근 권한이 필요합니다.",
+          "cameraPermission": "처방전을 촬영하기 위해 카메라 접근 권한이 필요합니다."
+        }
+      ],
       "expo-secure-store",
       [
         "expo-font",

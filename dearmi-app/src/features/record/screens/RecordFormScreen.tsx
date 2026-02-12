@@ -114,7 +114,7 @@ export const RecordFormScreen: React.FC = () => {
         onPress: async () => {
           const { status } = await ImagePicker.requestCameraPermissionsAsync();
           if (status !== 'granted') { customAlert('권한 필요', '카메라 접근 권한이 필요합니다.'); return; }
-          const r = await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.85 });
+          const r = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.85 });
           if (!r.canceled && r.assets.length > 0) setRxImage(r.assets[0]);
         },
       },
@@ -123,7 +123,7 @@ export const RecordFormScreen: React.FC = () => {
         onPress: async () => {
           const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
           if (status !== 'granted') { customAlert('권한 필요', '갤러리 접근 권한이 필요합니다.'); return; }
-          const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.85 });
+          const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.85 });
           if (!r.canceled && r.assets.length > 0) setRxImage(r.assets[0]);
         },
       },
