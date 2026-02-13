@@ -4,6 +4,7 @@ import com.dearmi.backend.application.prescription.dto.CreatePrescriptionCommand
 import com.dearmi.backend.application.prescription.dto.GenerateUploadUrlCommand;
 import com.dearmi.backend.application.prescription.dto.UpdateMedicationsCommand;
 import com.dearmi.backend.application.prescription.usecase.CreatePrescriptionUseCase;
+import com.dearmi.backend.application.prescription.usecase.DeletePrescriptionUseCase;
 import com.dearmi.backend.application.prescription.usecase.GenerateUploadUrlUseCase;
 import com.dearmi.backend.application.prescription.usecase.GetPrescriptionDetailUseCase;
 import com.dearmi.backend.application.prescription.usecase.GetPrescriptionListUseCase;
@@ -35,6 +36,7 @@ public class PrescriptionController {
     private final GetPrescriptionListUseCase getPrescriptionListUseCase;
     private final GetPrescriptionDetailUseCase getPrescriptionDetailUseCase;
     private final UpdateMedicationsUseCase updateMedicationsUseCase;
+    private final DeletePrescriptionUseCase deletePrescriptionUseCase;
 
     /** POST /api/v1/prescriptions/presigned-url — S3 업로드용 PUT Presigned URL 발급 */
     @PostMapping("/presigned-url")
@@ -86,6 +88,16 @@ public class PrescriptionController {
         return ApiResponse.success(
                 PrescriptionDetailResponse.from(getPrescriptionDetailUseCase.getDetail(userId, id))
         );
+    }
+
+    /** DELETE /api/v1/prescriptions/{id} — 처방전 삭제 (약품 cascade + S3 이미지 삭제) */
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(
+            @AuthenticatedUserId UUID userId,
+            @PathVariable UUID id
+    ) {
+        deletePrescriptionUseCase.delete(userId, id);
     }
 
     /** PUT /api/v1/prescriptions/{id}/medications — 약품 목록 수동 수정 (전체 교체) */
