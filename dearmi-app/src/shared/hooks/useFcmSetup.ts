@@ -42,15 +42,12 @@ export const useFcmSetup = () => {
     }
 
     try {
-      console.log('[FCM] 토큰 획득 시도...');
       const tokenData = await Notifications.getDevicePushTokenAsync();
-      console.log('[FCM] 토큰 획득 성공:', tokenData.data?.substring(0, 20) + '...');
       await notificationApi.registerToken({
         fcmToken: tokenData.data,
       });
-      console.log('[FCM] 서버 등록 성공');
     } catch (e) {
-      console.error('[FCM] 실패:', e);
+      // FCM 토큰 등록 실패는 무시 (알림 미수신으로 이어질 수 있으나 앱 동작에 영향 없음)
     }
   };
 };
