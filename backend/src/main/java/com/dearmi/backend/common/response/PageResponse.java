@@ -9,7 +9,8 @@ public record PageResponse<T>(
         int page,
         int size,
         long totalElements,
-        int totalPages
+        int totalPages,
+        boolean hasNext
 ) {
     public static <T> PageResponse<T> from(PageResult<T> result) {
         return new PageResponse<>(
@@ -17,7 +18,8 @@ public record PageResponse<T>(
                 result.page(),
                 result.size(),
                 result.totalElements(),
-                result.totalPages()
+                result.totalPages(),
+                result.page() + 1 < result.totalPages()
         );
     }
 }

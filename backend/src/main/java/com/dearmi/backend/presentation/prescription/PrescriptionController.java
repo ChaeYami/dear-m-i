@@ -6,8 +6,10 @@ import com.dearmi.backend.application.prescription.dto.UpdateMedicationsCommand;
 import com.dearmi.backend.application.prescription.usecase.CreatePrescriptionUseCase;
 import com.dearmi.backend.application.prescription.usecase.GenerateUploadUrlUseCase;
 import com.dearmi.backend.application.prescription.usecase.GetPrescriptionDetailUseCase;
+import com.dearmi.backend.application.prescription.usecase.GetPrescriptionListUseCase;
 import com.dearmi.backend.application.prescription.usecase.UpdateMedicationsUseCase;
 import com.dearmi.backend.common.response.ApiResponse;
+import com.dearmi.backend.common.response.PageResponse;
 import com.dearmi.backend.infrastructure.aspect.Audited;
 import com.dearmi.backend.infrastructure.security.AuthenticatedUserId;
 import com.dearmi.backend.presentation.prescription.dto.CreatePrescriptionRequest;
@@ -30,6 +32,7 @@ public class PrescriptionController {
 
     private final GenerateUploadUrlUseCase generateUploadUrlUseCase;
     private final CreatePrescriptionUseCase createPrescriptionUseCase;
+    private final GetPrescriptionListUseCase getPrescriptionListUseCase;
     private final GetPrescriptionDetailUseCase getPrescriptionDetailUseCase;
     private final UpdateMedicationsUseCase updateMedicationsUseCase;
 
@@ -42,6 +45,21 @@ public class PrescriptionController {
         GenerateUploadUrlCommand command =
                 new GenerateUploadUrlCommand(userId, request.fileName(), request.contentType());
         return ApiResponse.success(PresignedUrlResponse.from(generateUploadUrlUseCase.generate(command)));
+    }
+
+    /** GET /api/v1/prescriptions?page=&size= — 처방전 목록 페이징 조회 */
+    @GetMapping
+    public ApiResponse<PageResponse<PrescriptionDetailResponse>> getList(
+            @AuthenticatedUserId UUID userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return ApiResponse.success(
+                PageResponse.from(
+                        getPrescriptionListUseCase.getList(userId, page, size)
+                                .map(PrescriptionDetailResponse::from)
+                )
+        );
     }
 
     /** POST /api/v1/prescriptions — 처방전 저장 + 비동기 OCR 시작 */

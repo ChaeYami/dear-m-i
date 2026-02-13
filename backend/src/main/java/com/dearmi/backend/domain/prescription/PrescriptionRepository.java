@@ -16,6 +16,11 @@ public interface PrescriptionRepository {
 
     List<Prescription> findByOcrStatusAndDeletedAtIsNull(String ocrStatus);
 
+    /** 처방전 목록 페이징 (최신순) */
+    List<Prescription> findPageByUserId(UUID userId, int offset, int size);
+
+    long countByUserId(UUID userId);
+
     /** hospital_schedules 소프트 딜리트 시 연결 해제 (⑤ 원칙) */
     void detachSchedule(UUID scheduleId);
 }

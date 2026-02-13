@@ -1,6 +1,7 @@
 package com.dearmi.backend.infrastructure.persistence;
 
 import com.dearmi.backend.domain.prescription.Prescription;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -17,6 +18,11 @@ public interface PrescriptionJpaRepository extends JpaRepository<Prescription, U
     List<Prescription> findByUserIdAndDeletedAtIsNullOrderByPrescribedAtDesc(UUID userId);
 
     List<Prescription> findByOcrStatusAndDeletedAtIsNull(String ocrStatus);
+
+    @Query("SELECT p FROM Prescription p WHERE p.userId = :userId AND p.deletedAt IS NULL ORDER BY p.createdAt DESC")
+    List<Prescription> findPageByUserId(@Param("userId") UUID userId, Pageable pageable);
+
+    long countByUserIdAndDeletedAtIsNull(UUID userId);
 
     /** hospital_schedules 소프트 딜리트 시 schedule_id NULL 처리 (⑤ 원칙) */
     @Modifying
