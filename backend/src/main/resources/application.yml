@@ -77,9 +77,11 @@ drug-info:
   api-url: https://apis.data.go.kr/1471000/DrbEasyDrugInfoService
 
 # Gemini API 설정 (처방전 OCR)
+# primary 503 (UNAVAILABLE) 시 fallback 으로 자동 전환
 gemini:
   api-key: ${GEMINI_API_KEY}
   api-url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
+  fallback-url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent
 
 # 암호화 설정 (상담 기록 content AES-256-GCM)
 encryption:

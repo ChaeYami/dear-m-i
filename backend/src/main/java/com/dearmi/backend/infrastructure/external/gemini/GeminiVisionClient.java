@@ -37,6 +37,9 @@ public class GeminiVisionClient implements PrescriptionOcrPort {
     @Value("${gemini.api-url}")
     private String apiUrl;
 
+    @Value("${gemini.fallback-url}")
+    private String fallbackUrl;
+
     private static final String PROMPT =
             "이 한국 처방전 이미지에서 정보를 추출해줘.\n" +
             "반드시 아래 예시와 동일한 JSON 형식으로만 응답해. 다른 텍스트 없이.\n" +
@@ -65,8 +68,6 @@ public class GeminiVisionClient implements PrescriptionOcrPort {
             "값이 없으면 null. medications가 없으면 빈 배열 [].\n" +
             "처방일(prescribedAt)은 반드시 YYYY-MM-DD 형식.";
 
-    private static final int MAX_RETRIES = 1;
-    private static final long RETRY_BASE_DELAY_MS = 3_000;
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(10);
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(45);
 
@@ -89,7 +90,6 @@ public class GeminiVisionClient implements PrescriptionOcrPort {
         Map<String, Object> content = Map.of("parts", List.of(imagePart, textPart));
         Map<String, Object> body = Map.of("contents", List.of(content));
 
-        String url = apiUrl + "?key=" + apiKey;
         String bodyJson;
         try {
             bodyJson = objectMapper.writeValueAsString(body);
@@ -97,62 +97,68 @@ public class GeminiVisionClient implements PrescriptionOcrPort {
             throw new PrescriptionOcrException("요청 body 직렬화 실패", e);
         }
 
+        // 1차: primary (gemini-2.5-flash)
+        OcrResult result = tryModel(apiUrl, bodyJson, s3Key, "primary");
+        if (result != null) return result;
+
+        // 2차: fallback (gemini-2.5-pro) — primary 가 과부하/타임아웃일 때만 도달
+        log.warn("Primary 모델 실패 — fallback 모델로 재시도: s3Key={}", s3Key);
+        OcrResult fallback = tryModel(fallbackUrl, bodyJson, s3Key, "fallback");
+        if (fallback != null) return fallback;
+
+        throw new PrescriptionOcrException("Gemini primary + fallback 모두 실패");
+    }
+
+    /**
+     * 단일 모델 호출.
+     * @return 성공 시 OcrResult, 과부하/타임아웃(폴백 가능 에러) 시 null, 기타 에러 시 예외.
+     */
+    private OcrResult tryModel(String modelUrl, String bodyJson, String s3Key, String tag) {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
+                .uri(URI.create(modelUrl + "?key=" + apiKey))
                 .timeout(REQUEST_TIMEOUT)
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(bodyJson))
                 .build();
 
-        Exception lastException = null;
-        for (int attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-            try {
-                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-                int status = response.statusCode();
+        try {
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            int status = response.statusCode();
 
-                if (status >= 200 && status < 300) {
-                    GeminiResponse parsed = objectMapper.readValue(response.body(), GeminiResponse.class);
-                    if (parsed == null || parsed.candidates() == null || parsed.candidates().isEmpty()) {
-                        throw new PrescriptionOcrException("Gemini API 응답이 비어있습니다");
-                    }
-                    String responseText = parsed.candidates().get(0).content().parts().get(0).text();
-                    return parseOcrResult(responseText);
+            if (status >= 200 && status < 300) {
+                GeminiResponse parsed = objectMapper.readValue(response.body(), GeminiResponse.class);
+                if (parsed == null || parsed.candidates() == null || parsed.candidates().isEmpty()) {
+                    throw new PrescriptionOcrException("Gemini 응답이 비어있음 (" + tag + ")");
                 }
-
-                boolean retryable = (status == 503 || status == 429 || status == 500);
-                if (retryable && attempt < MAX_RETRIES) {
-                    long delay = RETRY_BASE_DELAY_MS * (1L << attempt);
-                    log.warn("Gemini {} 오류, {}ms 후 재시도 ({}/{}): s3Key={}, body={}",
-                            status, delay, attempt + 1, MAX_RETRIES, s3Key, truncate(response.body(), 500));
-                    Thread.sleep(delay);
-                    lastException = new PrescriptionOcrException("Gemini HTTP " + status);
-                    continue;
-                }
-                log.error("Gemini HTTP {}: s3Key={}, body={}", status, s3Key, truncate(response.body(), 1000));
-                throw new PrescriptionOcrException("Gemini HTTP " + status);
-
-            } catch (HttpTimeoutException e) {
-                log.error("Gemini 타임아웃 ({}s 초과): s3Key={}", REQUEST_TIMEOUT.toSeconds(), s3Key);
-                if (attempt < MAX_RETRIES) {
-                    lastException = e;
-                    continue;
-                }
-                throw new PrescriptionOcrException("Gemini 응답 타임아웃", e);
-            } catch (PrescriptionOcrException e) {
-                throw e;
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new PrescriptionOcrException("OCR 처리 중 인터럽트", e);
-            } catch (Exception e) {
-                log.error("Gemini 호출 실패: s3Key={}, exception={}", s3Key, e.getClass().getSimpleName(), e);
-                if (attempt < MAX_RETRIES) {
-                    lastException = e;
-                    continue;
-                }
-                throw new PrescriptionOcrException("처방전 OCR 처리 중 오류가 발생했습니다", e);
+                String text = parsed.candidates().get(0).content().parts().get(0).text();
+                log.info("Gemini OCR 성공 ({}): s3Key={}", tag, s3Key);
+                return parseOcrResult(text);
             }
+
+            // 503/500/429: 폴백 시도
+            if (status == 503 || status == 500 || status == 429) {
+                log.warn("Gemini {} 과부하 HTTP {}: s3Key={}, body={}",
+                        tag, status, s3Key, truncate(response.body(), 500));
+                return null;
+            }
+
+            // 기타 4xx/5xx: 폴백해도 의미 없음 (인증/요청 형식 문제 등)
+            log.error("Gemini {} HTTP {}: s3Key={}, body={}",
+                    tag, status, s3Key, truncate(response.body(), 1000));
+            throw new PrescriptionOcrException("Gemini HTTP " + status + " (" + tag + ")");
+
+        } catch (HttpTimeoutException e) {
+            log.warn("Gemini {} 타임아웃 ({}s 초과): s3Key={}", tag, REQUEST_TIMEOUT.toSeconds(), s3Key);
+            return null;
+        } catch (PrescriptionOcrException e) {
+            throw e;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new PrescriptionOcrException("OCR 인터럽트", e);
+        } catch (Exception e) {
+            log.error("Gemini {} 호출 실패: s3Key={}, exception={}", tag, s3Key, e.getClass().getSimpleName(), e);
+            return null;
         }
-        throw new PrescriptionOcrException("처방전 OCR 최대 재시도 초과", lastException);
     }
 
     private OcrResult parseOcrResult(String json) {
