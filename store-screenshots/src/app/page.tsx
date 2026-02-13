@@ -962,18 +962,17 @@ function FeatureGraphicSlide({ cW, cH, locale }: SlideArgs) {
           maxWidth: cW * 0.65,
         }}
       >
-        {/* Adaptive icon (transparent, sized to compensate for inner padding) */}
+        {/* Brand icon (transparent PNG, logo fills more of its canvas) */}
         <div
           style={{
-            width: cH * 0.78,
-            height: cH * 0.78,
+            width: cH * 0.6,
+            height: cH * 0.6,
             flexShrink: 0,
-            marginLeft: -cH * 0.14,
             filter: "drop-shadow(0 10px 24px rgba(0,0,0,0.35))",
           }}
         >
           <img
-            src={img("/adaptive-icon.png")}
+            src={img("/app-icon.png")}
             alt=""
             style={{ width: "100%", height: "100%", objectFit: "contain" }}
             draggable={false}
@@ -1053,7 +1052,7 @@ function FeatureGraphicSlide({ cW, cH, locale }: SlideArgs) {
         style={{
           position: "absolute",
           right: cW * 0.045,
-          top: "42%",
+          top: "50%",
           transform: "translateY(-50%) rotate(-3deg)",
           padding: `${cH * 0.04}px ${cH * 0.05}px`,
           background: "#fff",
