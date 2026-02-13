@@ -40,6 +40,9 @@ public class GeminiVisionClient implements PrescriptionOcrPort {
     @Value("${gemini.fallback-url}")
     private String fallbackUrl;
 
+    @Value("${gemini.lite-fallback-url}")
+    private String liteFallbackUrl;
+
     private static final String PROMPT =
             "이 한국 처방전 이미지에서 정보를 추출해줘.\n" +
             "반드시 아래 예시와 동일한 JSON 형식으로만 응답해. 다른 텍스트 없이.\n" +
@@ -69,7 +72,8 @@ public class GeminiVisionClient implements PrescriptionOcrPort {
             "처방일(prescribedAt)은 반드시 YYYY-MM-DD 형식.";
 
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(10);
-    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(45);
+    // 3단 폴백 총 최악 지연: 30s × 3 = 90s (앱 OCR 타임아웃과 동일). 503 은 보통 ~5s 에 반환.
+    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(30);
 
     /** JDK HttpClient 는 thread-safe — 싱글턴으로 재사용. */
     private final HttpClient httpClient = HttpClient.newBuilder()
@@ -98,15 +102,20 @@ public class GeminiVisionClient implements PrescriptionOcrPort {
         }
 
         // 1차: primary (gemini-2.5-flash)
-        OcrResult result = tryModel(apiUrl, bodyJson, s3Key, "primary");
+        OcrResult result = tryModel(apiUrl, bodyJson, s3Key, "primary(flash)");
         if (result != null) return result;
 
-        // 2차: fallback (gemini-2.5-pro) — primary 가 과부하/타임아웃일 때만 도달
-        log.warn("Primary 모델 실패 — fallback 모델로 재시도: s3Key={}", s3Key);
-        OcrResult fallback = tryModel(fallbackUrl, bodyJson, s3Key, "fallback");
-        if (fallback != null) return fallback;
+        // 2차: fallback (gemini-2.5-pro)
+        log.warn("Primary 실패 — pro 폴백 시도: s3Key={}", s3Key);
+        OcrResult pro = tryModel(fallbackUrl, bodyJson, s3Key, "fallback(pro)");
+        if (pro != null) return pro;
 
-        throw new PrescriptionOcrException("Gemini primary + fallback 모두 실패");
+        // 3차: lite (gemini-2.5-flash-lite) — flash/pro 동시 과부하 대비
+        log.warn("Pro 폴백 실패 — lite 폴백 시도: s3Key={}", s3Key);
+        OcrResult lite = tryModel(liteFallbackUrl, bodyJson, s3Key, "fallback(lite)");
+        if (lite != null) return lite;
+
+        throw new PrescriptionOcrException("Gemini flash/pro/lite 모두 실패");
     }
 
     /**
