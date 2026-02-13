@@ -14,7 +14,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class GetMedicationDetailUseCaseImpl implements GetMedicationDetailUseCase {
+public class GetPrescriptionMedDetailUseCaseImpl implements GetPrescriptionMedDetailUseCase {
 
     private final PrescriptionMedicationRepository prescriptionMedicationRepository;
     private final PrescriptionRepository prescriptionRepository;

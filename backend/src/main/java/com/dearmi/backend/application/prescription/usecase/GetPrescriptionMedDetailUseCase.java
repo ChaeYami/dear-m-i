@@ -4,6 +4,6 @@ import com.dearmi.backend.application.prescription.dto.MedicationDetailResult;
 
 import java.util.UUID;
 
-public interface GetMedicationDetailUseCase {
+public interface GetPrescriptionMedDetailUseCase {
     MedicationDetailResult getDetail(UUID userId, UUID medicationId);
 }
