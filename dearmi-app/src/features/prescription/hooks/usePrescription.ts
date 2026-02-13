@@ -90,3 +90,16 @@ export const useDeletePrescription = () => {
     },
   });
 };
+
+/** 처방전 일괄 삭제 */
+export const useBulkDeletePrescriptions = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (ids: string[]) =>
+      Promise.all(ids.map((id) => prescriptionApi.deletePrescription(id))),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.prescriptions() });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.timeline() });
+    },
+  });
+};

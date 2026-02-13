@@ -22,6 +22,7 @@ import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
 import {
   usePagedPrescriptions,
   useDeletePrescription,
+  useBulkDeletePrescriptions,
 } from '@/features/prescription/hooks/usePrescription';
 import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
@@ -86,13 +87,15 @@ const MedicationDivider: React.FC<{ colors: any }> = ({ colors }) => (
 const PrescriptionCard: React.FC<{
   item: Prescription;
   expanded: boolean;
+  selected: boolean;
+  selectionMode: boolean;
   onToggle: () => void;
   onMedPress: (med: PrescriptionMedication) => void;
   onDelete: () => void;
   onViewOcr: () => void;
   colors: ReturnType<typeof useTheme>['colors'];
   shadow: object;
-}> = ({ item, expanded, onToggle, onMedPress, onDelete, onViewOcr, colors, shadow }) => {
+}> = ({ item, expanded, selected, selectionMode, onToggle, onMedPress, onDelete, onViewOcr, colors, shadow }) => {
   const OCR_STATUS_CONFIG: Record<OcrStatus, { label: string; color: string; bg: string }> = {
     PENDING: { label: '분석 대기', color: colors.warning, bg: colors.warningLight },
     PROCESSING: { label: '분석 중', color: colors.primary, bg: colors.primaryMuted },
@@ -109,6 +112,8 @@ const PrescriptionCard: React.FC<{
         backgroundColor: colors.surface,
         borderRadius: sizes.radius.xxl,
         overflow: 'hidden',
+        borderWidth: selectionMode && selected ? 2 : 0,
+        borderColor: selectionMode && selected ? colors.primary : 'transparent',
       },
       shadow,
     ]}>
@@ -119,6 +124,23 @@ const PrescriptionCard: React.FC<{
         padding: sizes.spacing.lg,
         gap: sizes.spacing.sm,
       }}>
+        {/* 선택 모드 체크박스 */}
+        {selectionMode && (
+          <View style={{
+            width: 24,
+            height: 24,
+            borderRadius: 12,
+            borderWidth: 2,
+            borderColor: selected ? colors.primary : colors.divider,
+            backgroundColor: selected ? colors.primary : 'transparent',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginRight: sizes.spacing.xs,
+          }}>
+            {selected && <Ionicons name="checkmark" size={14} color={colors.textInverse} />}
+          </View>
+        )}
+
         <View style={{ flex: 1, gap: sizes.spacing.xs }}>
           <Text style={{ fontSize: sizes.font.sm, fontFamily: fontFamily.regular, color: colors.textSub }}>
             {formatDate(item.prescribedAt)}
@@ -152,16 +174,18 @@ const PrescriptionCard: React.FC<{
               {item.medications.length}종
             </Text>
           </View>
-          <Ionicons
-            name={expanded ? 'chevron-up' : 'chevron-down'}
-            size={16}
-            color={colors.textDisabled}
-          />
+          {!selectionMode && (
+            <Ionicons
+              name={expanded ? 'chevron-up' : 'chevron-down'}
+              size={16}
+              color={colors.textDisabled}
+            />
+          )}
         </View>
       </View>
 
-      {/* Accordion content */}
-      {expanded && (
+      {/* Accordion content — 선택 모드에서는 숨김 */}
+      {!selectionMode && expanded && (
         <View style={{ borderTopWidth: 1, borderTopColor: colors.divider }}>
           {item.medications.length === 0 ? (
             <Text style={{
@@ -242,29 +266,63 @@ export const PrescriptionTab: React.FC = () => {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
     usePagedPrescriptions();
   const { mutate: deletePrescription } = useDeletePrescription();
+  const { mutate: bulkDelete, isPending: isBulkDeleting } = useBulkDeletePrescriptions();
 
-  // 포커스될 때마다 목록 새로고침 (OcrResult 저장 후 돌아올 때 등)
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const shadow = softShadow(colors);
+
+  // 포커스될 때마다 목록 새로고침
   useFocusEffect(
     useCallback(() => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.prescriptions() });
     }, [queryClient])
   );
 
-  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
-  const shadow = softShadow(colors);
-
   const prescriptions = useMemo(
     () => data?.pages.flatMap((p) => p.content) ?? [],
     [data]
   );
 
-  const toggleExpand = (id: number) => {
+  const toggleExpand = (id: string) => {
+    if (selectionMode) {
+      toggleSelect(id);
+      return;
+    }
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpandedIds((prev) => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const enterSelectionMode = () => {
+    setSelectionMode(true);
+    setSelectedIds(new Set());
+    setExpandedIds(new Set());
+  };
+
+  const exitSelectionMode = () => {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === prescriptions.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(prescriptions.map((p) => String(p.id))));
+    }
   };
 
   const handleDelete = (item: Prescription) => {
@@ -274,18 +332,41 @@ export const PrescriptionTab: React.FC = () => {
     ]);
   };
 
+  const handleBulkDelete = () => {
+    if (selectedIds.size === 0) return;
+    customAlert(
+      `${selectedIds.size}건 삭제`,
+      '선택한 처방전을 모두 삭제할까요?\n삭제된 데이터는 복구할 수 없습니다.',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '삭제',
+          style: 'destructive',
+          onPress: () => {
+            bulkDelete([...selectedIds], {
+              onSuccess: () => exitSelectionMode(),
+            });
+          },
+        },
+      ]
+    );
+  };
+
   if (isLoading) return <LoadingSpinner fullscreen />;
+
+  const allSelected = prescriptions.length > 0 && selectedIds.size === prescriptions.length;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      {/* 헤더 */}
       <View style={{
         height: sizes.headerHeight,
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: sizes.spacing.lg,
       }}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <Ionicons name="chevron-back" size={24} color={colors.primary} />
+        <TouchableOpacity onPress={() => selectionMode ? exitSelectionMode() : navigation.goBack()} hitSlop={12}>
+          <Ionicons name={selectionMode ? 'close' : 'chevron-back'} size={24} color={colors.primary} />
         </TouchableOpacity>
         <Text style={{
           flex: 1,
@@ -294,9 +375,21 @@ export const PrescriptionTab: React.FC = () => {
           fontFamily: fontFamily.bold,
           color: colors.text,
         }}>
-          처방 목록
+          {selectionMode ? `${selectedIds.size}건 선택됨` : '처방 목록'}
         </Text>
-        <View style={{ width: 24 }} />
+        {selectionMode ? (
+          <TouchableOpacity onPress={toggleSelectAll} hitSlop={12}>
+            <Text style={{ fontSize: sizes.font.sm, fontFamily: fontFamily.semibold, color: colors.primary }}>
+              {allSelected ? '전체 해제' : '전체 선택'}
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity onPress={enterSelectionMode} hitSlop={12}>
+            <Text style={{ fontSize: sizes.font.sm, fontFamily: fontFamily.semibold, color: colors.primary }}>
+              선택
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <FlatList
@@ -305,13 +398,21 @@ export const PrescriptionTab: React.FC = () => {
         contentContainerStyle={
           prescriptions.length === 0
             ? { flexGrow: 1 }
-            : { padding: sizes.spacing.lg, gap: sizes.spacing.md, paddingBottom: tabBarSafeBottom + 20 }
+            : {
+                padding: sizes.spacing.lg,
+                gap: sizes.spacing.md,
+                paddingBottom: selectionMode
+                  ? 100
+                  : tabBarSafeBottom + 20,
+              }
         }
         renderItem={({ item }) => (
           <PrescriptionCard
             item={item}
-            expanded={expandedIds.has(item.id)}
-            onToggle={() => toggleExpand(item.id)}
+            expanded={expandedIds.has(String(item.id))}
+            selected={selectedIds.has(String(item.id))}
+            selectionMode={selectionMode}
+            onToggle={() => toggleExpand(String(item.id))}
             onMedPress={(med) =>
               navigation.navigate('MedicationDetail', {
                 medicationId: med.id,
@@ -353,28 +454,69 @@ export const PrescriptionTab: React.FC = () => {
         }
       />
 
-      <TouchableOpacity
-        style={{
+      {/* 일반 모드: FAB */}
+      {!selectionMode && (
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            bottom: tabBarSafeBottom + sizes.spacing.md,
+            right: sizes.spacing.xl,
+            width: 56,
+            height: 56,
+            borderRadius: 28,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: colors.primary,
+            shadowColor: colors.glassShadow,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 1,
+            shadowRadius: 12,
+            elevation: 8,
+          }}
+          onPress={() => navigation.navigate('PrescriptionUpload')}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="add" size={28} color={colors.textInverse} />
+        </TouchableOpacity>
+      )}
+
+      {/* 선택 모드: 하단 삭제 바 */}
+      {selectionMode && (
+        <View style={{
           position: 'absolute',
-          bottom: tabBarSafeBottom + sizes.spacing.md,
-          right: sizes.spacing.xl,
-          width: 56,
-          height: 56,
-          borderRadius: 28,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: colors.primary,
-          shadowColor: colors.glassShadow,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 1,
-          shadowRadius: 12,
-          elevation: 8,
-        }}
-        onPress={() => navigation.navigate('PrescriptionUpload')}
-        activeOpacity={0.85}
-      >
-        <Ionicons name="add" size={28} color={colors.textInverse} />
-      </TouchableOpacity>
+          bottom: 0,
+          left: 0,
+          right: 0,
+          paddingHorizontal: sizes.spacing.lg,
+          paddingVertical: sizes.spacing.md,
+          paddingBottom: tabBarSafeBottom + sizes.spacing.md,
+          backgroundColor: colors.surface,
+          borderTopWidth: 1,
+          borderTopColor: colors.divider,
+          ...softShadow(colors),
+        }}>
+          <TouchableOpacity
+            style={{
+              height: sizes.buttonHeight.lg,
+              borderRadius: sizes.radius.full,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: selectedIds.size === 0 ? colors.divider : colors.error,
+            }}
+            onPress={handleBulkDelete}
+            disabled={selectedIds.size === 0 || isBulkDeleting}
+            activeOpacity={0.8}
+          >
+            <Text style={{
+              fontSize: sizes.font.md,
+              fontFamily: fontFamily.bold,
+              color: selectedIds.size === 0 ? colors.textDisabled : colors.textInverse,
+            }}>
+              {isBulkDeleting ? '삭제 중...' : selectedIds.size === 0 ? '항목을 선택하세요' : `${selectedIds.size}건 삭제`}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
