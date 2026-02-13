@@ -70,7 +70,6 @@ const RecordCard: React.FC<{ item: RecordSummary; onPress: () => void; onDelete:
 
       <AnimatedPressable
         onPress={onPress}
-        onLongPress={handleMore}
         style={[styles.card, { backgroundColor: colors.surface, overflow: 'hidden' }, softShadow(colors)]}
       >
         {/* 감정 컬러 세로 라인 */}
@@ -192,16 +191,6 @@ export const RecordTab: React.FC = () => {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScreenHeader variant="tab" title={t('title')} hasNotification />
 
-      <View style={styles.toolRow}>
-        <TouchableOpacity
-          style={[styles.prescriptionBtn, { backgroundColor: colors.accentMuted, borderColor: colors.accent + '33' }]}
-          onPress={() => navigation.navigate('PrescriptionList' as any)}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="medkit-outline" size={14} color={colors.accent} />
-          <Text style={[styles.prescriptionBtnText, { color: colors.accent }]}>처방 목록</Text>
-        </TouchableOpacity>
-      </View>
 
       {!isPremium && (
         <View style={[styles.freeBanner, { backgroundColor: colors.warningLight, borderBottomColor: colors.warning + '30' }]}>

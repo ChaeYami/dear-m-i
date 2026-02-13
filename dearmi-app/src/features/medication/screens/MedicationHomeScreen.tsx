@@ -294,24 +294,46 @@ export const MedicationHomeScreen: React.FC = () => {
         {...(isToday ? { hasNotification: true } : {})}
       />
 
-      {/* 편집 버튼 */}
-      {isToday && hasAnySlots && (
+      {/* 처방전 + 편집 버튼 툴바 */}
+      {isToday && (
         <View style={styles.toolRow}>
           <TouchableOpacity
-            onPress={() => {
-              if (isEditMode) {
-                setIsEditMode(false);
-                setSelectedIds(new Set());
-              } else {
-                setIsEditMode(true);
-              }
-            }}
+            onPress={() => navigation.navigate('PrescriptionList')}
+            style={[styles.toolChip, { borderColor: colors.accent + '33', backgroundColor: colors.accentMuted }]}
             hitSlop={8}
-            style={[styles.editChip, { borderColor: colors.accent + '33', backgroundColor: colors.accentMuted }]}
           >
-            <Ionicons name={isEditMode ? 'checkmark' : 'create-outline'} size={14} color={colors.accent} />
-            <Text style={styles.editChipText}>{isEditMode ? '완료' : '편집'}</Text>
+            <Ionicons name="receipt-outline" size={14} color={colors.accent} />
+            <Text style={[styles.toolChipText, { color: colors.accent }]}>처방전</Text>
           </TouchableOpacity>
+
+          {hasAnySlots && (
+            <TouchableOpacity
+              onPress={() => {
+                if (isEditMode) {
+                  setIsEditMode(false);
+                  setSelectedIds(new Set());
+                } else {
+                  setIsEditMode(true);
+                }
+              }}
+              hitSlop={8}
+              style={[
+                styles.toolChip,
+                isEditMode
+                  ? { borderColor: colors.primary + '44', backgroundColor: colors.primaryMuted }
+                  : { borderColor: colors.divider, backgroundColor: colors.surface },
+              ]}
+            >
+              <Ionicons
+                name={isEditMode ? 'checkmark' : 'create-outline'}
+                size={14}
+                color={isEditMode ? colors.primary : colors.textSub}
+              />
+              <Text style={[styles.toolChipText, { color: isEditMode ? colors.primary : colors.textSub }]}>
+                {isEditMode ? '완료' : '편집'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
 
@@ -496,22 +518,7 @@ export const MedicationHomeScreen: React.FC = () => {
                         {slot.logs.map((item) => {
                           const statusCfg = STATUS_CONFIG[item.status];
                           return (
-                            <TouchableOpacity
-                              key={item.logId}
-                              style={styles.historyDrugRow}
-                              activeOpacity={0.7}
-                              onPress={() => {
-                                customAlert(
-                                  item.drugName || '',
-                                  `${HISTORY_SLOT_LABELS[item.timeSlot]} 상태를 변경합니다.`,
-                                  [
-                                    { text: '복용', onPress: () => handleCheck(item.scheduleId, 'TAKEN', item.timeSlot, item.logDate) },
-                                    { text: '건너뜀', onPress: () => handleCheck(item.scheduleId, 'SKIPPED', item.timeSlot, item.logDate) },
-                                    { text: '취소', style: 'cancel' },
-                                  ]
-                                );
-                              }}
-                            >
+                            <View key={item.logId} style={styles.historyDrugRow}>
                               <Text style={styles.historyDrugTitle} numberOfLines={1}>
                                 {item.drugName || '알 수 없는 약'}
                               </Text>
@@ -520,7 +527,23 @@ export const MedicationHomeScreen: React.FC = () => {
                                   {statusCfg.label}
                                 </Text>
                               </View>
-                            </TouchableOpacity>
+                              <TouchableOpacity
+                                hitSlop={12}
+                                onPress={() => {
+                                  customAlert(
+                                    item.drugName || '',
+                                    `${HISTORY_SLOT_LABELS[item.timeSlot]} 복약 상태를 변경합니다.`,
+                                    [
+                                      { text: '복용', onPress: () => handleCheck(item.scheduleId, 'TAKEN', item.timeSlot, item.logDate) },
+                                      { text: '건너뜀', onPress: () => handleCheck(item.scheduleId, 'SKIPPED', item.timeSlot, item.logDate) },
+                                      { text: '취소', style: 'cancel' },
+                                    ]
+                                  );
+                                }}
+                              >
+                                <Ionicons name="ellipsis-vertical" size={16} color={colors.textDisabled} />
+                              </TouchableOpacity>
+                            </View>
                           );
                         })}
                       </View>
@@ -687,10 +710,12 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBott
     toolRow: {
       flexDirection: 'row' as const,
       justifyContent: 'flex-end' as const,
+      alignItems: 'center' as const,
+      gap: sizes.spacing.sm,
       paddingHorizontal: sizes.spacing.lg,
       paddingBottom: sizes.spacing.sm,
     },
-    editChip: {
+    toolChip: {
       flexDirection: 'row' as const,
       alignItems: 'center' as const,
       gap: 4,
@@ -699,9 +724,8 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBott
       borderRadius: sizes.radius.full,
       borderWidth: 1,
     },
-    editChipText: {
+    toolChipText: {
       fontSize: sizes.font.sm,
-      color: colors.accent,
       fontFamily: fontFamily.semibold,
     },
     editBar: {

@@ -23,14 +23,14 @@ import {
 } from '@/features/prescription/hooks/usePrescription';
 import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
-import type { PrescriptionStackParamList } from '@/navigation/PrescriptionNavigator';
+import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
 import type { Prescription, PrescriptionMedication, OcrStatus } from '@/shared/types/domain.types';
 
 if (Platform.OS === 'android') {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
 }
 
-type Nav = StackNavigationProp<PrescriptionStackParamList, 'PrescriptionTab'>;
+type Nav = StackNavigationProp<MedicationStackParamList, 'PrescriptionList'>;
 
 const formatDate = (dateStr?: string) => {
   if (!dateStr) return '날짜 미상';

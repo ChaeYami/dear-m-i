@@ -417,12 +417,14 @@ export const RecordFormScreen: React.FC = () => {
               <Text
                 style={[
                   styles.charCount,
-                  { color: colors.textDisabled },
-                  content.length > contentLimit && { color: colors.error, fontFamily: fontFamily.semibold },
+                  content.length > contentLimit
+                    ? { color: colors.error, fontFamily: fontFamily.semibold }
+                    : content.length >= contentLimit * 0.9
+                    ? { color: colors.warning }
+                    : { color: colors.textDisabled },
                 ]}
               >
                 {content.length}/{contentLimit}
-                {!isPremium && ' (무료 플랜)'}
               </Text>
             )}
           </View>

@@ -112,7 +112,14 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
           <View style={styles.fieldLabelRow}>
             <Text style={[styles.fieldLabel, { color: colors.textSub }]}>{t('memo_label')}</Text>
             {memoLimit && (
-              <Text style={[styles.charCount, { color: colors.textDisabled }, memo.length > memoLimit && styles.charCountOver]}>
+              <Text style={[
+                styles.charCount,
+                memo.length > memoLimit
+                  ? { color: colors.error, fontFamily: fontFamily.semibold }
+                  : memo.length >= memoLimit * 0.9
+                  ? { color: colors.warning }
+                  : { color: colors.textDisabled },
+              ]}>
                 {memo.length}/{memoLimit}
               </Text>
             )}

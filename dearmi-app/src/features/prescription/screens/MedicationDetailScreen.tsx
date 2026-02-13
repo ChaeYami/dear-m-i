@@ -14,10 +14,10 @@ import type { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { useMedicationDetail } from '@/features/prescription/hooks/usePrescription';
 import { PremiumGate } from '@/shared/components/PremiumGate';
-import type { PrescriptionStackParamList } from '@/navigation/PrescriptionNavigator';
+import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
 
-type Nav = StackNavigationProp<PrescriptionStackParamList, 'MedicationDetail'>;
-type Route = RouteProp<PrescriptionStackParamList, 'MedicationDetail'>;
+type Nav = StackNavigationProp<MedicationStackParamList, 'MedicationDetail'>;
+type Route = RouteProp<MedicationStackParamList, 'MedicationDetail'>;
 
 // ─── 스켈레톤 ──────────────────────────────────────────────────────────────
 

@@ -100,13 +100,18 @@ export const CheckinHomeScreen: React.FC = () => {
   const isToday = selectedDate === todayStr;
 
   const dynamicStyles = useMemo(() => ({
+    // 오늘(미선택): 테두리 강조
     dateItemToday: {
-      borderColor: colors.primary + '50',
+      borderColor: colors.primary,
       borderWidth: 2,
     },
+    // 체크인 있음(미선택): 배경 tint
     dateItemHasCheckin: {
-      borderColor: colors.primary,
+      backgroundColor: colors.primaryMuted,
+      borderColor: colors.primary + '60',
+      borderWidth: 1.5,
     },
+    // 선택됨: solid primary
     dateItemSelected: {
       backgroundColor: colors.primary,
       borderColor: colors.primary,
@@ -144,7 +149,8 @@ export const CheckinHomeScreen: React.FC = () => {
       alignItems: 'center',
       justifyContent: 'center',
       borderWidth: 1.5,
-      borderColor: colors.divider,
+      borderColor: 'transparent',
+      backgroundColor: colors.surface,
     },
     dateCol: {
       alignItems: 'center',
@@ -177,6 +183,11 @@ export const CheckinHomeScreen: React.FC = () => {
       fontSize: sizes.font.sm,
       fontFamily: fontFamily.semibold,
       color: colors.textSub,
+    },
+    pastDateNotice: {
+      fontSize: sizes.font.xs,
+      fontFamily: fontFamily.regular,
+      marginTop: -sizes.spacing.sm,
     },
     // 체크인 카드
     checkinCard: {
@@ -363,10 +374,17 @@ export const CheckinHomeScreen: React.FC = () => {
                 <Text style={[
                   styles.dateDayNum,
                   isSelected && styles.dateDayNumSelected,
+                  hasCheckin && !isSelected && { color: colors.primary },
                 ]}>
                   {dayNum}
                 </Text>
               </TouchableOpacity>
+              {/* 체크인 완료 인디케이터 */}
+              {hasCheckin && !isSelected ? (
+                <Ionicons name="checkmark-circle" size={10} color={colors.primary} style={{ marginTop: 2 }} />
+              ) : (
+                <View style={{ width: 10, height: 10, marginTop: 2 }} />
+              )}
             </View>
           );
         }}
@@ -381,6 +399,12 @@ export const CheckinHomeScreen: React.FC = () => {
         <Text style={styles.selectedDateLabel}>
           {isToday ? '오늘' : formatDateLabel(selectedDate)}
         </Text>
+        {/* 과거 날짜 안내 */}
+        {!isToday && (
+          <Text style={[styles.pastDateNotice, { color: colors.textDisabled }]}>
+            지난 날짜의 기록을 조회하거나 추가할 수 있어요
+          </Text>
+        )}
 
         {/* 체크인 카드 */}
         <AnimatedPressable

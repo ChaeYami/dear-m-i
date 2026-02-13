@@ -18,9 +18,9 @@ import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { prescriptionApi } from '@/features/prescription/api';
 import { useAuthStore } from '@/features/auth/store/authStore';
-import type { PrescriptionStackParamList } from '@/navigation/PrescriptionNavigator';
+import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
 
-type Nav = StackNavigationProp<PrescriptionStackParamList, 'PrescriptionUpload'>;
+type Nav = StackNavigationProp<MedicationStackParamList, 'PrescriptionUpload'>;
 
 type UploadStep = 'idle' | 'uploading_s3' | 'saving' | 'done' | 'error';
 
@@ -178,6 +178,9 @@ export const PrescriptionUploadScreen: React.FC = () => {
     );
   };
 
+  // FREE 유저: 화면 진입 즉시 페이월로 안내하고 업로드 UI 비활성화
+  const isBlocked = !isPremium;
+
   return (
     <SafeAreaView style={[staticStyles.container, { backgroundColor: colors.background }]}>
       {/* 헤더 */}
@@ -191,30 +194,56 @@ export const PrescriptionUploadScreen: React.FC = () => {
         <View style={{ width: 48 }} />
       </View>
 
-      <ScrollView contentContainerStyle={staticStyles.content}>
+      {/* FREE 유저 진입 차단 배너 */}
+      {isBlocked && (
+        <View style={[staticStyles.premiumBanner, { backgroundColor: colors.primaryMuted, borderColor: colors.primary + '30' }]}>
+          <Ionicons name="lock-closed" size={16} color={colors.primary} />
+          <Text style={[staticStyles.premiumBannerText, { color: colors.primary }]}>
+            처방전 자동 인식은 프리미엄 전용 기능이에요.
+          </Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Paywall' as any)}
+            hitSlop={8}
+          >
+            <Text style={[staticStyles.premiumBannerLink, { color: colors.primary }]}>업그레이드</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      <ScrollView contentContainerStyle={staticStyles.content} pointerEvents={isBlocked ? 'none' : 'auto'}>
         {/* 이미지 미리보기 / 선택 영역 */}
         <TouchableOpacity
-          style={[staticStyles.imageArea, { borderColor: colors.divider, backgroundColor: colors.surface }]}
+          style={[
+            staticStyles.imageArea,
+            { borderColor: colors.divider, backgroundColor: colors.surface },
+            isBlocked && staticStyles.imageAreaBlocked,
+          ]}
           onPress={showSourcePicker}
-          disabled={isUploading}
+          disabled={isUploading || isBlocked}
           activeOpacity={0.8}
         >
           {imageAsset ? (
             <Image source={{ uri: imageAsset.uri }} style={staticStyles.previewImage} resizeMode="contain" />
           ) : (
             <View style={staticStyles.imagePlaceholder}>
-              <Ionicons name="document-outline" size={48} color={colors.textDisabled} />
+              <Ionicons
+                name={isBlocked ? 'lock-closed-outline' : 'document-outline'}
+                size={48}
+                color={colors.textDisabled}
+              />
               <Text style={[staticStyles.imagePlaceholderText, { fontFamily: fontFamily.semibold, color: colors.textSub }]}>
-                처방전 사진을 선택하세요
+                {isBlocked ? '프리미엄 전용 기능입니다' : '처방전 사진을 선택하세요'}
               </Text>
-              <Text style={[staticStyles.imagePlaceholderSub, { color: colors.textDisabled }]}>
-                카메라 촬영 또는 갤러리
-              </Text>
+              {!isBlocked && (
+                <Text style={[staticStyles.imagePlaceholderSub, { color: colors.textDisabled }]}>
+                  카메라 촬영 또는 갤러리
+                </Text>
+              )}
             </View>
           )}
         </TouchableOpacity>
 
-        {imageAsset && (
+        {imageAsset && !isBlocked && (
           <TouchableOpacity
             style={staticStyles.reSelectBtn}
             onPress={showSourcePicker}
@@ -227,60 +256,55 @@ export const PrescriptionUploadScreen: React.FC = () => {
         )}
 
         {/* 처방 날짜 선택 */}
-        <View style={staticStyles.dateField}>
-          <Text style={[staticStyles.dateLabel, { fontFamily: fontFamily.medium, color: colors.textSub }]}>
-            처방 날짜
-          </Text>
-          <TouchableOpacity
-            style={[staticStyles.dateSelector, { backgroundColor: colors.surface, borderColor: colors.divider }]}
-            onPress={() => setShowDatePicker(true)}
-            disabled={isUploading}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="calendar-outline" size={18} color={colors.primary} />
-            <Text style={[staticStyles.dateText, { color: colors.text }]}>
-              {`${prescribedDate.getFullYear()}년 ${prescribedDate.getMonth() + 1}월 ${prescribedDate.getDate()}일`}
+        {!isBlocked && (
+          <View style={staticStyles.dateField}>
+            <Text style={[staticStyles.dateLabel, { fontFamily: fontFamily.medium, color: colors.textSub }]}>
+              처방 날짜
             </Text>
-          </TouchableOpacity>
-          <DatePickerModal
-            visible={showDatePicker}
-            initialDate={prescribedDate.toISOString().split('T')[0]}
-            maxDate={new Date().toISOString().split('T')[0]}
-            onConfirm={(dateStr) => {
-              setShowDatePicker(false);
-              setPrescribedDate(new Date(dateStr + 'T00:00:00'));
-            }}
-            onClose={() => setShowDatePicker(false)}
-          />
-        </View>
-
-        {/* 진행 상태 */}
-        {renderProgress()}
-
-        {/* 프리미엄 안내 */}
-        {!isPremium && (
-          <View style={[staticStyles.premiumNotice, { backgroundColor: colors.warningLight, borderColor: colors.warning + '55' }]}>
-            <Text style={[staticStyles.premiumNoticeText, { color: colors.textSub }]}>
-              처방전 자동 인식은 프리미엄 플랜 전용 기능입니다.
-            </Text>
+            <TouchableOpacity
+              style={[staticStyles.dateSelector, { backgroundColor: colors.surface, borderColor: colors.divider }]}
+              onPress={() => setShowDatePicker(true)}
+              disabled={isUploading}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="calendar-outline" size={18} color={colors.primary} />
+              <Text style={[staticStyles.dateText, { color: colors.text }]}>
+                {`${prescribedDate.getFullYear()}년 ${prescribedDate.getMonth() + 1}월 ${prescribedDate.getDate()}일`}
+              </Text>
+            </TouchableOpacity>
+            <DatePickerModal
+              visible={showDatePicker}
+              initialDate={prescribedDate.toISOString().split('T')[0]}
+              maxDate={new Date().toISOString().split('T')[0]}
+              onConfirm={(dateStr) => {
+                setShowDatePicker(false);
+                setPrescribedDate(new Date(dateStr + 'T00:00:00'));
+              }}
+              onClose={() => setShowDatePicker(false)}
+            />
           </View>
         )}
 
+        {/* 진행 상태 */}
+        {!isBlocked && renderProgress()}
+
         {/* 업로드 버튼 */}
-        <TouchableOpacity
-          style={[
-            staticStyles.uploadBtn,
-            { backgroundColor: colors.secondary },
-            (!imageAsset || isUploading) && staticStyles.uploadBtnDisabled,
-          ]}
-          onPress={handleUpload}
-          disabled={!imageAsset || isUploading}
-          activeOpacity={0.85}
-        >
-          <Text style={[staticStyles.uploadBtnText, { fontFamily: fontFamily.semibold, color: colors.textInverse }]}>
-            {isUploading ? '처리 중…' : isPremium ? '처방전 등록 및 자동 인식' : '처방전 등록'}
-          </Text>
-        </TouchableOpacity>
+        {!isBlocked && (
+          <TouchableOpacity
+            style={[
+              staticStyles.uploadBtn,
+              { backgroundColor: colors.secondary },
+              (!imageAsset || isUploading) && staticStyles.uploadBtnDisabled,
+            ]}
+            onPress={handleUpload}
+            disabled={!imageAsset || isUploading}
+            activeOpacity={0.85}
+          >
+            <Text style={[staticStyles.uploadBtnText, { fontFamily: fontFamily.semibold, color: colors.textInverse }]}>
+              {isUploading ? '처리 중…' : '처방전 등록 및 자동 인식'}
+            </Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -356,14 +380,28 @@ const staticStyles = StyleSheet.create({
     fontSize: sizes.font.sm,
     textAlign: 'center',
   },
-  premiumNotice: {
-    borderRadius: sizes.radius.md,
-    padding: sizes.spacing.md,
+  premiumBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sizes.spacing.sm,
+    marginHorizontal: sizes.spacing.lg,
+    marginBottom: sizes.spacing.sm,
+    paddingHorizontal: sizes.spacing.md,
+    paddingVertical: sizes.spacing.sm + 2,
+    borderRadius: sizes.radius.lg,
     borderWidth: 1,
   },
-  premiumNoticeText: {
+  premiumBannerText: {
+    flex: 1,
     fontSize: sizes.font.sm,
-    textAlign: 'center',
+    fontFamily: fontFamily.medium,
+  },
+  premiumBannerLink: {
+    fontSize: sizes.font.sm,
+    fontFamily: fontFamily.bold,
+  },
+  imageAreaBlocked: {
+    opacity: 0.45,
   },
   uploadBtn: {
     borderRadius: sizes.radius.md,

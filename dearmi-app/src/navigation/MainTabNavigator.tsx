@@ -126,41 +126,67 @@ const AnimatedTabItem: React.FC<AnimatedTabItemProps> = ({
     };
   });
 
-  const labelStyle = useAnimatedStyle(() => ({
+  const focusedLabelStyle = useAnimatedStyle(() => ({
     opacity: interpolate(progress.value, [0, 0.5, 1], [0, 0, 1]),
     maxWidth: interpolate(progress.value, [0, 1], [0, 70]),
     marginLeft: interpolate(progress.value, [0, 1], [0, 6]),
   }));
 
+  // 비포커스 상태의 작은 레이블 (아이콘 아래)
+  const unfocusedLabelStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(progress.value, [0, 0.3], [1, 0]),
+    position: 'absolute' as const,
+    bottom: -14,
+  }));
+
   return (
-    <AnimatedPressable
-      accessibilityRole="button"
-      accessibilityState={isFocused ? { selected: true } : undefined}
-      accessibilityLabel={accessibilityLabel}
-      testID={testID}
-      onPress={onPress}
-      onLongPress={onLongPress}
-      style={containerStyle}
-    >
-      <Ionicons
-        name={isFocused ? focusedIcon : unfocusedIcon}
-        size={isFocused ? 20 : 22}
-        color={isFocused ? textInverse : textSub}
-      />
+    <View style={{ alignItems: 'center' }}>
+      <AnimatedPressable
+        accessibilityRole="button"
+        accessibilityState={isFocused ? { selected: true } : undefined}
+        accessibilityLabel={accessibilityLabel}
+        testID={testID}
+        onPress={onPress}
+        onLongPress={onLongPress}
+        style={containerStyle}
+      >
+        <Ionicons
+          name={isFocused ? focusedIcon : unfocusedIcon}
+          size={isFocused ? 20 : 22}
+          color={isFocused ? textInverse : textSub}
+        />
+        <Animated.Text
+          numberOfLines={1}
+          style={[
+            {
+              fontFamily: fontFamily.semibold,
+              fontSize: sizes.font.sm,
+              color: textInverse,
+            },
+            focusedLabelStyle,
+          ]}
+        >
+          {label}
+        </Animated.Text>
+      </AnimatedPressable>
+
+      {/* 비포커스 탭 소형 레이블 */}
       <Animated.Text
         numberOfLines={1}
         style={[
           {
-            fontFamily: fontFamily.semibold,
-            fontSize: sizes.font.sm,
-            color: textInverse,
+            fontFamily: fontFamily.medium,
+            fontSize: 10,
+            color: textSub,
+            marginTop: 2,
           },
-          labelStyle,
+          unfocusedLabelStyle,
         ]}
+        pointerEvents="none"
       >
         {label}
       </Animated.Text>
-    </AnimatedPressable>
+    </View>
   );
 };
 
@@ -200,9 +226,10 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
         <View
           style={{
             flexDirection: 'row',
-            alignItems: 'center',
+            alignItems: 'flex-start',
             paddingHorizontal: 6,
-            paddingVertical: 6,
+            paddingTop: 6,
+            paddingBottom: 18,
             borderRadius: 32,
             backgroundColor: bgColor,
             borderWidth: 1,

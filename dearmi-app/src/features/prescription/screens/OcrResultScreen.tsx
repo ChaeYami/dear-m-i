@@ -12,7 +12,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import { CompositeNavigationProp } from '@react-navigation/native';
 import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
@@ -21,14 +20,10 @@ import {
   useSavePrescription,
 } from '@/features/prescription/hooks/usePrescription';
 import { useAuthStore } from '@/features/auth/store/authStore';
-import type { PrescriptionStackParamList } from '@/navigation/PrescriptionNavigator';
-import type { RootStackParamList } from '@/navigation/RootNavigator';
+import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
 
-type Nav = CompositeNavigationProp<
-  StackNavigationProp<PrescriptionStackParamList, 'OcrResult'>,
-  StackNavigationProp<RootStackParamList>
->;
-type Route = RouteProp<PrescriptionStackParamList, 'OcrResult'>;
+type Nav = StackNavigationProp<MedicationStackParamList, 'OcrResult'>;
+type Route = RouteProp<MedicationStackParamList, 'OcrResult'>;
 
 // ─── 편집 가능한 약품 항목 타입 ───────────────────────────────────────────────
 
@@ -239,27 +234,23 @@ export const OcrResultScreen: React.FC = () => {
         {
           text: '나중에',
           style: 'cancel',
-          onPress: () => navigation.navigate('PrescriptionTab'),
+          onPress: () => navigation.navigate('PrescriptionList'),
         },
         {
           text: '설정하기',
           onPress: () => {
             if (validMeds.length === 0) {
-              navigation.navigate('PrescriptionTab');
+              navigation.navigate('PrescriptionList');
               return;
             }
             const [first, ...rest] = validMeds;
-            // PrescriptionNavigator → MainTabNavigator → Medication tab
-            const tabNav = navigation.getParent()?.getParent() as any;
-            tabNav?.navigate('Medication', {
-              screen: 'MedicationForm',
-              params: {
-                drugName: first.drugName,
-                dosage: first.dosage,
-                totalDays: first.totalDays,
-                isFromOcr: true,
-                remainingMeds: rest,
-              },
+            // 같은 MedicationNavigator 스택 안에 있으므로 직접 navigate
+            navigation.navigate('MedicationForm', {
+              drugName: first.drugName,
+              dosage: first.dosage,
+              totalDays: first.totalDays,
+              isFromOcr: true,
+              remainingMeds: rest,
             });
           },
         },
