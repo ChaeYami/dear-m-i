@@ -59,6 +59,7 @@ public class OcrProcessorService {
      */
     @Async("ocrTaskExecutor")
     public void processAsync(UUID prescriptionId, String s3Key) {
+        log.info("OCR 시작: prescriptionId={}, s3Key={}", prescriptionId, s3Key);
         // ── 1단계: OCR + 결과 저장 (트랜잭션 즉시 커밋) ─────────────────────────
         List<PrescriptionMedication> savedMedications = new ArrayList<>();
 

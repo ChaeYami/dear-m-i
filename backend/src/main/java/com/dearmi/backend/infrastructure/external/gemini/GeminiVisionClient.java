@@ -70,6 +70,7 @@ public class GeminiVisionClient implements PrescriptionOcrPort {
 
     @Override
     public OcrResult analyze(String s3Key) {
+        log.info("Gemini OCR 호출 시작: s3Key={}", s3Key);
         byte[] imageBytes = s3Service.getObjectBytes(s3Key);
         String mimeType = detectMimeType(s3Key);
         String base64Data = Base64.getEncoder().encodeToString(imageBytes);

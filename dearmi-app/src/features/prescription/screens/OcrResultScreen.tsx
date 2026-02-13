@@ -22,6 +22,7 @@ import {
   usePrescriptions,
   useRetryOcr,
 } from '@/features/prescription/hooks/usePrescription';
+import { prescriptionApi } from '@/features/prescription/api';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
 
@@ -256,10 +257,14 @@ export const OcrResultScreen: React.FC = () => {
 
   const isPremium = useAuthStore((s) => s.user?.plan === 'PREMIUM');
 
-  const { data: prescription, isLoading } = usePrescriptionDetail(prescriptionId, true);
+  const { data: prescription, isLoading, isOcrTimedOut, resetOcrTimer } =
+    usePrescriptionDetail(prescriptionId, true);
   const { mutate: savePrescription, isPending: isSaving } = useSavePrescription();
   const { mutate: retryOcr, isPending: isRetrying } = useRetryOcr();
-  const handleRetry = () => retryOcr(prescriptionId);
+  const handleRetry = () => {
+    resetOcrTimer();
+    retryOcr(prescriptionId);
+  };
   const { data: allPrescriptions = [] } = usePrescriptions();
 
   const [hospitalName, setHospitalName] = useState('');
@@ -267,6 +272,15 @@ export const OcrResultScreen: React.FC = () => {
   const [medications, setMedications] = useState<EditableMedication[]>([]);
   const [editMode, setEditMode] = useState(false);
   const [duplicateWarningShown, setDuplicateWarningShown] = useState(false);
+
+  // 저장 버튼 눌러 성공한 경우에만 true — 아니면 unmount 시 처방전 자동 삭제
+  const savedRef = useRef(false);
+  useEffect(() => {
+    return () => {
+      if (savedRef.current) return;
+      prescriptionApi.deletePrescription(prescriptionId).catch(() => {});
+    };
+  }, [prescriptionId]);
 
   // OCR COMPLETED 시 약품 목록 초기화 + 중복 감지
   useEffect(() => {
@@ -304,10 +318,10 @@ export const OcrResultScreen: React.FC = () => {
         }
       }
     }
-    if (prescription?.ocrStatus === 'FAILED') {
-      setMedications([newMedication()]);
+    if (prescription?.ocrStatus === 'FAILED' || isOcrTimedOut) {
+      setMedications((prev) => (prev.length === 0 ? [newMedication()] : prev));
     }
-  }, [prescription?.ocrStatus, allPrescriptions.length]);
+  }, [prescription?.ocrStatus, allPrescriptions.length, isOcrTimedOut]);
 
   const handleChangeMed = (index: number, field: keyof EditableMedication, value: string) => {
     setMedications((prev) =>
@@ -355,7 +369,12 @@ export const OcrResultScreen: React.FC = () => {
           })),
         },
       },
-      { onSuccess: showMedicationSetupDialog }
+      {
+        onSuccess: () => {
+          savedRef.current = true;
+          showMedicationSetupDialog();
+        },
+      }
     );
   };
 
@@ -413,7 +432,10 @@ export const OcrResultScreen: React.FC = () => {
   };
 
   const ocrStatus = prescription?.ocrStatus;
-  const showEditor = ocrStatus === 'COMPLETED' || ocrStatus === 'FAILED' || editMode;
+  // 90초 내 OCR 완료/실패 미도달 시 FAILED 로 간주 (서버가 hang 하거나 재배포 좀비 상태 대응)
+  const effectiveStatus =
+    isOcrTimedOut && ocrStatus !== 'COMPLETED' && ocrStatus !== 'FAILED' ? 'FAILED' : ocrStatus;
+  const showEditor = effectiveStatus === 'COMPLETED' || effectiveStatus === 'FAILED' || editMode;
 
   return (
     <SafeAreaView style={[staticStyles.container, { backgroundColor: colors.background }]}>
@@ -437,9 +459,10 @@ export const OcrResultScreen: React.FC = () => {
         }
       />
 
-      {isLoading || ocrStatus === 'PENDING' || ocrStatus === 'PROCESSING' ? (
+      {isLoading ||
+      ((effectiveStatus === 'PENDING' || effectiveStatus === 'PROCESSING') && !editMode) ? (
         <PendingView colors={colors} imageUrl={prescription?.imageUrl} />
-      ) : ocrStatus === 'FAILED' && !editMode ? (
+      ) : effectiveStatus === 'FAILED' && !editMode ? (
         <FailedView onRetry={handleRetry} isRetrying={isRetrying} onManualEntry={() => setEditMode(true)} colors={colors} />
       ) : (
         <ScrollView contentContainerStyle={staticStyles.content} keyboardShouldPersistTaps="handled">

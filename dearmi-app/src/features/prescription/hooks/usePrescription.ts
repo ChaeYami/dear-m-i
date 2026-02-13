@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/constants/cacheKeys';
 import { prescriptionApi } from '@/features/prescription/api';
@@ -50,11 +51,13 @@ export const useMedicationDetail = (id: string) =>
  * 처방전 상세 (OCR 폴링 포함)
  * - poll=true 이면 PENDING/PROCESSING 상태일 때 2초마다 재요청
  * - COMPLETED/FAILED 또는 90초 초과 시 폴링 중단
+ * - 90초 내 완료/실패 미도달 시 isOcrTimedOut=true 로 UI 가 FailedView 로 전환 가능
  */
 export const usePrescriptionDetail = (id: string, poll = false) => {
-  const startTime = Date.now();
+  const startTimeRef = useRef<number>(Date.now());
+  const [isOcrTimedOut, setIsOcrTimedOut] = useState(false);
 
-  return useQuery({
+  const query = useQuery({
     queryKey: QUERY_KEYS.prescription(id),
     queryFn: async () => {
       const { data } = await prescriptionApi.getPrescription(id);
@@ -62,14 +65,38 @@ export const usePrescriptionDetail = (id: string, poll = false) => {
     },
     enabled: !!id,
     staleTime: 0,
-    refetchInterval: (query) => {
+    refetchInterval: (q) => {
       if (!poll) return false;
-      const status = query.state.data?.ocrStatus;
+      const status = q.state.data?.ocrStatus;
       if (status === 'COMPLETED' || status === 'FAILED') return false;
-      if (Date.now() - startTime > OCR_TIMEOUT_MS) return false;
+      if (Date.now() - startTimeRef.current > OCR_TIMEOUT_MS) return false;
       return OCR_POLL_INTERVAL_MS;
     },
   });
+
+  const ocrStatus = query.data?.ocrStatus;
+  // 재시도마다 증가 — useEffect 의존성으로 써서 타이머 재-arm 을 강제
+  const [timerEpoch, setTimerEpoch] = useState(0);
+  useEffect(() => {
+    if (!poll) return;
+    if (ocrStatus === 'COMPLETED' || ocrStatus === 'FAILED') return;
+    const remaining = OCR_TIMEOUT_MS - (Date.now() - startTimeRef.current);
+    if (remaining <= 0) {
+      setIsOcrTimedOut(true);
+      return;
+    }
+    const timer = setTimeout(() => setIsOcrTimedOut(true), remaining);
+    return () => clearTimeout(timer);
+  }, [poll, ocrStatus, timerEpoch]);
+
+  // 재시도 시 타이머 리셋용 (handleRetry 에서 호출)
+  const resetOcrTimer = useCallback(() => {
+    startTimeRef.current = Date.now();
+    setIsOcrTimedOut(false);
+    setTimerEpoch((n) => n + 1);
+  }, []);
+
+  return { ...query, isOcrTimedOut, resetOcrTimer };
 };
 
 /** OCR 결과 확인 후 처방전 저장 */
