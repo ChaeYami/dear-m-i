@@ -21,6 +21,9 @@ public interface PrescriptionRepository {
 
     long countByUserId(UUID userId);
 
+    /** FREE 플랜 주간 제한 체크 — after 이후 생성된 처방전 수 */
+    long countRecentByUserId(UUID userId, java.time.LocalDateTime after);
+
     /** hospital_schedules 소프트 딜리트 시 연결 해제 (⑤ 원칙) */
     void detachSchedule(UUID scheduleId);
 }

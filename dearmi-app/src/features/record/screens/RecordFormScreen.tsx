@@ -40,6 +40,7 @@ export const RecordFormScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const params = useRoute<Route>().params;
   const scheduleIdFromNav = params?.scheduleId;
+  const consultedAtFromNav = params?.consultedAt;
   const recordId = params?.recordId;
   const isEdit = Boolean(recordId);
 
@@ -66,9 +67,13 @@ export const RecordFormScreen: React.FC = () => {
   const [showPrepNotes, setShowPrepNotes] = useState(false);
   const [showCheckinSummary, setShowCheckinSummary] = useState(false);
 
-  // 일정 미연결 시 직접 선택할 진료 날짜
+  // 일정 미연결 시 직접 선택할 진료 날짜 (처방전에서 진입 시 prescribedAt 으로 초기화)
   const [consultedAt, setConsultedAt] = useState<Date | null>(
-    existingRecord?.consultedAt ? new Date(existingRecord.consultedAt) : null
+    existingRecord?.consultedAt
+      ? new Date(existingRecord.consultedAt)
+      : consultedAtFromNav
+      ? new Date(consultedAtFromNav + 'T00:00:00')
+      : null
   );
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [hydrated, setHydrated] = useState(!isEdit);

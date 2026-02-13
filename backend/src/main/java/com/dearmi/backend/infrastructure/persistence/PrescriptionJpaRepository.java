@@ -24,6 +24,8 @@ public interface PrescriptionJpaRepository extends JpaRepository<Prescription, U
 
     long countByUserIdAndDeletedAtIsNull(UUID userId);
 
+    long countByUserIdAndDeletedAtIsNullAndCreatedAtAfter(UUID userId, java.time.LocalDateTime after);
+
     /** hospital_schedules 소프트 딜리트 시 schedule_id NULL 처리 (⑤ 원칙) */
     @Modifying
     @Query("UPDATE Prescription p SET p.scheduleId = NULL WHERE p.scheduleId = :scheduleId")

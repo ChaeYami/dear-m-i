@@ -8,6 +8,7 @@ import com.dearmi.backend.application.prescription.usecase.DeletePrescriptionUse
 import com.dearmi.backend.application.prescription.usecase.GenerateUploadUrlUseCase;
 import com.dearmi.backend.application.prescription.usecase.GetPrescriptionDetailUseCase;
 import com.dearmi.backend.application.prescription.usecase.GetPrescriptionListUseCase;
+import com.dearmi.backend.application.prescription.usecase.RetryOcrUseCase;
 import com.dearmi.backend.application.prescription.usecase.UpdateMedicationsUseCase;
 import com.dearmi.backend.common.response.ApiResponse;
 import com.dearmi.backend.common.response.PageResponse;
@@ -37,6 +38,7 @@ public class PrescriptionController {
     private final GetPrescriptionDetailUseCase getPrescriptionDetailUseCase;
     private final UpdateMedicationsUseCase updateMedicationsUseCase;
     private final DeletePrescriptionUseCase deletePrescriptionUseCase;
+    private final RetryOcrUseCase retryOcrUseCase;
 
     /** POST /api/v1/prescriptions/presigned-url — S3 업로드용 PUT Presigned URL 발급 */
     @PostMapping("/presigned-url")
@@ -98,6 +100,16 @@ public class PrescriptionController {
             @PathVariable UUID id
     ) {
         deletePrescriptionUseCase.delete(userId, id);
+    }
+
+    /** POST /api/v1/prescriptions/{id}/retry-ocr — OCR 재시도 (FAILED 상태에서만 의미 있음) */
+    @PostMapping("/{id}/retry-ocr")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void retryOcr(
+            @AuthenticatedUserId UUID userId,
+            @PathVariable UUID id
+    ) {
+        retryOcrUseCase.retry(userId, id);
     }
 
     /** PUT /api/v1/prescriptions/{id}/medications — 약품 목록 수동 수정 (전체 교체) */

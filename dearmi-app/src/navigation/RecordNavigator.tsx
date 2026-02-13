@@ -8,7 +8,7 @@ import { RecordFormScreen } from '@/features/record/screens/RecordFormScreen';
 export type RecordStackParamList = {
   RecordTab: undefined;
   RecordDetail: { recordId: string };
-  RecordForm: { scheduleId?: string; recordId?: string } | undefined;
+  RecordForm: { scheduleId?: string; recordId?: string; consultedAt?: string } | undefined;
 };
 
 const Stack = createStackNavigator<RecordStackParamList>();

@@ -98,6 +98,17 @@ export const useDeletePrescription = () => {
   });
 };
 
+/** OCR 재시도 */
+export const useRetryOcr = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => prescriptionApi.retryOcr(id),
+    onSuccess: (_res, id) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.prescription(id) });
+    },
+  });
+};
+
 /** 처방전 일괄 삭제 */
 export const useBulkDeletePrescriptions = () => {
   const queryClient = useQueryClient();

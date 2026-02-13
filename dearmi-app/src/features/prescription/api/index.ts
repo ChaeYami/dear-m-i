@@ -83,4 +83,8 @@ export const prescriptionApi = {
   /** 처방전 삭제 */
   deletePrescription: (id: string) =>
     axiosInstance.delete<ApiResponse<void>>(`/api/v1/prescriptions/${id}`),
+
+  /** OCR 재시도 */
+  retryOcr: (id: string) =>
+    axiosInstance.post<ApiResponse<void>>(`/api/v1/prescriptions/${id}/retry-ocr`),
 };

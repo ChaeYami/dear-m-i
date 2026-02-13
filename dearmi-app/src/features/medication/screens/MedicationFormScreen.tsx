@@ -9,6 +9,7 @@ import {
   Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute, RouteProp, CommonActions } from '@react-navigation/native';
 import { DatePickerModal } from '@/features/schedule/components/DatePickerModal';
@@ -67,7 +68,7 @@ export const MedicationFormScreen: React.FC = () => {
 
   // API pre-fill — prescriptionMedicationId 있을 때만 (직접 파라미터 없을 때)
   const { data: prefill } = useMedicationDetail(
-    prescriptionMedicationId && !drugNameParam ? Number(prescriptionMedicationId) : 0
+    prescriptionMedicationId && !drugNameParam ? prescriptionMedicationId : ''
   );
 
   // 편집 모드: 기존 일정 가져오기
@@ -290,6 +291,26 @@ export const MedicationFormScreen: React.FC = () => {
         contentContainerStyle={[styles.content, showNextButton && styles.contentWithNext]}
         keyboardShouldPersistTaps="handled"
       >
+        {/* 처방전 등록 배너 — 신규 등록 모드에서만 */}
+        {!isFromOcr && !isEdit && (
+          <TouchableOpacity
+            style={[styles.prescriptionBanner, { backgroundColor: colors.primaryMuted, borderColor: colors.primary + '30' }]}
+            onPress={() => navigation.navigate('PrescriptionUpload')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="document-text-outline" size={20} color={colors.primary} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.prescriptionBannerTitle, { color: colors.primary }]}>
+                처방전 사진으로 자동 입력
+              </Text>
+              <Text style={[styles.prescriptionBannerSub, { color: colors.primary + 'aa' }]}>
+                처방전을 촬영하면 약품 정보가 자동으로 채워져요
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+          </TouchableOpacity>
+        )}
+
         {/* 약품명 */}
         <View style={styles.fieldCard}>
           <Text style={styles.label}>약품명 *</Text>
@@ -620,5 +641,23 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
       fontSize: sizes.font.md,
       fontFamily: fontFamily.bold,
       color: colors.textInverse,
+    },
+    // 처방전 등록 배너
+    prescriptionBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: sizes.spacing.sm,
+      borderRadius: sizes.radius.xxl,
+      borderWidth: 1,
+      padding: sizes.spacing.md,
+      paddingHorizontal: sizes.spacing.lg,
+    },
+    prescriptionBannerTitle: {
+      fontSize: sizes.font.sm,
+      fontFamily: fontFamily.semibold,
+    },
+    prescriptionBannerSub: {
+      fontSize: sizes.font.xs,
+      marginTop: 1,
     },
   });

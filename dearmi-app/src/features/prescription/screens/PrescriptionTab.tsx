@@ -93,9 +93,10 @@ const PrescriptionCard: React.FC<{
   onMedPress: (med: PrescriptionMedication) => void;
   onDelete: () => void;
   onViewOcr: () => void;
+  onWriteRecord: () => void;
   colors: ReturnType<typeof useTheme>['colors'];
   shadow: object;
-}> = ({ item, expanded, selected, selectionMode, onToggle, onMedPress, onDelete, onViewOcr, colors, shadow }) => {
+}> = ({ item, expanded, selected, selectionMode, onToggle, onMedPress, onDelete, onViewOcr, onWriteRecord, colors, shadow }) => {
   const OCR_STATUS_CONFIG: Record<OcrStatus, { label: string; color: string; bg: string }> = {
     PENDING: { label: '분석 대기', color: colors.warning, bg: colors.warningLight },
     PROCESSING: { label: '분석 중', color: colors.primary, bg: colors.primaryMuted },
@@ -219,6 +220,22 @@ const PrescriptionCard: React.FC<{
             borderBottomLeftRadius: sizes.radius.xxl,
             borderBottomRightRadius: sizes.radius.xxl,
           }}>
+            {/* 기록하기 */}
+            <TouchableOpacity
+              style={{
+                flex: 1,
+                paddingVertical: sizes.spacing.sm + 2,
+                borderRadius: sizes.radius.full,
+                alignItems: 'center',
+                backgroundColor: colors.primaryMuted,
+              }}
+              onPress={onWriteRecord}
+            >
+              <Text style={{ fontFamily: fontFamily.medium, fontSize: sizes.font.sm, color: colors.primary }}>
+                기록하기
+              </Text>
+            </TouchableOpacity>
+
             {(item.ocrStatus === 'FAILED' || item.ocrStatus === 'COMPLETED') && (
               <TouchableOpacity
                 style={{
@@ -233,14 +250,14 @@ const PrescriptionCard: React.FC<{
                 onPress={onViewOcr}
               >
                 <Text style={{ fontFamily: fontFamily.medium, fontSize: sizes.font.sm, color: colors.primary }}>
-                  자동 인식 결과 보기
+                  인식 결과 보기
                 </Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity
               style={{
-                flex: 1,
                 paddingVertical: sizes.spacing.sm + 2,
+                paddingHorizontal: sizes.spacing.md,
                 borderRadius: sizes.radius.full,
                 alignItems: 'center',
                 backgroundColor: colors.errorLight,
@@ -423,6 +440,13 @@ export const PrescriptionTab: React.FC = () => {
             onViewOcr={() =>
               navigation.navigate('OcrResult', { prescriptionId: String(item.id) })
             }
+            onWriteRecord={() => {
+              const tabNav = navigation.getParent()?.getParent() as any;
+              tabNav?.navigate('Record', {
+                screen: 'RecordForm',
+                params: { consultedAt: item.prescribedAt },
+              });
+            }}
             colors={colors}
             shadow={shadow}
           />

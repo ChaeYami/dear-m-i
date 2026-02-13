@@ -64,4 +64,10 @@ public class Prescription extends BaseTimeEntity {
     public void startOcr() {
         this.ocrStatus = OcrStatus.PROCESSING.name();
     }
+
+    /** 재시도: 상태를 PENDING 으로 초기화 (이전 rawText/medications 는 호출 전에 삭제할 것) */
+    public void resetForRetry() {
+        this.ocrStatus = OcrStatus.PENDING.name();
+        this.ocrRawText = null;
+    }
 }

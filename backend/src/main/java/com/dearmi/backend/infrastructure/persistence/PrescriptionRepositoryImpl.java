@@ -53,6 +53,11 @@ public class PrescriptionRepositoryImpl implements PrescriptionRepository {
     }
 
     @Override
+    public long countRecentByUserId(UUID userId, java.time.LocalDateTime after) {
+        return jpa.countByUserIdAndDeletedAtIsNullAndCreatedAtAfter(userId, after);
+    }
+
+    @Override
     public void detachSchedule(UUID scheduleId) {
         jpa.detachSchedule(scheduleId);
     }

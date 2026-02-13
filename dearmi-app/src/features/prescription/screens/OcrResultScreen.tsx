@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,8 +6,9 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-
   ActivityIndicator,
+  Animated,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp, CommonActions } from '@react-navigation/native';
@@ -18,6 +19,8 @@ import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import {
   usePrescriptionDetail,
   useSavePrescription,
+  usePrescriptions,
+  useRetryOcr,
 } from '@/features/prescription/hooks/usePrescription';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
@@ -28,7 +31,7 @@ type Route = RouteProp<MedicationStackParamList, 'OcrResult'>;
 // ─── 편집 가능한 약품 항목 타입 ───────────────────────────────────────────────
 
 interface EditableMedication {
-  key: string; // FlatList key (id or temp key)
+  key: string;
   medicationName: string;
   dosage: string;
   singleDose: string;
@@ -46,39 +49,93 @@ const newMedication = (): EditableMedication => ({
   durationDays: '',
 });
 
-// ─── 상태별 UI ────────────────────────────────────────────────────────────────
+// ─── OCR 대기 화면 (진행 바 포함) ────────────────────────────────────────────
 
-const PendingView: React.FC<{ colors: ReturnType<typeof useTheme>['colors'] }> = ({ colors }) => (
-  <View style={staticStyles.statusWrap}>
-    <ActivityIndicator size="large" color={colors.primary} />
-    <Text style={[staticStyles.statusTitle, { fontFamily: fontFamily.bold, color: colors.text }]}>
-      처방전을 분석 중입니다…
-    </Text>
-    <Text style={[staticStyles.statusSub, { color: colors.textSub }]}>잠시만 기다려 주세요</Text>
-  </View>
-);
+const PendingView: React.FC<{
+  colors: ReturnType<typeof useTheme>['colors'];
+  imageUrl?: string;
+}> = ({ colors, imageUrl }) => {
+  const progress = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // 45초 동안 0 → 85% 로 애니메이션
+    Animated.timing(progress, {
+      toValue: 85,
+      duration: 45000,
+      useNativeDriver: false,
+    }).start();
+    return () => progress.stopAnimation();
+  }, []);
+
+  const widthInterpolated = progress.interpolate({
+    inputRange: [0, 100],
+    outputRange: ['0%', '100%'],
+  });
+
+  return (
+    <View style={staticStyles.statusWrap}>
+      {imageUrl ? (
+        <Image
+          source={{ uri: imageUrl }}
+          style={[staticStyles.pendingThumbnail, { borderColor: colors.divider }]}
+          resizeMode="contain"
+        />
+      ) : null}
+      <ActivityIndicator size="large" color={colors.primary} />
+      <Text style={[staticStyles.statusTitle, { fontFamily: fontFamily.bold, color: colors.text }]}>
+        처방전을 분석 중입니다…
+      </Text>
+      <Text style={[staticStyles.statusSub, { color: colors.textSub }]}>잠시만 기다려 주세요</Text>
+
+      {/* 진행 바 */}
+      <View style={[staticStyles.progressTrack, { backgroundColor: colors.divider }]}>
+        <Animated.View
+          style={[
+            staticStyles.progressFill,
+            { backgroundColor: colors.primary, width: widthInterpolated as any },
+          ]}
+        />
+      </View>
+    </View>
+  );
+};
 
 const FailedView: React.FC<{
+  onRetry: () => void;
   onManualEntry: () => void;
+  isRetrying: boolean;
   colors: ReturnType<typeof useTheme>['colors'];
-}> = ({ onManualEntry, colors }) => (
+}> = ({ onRetry, onManualEntry, isRetrying, colors }) => (
   <View style={staticStyles.statusWrap}>
     <Text style={staticStyles.failIcon}>⚠️</Text>
     <Text style={[staticStyles.statusTitle, { fontFamily: fontFamily.bold, color: colors.text }]}>
       자동 인식에 실패했습니다
     </Text>
     <Text style={[staticStyles.statusSub, { color: colors.textSub }]}>
-      직접 입력해서 저장할 수 있어요
+      일시적인 오류일 수 있어요. 재시도하거나 직접 입력할 수 있어요.
     </Text>
-    <TouchableOpacity
-      style={[staticStyles.manualEntryBtn, { backgroundColor: colors.primary }]}
-      onPress={onManualEntry}
-      activeOpacity={0.8}
-    >
-      <Text style={[staticStyles.manualEntryBtnText, { fontFamily: fontFamily.semibold, color: colors.textInverse }]}>
-        직접 입력하기
-      </Text>
-    </TouchableOpacity>
+    <View style={staticStyles.failedActions}>
+      <TouchableOpacity
+        style={[staticStyles.failedBtn, { backgroundColor: colors.primary }]}
+        onPress={onRetry}
+        disabled={isRetrying}
+        activeOpacity={0.8}
+      >
+        <Text style={[staticStyles.failedBtnText, { fontFamily: fontFamily.semibold, color: colors.textInverse }]}>
+          {isRetrying ? '재시도 중…' : '재시도'}
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[staticStyles.failedBtn, { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.divider }]}
+        onPress={onManualEntry}
+        disabled={isRetrying}
+        activeOpacity={0.8}
+      >
+        <Text style={[staticStyles.failedBtnText, { fontFamily: fontFamily.semibold, color: colors.text }]}>
+          직접 입력하기
+        </Text>
+      </TouchableOpacity>
+    </View>
   </View>
 );
 
@@ -154,17 +211,23 @@ export const OcrResultScreen: React.FC = () => {
 
   const { data: prescription, isLoading } = usePrescriptionDetail(prescriptionId, true);
   const { mutate: savePrescription, isPending: isSaving } = useSavePrescription();
+  const { mutate: retryOcr, isPending: isRetrying } = useRetryOcr();
+  const handleRetry = () => retryOcr(prescriptionId);
+  const { data: allPrescriptions = [] } = usePrescriptions();
 
   const [hospitalName, setHospitalName] = useState('');
   const [prescribedAt, setPrescribedAt] = useState('');
   const [medications, setMedications] = useState<EditableMedication[]>([]);
-  const [editMode, setEditMode] = useState(false); // FAILED → 수동 입력 모드
+  const [editMode, setEditMode] = useState(false);
+  const [duplicateWarningShown, setDuplicateWarningShown] = useState(false);
 
-  // OCR COMPLETED 시 약품 목록 초기화
+  // OCR COMPLETED 시 약품 목록 초기화 + 중복 감지
   useEffect(() => {
     if (prescription?.ocrStatus === 'COMPLETED') {
-      setHospitalName(prescription.hospitalName ?? '');
-      setPrescribedAt(prescription.prescribedAt ?? '');
+      const hospital = prescription.hospitalName ?? '';
+      const date = prescription.prescribedAt ?? '';
+      setHospitalName(hospital);
+      setPrescribedAt(date);
       setMedications(
         prescription.medications.map((m) => ({
           key: String(m.id),
@@ -175,11 +238,29 @@ export const OcrResultScreen: React.FC = () => {
           durationDays: m.durationDays !== undefined ? String(m.durationDays) : '',
         }))
       );
+
+      // 중복 감지: 같은 병원 + 같은 처방일인 다른 처방전이 있으면 안내
+      if (!duplicateWarningShown && hospital && date && allPrescriptions.length > 0) {
+        const duplicate = allPrescriptions.find(
+          (p) =>
+            String(p.id) !== prescriptionId &&
+            p.hospitalName === hospital &&
+            p.prescribedAt === date
+        );
+        if (duplicate) {
+          setDuplicateWarningShown(true);
+          customAlert(
+            '동일한 처방전이 있어요',
+            `${hospital}의 ${date} 처방전이 이미 등록되어 있어요.\n중복 등록이 아닌지 확인해 주세요.`,
+            [{ text: '확인' }]
+          );
+        }
+      }
     }
     if (prescription?.ocrStatus === 'FAILED') {
       setMedications([newMedication()]);
     }
-  }, [prescription?.ocrStatus]);
+  }, [prescription?.ocrStatus, allPrescriptions.length]);
 
   const handleChangeMed = (index: number, field: keyof EditableMedication, value: string) => {
     setMedications((prev) =>
@@ -190,7 +271,7 @@ export const OcrResultScreen: React.FC = () => {
   const handleAddMed = () => setMedications((prev) => [...prev, newMedication()]);
 
   const handleRemoveMed = (index: number) => {
-    if (medications.length === 1) return; // 최소 1개 유지
+    if (medications.length === 1) return;
     setMedications((prev) => prev.filter((_, i) => i !== index));
   };
 
@@ -235,7 +316,6 @@ export const OcrResultScreen: React.FC = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // 현재 복약 중인 약만 알림 설정 대상 (처방일 + 투약일수 >= 오늘)
     const activeMeds = medications
       .filter((m) => m.medicationName.trim())
       .map((m) => ({
@@ -245,7 +325,7 @@ export const OcrResultScreen: React.FC = () => {
         totalDays: m.durationDays ? Number(m.durationDays) : undefined,
       }))
       .filter((m) => {
-        if (!prescribedAt || !m.totalDays) return true; // 날짜/일수 없으면 포함
+        if (!prescribedAt || !m.totalDays) return true;
         const start = new Date(prescribedAt + 'T00:00:00');
         const end = new Date(start);
         end.setDate(end.getDate() + m.totalDays - 1);
@@ -286,12 +366,10 @@ export const OcrResultScreen: React.FC = () => {
   };
 
   const ocrStatus = prescription?.ocrStatus;
-  const showEditor =
-    ocrStatus === 'COMPLETED' || ocrStatus === 'FAILED' || editMode;
+  const showEditor = ocrStatus === 'COMPLETED' || ocrStatus === 'FAILED' || editMode;
 
   return (
     <SafeAreaView style={[staticStyles.container, { backgroundColor: colors.background }]}>
-      {/* 헤더 */}
       <ScreenHeader
         variant="back"
         title="자동 인식 결과"
@@ -312,13 +390,21 @@ export const OcrResultScreen: React.FC = () => {
         }
       />
 
-      {/* 본문 */}
       {isLoading || ocrStatus === 'PENDING' || ocrStatus === 'PROCESSING' ? (
-        <PendingView colors={colors} />
+        <PendingView colors={colors} imageUrl={prescription?.imageUrl} />
       ) : ocrStatus === 'FAILED' && !editMode ? (
-        <FailedView onManualEntry={() => setEditMode(true)} colors={colors} />
+        <FailedView onRetry={handleRetry} isRetrying={isRetrying} onManualEntry={() => setEditMode(true)} colors={colors} />
       ) : (
         <ScrollView contentContainerStyle={staticStyles.content} keyboardShouldPersistTaps="handled">
+          {/* 처방전 사진 */}
+          {prescription?.imageUrl ? (
+            <Image
+              source={{ uri: prescription.imageUrl }}
+              style={[staticStyles.prescriptionImage, { borderColor: colors.divider }]}
+              resizeMode="contain"
+            />
+          ) : null}
+
           {/* 기본 정보 */}
           <View style={staticStyles.section}>
             <Text style={[staticStyles.sectionTitle, { fontFamily: fontFamily.bold, color: colors.text }]}>
@@ -385,9 +471,7 @@ export const OcrResultScreen: React.FC = () => {
 
 const staticStyles = StyleSheet.create({
   container: { flex: 1 },
-  saveBtn: {
-    fontSize: sizes.font.md,
-  },
+  saveBtn: { fontSize: sizes.font.md },
   saveBtnDisabled: { opacity: 0.4 },
   // 상태 화면
   statusWrap: {
@@ -406,22 +490,35 @@ const staticStyles = StyleSheet.create({
     fontSize: sizes.font.md,
     textAlign: 'center',
   },
-  manualEntryBtn: {
+  // 진행 바
+  progressTrack: {
+    width: '100%',
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
     marginTop: sizes.spacing.sm,
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  failedActions: {
+    flexDirection: 'row',
+    gap: sizes.spacing.sm,
+    marginTop: sizes.spacing.sm,
+  },
+  failedBtn: {
+    flex: 1,
     borderRadius: sizes.radius.md,
     paddingVertical: sizes.spacing.md,
-    paddingHorizontal: sizes.spacing.xl,
+    alignItems: 'center',
   },
-  manualEntryBtnText: {
-    fontSize: sizes.font.md,
-  },
+  failedBtnText: { fontSize: sizes.font.md },
   // 편집기
   content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg, paddingBottom: 40 },
   section: { gap: sizes.spacing.md },
   sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.sm },
-  sectionTitle: {
-    fontSize: sizes.font.md,
-  },
+  sectionTitle: { fontSize: sizes.font.md },
   sectionCount: {
     fontSize: sizes.font.sm,
     paddingHorizontal: sizes.spacing.sm,
@@ -447,13 +544,8 @@ const staticStyles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  medRowIndex: {
-    fontSize: sizes.font.sm,
-  },
-  removeBtn: {
-    fontSize: sizes.font.md,
-    padding: 2,
-  },
+  medRowIndex: { fontSize: sizes.font.sm },
+  removeBtn: { fontSize: sizes.font.md, padding: 2 },
   medInput: {
     borderWidth: 1,
     borderRadius: sizes.radius.sm,
@@ -471,7 +563,19 @@ const staticStyles = StyleSheet.create({
     paddingVertical: sizes.spacing.md,
     alignItems: 'center',
   },
-  addMedBtnText: {
-    fontSize: sizes.font.md,
+  addMedBtnText: { fontSize: sizes.font.md },
+  // 처방전 사진
+  pendingThumbnail: {
+    width: '100%',
+    height: 200,
+    borderRadius: sizes.radius.lg,
+    borderWidth: 1,
+    marginBottom: sizes.spacing.sm,
+  },
+  prescriptionImage: {
+    width: '100%',
+    height: 260,
+    borderRadius: sizes.radius.lg,
+    borderWidth: 1,
   },
 });
