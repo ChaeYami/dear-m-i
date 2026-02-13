@@ -1,199 +1,232 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import { SkeletonLoader } from '@/shared/components/SkeletonLoader';
 import { useMedicationDetail } from '@/features/prescription/hooks/usePrescription';
-import { PremiumGate } from '@/shared/components/PremiumGate';
+import { QUERY_KEYS } from '@/constants/cacheKeys';
+import axiosInstance from '@/shared/api/axiosInstance';
 import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
 
 type Nav = StackNavigationProp<MedicationStackParamList, 'MedicationDetail'>;
 type Route = RouteProp<MedicationStackParamList, 'MedicationDetail'>;
 
-// ─── 스켈레톤 ──────────────────────────────────────────────────────────────
+/** "## 제목\n내용" 형식을 섹션 배열로 파싱 */
+const parseSections = (text: string | null | undefined): Array<{ title: string; content: string }> => {
+  if (!text) return [{ title: '', content: text ?? '' }];
+  const sections: Array<{ title: string; content: string }> = [];
+  const lines = text.split('\n');
+  let currentTitle = '';
+  let currentContent: string[] = [];
 
-const SkeletonBox: React.FC<{
-  width?: number | string;
-  height?: number;
-  style?: object;
-  colors: ReturnType<typeof useTheme>['colors'];
-}> = ({ width = '100%', height = 16, style, colors }) => (
-  <View
-    style={[
-      staticStyles.skeleton,
-      { width: width as any, height, backgroundColor: colors.skeleton },
-      style,
-    ]}
-  />
-);
+  const flush = () => {
+    const content = currentContent.join('\n').trim();
+    if (currentTitle || content) sections.push({ title: currentTitle, content });
+    currentTitle = '';
+    currentContent = [];
+  };
 
-const SkeletonSection: React.FC<{ colors: ReturnType<typeof useTheme>['colors'] }> = ({ colors }) => (
-  <View style={[staticStyles.section, { backgroundColor: colors.surface, borderColor: colors.divider }]}>
-    <SkeletonBox width="40%" height={14} style={{ marginBottom: sizes.spacing.md }} colors={colors} />
-    <SkeletonBox height={16} style={{ marginBottom: sizes.spacing.sm }} colors={colors} />
-    <SkeletonBox height={16} style={{ marginBottom: sizes.spacing.sm }} colors={colors} />
-    <SkeletonBox width="75%" height={16} colors={colors} />
-  </View>
-);
+  for (const line of lines) {
+    if (line.startsWith('## ')) {
+      flush();
+      currentTitle = line.substring(3).trim();
+    } else {
+      currentContent.push(line);
+    }
+  }
+  flush();
+  return sections;
+};
 
-// ─── 섹션 컴포넌트 ────────────────────────────────────────────────────────
-
-const Section: React.FC<{
+/** 접기/펼치기 가능한 약품 정보 섹션 */
+const DrugSection: React.FC<{
+  icon: keyof typeof Ionicons.glyphMap;
+  iconColor: string;
   title: string;
-  children: React.ReactNode;
-  warning?: boolean;
-  colors: ReturnType<typeof useTheme>['colors'];
-}> = ({ title, children, warning, colors }) => (
-  <View
-    style={[
-      staticStyles.section,
-      { backgroundColor: colors.surface, borderColor: colors.divider },
-      warning && { borderColor: colors.error + '66', backgroundColor: colors.errorLight },
-    ]}
-  >
-    <View style={staticStyles.sectionTitleRow}>
-      {warning && <Text style={staticStyles.warningIcon}>⚠️</Text>}
-      <Text
-        style={[
-          staticStyles.sectionTitle,
-          { fontFamily: fontFamily.bold, color: colors.textSub },
-          warning && { color: colors.error },
-        ]}
+  sections: Array<{ title: string; content: string }>;
+  defaultOpen?: boolean;
+}> = ({ icon, iconColor, title, sections, defaultOpen = false }) => {
+  const { colors } = useTheme();
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const styles = getStyles(colors, 0);
+
+  return (
+    <View style={styles.sectionCard}>
+      <TouchableOpacity
+        style={styles.sectionHeader}
+        onPress={() => setIsOpen(!isOpen)}
+        activeOpacity={0.8}
       >
-        {title}
-      </Text>
+        <View style={styles.sectionHeaderLeft}>
+          <Ionicons name={icon} size={18} color={iconColor} />
+          <Text style={styles.sectionTitle}>{title}</Text>
+        </View>
+        <Ionicons name={isOpen ? 'chevron-up' : 'chevron-down'} size={18} color={colors.textSub} />
+      </TouchableOpacity>
+
+      {isOpen && (
+        <View style={styles.sectionBody}>
+          {sections.map((s, i) => (
+            <View key={i} style={styles.subsection}>
+              {s.title !== '' && (
+                <Text style={[styles.subsectionTitle, iconColor === colors.error && styles.cautionTitle]}>
+                  {s.title}
+                </Text>
+              )}
+              {s.content !== '' && (
+                <Text style={styles.subsectionContent}>{s.content}</Text>
+              )}
+            </View>
+          ))}
+        </View>
+      )}
     </View>
-    {children}
-  </View>
-);
-
-const InfoRow: React.FC<{
-  label: string;
-  value?: string | number;
-  colors: ReturnType<typeof useTheme>['colors'];
-}> = ({ label, value, colors }) => (
-  <View style={staticStyles.infoRow}>
-    <Text style={[staticStyles.infoLabel, { fontFamily: fontFamily.medium, color: colors.textSub }]}>
-      {label}
-    </Text>
-    <Text style={[staticStyles.infoValue, { color: colors.text }]}>{value ?? '—'}</Text>
-  </View>
-);
-
-// ─── 메인 화면 ────────────────────────────────────────────────────────────
+  );
+};
 
 export const MedicationDetailScreen: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const { medicationId, medicationName } = useRoute<Route>().params;
+  const queryClient = useQueryClient();
 
   const { data: med, isLoading } = useMedicationDetail(medicationId);
 
-  const isDrugInfoPending = !isLoading && med && !med.drugInfoFetchedAt;
+  const { mutate: refreshDrugInfo, isPending: isRefreshing } = useMutation({
+    mutationFn: () =>
+      axiosInstance.post(`/api/v1/prescription-medications/${medicationId}/refresh-drug-info`),
+    onSuccess: () => {
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.medicationDetail(medicationId) });
+      }, 2000);
+    },
+  });
+
+  const isPending = !isLoading && med && !med.drugInfoFetchedAt;
+  const noInfo = !isLoading && (!med || (!med.drugEffect && !med.drugCaution));
+  const styles = getStyles(colors, 0);
 
   return (
-    <SafeAreaView style={[staticStyles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={styles.container}>
       {/* 헤더 */}
-      <View style={staticStyles.header}>
+      <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
           <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={[staticStyles.headerTitle, { fontFamily: fontFamily.bold, color: colors.text }]} numberOfLines={1}>
+        <Text style={styles.headerTitle} numberOfLines={1}>
           {med?.medicationName ?? medicationName}
         </Text>
-        <View style={{ width: 48 }} />
+        <TouchableOpacity onPress={() => refreshDrugInfo()} disabled={isRefreshing} hitSlop={12}>
+          <Ionicons name="refresh" size={22} color={isRefreshing ? colors.textDisabled : colors.primary} />
+        </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={staticStyles.content}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {isLoading ? (
-          <>
-            <SkeletonSection colors={colors} />
-            <SkeletonSection colors={colors} />
-            <SkeletonSection colors={colors} />
-          </>
-        ) : !med ? (
-          <View style={staticStyles.errorWrap}>
-            <Text style={[staticStyles.errorText, { color: colors.textSub }]}>
-              약품 정보를 불러올 수 없습니다.
-            </Text>
+          <View style={styles.skeletonWrap}>
+            <SkeletonLoader width="100%" height={80} borderRadius={sizes.radius.lg} />
+            <SkeletonLoader width="100%" height={120} borderRadius={sizes.radius.lg} />
+            <SkeletonLoader width="100%" height={120} borderRadius={sizes.radius.lg} />
+          </View>
+        ) : isPending ? (
+          <View style={styles.statusWrap}>
+            <Ionicons name="time-outline" size={48} color={colors.primaryLight} />
+            <Text style={styles.statusTitle}>약품 정보를 조회 중이에요</Text>
+            <Text style={styles.statusDesc}>우측 상단 새로고침 버튼을 눌러보세요</Text>
+          </View>
+        ) : noInfo ? (
+          <View style={styles.statusWrap}>
+            <Ionicons name="information-circle-outline" size={48} color={colors.textDisabled} />
+            <Text style={styles.statusTitle}>약품 정보를 찾을 수 없어요</Text>
+            <Text style={styles.statusDesc}>우측 상단 새로고침 버튼을 눌러보세요</Text>
           </View>
         ) : (
           <>
-            {/* 1. 약품명 + 제조사 */}
-            <Section title="약품 정보" colors={colors}>
-              <Text style={[staticStyles.medNameLarge, { fontFamily: fontFamily.bold, color: colors.text }]}>
-                {med.medicationName}
-              </Text>
-              {med.manufacturer && (
-                <Text style={[staticStyles.manufacturer, { color: colors.textSub }]}>
-                  {med.manufacturer}
-                </Text>
+            {/* 약품 기본 정보 카드 */}
+            <View style={styles.infoCard}>
+              <View style={styles.infoCardHeader}>
+                <Ionicons name="medical" size={20} color={colors.primary} />
+                <Text style={styles.infoCardTitle}>{med?.medicationName ?? medicationName}</Text>
+              </View>
+              {med?.manufacturer && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>제조사</Text>
+                  <Text style={styles.infoValue}>{med.manufacturer}</Text>
+                </View>
               )}
-            </Section>
+              {med?.dosage && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>용량</Text>
+                  <Text style={styles.infoValue}>{med.dosage}</Text>
+                </View>
+              )}
+              {med?.singleDose && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>1회 투여량</Text>
+                  <Text style={styles.infoValue}>{med.singleDose}</Text>
+                </View>
+              )}
+              {med?.frequency && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>용법</Text>
+                  <Text style={styles.infoValue}>{med.frequency}</Text>
+                </View>
+              )}
+              {med?.durationDays !== undefined && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>투약일수</Text>
+                  <Text style={styles.infoValue}>{med.durationDays}일</Text>
+                </View>
+              )}
+            </View>
 
-            {/* 2. 처방 정보 */}
-            <Section title="처방 정보" colors={colors}>
-              <InfoRow label="용량" value={med.dosage} colors={colors} />
-              <InfoRow label="용법" value={med.frequency} colors={colors} />
-              <InfoRow
-                label="투약일수"
-                value={med.durationDays !== undefined ? `${med.durationDays}일` : undefined}
-                colors={colors}
+            {/* 효능·효과 */}
+            {med?.drugEffect && (
+              <DrugSection
+                icon="checkmark-circle"
+                iconColor={colors.secondary}
+                title="효능·효과"
+                sections={parseSections(med.drugEffect)}
+                defaultOpen
               />
-            </Section>
-
-            {/* 3. 효능/효과 */}
-            <PremiumGate message="약품 효능·주의사항은 프리미엄 플랜에서 이용할 수 있어요">
-              <Section title="효능·효과" colors={colors}>
-                {isDrugInfoPending ? (
-                  <>
-                    <Text style={[staticStyles.fetchingText, { color: colors.textSub }]}>
-                      약품 정보를 불러오는 중입니다…
-                    </Text>
-                    <SkeletonBox height={14} style={{ marginTop: sizes.spacing.sm }} colors={colors} />
-                    <SkeletonBox height={14} width="85%" style={{ marginTop: sizes.spacing.sm }} colors={colors} />
-                    <SkeletonBox height={14} width="70%" style={{ marginTop: sizes.spacing.sm }} colors={colors} />
-                  </>
-                ) : med.drugEffect ? (
-                  <Text style={[staticStyles.bodyText, { color: colors.text }]}>{med.drugEffect}</Text>
-                ) : (
-                  <Text style={[staticStyles.emptyFieldText, { color: colors.textDisabled }]}>정보 없음</Text>
-                )}
-              </Section>
-
-              {/* 4. 주의사항 — 경고 스타일 */}
-              <Section title="주의사항" warning colors={colors}>
-                {isDrugInfoPending ? (
-                  <>
-                    <Text style={[staticStyles.fetchingText, { color: colors.textSub }]}>
-                      약품 정보를 불러오는 중입니다…
-                    </Text>
-                    <SkeletonBox height={14} style={{ marginTop: sizes.spacing.sm }} colors={colors} />
-                    <SkeletonBox height={14} width="90%" style={{ marginTop: sizes.spacing.sm }} colors={colors} />
-                  </>
-                ) : med.drugCaution ? (
-                  <Text style={[staticStyles.bodyText, { color: colors.text }]}>{med.drugCaution}</Text>
-                ) : (
-                  <Text style={[staticStyles.emptyFieldText, { color: colors.textDisabled }]}>정보 없음</Text>
-                )}
-              </Section>
-            </PremiumGate>
-
-            {/* 마지막 조회 시각 */}
-            {med.drugInfoFetchedAt && (
-              <Text style={[staticStyles.fetchedAt, { color: colors.textDisabled }]}>
-                약품 정보 최종 조회: {new Date(med.drugInfoFetchedAt).toLocaleDateString('ko-KR')}
-              </Text>
             )}
+
+            {/* 주의사항 */}
+            {med?.drugCaution && (
+              <DrugSection
+                icon="warning"
+                iconColor={colors.error}
+                title="주의사항"
+                sections={parseSections(med.drugCaution)}
+              />
+            )}
+
+            {/* 약학정보원 더보기 링크 */}
+            <TouchableOpacity
+              style={styles.nedrugLink}
+              onPress={() => {
+                const name = med?.medicationName ?? medicationName;
+                Linking.openURL(
+                  `https://nedrug.mfds.go.kr/searchDrug?searchYn=true&page=1&drug_name=${encodeURIComponent(name)}`
+                );
+              }}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="open-outline" size={16} color={colors.primary} />
+              <Text style={styles.nedrugLinkText}>약학정보원에서 전체 정보 보기</Text>
+              <Ionicons name="chevron-forward" size={14} color={colors.textDisabled} />
+            </TouchableOpacity>
           </>
         )}
       </ScrollView>
@@ -201,80 +234,133 @@ export const MedicationDetailScreen: React.FC = () => {
   );
 };
 
-const staticStyles = StyleSheet.create({
-  container: { flex: 1 },
-  header: {
-    height: sizes.headerHeight,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: sizes.spacing.lg,
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: sizes.font.lg,
-  },
-  content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg, paddingBottom: 40 },
-  // 섹션
-  section: {
-    borderRadius: sizes.radius.lg,
-    padding: sizes.spacing.lg,
-    borderWidth: 1,
-    gap: sizes.spacing.sm,
-  },
-  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.xs },
-  warningIcon: { fontSize: 14 },
-  sectionTitle: {
-    fontSize: sizes.font.sm,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  // 약품명
-  medNameLarge: {
-    fontSize: sizes.font.xl,
-  },
-  manufacturer: {
-    fontSize: sizes.font.sm,
-  },
-  // 처방 정보 행
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 2,
-  },
-  infoLabel: {
-    fontSize: sizes.font.sm,
-    minWidth: 60,
-  },
-  infoValue: {
-    fontSize: sizes.font.md,
-    flex: 1,
-    textAlign: 'right',
-  },
-  // 본문
-  bodyText: {
-    fontSize: sizes.font.sm,
-    lineHeight: 22,
-  },
-  emptyFieldText: {
-    fontSize: sizes.font.sm,
-    fontStyle: 'italic',
-  },
-  fetchingText: {
-    fontSize: sizes.font.sm,
-    fontStyle: 'italic',
-  },
-  fetchedAt: {
-    fontSize: sizes.font.xs,
-    textAlign: 'center',
-    marginTop: -sizes.spacing.sm,
-  },
-  // 스켈레톤
-  skeleton: {
-    borderRadius: sizes.radius.sm,
-  },
-  // 에러
-  errorWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60 },
-  errorText: { fontSize: sizes.font.md },
-});
+const getStyles = (colors: ReturnType<typeof useTheme>['colors'], _tabBarSafeBottom: number) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: {
+      height: sizes.headerHeight,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: sizes.spacing.lg,
+      gap: sizes.spacing.sm,
+    },
+    headerTitle: {
+      flex: 1,
+      textAlign: 'center',
+      fontSize: sizes.font.lg,
+      fontFamily: fontFamily.bold,
+      color: colors.text,
+    },
+    content: {
+      padding: sizes.spacing.lg,
+      gap: sizes.spacing.md,
+      paddingBottom: 40,
+    },
+    skeletonWrap: { gap: sizes.spacing.md },
+    statusWrap: {
+      alignItems: 'center',
+      paddingTop: 80,
+      gap: sizes.spacing.md,
+    },
+    statusTitle: {
+      fontSize: sizes.font.lg,
+      fontFamily: fontFamily.semibold,
+      color: colors.textSub,
+    },
+    statusDesc: {
+      fontSize: sizes.font.sm,
+      color: colors.textDisabled,
+    },
+    infoCard: {
+      backgroundColor: colors.primaryLight + '15',
+      borderRadius: sizes.radius.xl,
+      padding: sizes.spacing.lg,
+      gap: sizes.spacing.sm,
+      borderWidth: 1,
+      borderColor: colors.primaryLight + '30',
+    },
+    infoCardHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: sizes.spacing.sm,
+      marginBottom: sizes.spacing.xs,
+    },
+    infoCardTitle: {
+      fontSize: sizes.font.lg,
+      fontFamily: fontFamily.bold,
+      color: colors.text,
+      flex: 1,
+    },
+    infoRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    infoLabel: {
+      fontSize: sizes.font.sm,
+      color: colors.textSub,
+    },
+    infoValue: {
+      fontSize: sizes.font.sm,
+      fontFamily: fontFamily.medium,
+      color: colors.text,
+    },
+    sectionCard: {
+      backgroundColor: colors.surface,
+      borderRadius: sizes.radius.xl,
+      borderWidth: 1,
+      borderColor: colors.divider,
+      overflow: 'hidden',
+    },
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: sizes.spacing.md,
+    },
+    sectionHeaderLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: sizes.spacing.sm,
+    },
+    sectionTitle: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.bold,
+      color: colors.text,
+    },
+    sectionBody: {
+      paddingHorizontal: sizes.spacing.md,
+      paddingBottom: sizes.spacing.md,
+      gap: sizes.spacing.md,
+    },
+    subsection: { gap: sizes.spacing.xs },
+    subsectionTitle: {
+      fontSize: sizes.font.sm,
+      fontFamily: fontFamily.semibold,
+      color: colors.text,
+      lineHeight: 20,
+    },
+    cautionTitle: { color: colors.error },
+    subsectionContent: {
+      fontSize: sizes.font.sm,
+      color: colors.textSub,
+      lineHeight: 21,
+    },
+    nedrugLink: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: sizes.spacing.sm,
+      backgroundColor: colors.primaryLight + '15',
+      borderRadius: sizes.radius.lg,
+      paddingVertical: sizes.spacing.md,
+      borderWidth: 1,
+      borderColor: colors.primaryLight + '30',
+    },
+    nedrugLinkText: {
+      fontSize: sizes.font.sm,
+      color: colors.primary,
+      fontFamily: fontFamily.semibold,
+      flex: 1,
+    },
+  });

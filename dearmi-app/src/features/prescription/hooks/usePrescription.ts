@@ -28,7 +28,7 @@ export const usePagedPrescriptions = () =>
     getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.page + 1 : undefined),
   });
 
-/** 약품 상세 (e약은요 정보) */
+/** 약품 상세 (e약은요 정보) — drugInfoFetchedAt이 null이면 3초마다 폴링 */
 export const useMedicationDetail = (id: string) =>
   useQuery({
     queryKey: QUERY_KEYS.medicationDetail(id),
@@ -37,6 +37,13 @@ export const useMedicationDetail = (id: string) =>
       return data.data ?? null;
     },
     enabled: !!id,
+    refetchInterval: (query) => {
+      const med = query.state.data;
+      if (!med) return false;
+      if (med.drugInfoFetchedAt) return false;
+      if (query.state.dataUpdateCount > 20) return false;
+      return 3000;
+    },
   });
 
 /**
