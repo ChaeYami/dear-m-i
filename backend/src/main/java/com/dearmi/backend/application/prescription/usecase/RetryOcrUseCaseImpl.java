@@ -3,7 +3,6 @@ package com.dearmi.backend.application.prescription.usecase;
 import com.dearmi.backend.application.prescription.service.OcrProcessorService;
 import com.dearmi.backend.common.exception.CustomException;
 import com.dearmi.backend.common.exception.ErrorCode;
-import com.dearmi.backend.domain.prescription.OcrStatus;
 import com.dearmi.backend.domain.prescription.Prescription;
 import com.dearmi.backend.domain.prescription.PrescriptionMedicationRepository;
 import com.dearmi.backend.domain.prescription.PrescriptionRepository;
@@ -30,13 +29,8 @@ public class RetryOcrUseCaseImpl implements RetryOcrUseCase {
                 .findByIdAndUserIdAndDeletedAtIsNull(prescriptionId, userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
-        // PENDING/PROCESSING 중에는 이미 OCR이 실행 중이므로 재시도 불가
-        String currentStatus = prescription.getOcrStatus();
-        if (OcrStatus.PENDING.name().equals(currentStatus) || OcrStatus.PROCESSING.name().equals(currentStatus)) {
-            throw new CustomException(ErrorCode.INVALID_REQUEST);
-        }
-
-        // 이전 OCR 결과(약품 목록) 삭제 후 상태 초기화
+        // 상태 무관하게 강제 재시작 — PENDING/PROCESSING 인 채로 Gemini 가 hang 한 좀비 케이스 대응.
+        // 기존 비동기 태스크가 진행 중일 수 있으나, 완료되더라도 본 재시도가 덮어쓴다.
         prescriptionMedicationRepository.deleteByPrescriptionId(prescriptionId);
         prescription.resetForRetry();
         prescriptionRepository.save(prescription);

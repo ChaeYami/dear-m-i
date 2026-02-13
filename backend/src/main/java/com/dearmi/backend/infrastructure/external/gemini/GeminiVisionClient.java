@@ -8,6 +8,9 @@ import com.dearmi.backend.infrastructure.external.s3.S3Service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.netty.channel.ChannelOption;
+import io.netty.handler.timeout.ReadTimeoutHandler;
+import io.netty.handler.timeout.WriteTimeoutHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +20,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClient;
+import reactor.netty.http.client.HttpClient;
 
 import java.time.Duration;
 import java.util.Base64;
@@ -65,15 +69,19 @@ public class GeminiVisionClient implements PrescriptionOcrPort {
             "값이 없으면 null. medications가 없으면 빈 배열 [].\n" +
             "처방일(prescribedAt)은 반드시 YYYY-MM-DD 형식.";
 
-    private static final int MAX_RETRIES = 3;
-    private static final long RETRY_BASE_DELAY_MS = 5_000;
+    private static final int MAX_RETRIES = 1;
+    private static final long RETRY_BASE_DELAY_MS = 3_000;
+    private static final int CONNECT_TIMEOUT_MS = 10_000;
+    private static final int WRITE_TIMEOUT_SEC = 30;
+    private static final int READ_TIMEOUT_SEC = 40;
+    private static final Duration RESPONSE_TIMEOUT = Duration.ofSeconds(40);
 
     @Override
     public OcrResult analyze(String s3Key) {
-        log.info("Gemini OCR 호출 시작: s3Key={}", s3Key);
         byte[] imageBytes = s3Service.getObjectBytes(s3Key);
         String mimeType = detectMimeType(s3Key);
         String base64Data = Base64.getEncoder().encodeToString(imageBytes);
+        log.info("Gemini OCR 호출 시작: s3Key={}, imageBytes={}KB", s3Key, imageBytes.length / 1024);
 
         Map<String, Object> inlineData = Map.of("mime_type", mimeType, "data", base64Data);
         Map<String, Object> imagePart = Map.of("inline_data", inlineData);
@@ -83,8 +91,15 @@ public class GeminiVisionClient implements PrescriptionOcrPort {
 
         String url = apiUrl + "?key=" + apiKey;
 
-        ReactorClientHttpRequestFactory factory = new ReactorClientHttpRequestFactory();
-        factory.setReadTimeout(Duration.ofSeconds(60));
+        // reactor-netty HttpClient 에 connect/write/read/response 타임아웃 모두 명시.
+        // ReactorClientHttpRequestFactory.setReadTimeout 단독으로는 body 전송 단계 hang 을 못 막음.
+        HttpClient httpClient = HttpClient.create()
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, CONNECT_TIMEOUT_MS)
+                .responseTimeout(RESPONSE_TIMEOUT)
+                .doOnConnected(conn -> conn
+                        .addHandlerLast(new ReadTimeoutHandler(READ_TIMEOUT_SEC))
+                        .addHandlerLast(new WriteTimeoutHandler(WRITE_TIMEOUT_SEC)));
+        ReactorClientHttpRequestFactory factory = new ReactorClientHttpRequestFactory(httpClient);
 
         RestClient restClient = RestClient.builder()
                 .baseUrl(url)
