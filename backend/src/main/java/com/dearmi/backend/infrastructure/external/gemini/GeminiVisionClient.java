@@ -36,19 +36,31 @@ public class GeminiVisionClient implements PrescriptionOcrPort {
 
     private static final String PROMPT =
             "이 한국 처방전 이미지에서 정보를 추출해줘.\n" +
-            "반드시 아래 JSON 객체 형식으로만 응답해. 다른 텍스트 없이:\n" +
+            "반드시 아래 예시와 동일한 JSON 형식으로만 응답해. 다른 텍스트 없이.\n" +
+            "각 약품 객체는 반드시 { 로 시작하고 } 로 끝나야 해. 여러 약품이면 , 로 구분해.\n\n" +
+            "예시:\n" +
             "{\n" +
-            "\"hospitalName\":\"병원명 또는 의원명 (예: 서울정신건강의원)\",\n" +
-            "\"prescribedAt\":\"처방일 YYYY-MM-DD 형식 (예: 2026-04-16)\",\n" +
-            "\"medications\":[{\n" +
-            "\"drugName\":\"약품 기본명만 (규격 제외, 예: 자나팜정)\",\n" +
-            "\"dosage\":\"규격/용량 (예: 0.125밀리그램, 25mg)\",\n" +
-            "\"singleDose\":\"1회 투여량 (예: 1정, 0.5정, 5ml)\",\n" +
-            "\"directions\":\"1일 투여횟수 및 복용 시기 (예: 1일 1회 취침전, 1일 2회 아침저녁 식후)\",\n" +
-            "\"days\":투약일수숫자\n" +
-            "}]\n" +
-            "}\n" +
-            "값이 없으면 null. medications가 없으면 빈 배열 [].";
+            "  \"hospitalName\": \"서울정신건강의원\",\n" +
+            "  \"prescribedAt\": \"2026-04-16\",\n" +
+            "  \"medications\": [\n" +
+            "    {\n" +
+            "      \"drugName\": \"자나팜정\",\n" +
+            "      \"dosage\": \"0.25mg\",\n" +
+            "      \"singleDose\": \"1정\",\n" +
+            "      \"directions\": \"1일 1회 취침전\",\n" +
+            "      \"days\": 14\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"drugName\": \"에스시탈로프람정\",\n" +
+            "      \"dosage\": \"10mg\",\n" +
+            "      \"singleDose\": \"1정\",\n" +
+            "      \"directions\": \"1일 1회 아침 식후\",\n" +
+            "      \"days\": 28\n" +
+            "    }\n" +
+            "  ]\n" +
+            "}\n\n" +
+            "값이 없으면 null. medications가 없으면 빈 배열 [].\n" +
+            "처방일(prescribedAt)은 반드시 YYYY-MM-DD 형식.";
 
     @Override
     public OcrResult analyze(String s3Key) {
