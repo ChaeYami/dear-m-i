@@ -34,10 +34,16 @@ public class GeminiVisionClient implements PrescriptionOcrPort {
 
     private static final String PROMPT =
             "이 한국 처방전 이미지에서 약품 정보를 추출해줘.\n" +
-            "한국 처방전의 컬럼 구조: 약품명(규격 포함) | 1회 투약량 | 1일 투여횟수 | 총 투약일수\n" +
+            "한국 처방전 컬럼 구조: 약품명 | 규격(용량) | 1회 투여량 | 1일 투여횟수 | 총 투약일수\n" +
             "반드시 아래 JSON 배열 형식으로만 응답해. 다른 텍스트 없이:\n" +
-            "[{\"drugName\":\"약품명과 규격 (예: 아빌리파이정 1밀리그램)\",\"dosage\":\"1회 투약량과 1일 횟수 (예: 1정 1일 2회)\",\"directions\":\"복용 시기 및 방법 (예: 아침저녁 식후)\",\"days\":투약일수숫자}]\n" +
-            "복용 시기가 없으면 directions는 null. 약품이 없으면 빈 배열 [] 반환.";
+            "[{" +
+            "\"drugName\":\"약품 기본명만 (규격 제외, 예: 자나팜정)\"," +
+            "\"dosage\":\"규격/용량 (예: 0.125밀리그램, 25mg)\"," +
+            "\"singleDose\":\"1회 투여량 (예: 1정, 0.5정, 5ml)\"," +
+            "\"directions\":\"1일 투여횟수 및 복용 시기 (예: 1일 1회 취침전, 1일 2회 아침저녁 식후)\"," +
+            "\"days\":투약일수숫자" +
+            "}]\n" +
+            "값이 없으면 null. 약품이 없으면 빈 배열 [] 반환.";
 
     @Override
     public List<OcrMedicationItem> analyze(String s3Key) {

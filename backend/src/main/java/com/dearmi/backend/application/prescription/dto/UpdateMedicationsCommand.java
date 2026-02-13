@@ -8,5 +8,5 @@ public record UpdateMedicationsCommand(
         UUID prescriptionId,
         List<MedicationItem> medications
 ) {
-    public record MedicationItem(String drugName, String dosage, String directions, Short days) {}
+    public record MedicationItem(String drugName, String dosage, String singleDose, String directions, Short days) {}
 }

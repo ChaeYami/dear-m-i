@@ -56,11 +56,14 @@ public class OcrProcessorService {
             List<OcrMedicationItem> items = prescriptionOcrPort.analyze(s3Key);
 
             items.forEach(item -> {
+                log.info("OCR 파싱 결과: drugName={}, dosage={}, singleDose={}, directions={}, days={}",
+                        item.drugName(), item.dosage(), item.singleDose(), item.directions(), item.days());
                 PrescriptionMedication med = prescriptionMedicationRepository.save(
                         PrescriptionMedication.builder()
                                 .prescriptionId(prescriptionId)
                                 .drugName(item.drugName())
                                 .dosage(item.dosage())
+                                .singleDose(item.singleDose())
                                 .directions(item.directions())
                                 .days(item.days())
                                 .build()

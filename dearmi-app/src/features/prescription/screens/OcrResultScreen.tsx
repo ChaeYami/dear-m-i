@@ -31,6 +31,7 @@ interface EditableMedication {
   key: string; // FlatList key (id or temp key)
   medicationName: string;
   dosage: string;
+  singleDose: string;
   frequency: string;
   durationDays: string;
 }
@@ -40,6 +41,7 @@ const newMedication = (): EditableMedication => ({
   key: `new-${++tempKeyCounter}`,
   medicationName: '',
   dosage: '',
+  singleDose: '',
   frequency: '',
   durationDays: '',
 });
@@ -115,21 +117,29 @@ const MedicationRow: React.FC<{
       />
       <TextInput
         style={[staticStyles.medInput, staticStyles.medInputHalf, { backgroundColor: colors.background, borderColor: colors.divider, color: colors.text }]}
+        placeholder="1회 투여량 (예: 1정)"
+        placeholderTextColor={colors.textDisabled}
+        value={item.singleDose}
+        onChangeText={(v) => onChange(index, 'singleDose', v)}
+      />
+    </View>
+    <View style={staticStyles.medInputRow}>
+      <TextInput
+        style={[staticStyles.medInput, staticStyles.medInputHalf, { backgroundColor: colors.background, borderColor: colors.divider, color: colors.text }]}
         placeholder="용법 (예: 1일 2회)"
         placeholderTextColor={colors.textDisabled}
         value={item.frequency}
         onChangeText={(v) => onChange(index, 'frequency', v)}
       />
+      <TextInput
+        style={[staticStyles.medInput, staticStyles.medInputShort, { backgroundColor: colors.background, borderColor: colors.divider, color: colors.text }]}
+        placeholder="투약일수 (예: 7)"
+        placeholderTextColor={colors.textDisabled}
+        value={item.durationDays}
+        onChangeText={(v) => onChange(index, 'durationDays', v)}
+        keyboardType="numeric"
+      />
     </View>
-    <TextInput
-      style={[staticStyles.medInput, staticStyles.medInputShort, { backgroundColor: colors.background, borderColor: colors.divider, color: colors.text }]}
-      placeholder="투약일수 (예: 7)"
-      placeholderTextColor={colors.textDisabled}
-      value={item.durationDays}
-      onChangeText={(v) => onChange(index, 'durationDays', v)}
-      keyboardType="numeric"
-    />
-  </View>
 );
 
 // ─── 메인 화면 ────────────────────────────────────────────────────────────────
@@ -159,6 +169,7 @@ export const OcrResultScreen: React.FC = () => {
           key: String(m.id),
           medicationName: m.medicationName,
           dosage: m.dosage ?? '',
+          singleDose: m.singleDose ?? '',
           frequency: m.frequency ?? '',
           durationDays: m.durationDays !== undefined ? String(m.durationDays) : '',
         }))
@@ -209,6 +220,7 @@ export const OcrResultScreen: React.FC = () => {
           medications: medications.map((m) => ({
             medicationName: m.medicationName.trim(),
             dosage: m.dosage.trim() || undefined,
+            singleDose: m.singleDose.trim() || undefined,
             frequency: m.frequency.trim() || undefined,
             durationDays: m.durationDays ? Number(m.durationDays) : undefined,
           })),
@@ -224,6 +236,7 @@ export const OcrResultScreen: React.FC = () => {
       .map((m) => ({
         drugName: m.medicationName.trim(),
         dosage: m.dosage.trim() || undefined,
+        singleDose: m.singleDose.trim() || undefined,
         totalDays: m.durationDays ? Number(m.durationDays) : undefined,
       }));
 
@@ -248,6 +261,7 @@ export const OcrResultScreen: React.FC = () => {
             navigation.navigate('MedicationForm', {
               drugName: first.drugName,
               dosage: first.dosage,
+              singleDose: first.singleDose,
               totalDays: first.totalDays,
               isFromOcr: true,
               remainingMeds: rest,

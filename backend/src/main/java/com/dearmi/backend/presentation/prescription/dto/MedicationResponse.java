@@ -1,19 +1,21 @@
 package com.dearmi.backend.presentation.prescription.dto;
 
 import com.dearmi.backend.application.prescription.dto.MedicationResult;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.UUID;
 
 public record MedicationResponse(
         UUID id,
-        String drugName,
+        @JsonProperty("medicationName") String drugName,
         String dosage,
-        String directions,
-        Short days
+        String singleDose,
+        @JsonProperty("frequency") String directions,
+        @JsonProperty("durationDays") Short days
 ) {
     public static MedicationResponse from(MedicationResult result) {
         return new MedicationResponse(
-                result.id(), result.drugName(), result.dosage(), result.directions(), result.days()
+                result.id(), result.drugName(), result.dosage(), result.singleDose(), result.directions(), result.days()
         );
     }
 }

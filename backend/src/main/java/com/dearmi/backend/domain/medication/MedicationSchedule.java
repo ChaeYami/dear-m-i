@@ -36,6 +36,9 @@ public class MedicationSchedule extends BaseTimeEntity {
     @Column(length = 100)
     private String dosage;
 
+    @Column(name = "single_dose", length = 100)
+    private String singleDose;
+
     @Column(name = "times_per_day")
     private Short timesPerDay;
 
@@ -110,13 +113,14 @@ public class MedicationSchedule extends BaseTimeEntity {
     }
 
     public void update(
-            String drugName, String dosage, String drugCategory, Short timesPerDay,
+            String drugName, String dosage, String singleDose, String drugCategory, Short timesPerDay,
             LocalDate startDate, LocalDate endDate,
             Boolean morning, Boolean afternoon, Boolean evening, Boolean bedtime,
             LocalTime morningTime, LocalTime afternoonTime, LocalTime eveningTime, LocalTime bedtimeTime
     ) {
         this.drugName = drugName;
         this.dosage = dosage;
+        this.singleDose = singleDose;
         this.drugCategory = drugCategory;
         this.timesPerDay = timesPerDay;
         this.startDate = startDate;

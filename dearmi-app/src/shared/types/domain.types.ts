@@ -125,6 +125,7 @@ export interface PrescriptionMedication {
   medicationName: string;
   manufacturer?: string;
   dosage?: string;
+  singleDose?: string;
   frequency?: string;
   durationDays?: number;
   // 약학정보원(e약은요) 비동기 조회 결과
@@ -147,6 +148,7 @@ export interface SavePrescriptionRequest {
   medications: Array<{
     medicationName: string;
     dosage?: string;
+    singleDose?: string;
     frequency?: string;
     durationDays?: number;
   }>;
@@ -232,6 +234,7 @@ export interface MedicationSchedule {
   prescriptionMedicationId?: string;
   drugName: string;
   dosage?: string;
+  singleDose?: string;
   drugCategory?: string;
   drugCaution?: string;
   timesPerDay?: number;
@@ -252,6 +255,7 @@ export interface CreateMedicationScheduleRequest {
   prescriptionMedicationId?: string;
   drugName?: string;
   dosage?: string;
+  singleDose?: string;
   drugCategory?: string;
   timesPerDay?: number;
   startDate?: string;  // YYYY-MM-DD

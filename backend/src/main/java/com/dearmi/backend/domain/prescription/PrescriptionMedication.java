@@ -32,6 +32,9 @@ public class PrescriptionMedication extends BaseTimestampEntity {
     @Column(length = 100)
     private String dosage;
 
+    @Column(name = "single_dose", length = 100)
+    private String singleDose;
+
     @Column(length = 300)
     private String directions;
 

@@ -13,6 +13,7 @@ import { MedicationDetailScreen } from '@/features/prescription/screens/Medicati
 export interface OcrMedicationItem {
   drugName: string;
   dosage?: string;
+  singleDose?: string;
   totalDays?: number;
 }
 
@@ -23,6 +24,7 @@ export type MedicationStackParamList = {
     prescriptionMedicationId?: string;
     drugName?: string;
     dosage?: string;
+    singleDose?: string;
     totalDays?: number;
     isFromOcr?: boolean;
     remainingMeds?: OcrMedicationItem[];

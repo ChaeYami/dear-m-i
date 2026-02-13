@@ -81,7 +81,7 @@ public class PrescriptionController {
                 userId, id,
                 request.medications().stream()
                         .map(m -> new UpdateMedicationsCommand.MedicationItem(
-                                m.drugName(), m.dosage(), m.directions(), m.days()))
+                                m.drugName(), m.dosage(), m.singleDose(), m.directions(), m.days()))
                         .toList()
         );
         return ApiResponse.success(

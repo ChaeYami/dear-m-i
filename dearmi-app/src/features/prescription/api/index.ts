@@ -68,9 +68,17 @@ export const prescriptionApi = {
   getPrescription: (id: string) =>
     axiosInstance.get<ApiResponse<Prescription>>(`/api/v1/prescriptions/${id}`),
 
-  /** OCR 결과 확인 후 저장 (약품 목록 수정 포함) */
+  /** OCR 결과 확인 후 저장 (약품 목록 전체 교체) */
   savePrescription: (id: string, data: SavePrescriptionRequest) =>
-    axiosInstance.put<ApiResponse<Prescription>>(`/api/v1/prescriptions/${id}`, data),
+    axiosInstance.put<ApiResponse<Prescription>>(`/api/v1/prescriptions/${id}/medications`, {
+      medications: data.medications.map((m) => ({
+        drugName: m.medicationName,
+        dosage: m.dosage,
+        singleDose: m.singleDose,
+        directions: m.frequency,
+        days: m.durationDays,
+      })),
+    }),
 
   /** 처방전 삭제 */
   deletePrescription: (id: string) =>

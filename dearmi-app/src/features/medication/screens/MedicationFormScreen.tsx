@@ -56,6 +56,7 @@ export const MedicationFormScreen: React.FC = () => {
     prescriptionMedicationId,
     drugName: drugNameParam,
     dosage: dosageParam,
+    singleDose: singleDoseParam,
     totalDays: totalDaysParam,
     isFromOcr,
     remainingMeds,
@@ -79,6 +80,7 @@ export const MedicationFormScreen: React.FC = () => {
 
   const [drugName, setDrugName] = useState(drugNameParam ?? '');
   const [dosage, setDosage] = useState(dosageParam ?? '');
+  const [singleDose, setSingleDose] = useState(singleDoseParam ?? '');
   const [drugCategory, setDrugCategory] = useState('');
   const [durationDays, setDurationDays] = useState(
     totalDaysParam !== undefined ? String(totalDaysParam) : ''
@@ -110,6 +112,7 @@ export const MedicationFormScreen: React.FC = () => {
     if (prefill && !drugNameParam) {
       if (prefill.medicationName) setDrugName(prefill.medicationName);
       if (prefill.dosage) setDosage(prefill.dosage);
+      if (prefill.singleDose) setSingleDose(prefill.singleDose);
       if (prefill.durationDays) setDurationDays(String(prefill.durationDays));
     }
   }, [prefill]);
@@ -120,6 +123,7 @@ export const MedicationFormScreen: React.FC = () => {
     if (!isEdit || !existingSchedule || editHydrated) return;
     setDrugName(existingSchedule.drugName ?? '');
     setDosage(existingSchedule.dosage ?? '');
+    setSingleDose(existingSchedule.singleDose ?? '');
     setDrugCategory(existingSchedule.drugCategory ?? '');
     if (existingSchedule.startDate) setStartDate(new Date(existingSchedule.startDate));
     if (existingSchedule.startDate && existingSchedule.endDate) {
@@ -163,6 +167,7 @@ export const MedicationFormScreen: React.FC = () => {
       : undefined,
     drugName: drugName.trim(),
     dosage: dosage.trim() || undefined,
+    singleDose: singleDose.trim() || undefined,
     drugCategory: drugCategory.trim() || undefined,
     startDate: toLocalDateStr(startDate),
     endDate: endDate ? toLocalDateStr(endDate) : undefined,
@@ -221,6 +226,7 @@ export const MedicationFormScreen: React.FC = () => {
         navigation.replace('MedicationForm', {
           drugName: next.drugName,
           dosage: next.dosage,
+          singleDose: next.singleDose,
           totalDays: next.totalDays,
           isFromOcr: true,
           remainingMeds: rest,
@@ -279,13 +285,25 @@ export const MedicationFormScreen: React.FC = () => {
           />
         </View>
 
-        {/* 1회 투약량 */}
+        {/* 용량 */}
         <View style={styles.fieldCard}>
-          <Text style={styles.label}>1회 투약량</Text>
+          <Text style={styles.label}>용량</Text>
           <TextInput
             style={styles.input}
             value={dosage}
             onChangeText={setDosage}
+            placeholder="예: 100mg, 1밀리그램"
+            placeholderTextColor={colors.textDisabled}
+          />
+        </View>
+
+        {/* 1회 투여량 */}
+        <View style={styles.fieldCard}>
+          <Text style={styles.label}>1회 투여량</Text>
+          <TextInput
+            style={styles.input}
+            value={singleDose}
+            onChangeText={setSingleDose}
             placeholder="예: 1정, 0.5정, 5ml"
             placeholderTextColor={colors.textDisabled}
           />

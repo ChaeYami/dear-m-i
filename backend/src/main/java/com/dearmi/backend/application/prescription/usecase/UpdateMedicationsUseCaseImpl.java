@@ -40,6 +40,7 @@ public class UpdateMedicationsUseCaseImpl implements UpdateMedicationsUseCase {
                         .prescriptionId(command.prescriptionId())
                         .drugName(item.drugName())
                         .dosage(item.dosage())
+                        .singleDose(item.singleDose())
                         .directions(item.directions())
                         .days(item.days())
                         .build())

@@ -29,6 +29,7 @@ public class CreateMedicationScheduleUseCaseImpl implements CreateMedicationSche
         // prescriptionMedicationId 있으면 소유권 검증 (④ 원칙) + 약품 정보 pre-fill
         String resolvedDrugName = command.drugName();
         String resolvedDosage = command.dosage();
+        String resolvedSingleDose = command.singleDose();
         java.util.UUID resolvedPrescriptionId = null;
 
         if (command.prescriptionMedicationId() != null) {
@@ -48,6 +49,9 @@ public class CreateMedicationScheduleUseCaseImpl implements CreateMedicationSche
             if (resolvedDosage == null || resolvedDosage.isBlank()) {
                 resolvedDosage = pm.getDosage();
             }
+            if (resolvedSingleDose == null || resolvedSingleDose.isBlank()) {
+                resolvedSingleDose = pm.getSingleDose();
+            }
         }
 
         if (resolvedDrugName == null || resolvedDrugName.isBlank()) {
@@ -60,6 +64,7 @@ public class CreateMedicationScheduleUseCaseImpl implements CreateMedicationSche
                 .prescriptionMedicationId(command.prescriptionMedicationId())
                 .drugName(resolvedDrugName)
                 .dosage(resolvedDosage)
+                .singleDose(resolvedSingleDose)
                 .drugCategory(command.drugCategory())
                 .timesPerDay(command.timesPerDay())
                 .startDate(command.startDate())
