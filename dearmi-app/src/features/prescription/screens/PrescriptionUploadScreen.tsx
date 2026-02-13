@@ -240,7 +240,7 @@ export const PrescriptionUploadScreen: React.FC = () => {
           )}
         </TouchableOpacity>
 
-        {imageAsset && (
+        {imageAsset ? (
           <TouchableOpacity
             style={staticStyles.reSelectBtn}
             onPress={showSourcePicker}
@@ -250,6 +250,28 @@ export const PrescriptionUploadScreen: React.FC = () => {
               다시 선택
             </Text>
           </TouchableOpacity>
+        ) : (
+          /* 사진 미선택 시 인식 팁 */
+          <View style={[staticStyles.tipBox, { backgroundColor: colors.surface, borderColor: colors.divider }]}>
+            <Text style={[staticStyles.tipTitle, { fontFamily: fontFamily.semibold, color: colors.text }]}>
+              이런 정보가 잘 보여야 인식이 잘 돼요
+            </Text>
+            {[
+              { icon: 'business-outline',  text: '병원명' },
+              { icon: 'calendar-outline',  text: '처방일' },
+              { icon: 'medical-outline',   text: '약품명 · 용량 · 복용 방법' },
+              { icon: 'time-outline',      text: '투약 일수' },
+            ].map(({ icon, text }) => (
+              <View key={text} style={staticStyles.tipRow}>
+                <Ionicons name={icon as any} size={15} color={colors.primary} />
+                <Text style={[staticStyles.tipText, { color: colors.textSub }]}>{text}</Text>
+              </View>
+            ))}
+            <View style={[staticStyles.tipDivider, { backgroundColor: colors.divider }]} />
+            <Text style={[staticStyles.tipHint, { color: colors.textDisabled }]}>
+              💡 빛 반사 없이 정면에서 촬영하면 더 정확해요
+            </Text>
+          </View>
         )}
 
         {/* 처방 날짜 선택 */}
@@ -411,5 +433,31 @@ const staticStyles = StyleSheet.create({
   uploadBtnDisabled: { opacity: 0.4 },
   uploadBtnText: {
     fontSize: sizes.font.md,
+  },
+  tipBox: {
+    borderRadius: sizes.radius.lg,
+    borderWidth: 1,
+    paddingHorizontal: sizes.spacing.md,
+    paddingVertical: sizes.spacing.md,
+    gap: sizes.spacing.sm,
+  },
+  tipTitle: {
+    fontSize: sizes.font.sm,
+    marginBottom: 2,
+  },
+  tipRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sizes.spacing.sm,
+  },
+  tipText: {
+    fontSize: sizes.font.sm,
+  },
+  tipDivider: {
+    height: 1,
+    marginVertical: sizes.spacing.xs,
+  },
+  tipHint: {
+    fontSize: sizes.font.xs,
   },
 });
