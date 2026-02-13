@@ -26,6 +26,7 @@ export type MedicationStackParamList = {
     dosage?: string;
     singleDose?: string;
     totalDays?: number;
+    startDate?: string; // 처방일 (YYYY-MM-DD) — OCR 흐름에서 전달
     isFromOcr?: boolean;
     remainingMeds?: OcrMedicationItem[];
   } | undefined;

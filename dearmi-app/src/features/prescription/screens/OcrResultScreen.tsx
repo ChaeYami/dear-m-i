@@ -232,14 +232,30 @@ export const OcrResultScreen: React.FC = () => {
   };
 
   const showMedicationSetupDialog = () => {
-    const validMeds = medications
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // 현재 복약 중인 약만 알림 설정 대상 (처방일 + 투약일수 >= 오늘)
+    const activeMeds = medications
       .filter((m) => m.medicationName.trim())
       .map((m) => ({
         drugName: m.medicationName.trim(),
         dosage: m.dosage.trim() || undefined,
         singleDose: m.singleDose.trim() || undefined,
         totalDays: m.durationDays ? Number(m.durationDays) : undefined,
-      }));
+      }))
+      .filter((m) => {
+        if (!prescribedAt || !m.totalDays) return true; // 날짜/일수 없으면 포함
+        const start = new Date(prescribedAt + 'T00:00:00');
+        const end = new Date(start);
+        end.setDate(end.getDate() + m.totalDays - 1);
+        return end >= today;
+      });
+
+    if (activeMeds.length === 0) {
+      navigation.navigate('PrescriptionList');
+      return;
+    }
 
     customAlert(
       '복약 알림을 설정할까요?',
@@ -253,17 +269,13 @@ export const OcrResultScreen: React.FC = () => {
         {
           text: '설정하기',
           onPress: () => {
-            if (validMeds.length === 0) {
-              navigation.navigate('PrescriptionList');
-              return;
-            }
-            const [first, ...rest] = validMeds;
-            // 같은 MedicationNavigator 스택 안에 있으므로 직접 navigate
+            const [first, ...rest] = activeMeds;
             navigation.navigate('MedicationForm', {
               drugName: first.drugName,
               dosage: first.dosage,
               singleDose: first.singleDose,
               totalDays: first.totalDays,
+              startDate: prescribedAt || undefined,
               isFromOcr: true,
               remainingMeds: rest,
             });

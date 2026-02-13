@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/constants/cacheKeys';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
@@ -236,9 +238,17 @@ export const PrescriptionTab: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const tabBarSafeBottom = useTabBarSafeBottom();
+  const queryClient = useQueryClient();
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
     usePagedPrescriptions();
   const { mutate: deletePrescription } = useDeletePrescription();
+
+  // 포커스될 때마다 목록 새로고침 (OcrResult 저장 후 돌아올 때 등)
+  useFocusEffect(
+    useCallback(() => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.prescriptions() });
+    }, [queryClient])
+  );
 
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
   const shadow = softShadow(colors);

@@ -58,6 +58,7 @@ export const MedicationFormScreen: React.FC = () => {
     dosage: dosageParam,
     singleDose: singleDoseParam,
     totalDays: totalDaysParam,
+    startDate: startDateParam,
     isFromOcr,
     remainingMeds,
   } = params;
@@ -104,7 +105,10 @@ export const MedicationFormScreen: React.FC = () => {
   });
   const [showTimePicker, setShowTimePicker] = useState<TimeSlotType | null>(null);
 
-  const [startDate, setStartDate] = useState(new Date());
+  const [startDate, setStartDate] = useState(() => {
+    if (startDateParam) return new Date(startDateParam + 'T00:00:00');
+    return new Date();
+  });
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   // API pre-fill 적용 (직접 파라미터 없을 때만)
@@ -215,6 +219,14 @@ export const MedicationFormScreen: React.FC = () => {
     }
   };
 
+  /** OCR 흐름: 마지막 약 저장 후 처방전 목록으로 */
+  const handleSaveAndFinish = () => {
+    if (!validate()) return;
+    create(buildPayload(), {
+      onSuccess: () => navigation.navigate('PrescriptionList'),
+    });
+  };
+
   /** OCR 흐름: 저장 후 다음 약품으로 이동 */
   const handleSaveAndNext = () => {
     if (!validate()) return;
@@ -228,6 +240,7 @@ export const MedicationFormScreen: React.FC = () => {
           dosage: next.dosage,
           singleDose: next.singleDose,
           totalDays: next.totalDays,
+          startDate: startDateParam,
           isFromOcr: true,
           remainingMeds: rest,
         });
@@ -243,6 +256,7 @@ export const MedicationFormScreen: React.FC = () => {
 
   const nextMed = remainingMeds?.[0];
   const showNextButton = isFromOcr && nextMed;
+  const showFinishButton = isFromOcr && !nextMed;
 
   const styles = getStyles(colors);
 
@@ -410,22 +424,24 @@ export const MedicationFormScreen: React.FC = () => {
           )}
         </View>
 
-        {/* 저장 버튼 (full-width pill gradient) */}
-        <AnimatedPressable onPress={handleSave} disabled={isPending}>
-          <LinearGradient
-            colors={[colors.primaryVivid, colors.primaryVividDark]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={[styles.saveBtn, isPending && styles.saveBtnDisabled]}
-          >
-            <Text style={styles.saveBtnText}>
-              {isPending ? '저장 중...' : '저장하기'}
-            </Text>
-          </LinearGradient>
-        </AnimatedPressable>
+        {/* 저장 버튼 — OCR 흐름이 아닐 때만 스크롤 내 표시 */}
+        {!isFromOcr && (
+          <AnimatedPressable onPress={handleSave} disabled={isPending}>
+            <LinearGradient
+              colors={[colors.primaryVivid, colors.primaryVividDark]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={[styles.saveBtn, isPending && styles.saveBtnDisabled]}
+            >
+              <Text style={styles.saveBtnText}>
+                {isPending ? '저장 중...' : '저장하기'}
+              </Text>
+            </LinearGradient>
+          </AnimatedPressable>
+        )}
       </ScrollView>
 
-      {/* 다음 약품 버튼 (OCR 흐름) */}
+      {/* OCR 흐름: 다음 약품 버튼 */}
       {showNextButton && (
         <View style={styles.nextBtnWrap}>
           <AnimatedPressable onPress={handleSaveAndNext} disabled={isPending}>
@@ -437,6 +453,24 @@ export const MedicationFormScreen: React.FC = () => {
             >
               <Text style={styles.nextBtnText}>
                 {isPending ? '저장 중...' : `다음: ${nextMed.drugName} 설정하기 \u2192`}
+              </Text>
+            </LinearGradient>
+          </AnimatedPressable>
+        </View>
+      )}
+
+      {/* OCR 흐름: 마지막 약 저장 버튼 */}
+      {showFinishButton && (
+        <View style={styles.nextBtnWrap}>
+          <AnimatedPressable onPress={handleSaveAndFinish} disabled={isPending}>
+            <LinearGradient
+              colors={[colors.primaryVivid, colors.primaryVividDark]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={[styles.nextBtn, isPending && styles.nextBtnDisabled]}
+            >
+              <Text style={styles.nextBtnText}>
+                {isPending ? '저장 중...' : '저장하기'}
               </Text>
             </LinearGradient>
           </AnimatedPressable>
