@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,7 @@ import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { SectionTitle } from '@/shared/components/SectionTitle';
-import { useCreateSchedule, useUpdateSchedule } from '@/features/schedule/hooks/useSchedule';
+import { useCreateSchedule, useUpdateSchedule, useAllSchedules } from '@/features/schedule/hooks/useSchedule';
 import { useUnsavedChangesWarning } from '@/shared/hooks/useUnsavedChangesWarning';
 import type { ScheduleStackParamList } from '@/navigation/ScheduleNavigator';
 
@@ -50,10 +50,40 @@ export const ScheduleFormScreen: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(initialDate);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [hospitalFocused, setHospitalFocused] = useState(false);
+
+  const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { mutate: createSchedule, isPending: isCreating } = useCreateSchedule();
   const { mutate: updateSchedule, isPending: isUpdating } = useUpdateSchedule();
   const isPending = isCreating || isUpdating;
+
+  // 자동완성용: 기존 일정에서 병원명 목록 추출
+  const { data: allSchedules = [] } = useAllSchedules();
+  const knownHospitals = useMemo(() => {
+    const names = allSchedules
+      .map((s) => s.hospitalName)
+      .filter((n): n is string => Boolean(n));
+    return [...new Set(names)];
+  }, [allSchedules]);
+
+  const suggestions = useMemo(() => {
+    if (!hospitalFocused || !hospitalName.trim()) return [];
+    const q = hospitalName.trim().toLowerCase();
+    return knownHospitals.filter(
+      (n) => n.toLowerCase().includes(q) && n.toLowerCase() !== hospitalName.toLowerCase()
+    );
+  }, [hospitalFocused, hospitalName, knownHospitals]);
+
+  const handleHospitalBlur = () => {
+    blurTimer.current = setTimeout(() => setHospitalFocused(false), 150);
+  };
+
+  const handleSuggestionPress = (name: string) => {
+    if (blurTimer.current) clearTimeout(blurTimer.current);
+    setHospitalName(name);
+    setHospitalFocused(false);
+  };
 
   // 변경사항 추적 → 이탈 경고
   const isDirty =
@@ -63,7 +93,6 @@ export const ScheduleFormScreen: React.FC = () => {
     selectedDate.getTime() !== initialDate.getTime();
 
   const { markSavedAndExit } = useUnsavedChangesWarning({ isDirty });
-
 
   const handleSave = () => {
     if (!hospitalName.trim()) {
@@ -118,13 +147,37 @@ export const ScheduleFormScreen: React.FC = () => {
           <SectionTitle size="sm">병원 정보</SectionTitle>
           <View style={styles.sectionFields}>
             <Field label="병원명" required colors={colors}>
-              <TextInput
-                style={[styles.input, { backgroundColor: 'transparent', borderColor: colors.divider, color: colors.text }]}
-                placeholder="병원 이름을 입력하세요"
-                placeholderTextColor={colors.textDisabled}
-                value={hospitalName}
-                onChangeText={setHospitalName}
-              />
+              {/* 자동완성 래퍼 */}
+              <View style={styles.autocompleteWrap}>
+                <TextInput
+                  style={[styles.input, { backgroundColor: 'transparent', borderColor: colors.divider, color: colors.text }]}
+                  placeholder="병원 이름을 입력하세요"
+                  placeholderTextColor={colors.textDisabled}
+                  value={hospitalName}
+                  onChangeText={setHospitalName}
+                  onFocus={() => setHospitalFocused(true)}
+                  onBlur={handleHospitalBlur}
+                />
+                {suggestions.length > 0 && (
+                  <View style={[styles.suggestionList, { backgroundColor: colors.surface, borderColor: colors.divider }]}>
+                    {suggestions.map((name, idx) => (
+                      <TouchableOpacity
+                        key={name}
+                        style={[
+                          styles.suggestionItem,
+                          idx < suggestions.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.divider },
+                        ]}
+                        onPress={() => handleSuggestionPress(name)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={[styles.suggestionText, { color: colors.text, fontFamily: fontFamily.regular }]}>
+                          {name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </View>
             </Field>
 
             <Field label="담당 선생님 (선택)" colors={colors}>
@@ -271,6 +324,29 @@ const styles = StyleSheet.create({
     paddingVertical: sizes.spacing.sm,
   },
   pickerDoneText: {
+    fontSize: sizes.font.md,
+  },
+  // 자동완성
+  autocompleteWrap: {
+    zIndex: 10,
+  },
+  suggestionList: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    borderWidth: 1,
+    borderRadius: sizes.radius.md,
+    marginTop: 2,
+    zIndex: 10,
+    elevation: 4,
+    overflow: 'hidden',
+  },
+  suggestionItem: {
+    paddingHorizontal: sizes.spacing.md,
+    paddingVertical: sizes.spacing.md,
+  },
+  suggestionText: {
     fontSize: sizes.font.md,
   },
 });
