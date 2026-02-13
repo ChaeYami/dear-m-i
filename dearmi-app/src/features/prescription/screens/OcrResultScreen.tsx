@@ -140,6 +140,7 @@ const MedicationRow: React.FC<{
         keyboardType="numeric"
       />
     </View>
+  </View>
 );
 
 // ─── 메인 화면 ────────────────────────────────────────────────────────────────
