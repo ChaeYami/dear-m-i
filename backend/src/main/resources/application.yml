@@ -79,7 +79,7 @@ drug-info:
 # Gemini API 설정 (처방전 OCR)
 gemini:
   api-key: ${GEMINI_API_KEY}
-  api-url: https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent
+  api-url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
 
 # 암호화 설정 (상담 기록 content AES-256-GCM)
 encryption:
