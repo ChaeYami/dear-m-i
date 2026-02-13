@@ -290,7 +290,7 @@ export const PrescriptionUploadScreen: React.FC = () => {
               {`${prescribedDate.getFullYear()}년 ${prescribedDate.getMonth() + 1}월 ${prescribedDate.getDate()}일`}
             </Text>
           </TouchableOpacity>
-          <Text style={[staticStyles.dateHint, { color: colors.textDisabled }]}>
+          <Text style={[staticStyles.dateHint, { color: colors.textSub }]}>
             사진을 등록하면 날짜가 자동으로 선택됩니다
           </Text>
           <DatePickerModal

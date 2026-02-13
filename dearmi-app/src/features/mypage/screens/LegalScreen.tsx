@@ -15,6 +15,276 @@ const KIND_KEY: Record<string, string> = {
   licenses: 'legal_licenses',
 };
 
+// ─── 개인정보처리방침 섹션 데이터 ──────────────────────────────────────────────
+
+interface LegalSection {
+  title: string;
+  body: string;
+}
+
+const PRIVACY_SECTIONS: LegalSection[] = [
+  {
+    title: '제1조(목적)',
+    body: `Chaeyeon(이하 '회사'라고 함)는 회사가 제공하고자 하는 서비스(이하 '회사 서비스')를 이용하는 개인(이하 '이용자' 또는 '개인')의 정보(이하 '개인정보')를 보호하기 위해, 개인정보보호법, 정보통신망 이용촉진 및 정보보호 등에 관한 법률(이하 '정보통신망법') 등 관련 법령을 준수하고, 서비스 이용자의 개인정보 보호 관련한 고충을 신속하고 원활하게 처리할 수 있도록 하기 위하여 다음과 같이 개인정보처리방침(이하 '본 방침')을 수립합니다.`,
+  },
+  {
+    title: '제2조(개인정보 처리의 원칙)',
+    body: `개인정보 관련 법령 및 본 방침에 따라 회사는 이용자의 개인정보를 수집할 수 있으며 수집된 개인정보는 개인의 동의가 있는 경우에 한해 제3자에게 제공될 수 있습니다. 단, 법령의 규정 등에 의해 적법하게 강제되는 경우 회사는 수집한 이용자의 개인정보를 사전에 개인의 동의 없이 제3자에게 제공할 수도 있습니다.`,
+  },
+  {
+    title: '제3조(본 방침의 공개)',
+    body: `① 회사는 이용자가 언제든지 쉽게 본 방침을 확인할 수 있도록 회사 홈페이지 첫 화면 또는 첫 화면과의 연결화면을 통해 본 방침을 공개하고 있습니다.\n\n② 회사는 제1항에 따라 본 방침을 공개하는 경우 글자 크기, 색상 등을 활용하여 이용자가 본 방침을 쉽게 확인할 수 있도록 합니다.`,
+  },
+  {
+    title: '제4조(본 방침의 변경)',
+    body: `① 본 방침은 개인정보 관련 법령, 지침, 고시 또는 정부나 회사 서비스의 정책이나 내용의 변경에 따라 개정될 수 있습니다.\n\n② 회사는 제1항에 따라 본 방침을 개정하는 경우 다음 각 호 하나 이상의 방법으로 공지합니다.\n가. 회사가 운영하는 인터넷 홈페이지의 첫 화면의 공지사항란 또는 별도의 창을 통하여 공지하는 방법\n나. 서면·모사전송·전자우편 또는 이와 비슷한 방법으로 이용자에게 공지하는 방법\n\n③ 회사는 제2항의 공지는 본 방침 개정의 시행일로부터 최소 7일 이전에 공지합니다. 다만, 이용자 권리의 중요한 변경이 있을 경우에는 최소 30일 전에 공지합니다.`,
+  },
+  {
+    title: '제5조(회원 가입을 위한 정보)',
+    body: `회사는 이용자의 회사 서비스에 대한 회원가입을 위하여 다음과 같은 정보를 수집합니다.\n\n필수 수집 정보: 이메일 주소`,
+  },
+  {
+    title: '제6조(결제 서비스를 위한 정보)',
+    body: `회사는 이용자에게 회사의 결제 서비스 제공을 위하여 다음과 같은 정보를 수집합니다.\n\n필수 수집 정보: 카드번호, 카드비밀번호 및 유효기간`,
+  },
+  {
+    title: '제7조(개인정보 수집 방법)',
+    body: `회사는 다음과 같은 방법으로 이용자의 개인정보를 수집합니다.\n\n① 이용자가 회사의 홈페이지에 자신의 개인정보를 입력하는 방식\n\n② 어플리케이션 등 회사가 제공하는 홈페이지 외의 서비스를 통해 이용자가 자신의 개인정보를 입력하는 방식\n\n③ 이용자가 고객센터의 상담, 게시판에서의 활동 등 회사의 서비스를 이용하는 과정에서 이용자가 입력하는 방식`,
+  },
+  {
+    title: '제8조(개인정보의 이용)',
+    body: `회사는 개인정보를 다음 각 호의 경우에 이용합니다.\n\n① 공지사항의 전달 등 회사운영에 필요한 경우\n\n② 이용문의에 대한 회신, 불만의 처리 등 이용자에 대한 서비스 개선을 위한 경우\n\n③ 회사의 서비스를 제공하기 위한 경우\n\n④ 법령 및 회사 약관을 위반하는 회원에 대한 이용 제한 조치, 부정 이용 행위를 포함하여 서비스의 원활한 운영에 지장을 주는 행위에 대한 방지 및 제재를 위한 경우\n\n⑤ 인구통계학적 분석, 서비스 방문 및 이용기록의 분석을 위한 경우`,
+  },
+  {
+    title: '제9조(개인정보의 처리 위탁)',
+    body: `회사는 원활한 서비스 제공과 효과적인 업무를 처리하기 위하여 다음 각 호와 같이 개인정보를 처리 위탁하고 있습니다.\n\n① Amazon Web Services (AWS): 서버 인프라 운영, 데이터 저장 및 처리 — 회원 탈퇴 시 또는 위탁 계약 종료 시까지\n\n② Google Firebase: 푸시 알림 발송 — 회원 탈퇴 시 또는 위탁 계약 종료 시까지\n\n③ 토스페이먼츠: 결제 처리 — 회원 탈퇴 시 또는 위탁 계약 종료 시까지\n\n④ Anthropic: 처방전 이미지 OCR 분석 — 처리 완료 즉시 삭제`,
+  },
+  {
+    title: '제10조(개인정보의 보유 및 이용기간)',
+    body: `① 회사는 이용자의 개인정보에 대해 개인정보의 수집·이용 목적 달성을 위한 기간 동안 개인정보를 보유 및 이용합니다.\n\n② 전항에도 불구하고 회사는 내부 방침에 의해 서비스 부정이용기록은 부정 가입 및 이용 방지를 위하여 회원 탈퇴 시점으로부터 최대 1년간 보관합니다.`,
+  },
+  {
+    title: '제11조(법령에 따른 개인정보의 보유 및 이용기간)',
+    body: `회사는 관계법령에 따라 다음과 같이 개인정보를 보유 및 이용합니다.\n\n① 전자상거래 등에서의 소비자보호에 관한 법률\n가. 계약 또는 청약철회 등에 관한 기록: 5년\n나. 대금결제 및 재화 등의 공급에 관한 기록: 5년\n다. 소비자의 불만 또는 분쟁처리에 관한 기록: 3년\n라. 표시·광고에 관한 기록: 6개월\n\n② 통신비밀보호법\n가. 웹사이트 로그 기록 자료: 3개월\n\n③ 전자금융거래법\n가. 전자금융거래에 관한 기록: 5년\n\n④ 위치정보의 보호 및 이용 등에 관한 법률\n가. 개인위치정보에 관한 기록: 6개월`,
+  },
+  {
+    title: '제12조(개인정보의 파기원칙)',
+    body: `회사는 원칙적으로 이용자의 개인정보 처리 목적의 달성, 보유·이용기간의 경과 등 개인정보가 필요하지 않을 경우에는 해당 정보를 지체 없이 파기합니다.`,
+  },
+  {
+    title: '제13조(개인정보파기절차)',
+    body: `① 이용자가 회원가입 등을 위해 입력한 정보는 개인정보 처리 목적이 달성된 후 별도의 DB로 옮겨져(종이의 경우 별도의 서류함) 내부 방침 및 기타 관련 법령에 의한 정보보호 사유에 따라 일정 기간 저장된 후 파기됩니다.\n\n② 회사는 파기 사유가 발생한 개인정보를 개인정보보호 책임자의 승인절차를 거쳐 파기합니다.`,
+  },
+  {
+    title: '제14조(개인정보파기방법)',
+    body: `회사는 전자적 파일형태로 저장된 개인정보는 기록을 재생할 수 없는 기술적 방법을 사용하여 삭제하며, 종이로 출력된 개인정보는 분쇄기로 분쇄하거나 소각 등을 통하여 파기합니다.`,
+  },
+  {
+    title: '제15조(광고성 정보의 전송 조치)',
+    body: `① 회사는 전자적 전송매체를 이용하여 영리목적의 광고성 정보를 전송하는 경우 이용자의 명시적인 사전동의를 받습니다. 다만, 다음 각호 어느 하나에 해당하는 경우에는 사전 동의를 받지 않습니다.\n가. 거래관계를 통하여 수신자로부터 직접 연락처를 수집한 경우, 거래가 종료된 날로부터 6개월 이내에 동종의 재화 등에 대한 광고성 정보를 전송하려는 경우\n나. 「방문판매 등에 관한 법률」에 따른 전화권유판매자가 육성으로 수신자에게 개인정보의 수집출처를 고지하고 전화권유를 하는 경우\n\n② 회사는 수신자가 수신거부의사를 표시하거나 사전 동의를 철회한 경우에는 영리목적의 광고성 정보를 전송하지 않으며 수신거부 및 수신동의의 철회에 대한 처리 결과를 알립니다.\n\n③ 회사는 오후 9시부터 그다음 날 오전 8시까지의 시간에 전자적 전송매체를 이용하여 영리목적의 광고성 정보를 전송하는 경우에는 그 수신자로부터 별도의 사전 동의를 받습니다.`,
+  },
+  {
+    title: '제16조(아동의 개인정보보호)',
+    body: `① 회사는 만 14세 미만 아동의 개인정보 보호를 위하여 만 14세 이상의 이용자에 한하여 회원가입을 허용합니다.\n\n② 제1항에도 불구하고 회사는 이용자가 만 14세 미만의 아동일 경우에는, 그 아동의 법정대리인으로부터 개인정보 수집·이용·제공 등의 동의를 받습니다.\n\n③ 제2항의 경우 회사는 그 법정대리인의 이름, 생년월일, 성별, 중복가입확인정보(ID), 휴대폰 번호 등을 추가로 수집합니다.`,
+  },
+  {
+    title: '제17조(개인정보 조회 및 수집동의의 철회)',
+    body: `① 이용자 및 법정 대리인은 언제든지 등록되어 있는 자신의 개인정보를 조회하거나 수정할 수 있으며 개인정보수집 동의의 철회를 요청할 수 있습니다.\n\n② 이용자 및 법정 대리인은 자신의 가입정보 수집 등에 대한 동의를 철회하기 위해서는 개인정보보호책임자 또는 담당자에게 서면, 전화 또는 전자우편주소로 연락하시면 회사는 지체 없이 조치하겠습니다.`,
+  },
+  {
+    title: '제18조(개인정보 정보변경 등)',
+    body: `① 이용자는 회사에게 전조의 방법을 통해 개인정보의 오류에 대한 정정을 요청할 수 있습니다.\n\n② 회사는 전항의 경우에 개인정보의 정정을 완료하기 전까지는 개인정보를 이용 또는 제공하지 않으며 잘못된 개인정보를 제3자에게 이미 제공한 경우에는 정정 처리결과를 제3자에게 지체 없이 통지하여 정정이 이루어지도록 하겠습니다.`,
+  },
+  {
+    title: '제19조(이용자의 의무)',
+    body: `① 이용자는 자신의 개인정보를 최신의 상태로 유지해야 하며, 이용자의 부정확한 정보 입력으로 발생하는 문제의 책임은 이용자 자신에게 있습니다.\n\n② 타인의 개인정보를 도용한 회원가입의 경우 이용자 자격을 상실하거나 관련 개인정보보호 법령에 의해 처벌받을 수 있습니다.\n\n③ 이용자는 전자우편주소, 비밀번호 등에 대한 보안을 유지할 책임이 있으며 제3자에게 이를 양도하거나 대여할 수 없습니다.`,
+  },
+  {
+    title: '제20조(회사의 개인정보 관리)',
+    body: `회사는 이용자의 개인정보를 처리함에 있어 개인정보가 분실, 도난, 유출, 변조, 훼손 등이 되지 아니하도록 안전성을 확보하기 위하여 필요한 기술적·관리적 보호대책을 강구하고 있습니다.`,
+  },
+  {
+    title: '제21조(삭제된 정보의 처리)',
+    body: `회사는 이용자 혹은 법정 대리인의 요청에 의해 해지 또는 삭제된 개인정보는 "개인정보의 보유 및 이용기간"에 명시된 바에 따라 처리하고 그 외의 용도로 열람 또는 이용할 수 없도록 처리하고 있습니다.`,
+  },
+  {
+    title: '제22조(비밀번호의 암호화)',
+    body: `이용자의 비밀번호는 일방향 암호화하여 저장 및 관리되고 있으며, 개인정보의 확인, 변경은 비밀번호를 알고 있는 본인에 의해서만 가능합니다.`,
+  },
+  {
+    title: '제23조(해킹 등에 대비한 대책)',
+    body: `① 회사는 해킹, 컴퓨터 바이러스 등 정보통신망 침입에 의해 이용자의 개인정보가 유출되거나 훼손되는 것을 막기 위해 최선을 다하고 있습니다.\n\n② 회사는 최신 백신프로그램을 이용하여 이용자들의 개인정보나 자료가 유출 또는 손상되지 않도록 방지하고 있습니다.\n\n③ 회사는 만일의 사태에 대비하여 침입차단 시스템을 이용하여 보안에 최선을 다하고 있습니다.\n\n④ 회사는 민감한 개인정보를 암호화 통신 등을 통하여 네트워크상에서 안전하게 전송할 수 있도록 하고 있습니다.`,
+  },
+  {
+    title: '제24조(개인정보 처리 최소화 및 교육)',
+    body: `회사는 개인정보 관련 처리 담당자를 최소한으로 제한하며, 개인정보 처리자에 대한 교육 등 관리적 조치를 통해 법령 및 내부방침 등의 준수를 강조하고 있습니다.`,
+  },
+  {
+    title: '제25조(개인정보 유출 등에 대한 조치)',
+    body: `회사는 개인정보의 분실·도난·유출 사실을 안 때에는 지체 없이 다음 각 호의 모든 사항을 해당 이용자에게 알리고 방송통신위원회 또는 한국인터넷진흥원에 신고합니다.\n\n① 유출 등이 된 개인정보 항목\n② 유출 등이 발생한 시점\n③ 이용자가 취할 수 있는 조치\n④ 정보통신서비스 제공자 등의 대응 조치\n⑤ 이용자가 상담 등을 접수할 수 있는 부서 및 연락처`,
+  },
+  {
+    title: '제26조(개인정보 유출 등에 대한 조치의 예외)',
+    body: `회사는 전조에도 불구하고 이용자의 연락처를 알 수 없는 등 정당한 사유가 있는 경우에는 회사의 홈페이지에 30일 이상 게시하는 방법으로 전조의 통지를 갈음하는 조치를 취할 수 있습니다.`,
+  },
+  {
+    title: '제27조(국외 이전 개인정보의 보호)',
+    body: `① 회사는 이용자의 개인정보에 관하여 개인정보보호법 등 관계 법규를 위반하는 사항을 내용으로 하는 국제계약을 체결하지 않습니다.\n\n② 회사는 이용자의 개인정보를 국외에 제공·처리위탁·보관하려면 이용자의 동의를 받습니다. 다만, 관계 법규에 따라 공개하거나 이용자에게 알린 경우에는 개인정보 처리위탁·보관에 따른 동의절차를 거치지 아니할 수 있습니다.\n\n③ 회사는 본조 제2항 본문에 따른 동의를 받으려면 미리 다음 각 호의 사항 모두를 이용자에게 고지합니다.\n가. 이전되는 개인정보 항목\n나. 개인정보가 이전되는 국가, 이전일시 및 이전방법\n다. 개인정보를 이전받는 자의 성명(법인인 경우 그 명칭 및 정보관리 책임자의 연락처)\n라. 개인정보를 이전받는 자의 개인정보 이용목적 및 보유·이용 기간`,
+  },
+  {
+    title: '제28조(개인정보 자동 수집 장치의 설치·운영 및 거부에 관한 사항)',
+    body: `① 회사는 이용자에게 개별적인 맞춤서비스를 제공하기 위해 이용 정보를 저장하고 수시로 불러오는 개인정보 자동 수집장치(이하 '쿠키')를 사용합니다. 쿠키는 웹사이트를 운영하는데 이용되는 서버(http)가 이용자의 웹브라우저에게 보내는 소량의 정보이며 이용자의 저장공간에 저장되기도 합니다.\n\n② 이용자는 쿠키 설치에 대한 선택권을 가지고 있습니다. 따라서 이용자는 웹브라우저에서 옵션을 설정함으로써 모든 쿠키를 허용하거나, 쿠키가 저장될 때마다 확인을 거치거나, 아니면 모든 쿠키의 저장을 거부할 수도 있습니다.\n\n③ 다만, 쿠키의 저장을 거부할 경우에는 로그인이 필요한 회사의 일부 서비스는 이용에 어려움이 있을 수 있습니다.`,
+  },
+  {
+    title: '제29조(쿠키 설치 허용 지정 방법)',
+    body: `웹브라우저 옵션 설정을 통해 쿠키 허용, 쿠키 차단 등의 설정을 할 수 있습니다.\n\nEdge: 웹브라우저 우측 상단의 설정 메뉴 > 쿠키 및 사이트 권한 > 쿠키 및 사이트 데이터 관리 및 삭제\nChrome: 웹브라우저 우측 상단의 설정 메뉴 > 개인정보 및 보안 > 쿠키 및 기타 사이트 데이터\nWhale: 웹브라우저 우측 상단의 설정 메뉴 > 개인정보 보호 > 쿠키 및 기타 사이트 데이터`,
+  },
+  {
+    title: '제30조(회사의 개인정보 보호 책임자 지정)',
+    body: `회사는 이용자의 개인정보를 보호하고 개인정보와 관련한 불만을 처리하기 위하여 아래와 같이 관련 부서 및 개인정보 보호 책임자를 지정하고 있습니다.\n\n개인정보 보호 책임자\n이메일: yamisupport@gmail.com`,
+  },
+  {
+    title: '제31조(권익침해에 대한 구제방법)',
+    body: `① 정보주체는 개인정보침해로 인한 구제를 받기 위하여 개인정보분쟁조정위원회, 한국인터넷진흥원 개인정보침해신고센터 등에 분쟁해결이나 상담 등을 신청할 수 있습니다.\n가. 개인정보분쟁조정위원회: (국번없이) 1833-6972 (www.kopico.go.kr)\n나. 개인정보침해신고센터: (국번없이) 118 (privacy.kisa.or.kr)\n다. 대검찰청: (국번없이) 1301 (www.spo.go.kr)\n라. 경찰청: (국번없이) 182 (ecrm.cyber.go.kr)\n\n② 회사는 정보주체의 개인정보자기결정권을 보장하고, 개인정보침해로 인한 상담 및 피해 구제를 위해 노력하고 있으며, 신고나 상담이 필요한 경우 제1항의 담당부서로 연락해주시기 바랍니다.\n\n③ 개인정보 보호법 제35조·제36조·제37조의 규정에 의한 요구에 대하여 공공기관의 장이 행한 처분 또는 부작위로 인하여 권리 또는 이익의 침해를 받은 자는 행정심판법이 정하는 바에 따라 행정심판을 청구할 수 있습니다.\n가. 중앙행정심판위원회: (국번없이) 110 (www.simpan.go.kr)`,
+  },
+];
+
+const PRIVACY_ADDENDUM = '본 방침은 2026년 4월 16일부터 시행됩니다.';
+
+// ─── 서비스 이용약관 섹션 데이터 ───────────────────────────────────────────────
+
+const TERMS_SECTIONS: LegalSection[] = [
+  {
+    title: '제1조(목적)',
+    body: `이 약관은 Chaeyeon(이하 '회사'라고 함)이 제공하는 DearMI 서비스(이하 '서비스')의 이용과 관련하여 회사와 이용자 간의 권리·의무 및 책임사항, 서비스 이용 조건 및 절차 등 기본적인 사항을 규정함을 목적으로 합니다.`,
+  },
+  {
+    title: '제2조(용어의 정의)',
+    body: `이 약관에서 사용하는 용어의 정의는 다음과 같습니다.\n\n① '서비스'란 회사가 제공하는 DearMI 애플리케이션 및 이와 관련된 모든 기능을 말합니다.\n\n② '이용자'란 이 약관에 따라 회사가 제공하는 서비스를 이용하는 회원 및 비회원을 말합니다.\n\n③ '회원'이란 회사와 이용계약을 체결하고 서비스를 이용하는 자를 말합니다.\n\n④ '무료 플랜'이란 별도의 구독 비용 없이 이용 가능한 기본 서비스를 말합니다.\n\n⑤ '프리미엄 플랜'이란 유료 구독을 통해 이용 가능한 확장 서비스를 말합니다.\n\n⑥ '콘텐츠'란 회원이 서비스를 이용하면서 입력·저장하는 진료 기록, 처방전, 복약 일정, 감정 체크인 등 모든 데이터를 말합니다.`,
+  },
+  {
+    title: '제3조(약관의 게시와 개정)',
+    body: `① 회사는 이 약관의 내용을 이용자가 쉽게 알 수 있도록 서비스 초기 화면 또는 연결화면을 통하여 게시합니다.\n\n② 회사는 관련 법령을 위반하지 않는 범위에서 이 약관을 개정할 수 있습니다.\n\n③ 회사가 약관을 개정하는 경우 적용 일자 및 개정 사유를 명시하여 현행 약관과 함께 서비스 내 공지사항 또는 개별 알림을 통해 적용 일자 7일 전부터 공지합니다. 다만, 이용자에게 불리한 약관 변경의 경우 30일 전에 공지합니다.\n\n④ 이용자가 개정된 약관의 적용에 동의하지 않는 경우 이용 계약을 해지할 수 있습니다. 개정 약관 시행 이후에도 서비스를 계속 이용하는 경우 개정 약관에 동의한 것으로 봅니다.`,
+  },
+  {
+    title: '제4조(이용계약의 성립)',
+    body: `① 이용계약은 이용자가 약관의 내용에 동의한 후 서비스 가입 신청을 하고 회사가 이를 승낙함으로써 성립합니다.\n\n② 회사는 소셜 로그인(Google, Apple)을 통한 회원가입을 지원합니다.\n\n③ 회사는 다음 각 호의 경우 회원가입 신청을 거부하거나 사후에 이용계약을 해지할 수 있습니다.\n가. 타인의 명의나 정보를 도용한 경우\n나. 만 14세 미만인 자가 신청한 경우\n다. 이전에 이용계약이 해지된 자가 재가입을 신청한 경우\n라. 기타 관련 법령이나 이 약관에 위반하여 신청한 경우`,
+  },
+  {
+    title: '제5조(서비스의 제공 및 변경)',
+    body: `① 회사는 다음과 같은 서비스를 제공합니다.\n가. 정신건강의학과·심리상담 진료 일정 관리 및 기록\n나. 처방전 등록 및 OCR 자동 인식\n복약 일정 관리 및 복약 알림\n다. 감정 체크인 및 기록\n라. 진료 준비 메모 작성\n마. 데이터 내보내기(PDF)\n바. 기타 회사가 추가 개발하거나 제휴를 통해 제공하는 서비스\n\n② 무료 플랜과 프리미엄 플랜은 제공 기능이 다를 수 있으며, 각 플랜의 세부 내용은 서비스 내 안내를 통해 확인할 수 있습니다.\n\n③ 회사는 서비스의 내용·운영 방식을 변경할 경우 변경 사유, 변경 내용 및 제공 일자를 사전에 공지합니다.`,
+  },
+  {
+    title: '제6조(서비스의 중단)',
+    body: `① 회사는 컴퓨터 등 정보통신설비의 보수점검, 교체 및 고장, 통신의 두절 등의 사유가 발생한 경우에는 서비스의 제공을 일시적으로 중단할 수 있습니다.\n\n② 회사는 제1항의 사유로 서비스 제공이 일시적으로 중단됨으로 인하여 이용자 또는 제3자가 입은 손해에 대하여 배상하지 않습니다. 단, 회사에 고의 또는 중과실이 있는 경우에는 그러하지 않습니다.\n\n③ 사업 종목의 전환, 사업 포기, 업체 간 통합 등의 이유로 서비스를 제공할 수 없게 되는 경우에는 회사는 이용자에게 사전 통지하고 서비스 종료에 따른 조치를 취합니다.`,
+  },
+  {
+    title: '제7조(회원정보의 관리)',
+    body: `① 회원은 소셜 계정 및 서비스 내 정보를 최신 상태로 유지해야 하며, 부정확한 정보로 인한 불이익은 회원 본인이 책임집니다.\n\n② 회원은 소셜 계정의 보안을 철저히 관리해야 하며, 타인에게 양도하거나 대여할 수 없습니다.\n\n③ 회원은 소셜 계정의 도용 또는 제3자 사용을 인지한 즉시 회사에 통보하고 회사의 안내에 따라야 합니다.`,
+  },
+  {
+    title: '제8조(이용자의 의무)',
+    body: `이용자는 다음 각 호의 행위를 해서는 안 됩니다.\n\n① 신청 또는 변경 시 허위 내용을 등록하는 행위\n② 회사의 서비스에 게시된 정보를 변경하거나 서비스를 이용하여 얻은 정보를 회사의 사전 승낙 없이 복제, 출판, 방송 등에 이용하거나 제3자에게 제공하는 행위\n③ 회사와 기타 제3자의 저작권 등 지식재산권을 침해하는 행위\n④ 회사 및 기타 제3자의 명예를 훼손하거나 업무를 방해하는 행위\n⑤ 외설 또는 폭력적인 정보를 서비스에 공개 또는 게시하는 행위\n⑥ 해킹, 악성코드 배포 등 서비스의 안정적 운영을 방해하는 행위\n⑦ 관련 법령, 이 약관 및 회사의 정책을 위반하는 행위`,
+  },
+  {
+    title: '제9조(회사의 의무)',
+    body: `① 회사는 관련 법령과 이 약관이 금지하거나 미풍양속에 반하는 행위를 하지 않으며, 지속적·안정적으로 서비스를 제공하기 위하여 최선을 다합니다.\n\n② 회사는 이용자의 개인정보(건강 관련 데이터 포함)를 안전하게 처리하기 위한 보안 시스템을 갖추고 개인정보처리방침을 공시하고 준수합니다.\n\n③ 회사는 서비스 이용과 관련하여 이용자로부터 제기된 의견이나 불만이 정당하다고 인정할 경우 이를 처리하며, 처리 결과는 이메일(yamisupport@gmail.com) 등을 통해 이용자에게 전달합니다.`,
+  },
+  {
+    title: '제10조(유료서비스 및 결제)',
+    body: `① 회사는 프리미엄 플랜을 포함한 유료 서비스를 제공할 수 있으며, 유료 서비스 이용을 원하는 이용자는 회사가 정한 요금을 납부해야 합니다.\n\n② 결제 수단은 다음과 같습니다.\n가. iOS: Apple App Store 인앱결제(IAP)\n나. Android: Google Play 인앱결제 또는 토스페이먼츠 결제\n\n③ 유료 서비스의 요금 및 구독 갱신 주기 등 세부 사항은 서비스 내 결제 화면에 명시되며, 결제 전 이용자가 확인할 수 있도록 제공합니다.\n\n④ 정기구독 서비스는 이용자가 구독을 직접 해지하지 않는 한 자동으로 갱신됩니다. 자동갱신 취소는 App Store 또는 Google Play의 구독 관리 화면에서 직접 해지해야 합니다.`,
+  },
+  {
+    title: '제11조(청약철회 및 환불)',
+    body: `① 이용자는 유료 서비스 구매일로부터 7일 이내에 청약을 철회할 수 있습니다. 단, 콘텐츠를 이미 이용한 경우 또는 서비스의 특성상 환불이 불가한 경우에는 청약철회가 제한될 수 있습니다.\n\n② 결제 플랫폼(App Store, Google Play)의 환불 정책이 우선 적용되며, 각 플랫폼의 환불 절차를 통해 환불을 신청해야 합니다. 회사는 플랫폼을 통한 결제에 대해 직접 환불 처리가 어렵습니다.\n\n③ 회사의 귀책사유로 서비스를 이용하지 못하는 경우 이용자는 회사에 환불을 요청할 수 있으며, 회사는 합리적인 기간 내에 처리합니다.`,
+  },
+  {
+    title: '제12조(건강정보의 특별 취급)',
+    body: `① 서비스는 이용자가 진료 기록, 처방전, 복약 정보, 감정 상태 등 민감한 건강 정보를 입력·저장할 수 있도록 하며, 회사는 이러한 정보를 안전하게 암호화하여 보관합니다.\n\n② 서비스에 저장된 건강 관련 정보는 이용자 본인만 열람·수정·삭제할 수 있으며, 회사는 법령에 따른 경우를 제외하고 이를 제3자에게 제공하지 않습니다.\n\n③ 처방전 이미지 OCR 분석 시 Anthropic API를 활용하며, 처리 완료 즉시 이미지 데이터는 삭제됩니다.\n\n④ 서비스는 의료 서비스가 아니며, 서비스를 통해 제공되는 어떠한 정보도 전문 의료 진단, 처방 또는 치료를 대체하지 않습니다.`,
+  },
+  {
+    title: '제13조(콘텐츠의 귀속 및 관리)',
+    body: `① 이용자가 서비스 내에 작성하거나 입력한 콘텐츠에 대한 저작권은 이용자 본인에게 귀속됩니다.\n\n② 이용자는 서비스를 이용하여 생성된 콘텐츠에 대해 PDF 내보내기 등의 방법으로 언제든지 데이터를 내려받을 수 있습니다.\n\n③ 회원 탈퇴 시 이용자의 콘텐츠는 소프트 삭제 후 30일 이내에 완전히 삭제되며, 탈퇴 후 해당 데이터를 복구할 수 없습니다.`,
+  },
+  {
+    title: '제14조(서비스 이용 제한)',
+    body: `① 회사는 이용자가 이 약관의 의무를 위반하거나 서비스의 정상적인 운영을 방해한 경우 경고, 일시 정지, 영구 이용 정지 등의 조치를 취할 수 있습니다.\n\n② 회사는 이용자가 관련 법령을 위반한 경우 즉시 이용 계약을 해지하고 수사기관에 신고할 수 있습니다.\n\n③ 회사가 이용자의 서비스 이용을 제한하거나 계약을 해지하는 경우 해당 사실을 이용자에게 통지합니다.`,
+  },
+  {
+    title: '제15조(계약 해지 및 탈퇴)',
+    body: `① 이용자는 언제든지 서비스 내 '계정 삭제' 기능을 통해 이용계약을 해지하고 회원 탈퇴할 수 있습니다.\n\n② 회원 탈퇴 시 이용자의 개인정보 및 콘텐츠는 개인정보처리방침에 따라 처리됩니다.\n\n③ 프리미엄 플랜 구독 중 탈퇴하는 경우 구독은 자동으로 해지되며, 잔여 기간에 대한 환불은 각 앱 스토어의 환불 정책에 따릅니다.\n\n④ 탈퇴 처리 후에는 계정 복구가 불가능하오니 신중하게 결정하시기 바랍니다.`,
+  },
+  {
+    title: '제16조(손해배상)',
+    body: `① 회사는 무료로 제공하는 서비스와 관련하여 이용자에게 발생한 손해에 대해서는 배상 책임을 지지 않습니다. 단, 회사의 고의 또는 중과실로 인한 경우에는 그러하지 않습니다.\n\n② 유료 서비스와 관련하여 회사의 귀책사유로 이용자에게 손해가 발생한 경우 회사의 배상 책임은 해당 이용자가 지불한 최근 3개월 이용료를 초과하지 않습니다.\n\n③ 이용자가 이 약관을 위반하거나 관련 법령을 위반하여 회사에 손해가 발생한 경우 이용자는 회사에 발생한 손해를 배상해야 합니다.`,
+  },
+  {
+    title: '제17조(면책조항)',
+    body: `① 회사는 천재지변, 전쟁, 기간통신사업자의 서비스 중지, 기술적 결함 등 불가항력으로 인한 서비스 중단에 대해서는 책임을 지지 않습니다.\n\n② 회사는 이용자의 귀책사유로 인한 서비스 이용 장애에 대해 책임을 지지 않습니다.\n\n③ 회사는 이용자가 서비스를 통해 기대하는 수익을 얻지 못하거나 서비스로부터 얻은 자료로 인한 손해에 대해 책임을 지지 않습니다.\n\n④ 서비스는 의료 서비스가 아니며, 서비스 이용으로 인한 건강상의 결과에 대해 회사는 책임을 지지 않습니다.`,
+  },
+  {
+    title: '제18조(분쟁 해결)',
+    body: `① 회사와 이용자 간 발생한 분쟁에 대해 회사는 이용자의 의견 및 불만을 신속하게 처리하기 위해 노력합니다.\n\n② 이용자는 서비스 관련 불만 또는 분쟁을 yamisupport@gmail.com으로 신고할 수 있습니다.\n\n③ 회사와 이용자 간 제기된 소송은 대한민국 관련 법령에 따르며, 본사 소재지를 관할하는 법원을 관할 법원으로 합니다.`,
+  },
+  {
+    title: '제19조(준거법)',
+    body: `이 약관의 해석 및 적용에 관하여는 대한민국 법률을 준거법으로 하며, 서비스 이용과 관련한 분쟁에 대해서는 대한민국 법원에 소를 제기할 수 있습니다.`,
+  },
+];
+
+const TERMS_ADDENDUM = '이 약관은 2026년 4월 16일부터 시행됩니다.';
+
+// ─── 오픈소스 라이선스 ──────────────────────────────────────────────────────────
+
+interface LicenseItem {
+  name: string;
+  version: string;
+  license: string;
+  copyright?: string;
+}
+
+const LICENSES: LicenseItem[] = [
+  { name: 'React', version: '19.1.0', license: 'MIT', copyright: 'Copyright (c) Meta Platforms, Inc. and affiliates.' },
+  { name: 'React Native', version: '0.81.5', license: 'MIT', copyright: 'Copyright (c) Meta Platforms, Inc. and affiliates.' },
+  { name: 'Expo', version: '~54.0.33', license: 'MIT', copyright: 'Copyright (c) 2015-present 650 Industries, Inc.' },
+  { name: 'expo-auth-session', version: '~7.0.10', license: 'MIT', copyright: 'Copyright (c) 2015-present 650 Industries, Inc.' },
+  { name: 'expo-blur', version: '~15.0.8', license: 'MIT', copyright: 'Copyright (c) 2015-present 650 Industries, Inc.' },
+  { name: 'expo-constants', version: '~18.0.13', license: 'MIT', copyright: 'Copyright (c) 2015-present 650 Industries, Inc.' },
+  { name: 'expo-device', version: '~8.0.10', license: 'MIT', copyright: 'Copyright (c) 2015-present 650 Industries, Inc.' },
+  { name: 'expo-font', version: '~14.0.11', license: 'MIT', copyright: 'Copyright (c) 2015-present 650 Industries, Inc.' },
+  { name: 'expo-image-picker', version: '~17.0.10', license: 'MIT', copyright: 'Copyright (c) 2015-present 650 Industries, Inc.' },
+  { name: 'expo-linear-gradient', version: '~15.0.8', license: 'MIT', copyright: 'Copyright (c) 2015-present 650 Industries, Inc.' },
+  { name: 'expo-local-authentication', version: '~17.0.8', license: 'MIT', copyright: 'Copyright (c) 2015-present 650 Industries, Inc.' },
+  { name: 'expo-localization', version: '~17.0.8', license: 'MIT', copyright: 'Copyright (c) 2015-present 650 Industries, Inc.' },
+  { name: 'expo-notifications', version: '~0.32.16', license: 'MIT', copyright: 'Copyright (c) 2015-present 650 Industries, Inc.' },
+  { name: 'expo-secure-store', version: '~15.0.8', license: 'MIT', copyright: 'Copyright (c) 2015-present 650 Industries, Inc.' },
+  { name: 'expo-status-bar', version: '~3.0.9', license: 'MIT', copyright: 'Copyright (c) 2015-present 650 Industries, Inc.' },
+  { name: 'expo-web-browser', version: '~15.0.10', license: 'MIT', copyright: 'Copyright (c) 2015-present 650 Industries, Inc.' },
+  { name: '@react-navigation/native', version: '^7.2.2', license: 'MIT', copyright: 'Copyright (c) 2017 React Navigation Contributors' },
+  { name: '@react-navigation/stack', version: '^7.8.9', license: 'MIT', copyright: 'Copyright (c) 2017 React Navigation Contributors' },
+  { name: '@react-navigation/bottom-tabs', version: '^7.15.9', license: 'MIT', copyright: 'Copyright (c) 2017 React Navigation Contributors' },
+  { name: '@tanstack/react-query', version: '^5.96.2', license: 'MIT', copyright: 'Copyright (c) 2021 Tanner Linsley' },
+  { name: 'zustand', version: '^5.0.12', license: 'MIT', copyright: 'Copyright (c) 2019 Paul Henschel' },
+  { name: 'axios', version: '^1.15.0', license: 'MIT', copyright: 'Copyright (c) 2014-present Matt Zabriskie & Collaborators' },
+  { name: 'i18next', version: '^26.0.4', license: 'MIT', copyright: 'Copyright (c) 2022 i18next' },
+  { name: 'react-i18next', version: '^17.0.2', license: 'MIT', copyright: 'Copyright (c) 2017 i18next' },
+  { name: 'react-native-reanimated', version: '~4.1.1', license: 'MIT', copyright: 'Copyright (c) 2016 Software Mansion' },
+  { name: 'react-native-gesture-handler', version: '~2.28.0', license: 'MIT', copyright: 'Copyright (c) 2016 Software Mansion' },
+  { name: 'react-native-screens', version: '~4.16.0', license: 'MIT', copyright: 'Copyright (c) 2018 Software Mansion' },
+  { name: 'react-native-safe-area-context', version: '~5.6.0', license: 'MIT', copyright: 'Copyright (c) 2019 Th3rdwave' },
+  { name: 'react-native-mmkv', version: '^4.3.1', license: 'MIT', copyright: 'Copyright (c) 2020 Marc Rousavy' },
+  { name: 'react-native-svg', version: '15.12.1', license: 'MIT', copyright: 'Copyright (c) 2015 Horcrux' },
+  { name: 'react-native-calendars', version: '^1.1314.0', license: 'MIT', copyright: 'Copyright (c) 2017 Wix.com' },
+  { name: 'react-native-chart-kit', version: '^6.12.0', license: 'MIT', copyright: 'Copyright (c) 2018 Indiez' },
+  { name: 'react-native-iap', version: '^15.0.0', license: 'MIT', copyright: 'Copyright (c) 2018 dooboolab' },
+  { name: '@react-native-community/netinfo', version: '11.4.1', license: 'MIT', copyright: 'Copyright (c) 2015-present, Facebook, Inc.' },
+  { name: '@react-native-community/datetimepicker', version: '8.4.4', license: 'MIT', copyright: 'Copyright (c) 2019 React Native Community' },
+  { name: '@quidone/react-native-wheel-picker', version: '^1.6.4', license: 'MIT', copyright: 'Copyright (c) 2023 quidone' },
+  { name: 'react-native-worklets', version: '0.5.1', license: 'MIT', copyright: 'Copyright (c) 2022 Margelo' },
+];
+
+// ─── 컴포넌트 ──────────────────────────────────────────────────────────────────
+
 export const LegalScreen: React.FC = () => {
   const { colors } = useTheme();
   const route = useRoute<Route>();
@@ -29,9 +299,64 @@ export const LegalScreen: React.FC = () => {
     >
       <ScreenHeader variant="back" title={title} />
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={[styles.placeholder, { color: colors.textSub, fontFamily: fontFamily.regular }]}>
-          {t('legal_placeholder')}
-        </Text>
+        {kind === 'licenses' ? (
+          <>
+            <Text style={[styles.mainTitle, { color: colors.text, fontFamily: fontFamily.bold }]}>
+              오픈소스 라이선스
+            </Text>
+            <Text style={[styles.sectionBody, { color: colors.textSub, fontFamily: fontFamily.regular, marginBottom: sizes.spacing.lg }]}>
+              이 앱은 다음 오픈소스 소프트웨어를 사용합니다.
+            </Text>
+            {LICENSES.map((item) => (
+              <View key={item.name} style={[styles.licenseItem, { borderBottomColor: colors.divider }]}>
+                <View style={styles.licenseHeader}>
+                  <Text style={[styles.licenseName, { color: colors.text, fontFamily: fontFamily.semibold }]}>
+                    {item.name}
+                  </Text>
+                  <Text style={[styles.licenseBadge, { color: colors.primary, backgroundColor: colors.primaryMuted, fontFamily: fontFamily.medium }]}>
+                    {item.license}
+                  </Text>
+                </View>
+                <Text style={[styles.licenseVersion, { color: colors.textSub, fontFamily: fontFamily.regular }]}>
+                  {item.version}
+                </Text>
+                {item.copyright && (
+                  <Text style={[styles.licenseCopyright, { color: colors.textSub, fontFamily: fontFamily.regular }]}>
+                    {item.copyright}
+                  </Text>
+                )}
+              </View>
+            ))}
+          </>
+        ) : kind === 'privacy' || kind === 'terms' ? (
+          <>
+            <Text style={[styles.mainTitle, { color: colors.text, fontFamily: fontFamily.bold }]}>
+              {kind === 'privacy' ? '개인정보처리방침' : '서비스 이용약관'}
+            </Text>
+            {(kind === 'privacy' ? PRIVACY_SECTIONS : TERMS_SECTIONS).map((section) => (
+              <View key={section.title} style={styles.section}>
+                <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: fontFamily.semibold }]}>
+                  {section.title}
+                </Text>
+                <Text style={[styles.sectionBody, { color: colors.textSub, fontFamily: fontFamily.regular }]}>
+                  {section.body}
+                </Text>
+              </View>
+            ))}
+            <View style={[styles.addendumBox, { borderTopColor: colors.divider }]}>
+              <Text style={[styles.addendumTitle, { color: colors.text, fontFamily: fontFamily.semibold }]}>
+                부칙
+              </Text>
+              <Text style={[styles.sectionBody, { color: colors.textSub, fontFamily: fontFamily.regular }]}>
+                {kind === 'privacy' ? PRIVACY_ADDENDUM : TERMS_ADDENDUM}
+              </Text>
+            </View>
+          </>
+        ) : (
+          <Text style={[styles.placeholder, { color: colors.textSub, fontFamily: fontFamily.regular }]}>
+            {t('legal_placeholder')}
+          </Text>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -41,6 +366,61 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: {
     padding: sizes.spacing.lg,
+    paddingBottom: sizes.spacing.xxl,
+  },
+  mainTitle: {
+    fontSize: sizes.font.xl,
+    marginBottom: sizes.spacing.lg,
+  },
+  section: {
+    marginBottom: sizes.spacing.lg,
+  },
+  sectionTitle: {
+    fontSize: sizes.font.md,
+    marginBottom: sizes.spacing.sm,
+  },
+  sectionBody: {
+    fontSize: sizes.font.sm,
+    lineHeight: 22,
+  },
+  addendumBox: {
+    marginTop: sizes.spacing.sm,
+    paddingTop: sizes.spacing.lg,
+    borderTopWidth: 1,
+  },
+  addendumTitle: {
+    fontSize: sizes.font.md,
+    marginBottom: sizes.spacing.sm,
+  },
+  licenseItem: {
+    paddingVertical: sizes.spacing.md,
+    borderBottomWidth: 1,
+  },
+  licenseHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: sizes.spacing.sm,
+  },
+  licenseName: {
+    flex: 1,
+    fontSize: sizes.font.sm,
+  },
+  licenseBadge: {
+    fontSize: sizes.font.xs,
+    paddingHorizontal: sizes.spacing.sm,
+    paddingVertical: 2,
+    borderRadius: sizes.radius.sm,
+    overflow: 'hidden',
+  },
+  licenseVersion: {
+    fontSize: sizes.font.xs,
+    marginTop: 2,
+  },
+  licenseCopyright: {
+    fontSize: sizes.font.xs,
+    marginTop: 1,
+    lineHeight: 16,
   },
   placeholder: {
     fontSize: sizes.font.sm,

@@ -39,12 +39,12 @@ export const ScheduleFormScreen: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
-  const { schedule, defaultDate } = route.params ?? {};
+  const { schedule, defaultDate, defaultHospitalName } = route.params ?? {};
 
   const isEdit = Boolean(schedule);
   const initialDate = schedule ? new Date(schedule.scheduledAt) : buildInitialDate(defaultDate);
 
-  const [hospitalName, setHospitalName] = useState(schedule?.hospitalName ?? '');
+  const [hospitalName, setHospitalName] = useState(schedule?.hospitalName ?? defaultHospitalName ?? '');
   const [doctorName, setDoctorName] = useState(schedule?.doctorName ?? '');
   const [memo, setMemo] = useState(schedule?.memo ?? '');
   const [selectedDate, setSelectedDate] = useState<Date>(initialDate);

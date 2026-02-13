@@ -28,6 +28,7 @@ import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
 import type { Prescription, PrescriptionMedication, OcrStatus } from '@/shared/types/domain.types';
+import { navigationRef } from '@/navigation/navigationRef';
 
 if (Platform.OS === 'android') {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
@@ -94,9 +95,10 @@ const PrescriptionCard: React.FC<{
   onDelete: () => void;
   onViewOcr: () => void;
   onWriteRecord: () => void;
+  onWriteSchedule: () => void;
   colors: ReturnType<typeof useTheme>['colors'];
   shadow: object;
-}> = ({ item, expanded, selected, selectionMode, onToggle, onMedPress, onDelete, onViewOcr, onWriteRecord, colors, shadow }) => {
+}> = ({ item, expanded, selected, selectionMode, onToggle, onMedPress, onDelete, onViewOcr, onWriteRecord, onWriteSchedule, colors, shadow }) => {
   const OCR_STATUS_CONFIG: Record<OcrStatus, { label: string; color: string; bg: string }> = {
     PENDING: { label: '분석 대기', color: colors.warning, bg: colors.warningLight },
     PROCESSING: { label: '분석 중', color: colors.primary, bg: colors.primaryMuted },
@@ -220,6 +222,22 @@ const PrescriptionCard: React.FC<{
             borderBottomLeftRadius: sizes.radius.xxl,
             borderBottomRightRadius: sizes.radius.xxl,
           }}>
+            {/* 일정 추가 */}
+            <TouchableOpacity
+              style={{
+                flex: 1,
+                paddingVertical: sizes.spacing.sm + 2,
+                borderRadius: sizes.radius.full,
+                alignItems: 'center',
+                backgroundColor: colors.primaryMuted,
+              }}
+              onPress={onWriteSchedule}
+            >
+              <Text style={{ fontFamily: fontFamily.medium, fontSize: sizes.font.sm, color: colors.primary }}>
+                일정 추가
+              </Text>
+            </TouchableOpacity>
+
             {/* 기록하기 */}
             <TouchableOpacity
               style={{
@@ -441,11 +459,30 @@ export const PrescriptionTab: React.FC = () => {
               navigation.navigate('OcrResult', { prescriptionId: String(item.id) })
             }
             onWriteRecord={() => {
-              const tabNav = navigation.getParent()?.getParent() as any;
-              tabNav?.navigate('Record', {
-                screen: 'RecordForm',
-                params: { consultedAt: item.prescribedAt },
+              (navigationRef.current as any)?.navigate('Main', {
+                screen: 'Record',
+                params: {
+                  screen: 'RecordForm',
+                  params: { consultedAt: item.prescribedAt },
+                },
               });
+            }}
+            onWriteSchedule={() => {
+              // 1단계: Schedule 탭 전환 (ScheduleTab이 스택에 먼저 쌓이도록)
+              (navigationRef.current as any)?.navigate('Main', { screen: 'Schedule' });
+              // 2단계: 다음 프레임에 ScheduleForm push → [ScheduleTab, ScheduleForm] 보장
+              setTimeout(() => {
+                (navigationRef.current as any)?.navigate('Main', {
+                  screen: 'Schedule',
+                  params: {
+                    screen: 'ScheduleForm',
+                    params: {
+                      defaultDate: item.prescribedAt,
+                      defaultHospitalName: item.hospitalName,
+                    },
+                  },
+                });
+              }, 0);
             }}
             colors={colors}
             shadow={shadow}

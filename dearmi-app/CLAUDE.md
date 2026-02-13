@@ -82,13 +82,19 @@ react-navigation v7 BottomTabBar 의 `justifyContent: 'flex-start'` 강제 + tab
 - **편집 모드 hydration 함정**: `useState` 초기값에 비동기 로드된 서버 데이터를 넣으면 항상 빈 값으로 시작 → `hydrated` state + `useEffect` 로 1회 채우고, `isDirty = hydrated && (...)` 로 가드.
 
 ### 크로스탭 네비게이션 패턴
-```typescript
-// 예: ScheduleDetail → Record/RecordForm
-const tabNav = navigation.getParent()?.getParent();
-tabNav?.navigate('Record', { screen: 'RecordForm', params: { scheduleId } });
+**항상 `navigationRef` 사용** — `getParent()?.getParent()` 는 RootNavigator 까지 올라가 버려서 'Record' 등 탭 이름을 찾지 못함 (action not handled 에러 발생).
 
-// 알림 탭 → ScheduleDetail (RootNavigator.navigateToScheduleDetail, navigationRef 사용)
-navigationRef.current?.navigate('Main', {
+```typescript
+import { navigationRef } from '@/navigation/navigationRef';
+
+// 예: 어디서든 → Record/RecordForm
+(navigationRef.current as any)?.navigate('Main', {
+  screen: 'Record',
+  params: { screen: 'RecordForm', params: { scheduleId } },
+});
+
+// 예: 어디서든 → Schedule/ScheduleDetail
+(navigationRef.current as any)?.navigate('Main', {
   screen: 'Schedule',
   params: { screen: 'ScheduleDetail', params: { scheduleId } },
 });

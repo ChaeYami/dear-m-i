@@ -19,6 +19,7 @@ import { useScheduleDetail, useDeleteSchedule } from '@/features/schedule/hooks/
 import { usePrepNotesBySchedule } from '@/features/prepnote/hooks/usePrepNote';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import type { ScheduleStackParamList } from '@/navigation/ScheduleNavigator';
+import { navigationRef } from '@/navigation/navigationRef';
 
 type Nav = StackNavigationProp<ScheduleStackParamList, 'ScheduleDetail'>;
 type RootNav = any;
@@ -61,10 +62,12 @@ export const ScheduleDetailScreen: React.FC = () => {
 
   const handleLinkRecord = () => {
     if (!schedule) return;
-    const tabNav = navigation.getParent()?.getParent() as RootNav;
-    tabNav?.navigate('Record', {
-      screen: 'RecordForm',
-      params: { scheduleId: schedule.id },
+    (navigationRef.current as any)?.navigate('Main', {
+      screen: 'Record',
+      params: {
+        screen: 'RecordForm',
+        params: { scheduleId: schedule.id },
+      },
     });
   };
 
