@@ -264,11 +264,11 @@ export const PrescriptionUploadScreen: React.FC = () => {
             ].map(({ icon, text }) => (
               <View key={text} style={staticStyles.tipRow}>
                 <Ionicons name={icon as any} size={15} color={colors.primary} />
-                <Text style={[staticStyles.tipText, { color: colors.textSub }]}>{text}</Text>
+                <Text style={[staticStyles.tipText, { color: colors.text }]}>{text}</Text>
               </View>
             ))}
             <View style={[staticStyles.tipDivider, { backgroundColor: colors.divider }]} />
-            <Text style={[staticStyles.tipHint, { color: colors.textDisabled }]}>
+            <Text style={[staticStyles.tipHint, { color: colors.textSub }]}>
               💡 빛 반사 없이 정면에서 촬영하면 더 정확해요
             </Text>
           </View>
