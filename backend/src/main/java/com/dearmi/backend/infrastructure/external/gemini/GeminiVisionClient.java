@@ -11,8 +11,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.client.ReactorClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClient;
 
 import java.time.Duration;
@@ -62,48 +65,67 @@ public class GeminiVisionClient implements PrescriptionOcrPort {
             "값이 없으면 null. medications가 없으면 빈 배열 [].\n" +
             "처방일(prescribedAt)은 반드시 YYYY-MM-DD 형식.";
 
+    private static final int MAX_RETRIES = 3;
+    private static final long RETRY_BASE_DELAY_MS = 5_000;
+
     @Override
     public OcrResult analyze(String s3Key) {
-        try {
-            byte[] imageBytes = s3Service.getObjectBytes(s3Key);
-            String mimeType = detectMimeType(s3Key);
-            String base64Data = Base64.getEncoder().encodeToString(imageBytes);
+        byte[] imageBytes = s3Service.getObjectBytes(s3Key);
+        String mimeType = detectMimeType(s3Key);
+        String base64Data = Base64.getEncoder().encodeToString(imageBytes);
 
-            Map<String, Object> inlineData = Map.of("mime_type", mimeType, "data", base64Data);
-            Map<String, Object> imagePart = Map.of("inline_data", inlineData);
-            Map<String, Object> textPart = Map.of("text", PROMPT);
-            Map<String, Object> content = Map.of("parts", List.of(imagePart, textPart));
-            Map<String, Object> body = Map.of("contents", List.of(content));
+        Map<String, Object> inlineData = Map.of("mime_type", mimeType, "data", base64Data);
+        Map<String, Object> imagePart = Map.of("inline_data", inlineData);
+        Map<String, Object> textPart = Map.of("text", PROMPT);
+        Map<String, Object> content = Map.of("parts", List.of(imagePart, textPart));
+        Map<String, Object> body = Map.of("contents", List.of(content));
 
-            String url = apiUrl + "?key=" + apiKey;
+        String url = apiUrl + "?key=" + apiKey;
 
-            ReactorClientHttpRequestFactory factory = new ReactorClientHttpRequestFactory();
-            factory.setReadTimeout(Duration.ofSeconds(60));
+        ReactorClientHttpRequestFactory factory = new ReactorClientHttpRequestFactory();
+        factory.setReadTimeout(Duration.ofSeconds(60));
 
-            RestClient restClient = RestClient.builder()
-                    .baseUrl(url)
-                    .defaultHeader("content-type", "application/json")
-                    .requestFactory(factory)
-                    .build();
+        RestClient restClient = RestClient.builder()
+                .baseUrl(url)
+                .defaultHeader("content-type", "application/json")
+                .requestFactory(factory)
+                .build();
 
-            GeminiResponse response = restClient.post()
-                    .body(body)
-                    .retrieve()
-                    .body(GeminiResponse.class);
+        Exception lastException = null;
+        for (int attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+            try {
+                GeminiResponse response = restClient.post()
+                        .body(body)
+                        .retrieve()
+                        .body(GeminiResponse.class);
 
-            if (response == null || response.candidates() == null || response.candidates().isEmpty()) {
-                throw new PrescriptionOcrException("Gemini API 응답이 비어있습니다");
+                if (response == null || response.candidates() == null || response.candidates().isEmpty()) {
+                    throw new PrescriptionOcrException("Gemini API 응답이 비어있습니다");
+                }
+
+                String responseText = response.candidates().get(0).content().parts().get(0).text();
+                return parseOcrResult(responseText);
+
+            } catch (PrescriptionOcrException e) {
+                throw e;
+            } catch (HttpStatusCodeException e) {
+                int status = e.getStatusCode().value();
+                boolean retryable = (status == 503 || status == 429 || status == 500);
+                if (retryable && attempt < MAX_RETRIES) {
+                    long delay = RETRY_BASE_DELAY_MS * (1L << attempt); // 5s, 10s, 20s
+                    log.warn("Gemini {} 오류, {}ms 후 재시도 ({}/{}): s3Key={}", status, delay, attempt + 1, MAX_RETRIES, s3Key);
+                    try { Thread.sleep(delay); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
+                    lastException = e;
+                } else {
+                    log.error("처방전 OCR 실패: s3Key={}", s3Key, e);
+                    throw new PrescriptionOcrException("처방전 OCR 처리 중 오류가 발생했습니다", e);
+                }
+            } catch (Exception e) {
+                log.error("처방전 OCR 실패: s3Key={}", s3Key, e);
+                throw new PrescriptionOcrException("처방전 OCR 처리 중 오류가 발생했습니다", e);
             }
-
-            String responseText = response.candidates().get(0).content().parts().get(0).text();
-            return parseOcrResult(responseText);
-
-        } catch (PrescriptionOcrException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("처방전 OCR 실패: s3Key={}", s3Key, e);
-            throw new PrescriptionOcrException("처방전 OCR 처리 중 오류가 발생했습니다", e);
         }
+        throw new PrescriptionOcrException("처방전 OCR 최대 재시도 초과", lastException);
     }
 
     private OcrResult parseOcrResult(String json) {

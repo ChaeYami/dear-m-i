@@ -49,22 +49,41 @@ const newMedication = (): EditableMedication => ({
   durationDays: '',
 });
 
-// ─── OCR 대기 화면 (진행 바 포함) ────────────────────────────────────────────
+// ─── OCR 대기 화면 (스캔 애니메이션 + 진행 바) ───────────────────────────────
+
+const THUMB_HEIGHT = 220;
 
 const PendingView: React.FC<{
   colors: ReturnType<typeof useTheme>['colors'];
   imageUrl?: string;
 }> = ({ colors, imageUrl }) => {
+  // imageUrl은 폴링마다 바뀌는 presigned URL이므로 첫 값으로 고정
+  const frozenUrl = useRef(imageUrl).current;
+
   const progress = useRef(new Animated.Value(0)).current;
+  const scanY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // 45초 동안 0 → 85% 로 애니메이션
+    // 진행 바: 45초 동안 0 → 85%
     Animated.timing(progress, {
       toValue: 85,
       duration: 45000,
       useNativeDriver: false,
     }).start();
-    return () => progress.stopAnimation();
+
+    // 스캔 라인: 위아래 루프
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(scanY, { toValue: THUMB_HEIGHT - 4, duration: 1800, useNativeDriver: true }),
+        Animated.timing(scanY, { toValue: 0, duration: 1800, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+
+    return () => {
+      progress.stopAnimation();
+      loop.stop();
+    };
   }, []);
 
   const widthInterpolated = progress.interpolate({
@@ -74,13 +93,32 @@ const PendingView: React.FC<{
 
   return (
     <View style={staticStyles.statusWrap}>
-      {imageUrl ? (
-        <Image
-          source={{ uri: imageUrl }}
-          style={[staticStyles.pendingThumbnail, { borderColor: colors.divider }]}
-          resizeMode="contain"
-        />
+      {/* 처방전 사진 + 스캔 라인 */}
+      {frozenUrl ? (
+        <View style={[staticStyles.pendingThumbnail, { borderColor: colors.divider, overflow: 'hidden' }]}>
+          <Image source={{ uri: frozenUrl }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+          {/* 스캔 라인 */}
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              staticStyles.scanLine,
+              { backgroundColor: colors.primary, transform: [{ translateY: scanY }] },
+            ]}
+          />
+          {/* 스캔 오버레이 (반투명) */}
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              staticStyles.scanOverlay,
+              {
+                backgroundColor: colors.primary + '18',
+                height: scanY as any,
+              },
+            ]}
+          />
+        </View>
       ) : null}
+
       <ActivityIndicator size="large" color={colors.primary} />
       <Text style={[staticStyles.statusTitle, { fontFamily: fontFamily.bold, color: colors.text }]}>
         처방전을 분석 중입니다…
@@ -564,13 +602,27 @@ const staticStyles = StyleSheet.create({
     alignItems: 'center',
   },
   addMedBtnText: { fontSize: sizes.font.md },
-  // 처방전 사진
+  // 처방전 사진 (대기 화면)
   pendingThumbnail: {
     width: '100%',
-    height: 200,
+    height: THUMB_HEIGHT,
     borderRadius: sizes.radius.lg,
     borderWidth: 1,
     marginBottom: sizes.spacing.sm,
+  },
+  scanLine: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 3,
+    borderRadius: 2,
+    opacity: 0.85,
+  },
+  scanOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
   },
   prescriptionImage: {
     width: '100%',
