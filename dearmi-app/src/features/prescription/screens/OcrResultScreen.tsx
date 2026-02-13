@@ -53,21 +53,34 @@ const newMedication = (): EditableMedication => ({
 
 const THUMB_HEIGHT = 220;
 
+const STEPS = [
+  { until: 5,  text: '이미지 불러오는 중…' },
+  { until: 15, text: '처방전 분석 중…' },
+  { until: 28, text: '약품 정보 추출 중…' },
+  { until: 99, text: '마무리 중…' },
+];
+
 const PendingView: React.FC<{
   colors: ReturnType<typeof useTheme>['colors'];
   imageUrl?: string;
 }> = ({ colors, imageUrl }) => {
-  // imageUrl은 폴링마다 바뀌는 presigned URL이므로 첫 값으로 고정
-  const frozenUrl = useRef(imageUrl).current;
+  // imageUrl은 폴링마다 바뀌는 presigned URL이므로 첫 비어있지 않은 값으로 고정
+  const frozenUrlRef = useRef<string | undefined>(undefined);
+  if (imageUrl && !frozenUrlRef.current) {
+    frozenUrlRef.current = imageUrl;
+  }
+  const frozenUrl = frozenUrlRef.current;
 
   const progress = useRef(new Animated.Value(0)).current;
   const scanY = useRef(new Animated.Value(0)).current;
+  const [stepIndex, setStepIndex] = useState(0);
+  const elapsed = useRef(0);
 
   useEffect(() => {
-    // 진행 바: 45초 동안 0 → 85%
+    // 진행 바: 30초 동안 0 → 90%
     Animated.timing(progress, {
-      toValue: 85,
-      duration: 45000,
+      toValue: 90,
+      duration: 30000,
       useNativeDriver: false,
     }).start();
 
@@ -80,9 +93,17 @@ const PendingView: React.FC<{
     );
     loop.start();
 
+    // 단계 메시지: 1초마다 elapsed 체크 → stepIndex 업데이트
+    const timer = setInterval(() => {
+      elapsed.current += 1;
+      const idx = STEPS.findIndex((s) => elapsed.current < s.until);
+      setStepIndex(idx === -1 ? STEPS.length - 1 : idx);
+    }, 1000);
+
     return () => {
       progress.stopAnimation();
       loop.stop();
+      clearInterval(timer);
     };
   }, []);
 
@@ -97,7 +118,6 @@ const PendingView: React.FC<{
       {frozenUrl ? (
         <View style={[staticStyles.pendingThumbnail, { borderColor: colors.divider, overflow: 'hidden' }]}>
           <Image source={{ uri: frozenUrl }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
-          {/* 스캔 라인 */}
           <Animated.View
             pointerEvents="none"
             style={[
@@ -105,23 +125,12 @@ const PendingView: React.FC<{
               { backgroundColor: colors.primary, transform: [{ translateY: scanY }] },
             ]}
           />
-          {/* 스캔 오버레이 (반투명) */}
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              staticStyles.scanOverlay,
-              {
-                backgroundColor: colors.primary + '18',
-                height: scanY as any,
-              },
-            ]}
-          />
         </View>
       ) : null}
 
       <ActivityIndicator size="large" color={colors.primary} />
       <Text style={[staticStyles.statusTitle, { fontFamily: fontFamily.bold, color: colors.text }]}>
-        처방전을 분석 중입니다…
+        {STEPS[stepIndex].text}
       </Text>
       <Text style={[staticStyles.statusSub, { color: colors.textSub }]}>잠시만 기다려 주세요</Text>
 
@@ -617,12 +626,6 @@ const staticStyles = StyleSheet.create({
     height: 3,
     borderRadius: 2,
     opacity: 0.85,
-  },
-  scanOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
   },
   prescriptionImage: {
     width: '100%',

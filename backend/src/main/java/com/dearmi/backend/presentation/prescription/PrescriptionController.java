@@ -121,6 +121,8 @@ public class PrescriptionController {
     ) {
         UpdateMedicationsCommand command = new UpdateMedicationsCommand(
                 userId, id,
+                request.hospitalName(),
+                request.prescribedAt(),
                 request.medications().stream()
                         .map(m -> new UpdateMedicationsCommand.MedicationItem(
                                 m.drugName(), m.dosage(), m.singleDose(), m.directions(), m.days()))

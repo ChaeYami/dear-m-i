@@ -71,6 +71,8 @@ export const prescriptionApi = {
   /** OCR 결과 확인 후 저장 (약품 목록 전체 교체) */
   savePrescription: (id: string, data: SavePrescriptionRequest) =>
     axiosInstance.put<ApiResponse<Prescription>>(`/api/v1/prescriptions/${id}/medications`, {
+      hospitalName: data.hospitalName,
+      prescribedAt: data.prescribedAt,
       medications: data.medications.map((m) => ({
         drugName: m.medicationName,
         dosage: m.dosage,

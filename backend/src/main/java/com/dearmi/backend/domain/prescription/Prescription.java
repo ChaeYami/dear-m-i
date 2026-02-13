@@ -47,6 +47,11 @@ public class Prescription extends BaseTimeEntity {
         this.scheduleId = null;
     }
 
+    public void updateMeta(String hospitalName, LocalDate prescribedAt) {
+        if (hospitalName != null && !hospitalName.isBlank()) this.hospitalName = hospitalName;
+        if (prescribedAt != null) this.prescribedAt = prescribedAt;
+    }
+
     public void updateFromOcr(String hospitalName, LocalDate prescribedAt) {
         if (hospitalName != null && !hospitalName.isBlank()) this.hospitalName = hospitalName;
         if (prescribedAt != null) this.prescribedAt = prescribedAt;

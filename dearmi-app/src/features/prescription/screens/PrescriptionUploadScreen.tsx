@@ -291,7 +291,7 @@ export const PrescriptionUploadScreen: React.FC = () => {
             </Text>
           </TouchableOpacity>
           <Text style={[staticStyles.dateHint, { color: colors.textSub }]}>
-            사진을 등록하면 날짜가 자동으로 선택됩니다
+            사진을 등록하면 날짜가 자동으로 선택됩니다. 날짜 정보가 없는 경우 직접 선택해주세요.
           </Text>
           <DatePickerModal
             visible={showDatePicker}

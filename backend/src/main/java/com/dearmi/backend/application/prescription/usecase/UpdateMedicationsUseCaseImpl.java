@@ -31,6 +31,9 @@ public class UpdateMedicationsUseCaseImpl implements UpdateMedicationsUseCase {
                 .findByIdAndUserIdAndDeletedAtIsNull(command.prescriptionId(), command.userId())
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
+        // 병원명 / 처방일 업데이트
+        prescription.updateMeta(command.hospitalName(), command.prescribedAt());
+
         // 기존 medications 전체 삭제 후 재등록
         prescriptionMedicationRepository.deleteByPrescriptionId(command.prescriptionId());
 
