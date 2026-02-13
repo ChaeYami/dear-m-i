@@ -9,6 +9,7 @@ public record PrescriptionResult(
         UUID scheduleId,
         String s3Key,
         String ocrStatus,
+        String hospitalName,
         LocalDate prescribedAt,
         List<MedicationResult> medications,
         String imageUrl          // GET Presigned URL (15분 유효)

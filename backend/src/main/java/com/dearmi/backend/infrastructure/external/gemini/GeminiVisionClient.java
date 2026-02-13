@@ -1,10 +1,12 @@
 package com.dearmi.backend.infrastructure.external.gemini;
 
 import com.dearmi.backend.application.prescription.dto.OcrMedicationItem;
+import com.dearmi.backend.application.prescription.dto.OcrResult;
 import com.dearmi.backend.application.prescription.port.PrescriptionOcrPort;
 import com.dearmi.backend.common.exception.PrescriptionOcrException;
 import com.dearmi.backend.infrastructure.external.s3.S3Service;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,20 +35,23 @@ public class GeminiVisionClient implements PrescriptionOcrPort {
     private String apiUrl;
 
     private static final String PROMPT =
-            "이 한국 처방전 이미지에서 약품 정보를 추출해줘.\n" +
-            "한국 처방전 컬럼 구조: 약품명 | 규격(용량) | 1회 투여량 | 1일 투여횟수 | 총 투약일수\n" +
-            "반드시 아래 JSON 배열 형식으로만 응답해. 다른 텍스트 없이:\n" +
-            "[{" +
-            "\"drugName\":\"약품 기본명만 (규격 제외, 예: 자나팜정)\"," +
-            "\"dosage\":\"규격/용량 (예: 0.125밀리그램, 25mg)\"," +
-            "\"singleDose\":\"1회 투여량 (예: 1정, 0.5정, 5ml)\"," +
-            "\"directions\":\"1일 투여횟수 및 복용 시기 (예: 1일 1회 취침전, 1일 2회 아침저녁 식후)\"," +
-            "\"days\":투약일수숫자" +
+            "이 한국 처방전 이미지에서 정보를 추출해줘.\n" +
+            "반드시 아래 JSON 객체 형식으로만 응답해. 다른 텍스트 없이:\n" +
+            "{\n" +
+            "\"hospitalName\":\"병원명 또는 의원명 (예: 서울정신건강의원)\",\n" +
+            "\"prescribedAt\":\"처방일 YYYY-MM-DD 형식 (예: 2026-04-16)\",\n" +
+            "\"medications\":[{\n" +
+            "\"drugName\":\"약품 기본명만 (규격 제외, 예: 자나팜정)\",\n" +
+            "\"dosage\":\"규격/용량 (예: 0.125밀리그램, 25mg)\",\n" +
+            "\"singleDose\":\"1회 투여량 (예: 1정, 0.5정, 5ml)\",\n" +
+            "\"directions\":\"1일 투여횟수 및 복용 시기 (예: 1일 1회 취침전, 1일 2회 아침저녁 식후)\",\n" +
+            "\"days\":투약일수숫자\n" +
             "}]\n" +
-            "값이 없으면 null. 약품이 없으면 빈 배열 [] 반환.";
+            "}\n" +
+            "값이 없으면 null. medications가 없으면 빈 배열 [].";
 
     @Override
-    public List<OcrMedicationItem> analyze(String s3Key) {
+    public OcrResult analyze(String s3Key) {
         try {
             byte[] imageBytes = s3Service.getObjectBytes(s3Key);
             String mimeType = detectMimeType(s3Key);
@@ -89,16 +94,28 @@ public class GeminiVisionClient implements PrescriptionOcrPort {
         }
     }
 
-    private List<OcrMedicationItem> parseOcrResult(String json) {
+    private OcrResult parseOcrResult(String json) {
         try {
             String trimmed = json.strip();
-            int start = trimmed.indexOf('[');
-            int end = trimmed.lastIndexOf(']');
+            // JSON 객체 추출 (```json ... ``` 마크다운 블록 대응)
+            int start = trimmed.indexOf('{');
+            int end = trimmed.lastIndexOf('}');
             if (start == -1 || end == -1) {
-                return List.of();
+                return new OcrResult(null, null, List.of());
             }
-            String jsonArray = trimmed.substring(start, end + 1);
-            return objectMapper.readValue(jsonArray, new TypeReference<>() {});
+            String jsonObj = trimmed.substring(start, end + 1);
+            JsonNode root = objectMapper.readTree(jsonObj);
+
+            String hospitalName = root.has("hospitalName") && !root.get("hospitalName").isNull()
+                    ? root.get("hospitalName").asText() : null;
+            String prescribedAt = root.has("prescribedAt") && !root.get("prescribedAt").isNull()
+                    ? root.get("prescribedAt").asText() : null;
+
+            List<OcrMedicationItem> medications = root.has("medications") && root.get("medications").isArray()
+                    ? objectMapper.convertValue(root.get("medications"), new TypeReference<>() {})
+                    : List.of();
+
+            return new OcrResult(hospitalName, prescribedAt, medications);
         } catch (Exception e) {
             throw new PrescriptionOcrException("OCR 응답 JSON 파싱 실패: " + json, e);
         }

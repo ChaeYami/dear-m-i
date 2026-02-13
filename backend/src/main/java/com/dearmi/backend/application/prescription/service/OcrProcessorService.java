@@ -3,6 +3,7 @@ package com.dearmi.backend.application.prescription.service;
 import com.dearmi.backend.application.druginfo.dto.DrugInfoDto;
 import com.dearmi.backend.application.druginfo.service.DrugInfoCacheService;
 import com.dearmi.backend.application.prescription.dto.OcrMedicationItem;
+import com.dearmi.backend.application.prescription.dto.OcrResult;
 import com.dearmi.backend.application.prescription.port.PrescriptionOcrPort;
 import com.dearmi.backend.common.exception.PrescriptionOcrException;
 import com.dearmi.backend.domain.prescription.Prescription;
@@ -15,6 +16,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -53,10 +55,23 @@ public class OcrProcessorService {
             prescription.startOcr();
             prescriptionRepository.save(prescription);
 
-            List<OcrMedicationItem> items = prescriptionOcrPort.analyze(s3Key);
+            OcrResult ocrResult = prescriptionOcrPort.analyze(s3Key);
+            List<OcrMedicationItem> items = ocrResult.medications();
+
+            log.info("OCR 파싱: hospitalName={}, prescribedAt={}, 약품={}건",
+                    ocrResult.hospitalName(), ocrResult.prescribedAt(), items.size());
+
+            // 병원명/처방일 업데이트 (OCR에서 추출된 경우만)
+            LocalDate parsedDate = null;
+            try {
+                if (ocrResult.prescribedAt() != null) parsedDate = LocalDate.parse(ocrResult.prescribedAt());
+            } catch (Exception e) {
+                log.warn("처방일 파싱 실패: {}", ocrResult.prescribedAt());
+            }
+            prescription.updateFromOcr(ocrResult.hospitalName(), parsedDate);
 
             items.forEach(item -> {
-                log.info("OCR 파싱 결과: drugName={}, dosage={}, singleDose={}, directions={}, days={}",
+                log.info("OCR 약품: drugName={}, dosage={}, singleDose={}, directions={}, days={}",
                         item.drugName(), item.dosage(), item.singleDose(), item.directions(), item.days());
                 PrescriptionMedication med = prescriptionMedicationRepository.save(
                         PrescriptionMedication.builder()

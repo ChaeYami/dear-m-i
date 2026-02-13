@@ -10,6 +10,7 @@ public record PrescriptionDetailResponse(
         UUID id,
         UUID scheduleId,
         String ocrStatus,
+        String hospitalName,
         LocalDate prescribedAt,
         List<MedicationResponse> medications,
         String imageUrl
@@ -19,6 +20,7 @@ public record PrescriptionDetailResponse(
                 result.id(),
                 result.scheduleId(),
                 result.ocrStatus(),
+                result.hospitalName(),
                 result.prescribedAt(),
                 result.medications().stream().map(MedicationResponse::from).toList(),
                 result.imageUrl()

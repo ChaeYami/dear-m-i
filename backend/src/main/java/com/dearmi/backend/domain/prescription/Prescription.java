@@ -30,6 +30,9 @@ public class Prescription extends BaseTimeEntity {
     @Column(name = "s3_key", length = 500)
     private String s3Key;
 
+    @Column(name = "hospital_name", length = 200)
+    private String hospitalName;
+
     @Column(name = "ocr_raw_text", columnDefinition = "text")
     private String ocrRawText;
 
@@ -42,6 +45,11 @@ public class Prescription extends BaseTimeEntity {
 
     public void detachSchedule() {
         this.scheduleId = null;
+    }
+
+    public void updateFromOcr(String hospitalName, LocalDate prescribedAt) {
+        if (hospitalName != null && !hospitalName.isBlank()) this.hospitalName = hospitalName;
+        if (prescribedAt != null) this.prescribedAt = prescribedAt;
     }
 
     public void completeOcr(String rawText) {

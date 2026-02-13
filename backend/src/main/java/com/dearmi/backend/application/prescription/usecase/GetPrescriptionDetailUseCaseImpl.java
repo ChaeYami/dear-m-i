@@ -46,6 +46,7 @@ public class GetPrescriptionDetailUseCaseImpl implements GetPrescriptionDetailUs
                 prescription.getScheduleId(),
                 prescription.getS3Key(),
                 prescription.getOcrStatus(),
+                prescription.getHospitalName(),
                 prescription.getPrescribedAt(),
                 medications,
                 imageUrl
