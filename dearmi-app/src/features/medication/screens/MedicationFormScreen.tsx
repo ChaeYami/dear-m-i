@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, CommonActions } from '@react-navigation/native';
 import { DatePickerModal } from '@/features/schedule/components/DatePickerModal';
 import { TimePickerModal } from '@/shared/components/TimePickerModal';
 import type { StackNavigationProp } from '@react-navigation/stack';
@@ -219,11 +219,14 @@ export const MedicationFormScreen: React.FC = () => {
     }
   };
 
-  /** OCR 흐름: 마지막 약 저장 후 처방전 목록으로 */
+  /** OCR 흐름: 마지막 약 저장 후 처방전 목록으로 (스택 리셋으로 OcrResult 제거) */
   const handleSaveAndFinish = () => {
     if (!validate()) return;
     create(buildPayload(), {
-      onSuccess: () => navigation.navigate('PrescriptionList'),
+      onSuccess: () =>
+        navigation.dispatch(
+          CommonActions.reset({ index: 1, routes: [{ name: 'MedicationHome' }, { name: 'PrescriptionList' }] })
+        ),
     });
   };
 

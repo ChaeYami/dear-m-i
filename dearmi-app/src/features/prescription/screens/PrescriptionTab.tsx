@@ -270,7 +270,7 @@ export const PrescriptionTab: React.FC = () => {
   const handleDelete = (item: Prescription) => {
     customAlert('처방전 삭제', '이 처방전을 삭제할까요?', [
       { text: '취소', style: 'cancel' },
-      { text: '삭제', style: 'destructive', onPress: () => deletePrescription(item.id) },
+      { text: '삭제', style: 'destructive', onPress: () => deletePrescription(String(item.id)) },
     ]);
   };
 
@@ -320,7 +320,7 @@ export const PrescriptionTab: React.FC = () => {
             }
             onDelete={() => handleDelete(item)}
             onViewOcr={() =>
-              navigation.navigate('OcrResult', { prescriptionId: item.id })
+              navigation.navigate('OcrResult', { prescriptionId: String(item.id) })
             }
             colors={colors}
             shadow={shadow}

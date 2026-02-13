@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, CommonActions } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
@@ -201,7 +201,7 @@ export const OcrResultScreen: React.FC = () => {
         '처방전 저장은 프리미엄 플랜에서 이용할 수 있습니다.',
         [
           { text: '취소', style: 'cancel' },
-          { text: '업그레이드', onPress: () => navigation.navigate('Paywall') },
+          { text: '업그레이드', onPress: () => (navigation as any).navigate('Paywall') },
         ]
       );
       return;
@@ -253,7 +253,7 @@ export const OcrResultScreen: React.FC = () => {
       });
 
     if (activeMeds.length === 0) {
-      navigation.navigate('PrescriptionList');
+      navigation.dispatch(CommonActions.reset({ index: 1, routes: [{ name: 'MedicationHome' }, { name: 'PrescriptionList' }] }));
       return;
     }
 
@@ -264,7 +264,7 @@ export const OcrResultScreen: React.FC = () => {
         {
           text: '나중에',
           style: 'cancel',
-          onPress: () => navigation.navigate('PrescriptionList'),
+          onPress: () => navigation.dispatch(CommonActions.reset({ index: 1, routes: [{ name: 'MedicationHome' }, { name: 'PrescriptionList' }] })),
         },
         {
           text: '설정하기',

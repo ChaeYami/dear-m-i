@@ -33,7 +33,7 @@ export type MedicationStackParamList = {
   MedicationScheduleDetail: { scheduleId: string; drugName: string };
   PrescriptionList: undefined;
   PrescriptionUpload: undefined;
-  OcrResult: { prescriptionId: number };
+  OcrResult: { prescriptionId: string };
   MedicationDetail: { medicationId: number; medicationName: string };
 };
 
