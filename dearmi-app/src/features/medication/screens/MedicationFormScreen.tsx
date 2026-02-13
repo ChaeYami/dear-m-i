@@ -279,14 +279,14 @@ export const MedicationFormScreen: React.FC = () => {
           />
         </View>
 
-        {/* 용량 */}
+        {/* 1회 투약량 */}
         <View style={styles.fieldCard}>
-          <Text style={styles.label}>용량</Text>
+          <Text style={styles.label}>1회 투약량</Text>
           <TextInput
             style={styles.input}
             value={dosage}
             onChangeText={setDosage}
-            placeholder="예: 100mg"
+            placeholder="예: 1정, 0.5정, 5ml"
             placeholderTextColor={colors.textDisabled}
           />
         </View>
