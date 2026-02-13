@@ -45,10 +45,11 @@ public class CounselingRecordRepositoryImpl implements CounselingRecordRepositor
     @Override
     public List<CounselingRecord> findByUserIdOrderByCreatedAtDesc(UUID userId, int offset, int limit) {
         QCounselingRecord cr = QCounselingRecord.counselingRecord;
+        // 진료일(consultedAt) 기준 최신순. NULL 은 뒤로, 동률은 createdAt 으로.
         return queryFactory
                 .selectFrom(cr)
                 .where(cr.userId.eq(userId), cr.deletedAt.isNull())
-                .orderBy(cr.createdAt.desc())
+                .orderBy(cr.consultedAt.desc().nullsLast(), cr.createdAt.desc())
                 .offset(offset)
                 .limit(limit)
                 .fetch();
@@ -69,10 +70,12 @@ public class CounselingRecordRepositoryImpl implements CounselingRecordRepositor
     public List<CounselingRecord> findByUserIdAndDeletedAtIsNullAndCreatedAtAfterOrderByCreatedAtDesc(
             UUID userId, LocalDateTime after, int offset, int limit) {
         QCounselingRecord cr = QCounselingRecord.counselingRecord;
+        // 진료일(consultedAt) 기준 최신순. NULL 은 뒤로, 동률은 createdAt 으로.
+        // FREE 플랜 2개월 cutoff 는 createdAt 기준 유지 (진료일 임의 입력 가능해 일관성 위해).
         return queryFactory
                 .selectFrom(cr)
                 .where(cr.userId.eq(userId), cr.deletedAt.isNull(), cr.createdAt.after(after))
-                .orderBy(cr.createdAt.desc())
+                .orderBy(cr.consultedAt.desc().nullsLast(), cr.createdAt.desc())
                 .offset(offset)
                 .limit(limit)
                 .fetch();

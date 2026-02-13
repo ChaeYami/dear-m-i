@@ -19,7 +19,9 @@ public interface PrescriptionJpaRepository extends JpaRepository<Prescription, U
 
     List<Prescription> findByOcrStatusAndDeletedAtIsNull(String ocrStatus);
 
-    @Query("SELECT p FROM Prescription p WHERE p.userId = :userId AND p.deletedAt IS NULL ORDER BY p.createdAt DESC")
+    /** 처방일(prescribedAt) 기준 최신순. NULL(OCR 파싱 실패 등) 은 뒤로. */
+    @Query("SELECT p FROM Prescription p WHERE p.userId = :userId AND p.deletedAt IS NULL " +
+           "ORDER BY p.prescribedAt DESC NULLS LAST, p.createdAt DESC")
     List<Prescription> findPageByUserId(@Param("userId") UUID userId, Pageable pageable);
 
     long countByUserIdAndDeletedAtIsNull(UUID userId);
