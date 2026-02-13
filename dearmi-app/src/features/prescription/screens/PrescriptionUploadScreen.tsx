@@ -442,7 +442,7 @@ const staticStyles = StyleSheet.create({
     gap: sizes.spacing.sm,
   },
   tipTitle: {
-    fontSize: sizes.font.sm,
+    fontSize: sizes.font.md,
     marginBottom: 2,
   },
   tipRow: {
@@ -451,13 +451,13 @@ const staticStyles = StyleSheet.create({
     gap: sizes.spacing.sm,
   },
   tipText: {
-    fontSize: sizes.font.sm,
+    fontSize: sizes.font.md,
   },
   tipDivider: {
     height: 1,
     marginVertical: sizes.spacing.xs,
   },
   tipHint: {
-    fontSize: sizes.font.xs,
+    fontSize: sizes.font.sm,
   },
 });
