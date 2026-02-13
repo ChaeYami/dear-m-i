@@ -3,10 +3,14 @@ package com.dearmi.backend.infrastructure.persistence;
 import com.dearmi.backend.domain.counseling.CounselingRecord;
 import com.dearmi.backend.domain.counseling.CounselingRecordRepository;
 import com.dearmi.backend.domain.counseling.QCounselingRecord;
+import com.dearmi.backend.domain.hospital.QHospitalSchedule;
+import com.querydsl.core.types.dsl.DateTemplate;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -45,11 +49,18 @@ public class CounselingRecordRepositoryImpl implements CounselingRecordRepositor
     @Override
     public List<CounselingRecord> findByUserIdOrderByCreatedAtDesc(UUID userId, int offset, int limit) {
         QCounselingRecord cr = QCounselingRecord.counselingRecord;
-        // 진료일(consultedAt) 기준 최신순. NULL 은 뒤로, 동률은 createdAt 으로.
+        QHospitalSchedule hs = QHospitalSchedule.hospitalSchedule;
+        // 정렬 기준: consultedAt(직접 기록) 이 있으면 그것, 없으면 연결 일정의 scheduledAt 날짜.
+        // 둘 다 없으면 NULL → 뒤로. 동률은 createdAt 내림차순.
+        DateTemplate<LocalDate> effectiveDate = Expressions.dateTemplate(
+                LocalDate.class,
+                "coalesce({0}, cast({1} as date))",
+                cr.consultedAt, hs.scheduledAt);
         return queryFactory
                 .selectFrom(cr)
+                .leftJoin(hs).on(hs.id.eq(cr.scheduleId))
                 .where(cr.userId.eq(userId), cr.deletedAt.isNull())
-                .orderBy(cr.consultedAt.desc().nullsLast(), cr.createdAt.desc())
+                .orderBy(effectiveDate.desc().nullsLast(), cr.createdAt.desc())
                 .offset(offset)
                 .limit(limit)
                 .fetch();
@@ -70,12 +81,18 @@ public class CounselingRecordRepositoryImpl implements CounselingRecordRepositor
     public List<CounselingRecord> findByUserIdAndDeletedAtIsNullAndCreatedAtAfterOrderByCreatedAtDesc(
             UUID userId, LocalDateTime after, int offset, int limit) {
         QCounselingRecord cr = QCounselingRecord.counselingRecord;
-        // 진료일(consultedAt) 기준 최신순. NULL 은 뒤로, 동률은 createdAt 으로.
+        QHospitalSchedule hs = QHospitalSchedule.hospitalSchedule;
+        // 정렬 기준: consultedAt 우선, 없으면 연결 일정의 scheduledAt 날짜. 둘 다 없으면 NULL 뒤로.
         // FREE 플랜 2개월 cutoff 는 createdAt 기준 유지 (진료일 임의 입력 가능해 일관성 위해).
+        DateTemplate<LocalDate> effectiveDate = Expressions.dateTemplate(
+                LocalDate.class,
+                "coalesce({0}, cast({1} as date))",
+                cr.consultedAt, hs.scheduledAt);
         return queryFactory
                 .selectFrom(cr)
+                .leftJoin(hs).on(hs.id.eq(cr.scheduleId))
                 .where(cr.userId.eq(userId), cr.deletedAt.isNull(), cr.createdAt.after(after))
-                .orderBy(cr.consultedAt.desc().nullsLast(), cr.createdAt.desc())
+                .orderBy(effectiveDate.desc().nullsLast(), cr.createdAt.desc())
                 .offset(offset)
                 .limit(limit)
                 .fetch();

@@ -12,10 +12,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -52,20 +52,25 @@ public class GetRecordTimelineUseCaseImpl implements GetRecordTimelineUseCase {
             isLimited = true;
         }
 
-        // 연결된 일정의 hospitalName 일괄 조회 (N+1 방지)
-        Map<UUID, String> scheduleNames = records.stream()
+        // 연결된 일정 일괄 조회 (N+1 방지) — hospitalName + scheduledAt 둘 다 사용
+        Map<UUID, HospitalSchedule> scheduleMap = new HashMap<>();
+        records.stream()
                 .map(CounselingRecord::getScheduleId)
                 .filter(id -> id != null)
                 .distinct()
-                .map(id -> hospitalScheduleRepository.findByIdAndUserIdAndDeletedAtIsNull(id, userId).orElse(null))
-                .filter(s -> s != null)
-                .collect(Collectors.toMap(HospitalSchedule::getId, HospitalSchedule::getHospitalName));
+                .forEach(id -> hospitalScheduleRepository
+                        .findByIdAndUserIdAndDeletedAtIsNull(id, userId)
+                        .ifPresent(s -> scheduleMap.put(s.getId(), s)));
 
         List<RecordSummaryResult> content = records.stream()
-                .map(r -> RecordSummaryResult.of(
-                        r,
-                        r.getScheduleId() != null ? scheduleNames.get(r.getScheduleId()) : null
-                ))
+                .map(r -> {
+                    HospitalSchedule linked = r.getScheduleId() != null ? scheduleMap.get(r.getScheduleId()) : null;
+                    return RecordSummaryResult.of(
+                            r,
+                            linked != null ? linked.getHospitalName() : null,
+                            linked != null ? linked.getScheduledAt() : null
+                    );
+                })
                 .toList();
 
         return RecordTimelineResult.of(content, page, size, total, isLimited);
