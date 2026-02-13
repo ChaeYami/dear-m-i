@@ -390,11 +390,11 @@ export const MedicationHomeScreen: React.FC = () => {
               ]}
             />
           </View>
-          <Text style={styles.summaryPercent}>
-            {totalSlots === 0
-              ? '오늘 복약 일정이 없습니다'
-              : `${Math.round(completionRate * 100)}%`}
-          </Text>
+          {totalSlots === 0 ? (
+            <Text style={styles.summaryEmpty}>오늘 복약 일정이 없습니다</Text>
+          ) : (
+            <Text style={styles.summaryPercent}>{`${Math.round(completionRate * 100)}%`}</Text>
+          )}
           {totalSlots > 0 && (
             <Text style={styles.summaryLabel}>완료</Text>
           )}
@@ -661,6 +661,12 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBott
     summaryPercent: {
       fontSize: sizes.font.xxl,
       fontFamily: fontFamily.bold,
+      color: colors.secondary,
+      textAlign: 'right',
+    },
+    summaryEmpty: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.medium,
       color: colors.secondary,
       textAlign: 'right',
     },
