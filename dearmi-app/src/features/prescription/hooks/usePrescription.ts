@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
 import { QUERY_KEYS } from '@/constants/cacheKeys';
 import { prescriptionApi } from '@/features/prescription/api';
 import type { SavePrescriptionRequest } from '@/shared/types/domain.types';
@@ -60,14 +61,22 @@ export const usePrescriptionDetail = (id: string, poll = false) => {
   const query = useQuery({
     queryKey: QUERY_KEYS.prescription(id),
     queryFn: async () => {
-      const { data } = await prescriptionApi.getPrescription(id);
-      return data.data ?? null;
+      try {
+        const { data } = await prescriptionApi.getPrescription(id);
+        return data.data ?? null;
+      } catch (e) {
+        // 404: unmount 자동 삭제와 폴링 레이스 — 조용히 null 반환
+        if (e instanceof AxiosError && e.response?.status === 404) return null;
+        throw e;
+      }
     },
     enabled: !!id,
     staleTime: 0,
     refetchInterval: (q) => {
       if (!poll) return false;
-      const status = q.state.data?.ocrStatus;
+      const data = q.state.data;
+      if (data === null) return false; // 삭제된 경우 폴링 중단
+      const status = data?.ocrStatus;
       if (status === 'COMPLETED' || status === 'FAILED') return false;
       if (Date.now() - startTimeRef.current > OCR_TIMEOUT_MS) return false;
       return OCR_POLL_INTERVAL_MS;

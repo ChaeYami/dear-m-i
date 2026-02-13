@@ -8,20 +8,16 @@ import com.dearmi.backend.infrastructure.external.s3.S3Service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.netty.channel.ChannelOption;
-import io.netty.handler.timeout.ReadTimeoutHandler;
-import io.netty.handler.timeout.WriteTimeoutHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.client.ReactorClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.HttpStatusCodeException;
-import org.springframework.web.client.RestClient;
-import reactor.netty.http.client.HttpClient;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpTimeoutException;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
@@ -71,10 +67,14 @@ public class GeminiVisionClient implements PrescriptionOcrPort {
 
     private static final int MAX_RETRIES = 1;
     private static final long RETRY_BASE_DELAY_MS = 3_000;
-    private static final int CONNECT_TIMEOUT_MS = 10_000;
-    private static final int WRITE_TIMEOUT_SEC = 30;
-    private static final int READ_TIMEOUT_SEC = 40;
-    private static final Duration RESPONSE_TIMEOUT = Duration.ofSeconds(40);
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(10);
+    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(45);
+
+    /** JDK HttpClient 는 thread-safe — 싱글턴으로 재사용. */
+    private final HttpClient httpClient = HttpClient.newBuilder()
+            .connectTimeout(CONNECT_TIMEOUT)
+            .version(HttpClient.Version.HTTP_2)
+            .build();
 
     @Override
     public OcrResult analyze(String s3Key) {
@@ -90,54 +90,65 @@ public class GeminiVisionClient implements PrescriptionOcrPort {
         Map<String, Object> body = Map.of("contents", List.of(content));
 
         String url = apiUrl + "?key=" + apiKey;
+        String bodyJson;
+        try {
+            bodyJson = objectMapper.writeValueAsString(body);
+        } catch (Exception e) {
+            throw new PrescriptionOcrException("요청 body 직렬화 실패", e);
+        }
 
-        // reactor-netty HttpClient 에 connect/write/read/response 타임아웃 모두 명시.
-        // ReactorClientHttpRequestFactory.setReadTimeout 단독으로는 body 전송 단계 hang 을 못 막음.
-        HttpClient httpClient = HttpClient.create()
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, CONNECT_TIMEOUT_MS)
-                .responseTimeout(RESPONSE_TIMEOUT)
-                .doOnConnected(conn -> conn
-                        .addHandlerLast(new ReadTimeoutHandler(READ_TIMEOUT_SEC))
-                        .addHandlerLast(new WriteTimeoutHandler(WRITE_TIMEOUT_SEC)));
-        ReactorClientHttpRequestFactory factory = new ReactorClientHttpRequestFactory(httpClient);
-
-        RestClient restClient = RestClient.builder()
-                .baseUrl(url)
-                .defaultHeader("content-type", "application/json")
-                .requestFactory(factory)
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .timeout(REQUEST_TIMEOUT)
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(bodyJson))
                 .build();
 
         Exception lastException = null;
         for (int attempt = 0; attempt <= MAX_RETRIES; attempt++) {
             try {
-                GeminiResponse response = restClient.post()
-                        .body(body)
-                        .retrieve()
-                        .body(GeminiResponse.class);
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                int status = response.statusCode();
 
-                if (response == null || response.candidates() == null || response.candidates().isEmpty()) {
-                    throw new PrescriptionOcrException("Gemini API 응답이 비어있습니다");
+                if (status >= 200 && status < 300) {
+                    GeminiResponse parsed = objectMapper.readValue(response.body(), GeminiResponse.class);
+                    if (parsed == null || parsed.candidates() == null || parsed.candidates().isEmpty()) {
+                        throw new PrescriptionOcrException("Gemini API 응답이 비어있습니다");
+                    }
+                    String responseText = parsed.candidates().get(0).content().parts().get(0).text();
+                    return parseOcrResult(responseText);
                 }
 
-                String responseText = response.candidates().get(0).content().parts().get(0).text();
-                return parseOcrResult(responseText);
-
-            } catch (PrescriptionOcrException e) {
-                throw e;
-            } catch (HttpStatusCodeException e) {
-                int status = e.getStatusCode().value();
                 boolean retryable = (status == 503 || status == 429 || status == 500);
                 if (retryable && attempt < MAX_RETRIES) {
-                    long delay = RETRY_BASE_DELAY_MS * (1L << attempt); // 5s, 10s, 20s
-                    log.warn("Gemini {} 오류, {}ms 후 재시도 ({}/{}): s3Key={}", status, delay, attempt + 1, MAX_RETRIES, s3Key);
-                    try { Thread.sleep(delay); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
-                    lastException = e;
-                } else {
-                    log.error("처방전 OCR 실패: s3Key={}", s3Key, e);
-                    throw new PrescriptionOcrException("처방전 OCR 처리 중 오류가 발생했습니다", e);
+                    long delay = RETRY_BASE_DELAY_MS * (1L << attempt);
+                    log.warn("Gemini {} 오류, {}ms 후 재시도 ({}/{}): s3Key={}, body={}",
+                            status, delay, attempt + 1, MAX_RETRIES, s3Key, truncate(response.body(), 500));
+                    Thread.sleep(delay);
+                    lastException = new PrescriptionOcrException("Gemini HTTP " + status);
+                    continue;
                 }
+                log.error("Gemini HTTP {}: s3Key={}, body={}", status, s3Key, truncate(response.body(), 1000));
+                throw new PrescriptionOcrException("Gemini HTTP " + status);
+
+            } catch (HttpTimeoutException e) {
+                log.error("Gemini 타임아웃 ({}s 초과): s3Key={}", REQUEST_TIMEOUT.toSeconds(), s3Key);
+                if (attempt < MAX_RETRIES) {
+                    lastException = e;
+                    continue;
+                }
+                throw new PrescriptionOcrException("Gemini 응답 타임아웃", e);
+            } catch (PrescriptionOcrException e) {
+                throw e;
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new PrescriptionOcrException("OCR 처리 중 인터럽트", e);
             } catch (Exception e) {
-                log.error("처방전 OCR 실패: s3Key={}", s3Key, e);
+                log.error("Gemini 호출 실패: s3Key={}, exception={}", s3Key, e.getClass().getSimpleName(), e);
+                if (attempt < MAX_RETRIES) {
+                    lastException = e;
+                    continue;
+                }
                 throw new PrescriptionOcrException("처방전 OCR 처리 중 오류가 발생했습니다", e);
             }
         }
@@ -147,7 +158,6 @@ public class GeminiVisionClient implements PrescriptionOcrPort {
     private OcrResult parseOcrResult(String json) {
         try {
             String trimmed = json.strip();
-            // JSON 객체 추출 (```json ... ``` 마크다운 블록 대응)
             int start = trimmed.indexOf('{');
             int end = trimmed.lastIndexOf('}');
             if (start == -1 || end == -1) {
@@ -177,5 +187,10 @@ public class GeminiVisionClient implements PrescriptionOcrPort {
         if (lower.endsWith(".gif")) return "image/gif";
         if (lower.endsWith(".webp")) return "image/webp";
         return "image/jpeg";
+    }
+
+    private static String truncate(String s, int max) {
+        if (s == null) return "";
+        return s.length() <= max ? s : s.substring(0, max) + "...[truncated]";
     }
 }
