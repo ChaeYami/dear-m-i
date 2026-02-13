@@ -29,14 +29,14 @@ export const usePagedPrescriptions = () =>
   });
 
 /** 약품 상세 (e약은요 정보) */
-export const useMedicationDetail = (id: number) =>
+export const useMedicationDetail = (id: string) =>
   useQuery({
     queryKey: QUERY_KEYS.medicationDetail(id),
     queryFn: async () => {
       const { data } = await prescriptionApi.getMedicationDetail(id);
       return data.data ?? null;
     },
-    enabled: id > 0,
+    enabled: !!id,
   });
 
 /**

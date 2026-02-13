@@ -34,7 +34,7 @@ export type MedicationStackParamList = {
   PrescriptionList: undefined;
   PrescriptionUpload: undefined;
   OcrResult: { prescriptionId: string };
-  MedicationDetail: { medicationId: number; medicationName: string };
+  MedicationDetail: { medicationId: string; medicationName: string };
 };
 
 const Stack = createStackNavigator<MedicationStackParamList>();

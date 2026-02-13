@@ -121,7 +121,7 @@ export interface Prescription {
 
 /** 처방 약품 (e약은요 API 데이터 포함) */
 export interface PrescriptionMedication {
-  id: number;
+  id: string;
   medicationName: string;
   manufacturer?: string;
   dosage?: string;
