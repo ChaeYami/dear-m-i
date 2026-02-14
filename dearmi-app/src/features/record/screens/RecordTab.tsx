@@ -20,19 +20,18 @@ import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { softShadow } from '@/shared/theme/shadows';
 import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
-import { useResetStackOnTabFocus } from '@/shared/hooks/useResetStackOnTabFocus';
 import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import { useTabBarScrollHide } from '@/shared/hooks/useTabBarScrollHide';
 import { useTimeline, useDeleteRecord } from '@/features/record/hooks/useRecord';
 import { getEmotionColor } from '@/shared/components/EmotionSlider';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import { useAuthStore } from '@/features/auth/store/authStore';
-import type { RecordStackParamList } from '@/navigation/RecordNavigator';
+import type { CareStackParamList } from '@/navigation/CareNavigator';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
 import type { RecordSummary } from '@/shared/types/domain.types';
 
 type Nav = CompositeNavigationProp<
-  StackNavigationProp<RecordStackParamList, 'RecordTab'>,
+  StackNavigationProp<CareStackParamList, 'CareHome'>,
   StackNavigationProp<RootStackParamList>
 >;
 
@@ -175,8 +174,7 @@ const EmotionBar: React.FC<{ score: number }> = ({ score }) => {
   );
 };
 
-export const RecordTab: React.FC = () => {
-  useResetStackOnTabFocus();
+export const RecordTab: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const { t } = useTranslation('record');
@@ -213,8 +211,11 @@ export const RecordTab: React.FC = () => {
   if (isLoading) return <LoadingSpinner fullscreen />;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScreenHeader variant="tab" title={t('title')} hasNotification />
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      edges={embedded ? [] : undefined}
+    >
+      {!embedded && <ScreenHeader variant="tab" title={t('title')} hasNotification />}
 
 
       {!isPremium && (

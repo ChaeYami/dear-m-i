@@ -19,15 +19,14 @@ import { softShadow, floatingShadow } from '@/shared/theme/shadows';
 import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { SectionTitle } from '@/shared/components/SectionTitle';
-import { useResetStackOnTabFocus } from '@/shared/hooks/useResetStackOnTabFocus';
 import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import { useTabBarScrollHide } from '@/shared/hooks/useTabBarScrollHide';
 import { useMonthlySchedules, useAllSchedules } from '@/features/schedule/hooks/useSchedule';
 import { DatePickerModal } from '@/features/schedule/components/DatePickerModal';
-import type { ScheduleStackParamList } from '@/navigation/ScheduleNavigator';
+import type { CareStackParamList } from '@/navigation/CareNavigator';
 import type { HospitalSchedule } from '@/shared/types/domain.types';
 
-type Nav = StackNavigationProp<ScheduleStackParamList, 'ScheduleTab'>;
+type Nav = StackNavigationProp<CareStackParamList, 'CareHome'>;
 type ViewMode = 'week' | 'all';
 
 const WEEK_DAYS_LABEL = ['일', '월', '화', '수', '목', '금', '토'];
@@ -63,8 +62,7 @@ const getTodayString = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-export const ScheduleTab: React.FC = () => {
-  useResetStackOnTabFocus();
+export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const { t } = useTranslation('common');
@@ -171,8 +169,11 @@ export const ScheduleTab: React.FC = () => {
   const totalWeekCount = selectedDaySchedules.length + weekSchedules.length;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScreenHeader variant="tab" title={t('tab_schedule')} hasNotification />
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      edges={embedded ? [] : undefined}
+    >
+      {!embedded && <ScreenHeader variant="tab" title={t('tab_schedule')} hasNotification />}
 
       <ScrollView
         showsVerticalScrollIndicator={false}

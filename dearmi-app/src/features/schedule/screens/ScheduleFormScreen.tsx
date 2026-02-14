@@ -19,7 +19,7 @@ import { GlassCard } from '@/shared/components/GlassCard';
 import { SectionTitle } from '@/shared/components/SectionTitle';
 import { useCreateSchedule, useUpdateSchedule, useAllSchedules } from '@/features/schedule/hooks/useSchedule';
 import { useUnsavedChangesWarning } from '@/shared/hooks/useUnsavedChangesWarning';
-import type { ScheduleStackParamList } from '@/navigation/ScheduleNavigator';
+import type { CareStackParamList as ScheduleStackParamList } from '@/navigation/CareNavigator';
 
 type Nav = StackNavigationProp<ScheduleStackParamList, 'ScheduleForm'>;
 type Route = RouteProp<ScheduleStackParamList, 'ScheduleForm'>;

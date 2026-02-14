@@ -17,7 +17,7 @@ import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import { getEmotionColor } from '@/shared/components/EmotionSlider';
 import { useRecordDetail, useDeleteRecord } from '@/features/record/hooks/useRecord';
-import type { RecordStackParamList } from '@/navigation/RecordNavigator';
+import type { CareStackParamList as RecordStackParamList } from '@/navigation/CareNavigator';
 
 type Nav = StackNavigationProp<RecordStackParamList, 'RecordDetail'>;
 type Route = RouteProp<RecordStackParamList, 'RecordDetail'>;

@@ -460,7 +460,7 @@ export const PrescriptionTab: React.FC = () => {
             }
             onWriteRecord={() => {
               (navigationRef.current as any)?.navigate('Main', {
-                screen: 'Record',
+                screen: 'Care',
                 params: {
                   screen: 'RecordForm',
                   params: { consultedAt: item.prescribedAt },
@@ -469,11 +469,11 @@ export const PrescriptionTab: React.FC = () => {
             }}
             onWriteSchedule={() => {
               // 1단계: Schedule 탭 전환 (ScheduleTab이 스택에 먼저 쌓이도록)
-              (navigationRef.current as any)?.navigate('Main', { screen: 'Schedule' });
-              // 2단계: 다음 프레임에 ScheduleForm push → [ScheduleTab, ScheduleForm] 보장
+              (navigationRef.current as any)?.navigate('Main', { screen: 'Care' });
+              // 2단계: 다음 프레임에 ScheduleForm push → [CareHome, ScheduleForm] 보장
               setTimeout(() => {
                 (navigationRef.current as any)?.navigate('Main', {
-                  screen: 'Schedule',
+                  screen: 'Care',
                   params: {
                     screen: 'ScheduleForm',
                     params: {

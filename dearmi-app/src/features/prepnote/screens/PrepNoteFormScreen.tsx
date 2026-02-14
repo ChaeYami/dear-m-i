@@ -17,7 +17,7 @@ import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { useCreatePrepNote, useUpdatePrepNote, usePrepNotes } from '@/features/prepnote/hooks/usePrepNote';
 import { useRecentSchedules } from '@/features/record/hooks/useRecord';
 import { useUnsavedChangesWarning } from '@/shared/hooks/useUnsavedChangesWarning';
-import type { ScheduleStackParamList } from '@/navigation/ScheduleNavigator';
+import type { CareStackParamList as ScheduleStackParamList } from '@/navigation/CareNavigator';
 
 type Nav = StackNavigationProp<ScheduleStackParamList, 'PrepNoteForm'>;
 type Route = RouteProp<ScheduleStackParamList, 'PrepNoteForm'>;

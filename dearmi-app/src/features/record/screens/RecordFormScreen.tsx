@@ -28,7 +28,7 @@ import { useAuthStore } from '@/features/auth/store/authStore';
 import { useUnsavedChangesWarning } from '@/shared/hooks/useUnsavedChangesWarning';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import { prescriptionApi } from '@/features/prescription/api';
-import type { RecordStackParamList } from '@/navigation/RecordNavigator';
+import type { CareStackParamList as RecordStackParamList } from '@/navigation/CareNavigator';
 
 type Nav = StackNavigationProp<RecordStackParamList, 'RecordForm'>;
 type Route = RouteProp<RecordStackParamList, 'RecordForm'>;

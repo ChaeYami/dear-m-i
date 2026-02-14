@@ -22,17 +22,15 @@ import {
   TabBarVisibilityProvider,
   useTabBarVisibility,
 } from '@/shared/navigation/TabBarVisibilityContext';
-import { ScheduleNavigator } from './ScheduleNavigator';
+import { CareNavigator } from './CareNavigator';
 import { CheckinNavigator } from './CheckinNavigator';
-import { RecordNavigator } from './RecordNavigator';
 import { MedicationNavigator } from './MedicationNavigator';
 import { MyPageNavigator } from './MyPageNavigator';
 import { useFcmSetup } from '@/shared/hooks/useFcmSetup';
 
 export type MainTabParamList = {
-  Schedule: undefined;
   Checkin: undefined;
-  Record: undefined;
+  Care: undefined;
   Medication: undefined;
   MyPage: undefined;
 };
@@ -43,27 +41,24 @@ const TAB_ICONS: Record<
   string,
   { focused: keyof typeof Ionicons.glyphMap; unfocused: keyof typeof Ionicons.glyphMap }
 > = {
-  Schedule:   { focused: 'calendar',      unfocused: 'calendar-outline' },
-  Checkin:    { focused: 'heart',         unfocused: 'heart-outline' },
-  Record:     { focused: 'document-text', unfocused: 'document-text-outline' },
-  Medication: { focused: 'medical',       unfocused: 'medical-outline' },
-  MyPage:     { focused: 'person',        unfocused: 'person-outline' },
+  Checkin:    { focused: 'heart',      unfocused: 'heart-outline' },
+  Care:       { focused: 'clipboard',  unfocused: 'clipboard-outline' },
+  Medication: { focused: 'medical',    unfocused: 'medical-outline' },
+  MyPage:     { focused: 'person',     unfocused: 'person-outline' },
 };
 
 const TAB_LABEL_KEY: Record<string, string> = {
-  Schedule: 'tab_schedule',
-  Checkin: 'tab_checkin',
-  Record: 'tab_record',
+  Checkin:    'tab_checkin',
+  Care:       'tab_care',
   Medication: 'tab_medication',
-  MyPage: 'tab_mypage',
+  MyPage:     'tab_mypage',
 };
 
 const TAB_ROOT_SCREENS: Record<string, string> = {
-  Schedule: 'ScheduleTab',
-  Checkin: 'CheckinHome',
-  Record: 'RecordTab',
+  Checkin:    'CheckinHome',
+  Care:       'CareHome',
   Medication: 'MedicationHome',
-  MyPage: 'MyPageTab',
+  MyPage:     'MyPageTab',
 };
 
 const PILL_HEIGHT = 48;
@@ -286,9 +281,8 @@ export const MainTabNavigator: React.FC = () => {
         initialRouteName="Checkin"
       >
         <Tab.Screen name="Checkin" component={CheckinNavigator} />
-        <Tab.Screen name="Schedule" component={ScheduleNavigator} />
+        <Tab.Screen name="Care" component={CareNavigator} />
         <Tab.Screen name="Medication" component={MedicationNavigator} />
-        <Tab.Screen name="Record" component={RecordNavigator} />
         <Tab.Screen name="MyPage" component={MyPageNavigator} />
       </Tab.Navigator>
     </TabBarVisibilityProvider>

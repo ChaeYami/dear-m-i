@@ -123,7 +123,7 @@ export const SearchScreen: React.FC = () => {
     navigation.goBack();
     setTimeout(() => {
       (navigationRef.current as any)?.navigate('Main', {
-        screen: 'Record',
+        screen: 'Care',
         params: { screen: 'RecordForm', params: { recordId: id } },
       });
     }, 300);
@@ -133,7 +133,7 @@ export const SearchScreen: React.FC = () => {
     navigation.goBack();
     setTimeout(() => {
       (navigationRef.current as any)?.navigate('Main', {
-        screen: 'Schedule',
+        screen: 'Care',
         params: {
           screen: 'PrepNoteForm',
           params: { noteId: id, scheduleId: scheduleId ?? undefined },

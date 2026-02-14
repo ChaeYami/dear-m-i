@@ -18,12 +18,12 @@ import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
 import { useScheduleDetail, useDeleteSchedule } from '@/features/schedule/hooks/useSchedule';
 import { usePrepNotesBySchedule } from '@/features/prepnote/hooks/usePrepNote';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
-import type { ScheduleStackParamList } from '@/navigation/ScheduleNavigator';
+import type { CareStackParamList } from '@/navigation/CareNavigator';
 import { navigationRef } from '@/navigation/navigationRef';
 
-type Nav = StackNavigationProp<ScheduleStackParamList, 'ScheduleDetail'>;
+type Nav = StackNavigationProp<CareStackParamList, 'ScheduleDetail'>;
 type RootNav = any;
-type Route = RouteProp<ScheduleStackParamList, 'ScheduleDetail'>;
+type Route = RouteProp<CareStackParamList, 'ScheduleDetail'>;
 
 const formatDateTime = (iso: string) => {
   // ISO 문자열에서 직접 파싱 (타임존 변환 방지)
@@ -63,7 +63,7 @@ export const ScheduleDetailScreen: React.FC = () => {
   const handleLinkRecord = () => {
     if (!schedule) return;
     (navigationRef.current as any)?.navigate('Main', {
-      screen: 'Record',
+      screen: 'Care',
       params: {
         screen: 'RecordForm',
         params: { scheduleId: schedule.id },

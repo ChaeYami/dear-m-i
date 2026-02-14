@@ -110,7 +110,7 @@ export const RootNavigator: React.FC = () => {
     if (!scheduleId || !navigationRef.isReady()) return;
 
     (navigationRef.current as any)?.navigate('Main', {
-      screen: 'Schedule',
+      screen: 'Care',
       params: {
         screen: 'ScheduleDetail',
         params: { scheduleId: Number(scheduleId) },

@@ -16,7 +16,7 @@ import { usePrepNotes, useDeletePrepNote } from '@/features/prepnote/hooks/usePr
 import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import type { PrepNote } from '@/shared/types/domain.types';
-import type { ScheduleStackParamList } from '@/navigation/ScheduleNavigator';
+import type { CareStackParamList as ScheduleStackParamList } from '@/navigation/CareNavigator';
 
 type Nav = StackNavigationProp<ScheduleStackParamList, 'PrepNoteList'>;
 
