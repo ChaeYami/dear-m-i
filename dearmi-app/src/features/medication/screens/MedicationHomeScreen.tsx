@@ -240,16 +240,24 @@ export const MedicationHomeScreen: React.FC = () => {
         </View>
       )}
 
-      {/* 복약 이력 + 편집 툴바 */}
+      {/* 복약 이력 · 처방전 · 편집 툴바 */}
       {isToday && (
         <View style={styles.toolRow}>
           <TouchableOpacity
             onPress={() => navigation.navigate('MedicationHistory')}
-            style={[styles.historyEntryBtn, { backgroundColor: colors.primaryMuted, borderColor: colors.primary + '30' }]}
+            style={[styles.toolChip, { flex: 1, borderColor: colors.primary + '30', backgroundColor: colors.primaryMuted }]}
             hitSlop={8}
           >
             <Ionicons name="time-outline" size={14} color={colors.primary} />
             <Text style={[styles.toolChipText, { color: colors.primary }]}>복약 이력</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('PrescriptionList')}
+            style={[styles.toolChip, { flex: 1, borderColor: colors.accent + '33', backgroundColor: colors.accentMuted }]}
+            hitSlop={8}
+          >
+            <Ionicons name="receipt-outline" size={14} color={colors.accent} />
+            <Text style={[styles.toolChipText, { color: colors.accent }]}>처방전</Text>
           </TouchableOpacity>
           {hasAnySlots && (
             <TouchableOpacity
@@ -345,24 +353,6 @@ export const MedicationHomeScreen: React.FC = () => {
             <Text style={styles.summaryLabel}>완료</Text>
           )}
         </View>
-
-        {/* 처방전 진입 카드 (오늘 화면에서만) */}
-        {isToday && (
-          <TouchableOpacity
-            style={[styles.featureCard, softShadow(colors)]}
-            onPress={() => navigation.navigate('PrescriptionList')}
-            activeOpacity={0.75}
-          >
-            <View style={[styles.featureIconWrap, { backgroundColor: colors.accentMuted }]}>
-              <Ionicons name="receipt-outline" size={22} color={colors.accent} />
-            </View>
-            <View style={styles.featureCardBody}>
-              <Text style={[styles.featureCardTitle, { color: colors.text }]}>처방전</Text>
-              <Text style={[styles.featureCardSub, { color: colors.textSub }]}>처방전 사진으로 복약 일정을 자동 등록해요</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.textDisabled} />
-          </TouchableOpacity>
-        )}
 
         {/* 시간대별 카드 */}
         {!hasAnySlots ? (
@@ -532,33 +522,6 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBott
       ...softShadow(colors),
       overflow: 'hidden',
     },
-    featureCard: {
-      flexDirection: 'row' as const,
-      alignItems: 'center' as const,
-      backgroundColor: colors.surface,
-      padding: sizes.spacing.md,
-      borderRadius: sizes.radius.xxl,
-      gap: sizes.spacing.md,
-    },
-    featureIconWrap: {
-      width: 44,
-      height: 44,
-      borderRadius: sizes.radius.xl,
-      alignItems: 'center' as const,
-      justifyContent: 'center' as const,
-    },
-    featureCardBody: {
-      flex: 1,
-      gap: 2,
-    },
-    featureCardTitle: {
-      fontSize: sizes.font.md,
-      fontFamily: fontFamily.semibold,
-    },
-    featureCardSub: {
-      fontSize: sizes.font.sm,
-      fontFamily: fontFamily.regular,
-    },
     emptyWrap: {
       alignItems: 'center',
       paddingTop: 60,
@@ -580,20 +543,10 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBott
       paddingHorizontal: sizes.spacing.lg,
       paddingBottom: sizes.spacing.sm,
     },
-    historyEntryBtn: {
-      flex: 1,
-      flexDirection: 'row' as const,
-      alignItems: 'center' as const,
-      justifyContent: 'center' as const,
-      gap: 4,
-      paddingVertical: sizes.spacing.xs + 2,
-      paddingHorizontal: sizes.spacing.md,
-      borderRadius: sizes.radius.full,
-      borderWidth: 1,
-    },
     toolChip: {
       flexDirection: 'row' as const,
       alignItems: 'center' as const,
+      justifyContent: 'center' as const,
       gap: 4,
       paddingHorizontal: sizes.spacing.md,
       paddingVertical: sizes.spacing.xs + 2,
