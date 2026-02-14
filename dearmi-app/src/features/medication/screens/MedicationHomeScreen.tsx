@@ -38,6 +38,7 @@ import { useTabBarScrollHide } from '@/shared/hooks/useTabBarScrollHide';
 import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
 import type { TimeSlotType } from '@/shared/types/domain.types';
+import { DatePickerModal } from '@/features/schedule/components/DatePickerModal';
 
 type Nav = CompositeNavigationProp<
   StackNavigationProp<MedicationStackParamList, 'MedicationHome'>,
@@ -98,6 +99,7 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const toggleSelect = (scheduleId: string) => {
     setSelectedIds((prev) => {
@@ -194,6 +196,13 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
     navigation.replace('MedicationHome', { date: getNextDay(selectedDate), direction: 'next' });
   };
 
+  const handleDatePicked = (date: string) => {
+    setShowDatePicker(false);
+    if (date !== selectedDate) {
+      navigation.replace('MedicationHome', { date, direction: date < selectedDate ? 'prev' : 'next' });
+    }
+  };
+
   // 14일 후까지만 미래 탐색 허용
   const maxBrowseDate = (() => {
     const d = new Date();
@@ -218,9 +227,20 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
         />
       )}
 
-      {/* 과거 날짜 네비게이션 바 */}
-      {!isToday && (
-        <View style={styles.dateNavBar}>
+      {/* 날짜 네비게이션 바 — 독립 화면(비embedded)에서만 표시 */}
+      {!embedded && <View style={styles.dateNavBar}>
+        {/* 오늘 버튼 — 오늘이 아닐 때만 표시 (레이아웃 고정을 위해 항상 자리 차지) */}
+        <TouchableOpacity
+          onPress={() => navigation.replace('MedicationHome', {})}
+          hitSlop={8}
+          style={[styles.dateNavSide, isToday && { opacity: 0 }]}
+          disabled={isToday}
+        >
+          <Text style={styles.todayBtnText}>오늘</Text>
+        </TouchableOpacity>
+
+        {/* 날짜 ← → */}
+        <View style={styles.dateNavCenter}>
           <TouchableOpacity onPress={handleGoPrev} hitSlop={12} style={styles.dateNavBtn}>
             <Ionicons name="chevron-back" size={20} color={colors.primary} />
           </TouchableOpacity>
@@ -238,58 +258,25 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
             />
           </TouchableOpacity>
         </View>
-      )}
 
-      {/* 처방전 · 편집 툴바 */}
-      {isToday && (
-        <View style={styles.toolRow}>
-          {!embedded && (
-            <TouchableOpacity
-              onPress={() => navigation.navigate('MedicationHistory')}
-              style={[styles.toolChip, { flex: 1, borderColor: colors.primary + '30', backgroundColor: colors.primaryMuted }]}
-              hitSlop={8}
-            >
-              <Ionicons name="time-outline" size={14} color={colors.primary} />
-              <Text style={[styles.toolChipText, { color: colors.primary }]}>복약 이력</Text>
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            onPress={() => navigation.navigate('PrescriptionList')}
-            style={[styles.toolChip, { flex: 1, borderColor: colors.accent + '33', backgroundColor: colors.accentMuted }]}
-            hitSlop={8}
-          >
-            <Ionicons name="receipt-outline" size={14} color={colors.accent} />
-            <Text style={[styles.toolChipText, { color: colors.accent }]}>처방전</Text>
-          </TouchableOpacity>
-          {hasAnySlots && (
-            <TouchableOpacity
-              onPress={() => {
-                if (isEditMode) {
-                  setIsEditMode(false);
-                  setSelectedIds(new Set());
-                } else {
-                  setIsEditMode(true);
-                }
-              }}
-              hitSlop={8}
-              style={[
-                styles.toolChip,
-                isEditMode
-                  ? { borderColor: colors.primary + '44', backgroundColor: colors.primaryMuted }
-                  : { borderColor: colors.divider, backgroundColor: colors.surface },
-              ]}
-            >
-              <Ionicons
-                name={isEditMode ? 'checkmark' : 'create-outline'}
-                size={14}
-                color={isEditMode ? colors.primary : colors.textSub}
-              />
-              <Text style={[styles.toolChipText, { color: isEditMode ? colors.primary : colors.textSub }]}>
-                {isEditMode ? '완료' : '편집'}
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        {/* 캘린더 버튼 */}
+        <TouchableOpacity
+          onPress={() => setShowDatePicker(true)}
+          hitSlop={8}
+          style={styles.dateNavSide}
+        >
+          <Ionicons name="calendar-outline" size={20} color={colors.primary} />
+        </TouchableOpacity>
+      </View>}
+
+      {!embedded && (
+        <DatePickerModal
+          visible={showDatePicker}
+          initialDate={selectedDate}
+          maxDate={maxBrowseDate}
+          onConfirm={handleDatePicked}
+          onClose={() => setShowDatePicker(false)}
+        />
       )}
 
       {/* 편집 모드: 전체 선택 + 삭제 바 */}
@@ -331,9 +318,24 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryDate}>{dateLabel}</Text>
-            <Text style={styles.summaryRate}>
-              {takenSlots} / {totalSlots}
-            </Text>
+            <View style={styles.summaryRateRow}>
+              <Text style={styles.summaryRate}>{takenSlots} / {totalSlots}</Text>
+              {isToday && hasAnySlots && (
+                <TouchableOpacity
+                  onPress={() => {
+                    if (isEditMode) { setIsEditMode(false); setSelectedIds(new Set()); }
+                    else { setIsEditMode(true); }
+                  }}
+                  hitSlop={8}
+                >
+                  <Ionicons
+                    name={isEditMode ? 'checkmark-circle' : 'create-outline'}
+                    size={18}
+                    color={isEditMode ? colors.primary : colors.textSub}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
           <View style={styles.progressBg}>
             <LinearGradient
@@ -451,17 +453,18 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBott
     container: { flex: 1, backgroundColor: colors.background },
     content: { padding: sizes.spacing.lg, paddingBottom: tabBarSafeBottom + 80, gap: sizes.spacing.md },
     summaryCard: {
-      backgroundColor: colors.surface,
-      borderRadius: sizes.radius.xxl,
-      padding: sizes.spacing.lg + 4,
-      ...softShadow(colors),
       gap: sizes.spacing.sm,
-      marginBottom: sizes.spacing.sm,
+      marginBottom: sizes.spacing.xs,
     },
     summaryRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
+    },
+    summaryRateRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
     },
     summaryDate: {
       fontSize: sizes.font.md,
@@ -606,10 +609,23 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBott
     dateNavBar: {
       flexDirection: 'row' as const,
       alignItems: 'center' as const,
-      justifyContent: 'center' as const,
+      justifyContent: 'space-between' as const,
       paddingHorizontal: sizes.spacing.lg,
       paddingVertical: sizes.spacing.sm,
-      gap: sizes.spacing.xl,
+    },
+    dateNavSide: {
+      width: 52,
+      alignItems: 'center' as const,
+    },
+    todayBtnText: {
+      fontSize: sizes.font.sm,
+      fontFamily: fontFamily.semibold,
+      color: colors.primary,
+    },
+    dateNavCenter: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      gap: sizes.spacing.sm,
     },
     dateNavBtn: {
       padding: sizes.spacing.xs,
@@ -618,7 +634,7 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBott
       fontSize: sizes.font.md,
       fontFamily: fontFamily.semibold,
       color: colors.text,
-      minWidth: 100,
+      minWidth: 90,
       textAlign: 'center' as const,
     },
 

@@ -21,7 +21,7 @@ import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { SectionTitle } from '@/shared/components/SectionTitle';
 import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import { useTabBarScrollHide } from '@/shared/hooks/useTabBarScrollHide';
-import { useMonthlySchedules, useAllSchedules } from '@/features/schedule/hooks/useSchedule';
+import { useAllSchedules } from '@/features/schedule/hooks/useSchedule';
 import { DatePickerModal } from '@/features/schedule/components/DatePickerModal';
 import type { CareStackParamList } from '@/navigation/CareNavigator';
 import type { HospitalSchedule } from '@/shared/types/domain.types';
@@ -77,7 +77,6 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
   const tabBarSafeBottom = useTabBarSafeBottom();
   const scrollHandlers = useTabBarScrollHide();
 
-  const { data: monthlySchedules = [] } = useMonthlySchedules(visibleYear, visibleMonth);
   const { data: allSchedules = [] } = useAllSchedules(true);
 
   const highlightedDates = useMemo(
@@ -85,25 +84,25 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
     [allSchedules],
   );
 
-  // 선택된 날짜의 일정
-  const selectedDaySchedules = useMemo(() => {
-    if (viewMode !== 'week') return [];
-    return allSchedules
-      .filter((s) => toDateString(s.scheduledAt) === selectedDate)
-      .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt));
-  }, [allSchedules, selectedDate, viewMode]);
-
-  // 주간 일정 (선택된 날짜 제외)
-  const weekSchedules = useMemo(() => {
+  // 이번 주 전체 일정 (선택 날짜 포함)
+  const weekAllGrouped = useMemo(() => {
     if (viewMode !== 'week') return [];
     const weekDates = getWeekDates(new Date(selectedDate));
-    return monthlySchedules
-      .filter((s) => {
+    const map = new Map<string, HospitalSchedule[]>();
+    allSchedules
+      .filter((s) => weekDates.includes(toDateString(s.scheduledAt)))
+      .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt))
+      .forEach((s) => {
         const d = toDateString(s.scheduledAt);
-        return weekDates.includes(d) && d !== selectedDate;
-      })
-      .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt));
-  }, [monthlySchedules, viewMode, selectedDate]);
+        if (!map.has(d)) map.set(d, []);
+        map.get(d)!.push(s);
+      });
+    // 선택된 날짜가 일정 없어도 항상 포함 (강조 표시용)
+    if (!map.has(selectedDate)) map.set(selectedDate, []);
+    return Array.from(map.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, items]) => ({ date, items }));
+  }, [allSchedules, selectedDate, viewMode]);
 
   // 전체 보기용
   const allDisplaySchedules = useMemo(() => {
@@ -120,16 +119,6 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
     });
     return Array.from(map.entries()).map(([date, items]) => ({ date, items }));
   }, [allDisplaySchedules]);
-
-  const weekGrouped = useMemo(() => {
-    const map = new Map<string, HospitalSchedule[]>();
-    weekSchedules.forEach((s) => {
-      const d = toDateString(s.scheduledAt);
-      if (!map.has(d)) map.set(d, []);
-      map.get(d)!.push(s);
-    });
-    return Array.from(map.entries()).map(([date, items]) => ({ date, items }));
-  }, [weekSchedules]);
 
   const handleDayPress = useCallback((dateString: string) => {
     setSelectedDate(dateString);
@@ -166,7 +155,7 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
     visibleYear === today.getFullYear() && visibleMonth === today.getMonth() + 1 && selectedDate === todayStr;
 
   const monthLabel = `${visibleYear}.${String(visibleMonth).padStart(2, '0')}`;
-  const totalWeekCount = selectedDaySchedules.length + weekSchedules.length;
+  const weekTotalCount = weekAllGrouped.reduce((sum, g) => sum + g.items.length, 0);
 
   return (
     <SafeAreaView
@@ -279,30 +268,50 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
           {/* ── 주간 모드 리스트 ── */}
           {viewMode === 'week' && (
             <View style={styles.scheduleList}>
-              {/* 선택 날짜 일정 */}
               <View style={styles.listHeader}>
-                <SectionTitle size="sm">{formatDateFull(selectedDate)}</SectionTitle>
+                <SectionTitle size="sm">이번 주 일정</SectionTitle>
                 <Text style={[styles.listCount, { color: colors.textSub, fontFamily: fontFamily.medium }]}>
-                  {selectedDaySchedules.length}건
+                  {weekTotalCount}건
                 </Text>
               </View>
-              {selectedDaySchedules.length === 0 ? (
-                <Text style={[styles.noItemText, { color: colors.textDisabled, fontFamily: fontFamily.medium }]}>
-                  일정 없음
-                </Text>
-              ) : (
-                selectedDaySchedules.map((item) => (
-                  <ScheduleListItem
-                    key={item.id}
-                    schedule={item}
-                    isTodayItem={selectedDate === todayStr}
-                    isPast={isPast(item.scheduledAt)}
-                    onPress={() => navigation.navigate('ScheduleDetail', { scheduleId: item.id })}
-                    colors={colors}
-                  />
-                ))
-              )}
-
+              {weekAllGrouped.map(({ date, items }) => {
+                const isSelected = date === selectedDate;
+                return (
+                  <View
+                    key={date}
+                    style={[
+                      styles.weekDateGroup,
+                      isSelected && { backgroundColor: colors.primaryMuted, borderRadius: sizes.radius.lg, padding: sizes.spacing.sm },
+                    ]}
+                  >
+                    <Text style={[
+                      styles.dateLabel,
+                      {
+                        color: isSelected ? colors.primary : colors.textSub,
+                        fontFamily: isSelected ? fontFamily.bold : fontFamily.semibold,
+                      },
+                    ]}>
+                      {formatDateFull(date)}
+                    </Text>
+                    {items.length === 0 ? (
+                      <Text style={[styles.noItemText, { color: colors.textDisabled, fontFamily: fontFamily.medium }]}>
+                        일정 없음
+                      </Text>
+                    ) : (
+                      items.map((item) => (
+                        <ScheduleListItem
+                          key={item.id}
+                          schedule={item}
+                          isTodayItem={date === todayStr}
+                          isPast={isPast(item.scheduledAt)}
+                          onPress={() => navigation.navigate('ScheduleDetail', { scheduleId: item.id })}
+                          colors={colors}
+                        />
+                      ))
+                    )}
+                  </View>
+                );
+              })}
             </View>
           )}
 
@@ -348,40 +357,6 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
           )}
         </View>
 
-        {/* 주간 일정 — 별도 카드 */}
-        {viewMode === 'week' && (
-          <View style={[styles.weekCard, { backgroundColor: colors.surface }, softShadow(colors)]}>
-            <View style={styles.listHeader}>
-              <SectionTitle size="sm" muted>주간 일정</SectionTitle>
-              <Text style={[styles.listCount, { color: colors.textSub, fontFamily: fontFamily.medium }]}>
-                {weekSchedules.length}건
-              </Text>
-            </View>
-            {weekGrouped.length === 0 ? (
-              <Text style={[styles.noItemText, { color: colors.textDisabled, fontFamily: fontFamily.medium }]}>
-                일정 없음
-              </Text>
-            ) : (
-              weekGrouped.map(({ date, items }) => (
-                <View key={date} style={styles.dateGroup}>
-                  <Text style={[styles.dateLabel, { color: colors.textSub, fontFamily: fontFamily.semibold }]}>
-                    {formatDateFull(date)}
-                  </Text>
-                  {items.map((item) => (
-                    <ScheduleListItem
-                      key={item.id}
-                      schedule={item}
-                      isTodayItem={date === todayStr}
-                      isPast={isPast(item.scheduledAt)}
-                      onPress={() => navigation.navigate('ScheduleDetail', { scheduleId: item.id })}
-                      colors={colors}
-                    />
-                  ))}
-                </View>
-              ))
-            )}
-          </View>
-        )}
       </ScrollView>
 
       <AnimatedPressable
@@ -746,6 +721,10 @@ const styles = StyleSheet.create({
   },
   dateGroup: {
     gap: sizes.spacing.sm,
+  },
+  weekDateGroup: {
+    gap: sizes.spacing.xs,
+    marginBottom: sizes.spacing.xs,
   },
   dateLabel: {
     fontSize: sizes.font.xs,

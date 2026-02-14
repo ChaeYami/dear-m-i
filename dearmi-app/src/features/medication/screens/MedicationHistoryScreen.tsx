@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -6,8 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Modal,
-  Animated,
-  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -36,7 +34,7 @@ import {
 } from '@/features/medication/components/MedicationCard';
 import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
-import type { TimeSlotType, MedicationLogStatus } from '@/shared/types/domain.types';
+import type { TimeSlotType } from '@/shared/types/domain.types';
 
 type Nav = CompositeNavigationProp<
   StackNavigationProp<MedicationStackParamList, 'MedicationHistory'>,
@@ -44,7 +42,6 @@ type Nav = CompositeNavigationProp<
 >;
 
 const TIME_SLOTS: TimeSlotType[] = ['MORNING', 'AFTERNOON', 'EVENING', 'BEDTIME'];
-const SCREEN_WIDTH = Dimensions.get('window').width;
 
 const todayStrFn = () => {
   const d = new Date();
@@ -79,29 +76,12 @@ export const MedicationHistoryScreen: React.FC<{ embedded?: boolean }> = ({ embe
   const { mutate: deleteMedicationSchedule } = useDeleteMedicationSchedule();
   const { data: allSchedules = [] } = useAllMedicationSchedules(showCalendar);
 
-  // 방향별 슬라이드 인 애니메이션
-  const slideAnim = useRef(new Animated.Value(0)).current;
-
-  const animateAndSet = (newDate: string, direction: 'prev' | 'next') => {
-    const fromX = direction === 'prev' ? -SCREEN_WIDTH : SCREEN_WIDTH;
-    slideAnim.setValue(fromX);
-    Animated.spring(slideAnim, {
-      toValue: 0,
-      tension: 68,
-      friction: 11,
-      useNativeDriver: true,
-    }).start();
+  const animateAndSet = (newDate: string, _direction?: 'prev' | 'next') => {
     setSelectedDate(newDate);
   };
 
   // 이력 화면은 오늘까지만 탐색
   const isNextDisabled = selectedDate >= today;
-
-  const STATUS_CONFIG: Record<MedicationLogStatus, { label: string; color: string }> = useMemo(() => ({
-    TAKEN: { label: '복용', color: colors.success },
-    SKIPPED: { label: '건너뜀', color: colors.textDisabled },
-    MISSED: { label: '미복용', color: colors.error },
-  }), [colors]);
 
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
 
@@ -154,20 +134,20 @@ export const MedicationHistoryScreen: React.FC<{ embedded?: boolean }> = ({ embe
   const completionRate = totalSlots > 0 ? takenSlots / totalSlots : 0;
   const hasAnySlots = TIME_SLOTS.some((s) => slotGroups[s].length > 0);
 
-  // 캘린더 마킹 — 복약 일정 기간 하이라이트
+  // 캘린더 마킹 — 복약 일정 기간 하이라이트 (미래 포함)
   const markedDates = useMemo(() => {
     const marks: Record<string, any> = {};
     const fillBg = colors.primaryLight + '30';
+    // 종료일 없는 진행 중 일정은 6개월 후까지 표시
+    const maxMarkD = new Date(today);
+    maxMarkD.setMonth(maxMarkD.getMonth() + 6);
     for (const s of allSchedules) {
       const start = s.startDate;
-      const end = s.endDate ?? today;
       if (!start) continue;
       const startD = new Date(start);
-      const endD = new Date(end);
-      const todayD = new Date(today);
-      const lastD = endD > todayD ? todayD : endD;
+      const endD = s.endDate ? new Date(s.endDate) : maxMarkD;
       const cur = new Date(startD);
-      while (cur <= lastD) {
+      while (cur <= endD) {
         const ds = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}-${String(cur.getDate()).padStart(2, '0')}`;
         if (!marks[ds]) {
           marks[ds] = {
@@ -197,8 +177,9 @@ export const MedicationHistoryScreen: React.FC<{ embedded?: boolean }> = ({ embe
   }, [allSchedules, today, colors]);
 
   const handlePickDate = (day: { dateString: string }) => {
+    if (day.dateString > today) return; // 미래 날짜 선택 차단
     setShowCalendar(false);
-    setSelectedDate(day.dateString);
+    animateAndSet(day.dateString);
   };
 
   const styles = getStyles(colors);
@@ -209,44 +190,56 @@ export const MedicationHistoryScreen: React.FC<{ embedded?: boolean }> = ({ embe
     <SafeAreaView style={styles.container} edges={embedded ? [] : undefined}>
       {!embedded && <ScreenHeader variant="back" title="복약 이력" />}
 
-      {/* 날짜 네비게이션 (항상 표시) */}
+      {/* 날짜 네비게이션 */}
       <View style={styles.dateNavBar}>
+        {/* 오늘 버튼 — 오늘이 아닐 때만 표시 (레이아웃 고정을 위해 항상 자리 차지) */}
         <TouchableOpacity
-          onPress={() => animateAndSet(getPrevDay(selectedDate), 'prev')}
-          hitSlop={12}
-          style={styles.dateNavBtn}
+          onPress={() => animateAndSet(today, 'next')}
+          hitSlop={8}
+          style={[styles.dateNavSide, isToday && { opacity: 0 }]}
+          disabled={isToday}
         >
-          <Ionicons name="chevron-back" size={20} color={colors.primary} />
+          <Text style={styles.todayBtnText}>오늘</Text>
         </TouchableOpacity>
 
+        {/* 날짜 ← → */}
+        <View style={styles.dateNavCenter}>
+          <TouchableOpacity
+            onPress={() => animateAndSet(getPrevDay(selectedDate), 'prev')}
+            hitSlop={12}
+            style={styles.dateNavBtn}
+          >
+            <Ionicons name="chevron-back" size={20} color={colors.primary} />
+          </TouchableOpacity>
+          <Text style={styles.dateNavLabel}>{mo}월 {da}일</Text>
+          <TouchableOpacity
+            onPress={() => animateAndSet(getNextDay(selectedDate), 'next')}
+            hitSlop={12}
+            style={styles.dateNavBtn}
+            disabled={isNextDisabled}
+          >
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={isNextDisabled ? colors.textDisabled : colors.primary}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* 캘린더 버튼 */}
         <TouchableOpacity
-          style={styles.dateNavCenter}
           onPress={() => setShowCalendar(true)}
           hitSlop={8}
-          activeOpacity={0.7}
+          style={styles.dateNavSide}
         >
-          <Text style={styles.dateNavLabel}>{mo}월 {da}일</Text>
-          <Ionicons name="calendar-outline" size={16} color={colors.primary} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => animateAndSet(getNextDay(selectedDate), 'next')}
-          hitSlop={12}
-          style={styles.dateNavBtn}
-          disabled={isNextDisabled}
-        >
-          <Ionicons
-            name="chevron-forward"
-            size={20}
-            color={isNextDisabled ? colors.textDisabled : colors.primary}
-          />
+          <Ionicons name="calendar-outline" size={20} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
-      {isLoading ? (
-        <LoadingSpinner fullscreen />
-      ) : (
-        <Animated.View style={{ flex: 1, transform: [{ translateX: slideAnim }] }}>
+      <View style={{ flex: 1 }}>
+        {isLoading ? (
+          <LoadingSpinner fullscreen />
+        ) : (
           <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
             {/* 완료율 카드 */}
@@ -310,8 +303,8 @@ export const MedicationHistoryScreen: React.FC<{ embedded?: boolean }> = ({ embe
               })
             )}
           </ScrollView>
-        </Animated.View>
-      )}
+        )}
+      </View>
 
       {/* 날짜 선택 캘린더 모달 */}
       <Modal
@@ -334,6 +327,7 @@ export const MedicationHistoryScreen: React.FC<{ embedded?: boolean }> = ({ embe
             </View>
             <Calendar
               current={selectedDate}
+              maxDate={today}
               onDayPress={handlePickDate}
               markingType="custom"
               markedDates={markedDates}
@@ -368,34 +362,39 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
     dateNavBar: {
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'center',
+      justifyContent: 'space-between',
       paddingHorizontal: sizes.spacing.lg,
       paddingVertical: sizes.spacing.sm,
     },
-    dateNavBtn: {
-      padding: sizes.spacing.xs,
+    dateNavSide: {
+      width: 52,
+      alignItems: 'center',
+    },
+    todayBtnText: {
+      fontSize: sizes.font.sm,
+      fontFamily: fontFamily.semibold,
+      color: colors.primary,
     },
     dateNavCenter: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: sizes.spacing.xs,
-      minWidth: 130,
-      justifyContent: 'center',
+      gap: sizes.spacing.sm,
+    },
+    dateNavBtn: {
+      padding: sizes.spacing.xs,
     },
     dateNavLabel: {
       fontSize: sizes.font.md,
       fontFamily: fontFamily.semibold,
       color: colors.text,
+      minWidth: 90,
+      textAlign: 'center',
     },
 
-    // ── 완료율 카드 ──
+    // ── 완료율 섹션 ──
     summaryCard: {
-      backgroundColor: colors.surface,
-      borderRadius: sizes.radius.xxl,
-      padding: sizes.spacing.lg + 4,
-      ...softShadow(colors),
       gap: sizes.spacing.sm,
-      marginBottom: sizes.spacing.sm,
+      marginBottom: sizes.spacing.xs,
     },
     summaryRow: {
       flexDirection: 'row',

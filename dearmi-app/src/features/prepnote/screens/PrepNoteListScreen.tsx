@@ -13,6 +13,7 @@ import type { StackNavigationProp } from '@react-navigation/stack';
 import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { usePrepNotes, useDeletePrepNote } from '@/features/prepnote/hooks/usePrepNote';
+import { useAllSchedules } from '@/features/schedule/hooks/useSchedule';
 import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import type { PrepNote } from '@/shared/types/domain.types';
@@ -37,6 +38,18 @@ export const PrepNoteListScreen: React.FC = () => {
   const tabBarSafeBottom = useTabBarSafeBottom();
   const { data: notes = [], isLoading } = usePrepNotes();
   const { mutate: deleteNote } = useDeletePrepNote();
+  const { data: allSchedules = [] } = useAllSchedules();
+
+  // scheduleId → 병원명 + 날짜 맵
+  const scheduleInfoMap = useMemo(() => {
+    const map = new Map<string, string>();
+    allSchedules.forEach((s) => {
+      const dateStr = s.scheduledAt.split('T')[0];
+      const [, mo, da] = dateStr.split('-').map(Number);
+      map.set(String(s.id), `${s.hospitalName} (${mo}/${da})`);
+    });
+    return map;
+  }, [allSchedules]);
 
   const sections: Section[] = useMemo(() => {
     const linked = notes.filter((n) => n.scheduleId);
@@ -52,7 +65,7 @@ export const PrepNoteListScreen: React.FC = () => {
 
     const linkedSections: Section[] = Array.from(scheduleMap.entries()).map(
       ([scheduleId, items]) => ({
-        title: `일정 ${scheduleId.slice(0, 8)}…`, // 실제로는 scheduleId로 일정 이름 조회 필요
+        title: scheduleInfoMap.get(scheduleId) ?? '연결된 일정',
         scheduleId,
         data: items,
       })
