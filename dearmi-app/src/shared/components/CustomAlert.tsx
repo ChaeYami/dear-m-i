@@ -66,7 +66,10 @@ export const CustomAlertProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const dismiss = useCallback((btn?: AlertButton) => {
     setState(INITIAL);
-    btn?.onPress?.();
+    if (btn?.onPress) {
+      const onPress = btn.onPress;
+      setTimeout(onPress, 50);
+    }
   }, []);
 
   return (
