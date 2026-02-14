@@ -72,7 +72,6 @@ export const MedicationHistoryScreen: React.FC = () => {
   const [showCalendar, setShowCalendar] = useState(false);
 
   const isToday = selectedDate === today;
-  const isFutureDate = selectedDate > today;
   const [, mo, da] = selectedDate.split('-').map(Number);
 
   const { data, isLoading } = useTodayMedication(isToday ? undefined : selectedDate);
@@ -95,12 +94,8 @@ export const MedicationHistoryScreen: React.FC = () => {
     setSelectedDate(newDate);
   };
 
-  const maxBrowseDate = (() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 14);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  })();
-  const isNextDisabled = selectedDate >= maxBrowseDate;
+  // 이력 화면은 오늘까지만 탐색
+  const isNextDisabled = selectedDate >= today;
 
   const STATUS_CONFIG: Record<MedicationLogStatus, { label: string; color: string }> = useMemo(() => ({
     TAKEN: { label: '복용', color: colors.success },
@@ -208,7 +203,7 @@ export const MedicationHistoryScreen: React.FC = () => {
 
   const styles = getStyles(colors);
 
-  const dateLabelSuffix = isToday ? ' (오늘)' : isFutureDate ? ' (예정)' : ' (지난 기록)';
+  const dateLabelSuffix = isToday ? ' (오늘)' : ' (지난 기록)';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -281,16 +276,8 @@ export const MedicationHistoryScreen: React.FC = () => {
             {/* 시간대별 카드 */}
             {!hasAnySlots ? (
               <View style={styles.emptyWrap}>
-                <Text style={styles.emptyText}>
-                  {isFutureDate
-                    ? '이 날짜에 예정된 복약 일정이 없어요'
-                    : '이 날짜에 활성 복약 일정이 없어요'}
-                </Text>
-                <Text style={styles.emptySubText}>
-                  {isFutureDate
-                    ? '복약 일정 등록 후 미리 확인할 수 있어요'
-                    : '복약 일정의 시작/종료일을 확인해주세요'}
-                </Text>
+                <Text style={styles.emptyText}>이 날짜에 활성 복약 일정이 없어요</Text>
+                <Text style={styles.emptySubText}>복약 일정의 시작/종료일을 확인해주세요</Text>
               </View>
             ) : (
               TIME_SLOTS.map((slot) => {
@@ -310,7 +297,6 @@ export const MedicationHistoryScreen: React.FC = () => {
                       <MedicationCard
                         items={slotGroups[slot]}
                         pendingScheduleIds={pendingIds}
-                        checkDisabled={isFutureDate}
                         onDrugPress={(scheduleId, drugName) =>
                           navigation.navigate('MedicationScheduleDetail', { scheduleId, drugName })
                         }
