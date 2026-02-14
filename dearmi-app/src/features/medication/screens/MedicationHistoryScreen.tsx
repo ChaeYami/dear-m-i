@@ -63,7 +63,7 @@ const getNextDay = (dateStr: string): string => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-export const MedicationHistoryScreen: React.FC = () => {
+export const MedicationHistoryScreen: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
 
@@ -206,8 +206,8 @@ export const MedicationHistoryScreen: React.FC = () => {
   const dateLabelSuffix = isToday ? ' (오늘)' : ' (지난 기록)';
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScreenHeader variant="back" title="복약 이력" />
+    <SafeAreaView style={styles.container} edges={embedded ? [] : undefined}>
+      {!embedded && <ScreenHeader variant="back" title="복약 이력" />}
 
       {/* 날짜 네비게이션 (항상 표시) */}
       <View style={styles.dateNavBar}>

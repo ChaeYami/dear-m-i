@@ -57,7 +57,7 @@ const TAB_LABEL_KEY: Record<string, string> = {
 const TAB_ROOT_SCREENS: Record<string, string> = {
   Checkin:    'CheckinHome',
   Care:       'CareHome',
-  Medication: 'MedicationHome',
+  Medication: 'MedicationTab',
   MyPage:     'MyPageTab',
 };
 

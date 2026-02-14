@@ -33,7 +33,6 @@ import {
 } from '@/features/medication/components/MedicationCard';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
-import { useResetStackOnTabFocus } from '@/shared/hooks/useResetStackOnTabFocus';
 import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import { useTabBarScrollHide } from '@/shared/hooks/useTabBarScrollHide';
 import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
@@ -65,8 +64,7 @@ const getNextDay = (dateStr: string): string => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-export const MedicationHomeScreen: React.FC = () => {
-  useResetStackOnTabFocus();
+export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
@@ -211,12 +209,14 @@ export const MedicationHomeScreen: React.FC = () => {
   const styles = getStyles(colors, tabBarSafeBottom);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScreenHeader
-        variant={isToday ? 'tab' : 'back'}
-        title={isToday ? '복약 관리' : '복약 기록'}
-        {...(isToday ? { hasNotification: true } : {})}
-      />
+    <SafeAreaView style={styles.container} edges={embedded ? [] : undefined}>
+      {!embedded && (
+        <ScreenHeader
+          variant={isToday ? 'tab' : 'back'}
+          title={isToday ? '복약 관리' : '복약 기록'}
+          {...(isToday ? { hasNotification: true } : {})}
+        />
+      )}
 
       {/* 과거 날짜 네비게이션 바 */}
       {!isToday && (
@@ -240,17 +240,19 @@ export const MedicationHomeScreen: React.FC = () => {
         </View>
       )}
 
-      {/* 복약 이력 · 처방전 · 편집 툴바 */}
+      {/* 처방전 · 편집 툴바 */}
       {isToday && (
         <View style={styles.toolRow}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('MedicationHistory')}
-            style={[styles.toolChip, { flex: 1, borderColor: colors.primary + '30', backgroundColor: colors.primaryMuted }]}
-            hitSlop={8}
-          >
-            <Ionicons name="time-outline" size={14} color={colors.primary} />
-            <Text style={[styles.toolChipText, { color: colors.primary }]}>복약 이력</Text>
-          </TouchableOpacity>
+          {!embedded && (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('MedicationHistory')}
+              style={[styles.toolChip, { flex: 1, borderColor: colors.primary + '30', backgroundColor: colors.primaryMuted }]}
+              hitSlop={8}
+            >
+              <Ionicons name="time-outline" size={14} color={colors.primary} />
+              <Text style={[styles.toolChipText, { color: colors.primary }]}>복약 이력</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             onPress={() => navigation.navigate('PrescriptionList')}
             style={[styles.toolChip, { flex: 1, borderColor: colors.accent + '33', backgroundColor: colors.accentMuted }]}

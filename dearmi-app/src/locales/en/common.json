@@ -49,6 +49,8 @@
   "tab_mypage": "My",
   "sub_tab_schedule": "Schedule",
   "sub_tab_record": "Records",
+  "sub_tab_med_today": "Today",
+  "sub_tab_med_history": "History",
   "premium_gate_title": "Premium Feature",
   "premium_gate_desc": "Unlock prescription auto-scan, drug info,\nmedication management and more\nwith the Premium plan.",
   "placeholder": "{{label}} coming soon"

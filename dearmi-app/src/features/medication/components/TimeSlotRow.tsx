@@ -37,7 +37,7 @@ export const TimeSlotRow: React.FC<Props> = ({
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 10,
+        paddingVertical: 14,
         paddingHorizontal: sizes.spacing.md,
         borderBottomWidth: 1,
         borderBottomColor: colors.divider,

@@ -49,6 +49,8 @@
   "tab_mypage": "마이",
   "sub_tab_schedule": "진료 일정",
   "sub_tab_record": "진료 기록",
+  "sub_tab_med_today": "오늘 복약 관리",
+  "sub_tab_med_history": "복약 이력",
   "premium_gate_title": "프리미엄 전용 기능",
   "premium_gate_desc": "처방전 자동 인식, 약품 정보 조회,\n복약 일정 관리 등 다양한 기능을\n프리미엄 플랜에서 이용할 수 있어요.",
   "placeholder": "{{label}} 구현 예정"
