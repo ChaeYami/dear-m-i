@@ -285,10 +285,10 @@ export const MainTabNavigator: React.FC = () => {
         tabBar={(props) => <CustomTabBar {...props} />}
         initialRouteName="Checkin"
       >
-        <Tab.Screen name="Schedule" component={ScheduleNavigator} />
-        <Tab.Screen name="Record" component={RecordNavigator} />
         <Tab.Screen name="Checkin" component={CheckinNavigator} />
+        <Tab.Screen name="Schedule" component={ScheduleNavigator} />
         <Tab.Screen name="Medication" component={MedicationNavigator} />
+        <Tab.Screen name="Record" component={RecordNavigator} />
         <Tab.Screen name="MyPage" component={MyPageNavigator} />
       </Tab.Navigator>
     </TabBarVisibilityProvider>
