@@ -21,7 +21,7 @@ export const MedicationTabScreen: React.FC = () => {
       <ScreenHeader variant="tab" title={t('tab_medication')} hasNotification />
 
       {/* Sub-tab switcher */}
-      <View style={[styles.subTabBar, { backgroundColor: colors.disabled }]}>
+      <View style={styles.subTabBar}>
         {(['home', 'history'] as const).map((tab) => {
           const label = tab === 'home' ? t('sub_tab_med_today') : t('sub_tab_med_history');
           const active = activeTab === tab;
@@ -30,14 +30,9 @@ export const MedicationTabScreen: React.FC = () => {
               key={tab}
               style={[
                 styles.subTabBtn,
-                active && {
-                  backgroundColor: colors.surface,
-                  shadowColor: colors.glassShadow,
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 1,
-                  shadowRadius: 4,
-                  elevation: 2,
-                },
+                active
+                  ? { backgroundColor: colors.primaryMuted, borderColor: colors.primary }
+                  : { backgroundColor: colors.surface, borderColor: colors.divider },
               ]}
               onPress={() => setActiveTab(tab)}
               activeOpacity={0.75}
@@ -45,8 +40,9 @@ export const MedicationTabScreen: React.FC = () => {
               <Text
                 style={[
                   styles.subTabText,
-                  { color: colors.textSub, fontFamily: fontFamily.medium },
-                  active && { color: colors.primary, fontFamily: fontFamily.bold },
+                  active
+                    ? { color: colors.primary, fontFamily: fontFamily.bold }
+                    : { color: colors.textSub, fontFamily: fontFamily.medium },
                 ]}
               >
                 {label}
@@ -74,18 +70,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginHorizontal: sizes.spacing.lg,
     marginTop: sizes.spacing.xs,
-    marginBottom: sizes.spacing.sm,
-    borderRadius: sizes.radius.full,
-    padding: 2,
+    marginBottom: sizes.spacing.md,
+    gap: sizes.spacing.sm,
   },
   subTabBtn: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: sizes.spacing.xs + 2,
+    paddingVertical: sizes.spacing.sm + 4,
     borderRadius: sizes.radius.full,
+    borderWidth: 1.5,
   },
   subTabText: {
-    fontSize: sizes.font.sm,
+    fontSize: sizes.font.md,
   },
   content: { flex: 1 },
 });
