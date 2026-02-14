@@ -364,18 +364,9 @@ export const MedicationHomeScreen: React.FC = () => {
         </View>
       )}
 
-      {/* 처방전 + 편집 버튼 툴바 */}
+      {/* 편집 버튼 툴바 */}
       {isToday && (
         <View style={styles.toolRow}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('PrescriptionList')}
-            style={[styles.toolChip, { borderColor: colors.accent + '33', backgroundColor: colors.accentMuted }]}
-            hitSlop={8}
-          >
-            <Ionicons name="receipt-outline" size={14} color={colors.accent} />
-            <Text style={[styles.toolChipText, { color: colors.accent }]}>처방전</Text>
-          </TouchableOpacity>
-
           {hasAnySlots && (
             <TouchableOpacity
               onPress={() => {
@@ -470,6 +461,24 @@ export const MedicationHomeScreen: React.FC = () => {
             <Text style={styles.summaryLabel}>완료</Text>
           )}
         </View>
+
+        {/* 처방전 진입 카드 (오늘 화면에서만) */}
+        {isToday && (
+          <TouchableOpacity
+            style={[styles.featureCard, softShadow(colors)]}
+            onPress={() => navigation.navigate('PrescriptionList')}
+            activeOpacity={0.75}
+          >
+            <View style={[styles.featureIconWrap, { backgroundColor: colors.accentMuted }]}>
+              <Ionicons name="receipt-outline" size={22} color={colors.accent} />
+            </View>
+            <View style={styles.featureCardBody}>
+              <Text style={[styles.featureCardTitle, { color: colors.text }]}>처방전</Text>
+              <Text style={[styles.featureCardSub, { color: colors.textSub }]}>처방전 사진으로 복약 일정을 자동 등록해요</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.textDisabled} />
+          </TouchableOpacity>
+        )}
 
         {/* 시간대별 카드 */}
         {!hasAnySlots ? (
@@ -789,6 +798,33 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBott
       borderRadius: sizes.radius.xxl,
       ...softShadow(colors),
       overflow: 'hidden',
+    },
+    featureCard: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      backgroundColor: colors.surface,
+      padding: sizes.spacing.md,
+      borderRadius: sizes.radius.xxl,
+      gap: sizes.spacing.md,
+    },
+    featureIconWrap: {
+      width: 44,
+      height: 44,
+      borderRadius: sizes.radius.xl,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+    },
+    featureCardBody: {
+      flex: 1,
+      gap: 2,
+    },
+    featureCardTitle: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.semibold,
+    },
+    featureCardSub: {
+      fontSize: sizes.font.sm,
+      fontFamily: fontFamily.regular,
     },
     emptyWrap: {
       alignItems: 'center',

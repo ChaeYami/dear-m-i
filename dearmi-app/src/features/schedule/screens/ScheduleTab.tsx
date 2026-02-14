@@ -179,19 +179,21 @@ export const ScheduleTab: React.FC = () => {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarSafeBottom + 80 }]}
         {...scrollHandlers}
       >
-        {/* 준비 메모 */}
-        <View style={styles.toolRow}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('PrepNoteList')}
-            style={[styles.prepNoteChip, { backgroundColor: colors.accentMuted, borderColor: colors.accent + '33' }]}
-            hitSlop={8}
-          >
-            <Ionicons name="create-outline" size={14} color={colors.accent} />
-            <Text style={[styles.prepNoteChipText, { color: colors.accent, fontFamily: fontFamily.semibold }]}>
-              준비 메모
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {/* 준비 메모 진입 카드 */}
+        <TouchableOpacity
+          style={[styles.featureCard, { backgroundColor: colors.surface }, softShadow(colors)]}
+          onPress={() => navigation.navigate('PrepNoteList')}
+          activeOpacity={0.75}
+        >
+          <View style={[styles.featureIconWrap, { backgroundColor: colors.accentMuted }]}>
+            <Ionicons name="create-outline" size={22} color={colors.accent} />
+          </View>
+          <View style={styles.featureCardBody}>
+            <Text style={[styles.featureCardTitle, { color: colors.text }]}>진료 준비 메모</Text>
+            <Text style={[styles.featureCardSub, { color: colors.textSub }]}>질문, 증상 등 미리 적어두고 진료실에서 활용해요</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.textDisabled} />
+        </TouchableOpacity>
 
         {/* 통합 카드 */}
         <View style={[styles.unifiedCard, { backgroundColor: colors.surface }, softShadow(colors)]}>
@@ -619,23 +621,33 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingTop: sizes.spacing.xs,
   },
-  toolRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingHorizontal: sizes.spacing.lg,
-    paddingBottom: sizes.spacing.sm,
-  },
-  prepNoteChip: {
+  featureCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: sizes.spacing.md,
-    paddingVertical: sizes.spacing.xs + 2,
-    borderRadius: sizes.radius.full,
-    borderWidth: 1,
+    marginHorizontal: sizes.spacing.lg,
+    marginBottom: sizes.spacing.sm,
+    padding: sizes.spacing.md,
+    borderRadius: sizes.radius.xxl,
+    gap: sizes.spacing.md,
   },
-  prepNoteChipText: {
+  featureIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: sizes.radius.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  featureCardBody: {
+    flex: 1,
+    gap: 2,
+  },
+  featureCardTitle: {
+    fontSize: sizes.font.md,
+    fontFamily: fontFamily.semibold,
+  },
+  featureCardSub: {
     fontSize: sizes.font.sm,
+    fontFamily: fontFamily.regular,
   },
   unifiedCard: {
     marginHorizontal: sizes.spacing.lg,
