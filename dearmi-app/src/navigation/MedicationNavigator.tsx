@@ -2,6 +2,7 @@ import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 
 import { MedicationHomeScreen } from '@/features/medication/screens/MedicationHomeScreen';
+import { MedicationHistoryScreen } from '@/features/medication/screens/MedicationHistoryScreen';
 import { MedicationFormScreen } from '@/features/medication/screens/MedicationFormScreen';
 import { MedicationScheduleDetailScreen } from '@/features/medication/screens/MedicationScheduleDetailScreen';
 import { PrescriptionTab } from '@/features/prescription/screens/PrescriptionTab';
@@ -19,6 +20,7 @@ export interface OcrMedicationItem {
 
 export type MedicationStackParamList = {
   MedicationHome: { date?: string; direction?: 'prev' | 'next' } | undefined;
+  MedicationHistory: undefined;
   MedicationForm: {
     scheduleId?: string;
     prescriptionMedicationId?: string;
@@ -47,6 +49,7 @@ export const MedicationNavigator: React.FC = () => (
     }}
   >
     <Stack.Screen name="MedicationHome" component={MedicationHomeScreen} />
+    <Stack.Screen name="MedicationHistory" component={MedicationHistoryScreen} />
     <Stack.Screen name="MedicationForm" component={MedicationFormScreen} />
     <Stack.Screen name="MedicationScheduleDetail" component={MedicationScheduleDetailScreen} />
     <Stack.Screen name="PrescriptionList" component={PrescriptionTab} />

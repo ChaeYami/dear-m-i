@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Modal,
   Animated,
   Dimensions,
 } from 'react-native';
@@ -15,20 +14,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Calendar } from 'react-native-calendars';
 import { CompositeNavigationProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { softShadow, floatingShadow } from '@/shared/theme/shadows';
-import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
-import { SectionTitle } from '@/shared/components/SectionTitle';
 import {
   useTodayMedication,
   useCheckMedication,
   useDeleteMedicationSchedule,
-  useMedicationHistory,
-  useAllMedicationSchedules,
 } from '@/features/medication/hooks/useMedication';
 import {
   MedicationCard,
@@ -42,10 +36,9 @@ import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { useResetStackOnTabFocus } from '@/shared/hooks/useResetStackOnTabFocus';
 import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import { useTabBarScrollHide } from '@/shared/hooks/useTabBarScrollHide';
-import { useAuthStore } from '@/features/auth/store/authStore';
 import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
-import type { TimeSlotType, MedicationLogItem, MedicationLogStatus } from '@/shared/types/domain.types';
+import type { TimeSlotType } from '@/shared/types/domain.types';
 
 type Nav = CompositeNavigationProp<
   StackNavigationProp<MedicationStackParamList, 'MedicationHome'>,
@@ -54,10 +47,6 @@ type Nav = CompositeNavigationProp<
 type Route = RouteProp<MedicationStackParamList, 'MedicationHome'>;
 
 const TIME_SLOTS: TimeSlotType[] = ['MORNING', 'AFTERNOON', 'EVENING', 'BEDTIME'];
-
-const HISTORY_SLOT_LABELS: Record<TimeSlotType, string> = {
-  MORNING: '아침', AFTERNOON: '점심', EVENING: '저녁', BEDTIME: '취침 전',
-};
 
 const todayStrFn = () => {
   const d = new Date();
@@ -76,24 +65,6 @@ const getNextDay = (dateStr: string): string => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-const formatHistoryDate = (dateStr: string) => {
-  const d = new Date(dateStr);
-  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
-};
-
-interface HistorySlotGroup {
-  timeSlot: TimeSlotType;
-  logs: MedicationLogItem[];
-}
-
-interface HistorySection {
-  title: string;
-  date: string;
-  slots: HistorySlotGroup[];
-  takenCount: number;
-  totalCount: number;
-}
-
 export const MedicationHomeScreen: React.FC = () => {
   useResetStackOnTabFocus();
   const { colors } = useTheme();
@@ -101,8 +72,6 @@ export const MedicationHomeScreen: React.FC = () => {
   const route = useRoute<Route>();
   const tabBarSafeBottom = useTabBarSafeBottom();
   const scrollHandlers = useTabBarScrollHide();
-  const plan = useAuthStore((s) => s.user?.plan);
-  const isFree = plan === 'FREE' || !plan;
 
   const today = todayStrFn();
   const paramDate = route.params?.date;
@@ -127,17 +96,6 @@ export const MedicationHomeScreen: React.FC = () => {
   const { data, isLoading } = useTodayMedication(isToday ? undefined : selectedDate);
   const { mutate: checkMedication, isPending: isChecking } = useCheckMedication();
   const { mutate: deleteMedicationSchedule } = useDeleteMedicationSchedule();
-
-  // 복약 이력
-  const { data: history, isLoading: historyLoading } = useMedicationHistory();
-  const [showCalendar, setShowCalendar] = useState(false);
-  const { data: allSchedules = [] } = useAllMedicationSchedules(showCalendar);
-
-  const STATUS_CONFIG: Record<MedicationLogStatus, { label: string; color: string }> = useMemo(() => ({
-    TAKEN: { label: '복용', color: colors.success },
-    SKIPPED: { label: '건너뜀', color: colors.textDisabled },
-    MISSED: { label: '미복용', color: colors.error },
-  }), [colors]);
 
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const [isEditMode, setIsEditMode] = useState(false);
@@ -228,88 +186,6 @@ export const MedicationHomeScreen: React.FC = () => {
   const [, mo, da] = selectedDate.split('-').map(Number);
   const dateLabel = isToday ? `${mo}월 ${da}일` : `${mo}월 ${da}일 (지난 기록)`;
 
-  // ── 복약 이력 (날짜 → 시간대별 그룹) ──
-  const historySections = useMemo<HistorySection[]>(() => {
-    if (!history?.logs) return [];
-    // 1. 날짜별 그룹
-    const dateMap = new Map<string, MedicationLogItem[]>();
-    for (const log of history.logs) {
-      const list = dateMap.get(log.logDate) ?? [];
-      list.push(log);
-      dateMap.set(log.logDate, list);
-    }
-    // 2. 각 날짜 내에서 시간대별 그룹 (아침→점심→저녁→취침전 순서 보장)
-    return Array.from(dateMap.entries()).map(([date, logs]) => {
-      const slotMap = new Map<TimeSlotType, MedicationLogItem[]>();
-      for (const log of logs) {
-        const list = slotMap.get(log.timeSlot) ?? [];
-        list.push(log);
-        slotMap.set(log.timeSlot, list);
-      }
-      const slots: HistorySlotGroup[] = TIME_SLOTS
-        .filter((s) => slotMap.has(s))
-        .map((s) => ({ timeSlot: s, logs: slotMap.get(s)! }));
-      return {
-        title: formatHistoryDate(date),
-        date,
-        slots,
-        takenCount: logs.filter((l) => l.status === 'TAKEN').length,
-        totalCount: logs.length,
-      };
-    });
-  }, [history]);
-
-  // 캘린더 마킹 — 복약 일정 기간 하이라이트
-  const markedDates = useMemo(() => {
-    const marks: Record<string, any> = {};
-    const fillBg = colors.primaryLight + '30';
-    for (const s of allSchedules) {
-      const start = s.startDate;
-      const end = s.endDate ?? today;
-      if (!start) continue;
-      const startD = new Date(start);
-      const endD = new Date(end);
-      const todayD = new Date(today);
-      const lastD = endD > todayD ? todayD : endD;
-      const cur = new Date(startD);
-      while (cur <= lastD) {
-        const ds = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}-${String(cur.getDate()).padStart(2, '0')}`;
-        if (!marks[ds]) {
-          marks[ds] = {
-            customStyles: {
-              container: { backgroundColor: fillBg },
-              text: { color: colors.text, fontFamily: fontFamily.medium },
-            },
-          };
-        }
-        cur.setDate(cur.getDate() + 1);
-      }
-    }
-    marks[today] = {
-      ...(marks[today] ?? {}),
-      customStyles: {
-        ...(marks[today]?.customStyles ?? {}),
-        container: {
-          ...(marks[today]?.customStyles?.container ?? {}),
-          borderWidth: 1.5,
-          borderColor: colors.primary,
-          borderRadius: 18,
-        },
-        text: { color: colors.primary, fontFamily: fontFamily.bold },
-      },
-    };
-    return marks;
-  }, [allSchedules, today, colors]);
-
-  const handlePickDate = (day: { dateString: string }) => {
-    setShowCalendar(false);
-    if (day.dateString === today) {
-      navigation.setParams({ date: undefined });
-    } else {
-      navigation.push('MedicationHome', { date: day.dateString });
-    }
-  };
-
   const isFutureDate = selectedDate > today;
 
   const handleGoPrev = () => {
@@ -364,9 +240,17 @@ export const MedicationHomeScreen: React.FC = () => {
         </View>
       )}
 
-      {/* 편집 버튼 툴바 */}
+      {/* 복약 이력 + 편집 툴바 */}
       {isToday && (
         <View style={styles.toolRow}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('MedicationHistory')}
+            style={[styles.historyEntryBtn, { backgroundColor: colors.primaryMuted, borderColor: colors.primary + '30' }]}
+            hitSlop={8}
+          >
+            <Ionicons name="time-outline" size={14} color={colors.primary} />
+            <Text style={[styles.toolChipText, { color: colors.primary }]}>복약 이력</Text>
+          </TouchableOpacity>
           {hasAnySlots && (
             <TouchableOpacity
               onPress={() => {
@@ -545,115 +429,6 @@ export const MedicationHomeScreen: React.FC = () => {
           })
         )}
 
-        {/* ── 복약 이력 섹션 (오늘 화면에서만) ── */}
-        {isToday && (
-          <>
-            <View style={styles.historySectionHeader}>
-              <View style={styles.historyTitleGroup}>
-                <SectionTitle size="md">복약 이력</SectionTitle>
-                <TouchableOpacity
-                  onPress={() => setShowCalendar(true)}
-                  hitSlop={12}
-                >
-                  <Ionicons name="calendar-outline" size={18} color={colors.primary} />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* FREE 플랜 배너 */}
-            {isFree && (
-              <View style={styles.freeBanner}>
-                <Text style={styles.freeBannerText}>
-                  무료 플랜은 최근 30일 이력만 조회됩니다.
-                </Text>
-                <TouchableOpacity
-                  onPress={() => navigation.navigate('Paywall')}
-                  hitSlop={8}
-                >
-                  <Text style={styles.freeBannerUpgrade}>업그레이드</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {/* 이력 리스트 */}
-            {historyLoading ? (
-              <View style={styles.historyLoadingWrap}>
-                <LoadingSpinner />
-              </View>
-            ) : historySections.length === 0 ? (
-              <View style={styles.historyEmptyWrap}>
-                <Text style={styles.historyEmptyText}>복약 이력이 없어요</Text>
-                <Text style={styles.historyEmptySubText}>복약 일정을 등록하고 체크해보세요</Text>
-              </View>
-            ) : (
-              historySections.map((section) => (
-                <View key={section.date}>
-                  {/* 날짜 헤더 (탭하면 해당 날짜 복약 화면으로) */}
-                  <TouchableOpacity
-                    style={styles.historySectionRow}
-                    onPress={() => navigation.push('MedicationHome', { date: section.date })}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.historySectionDate}>{section.title}</Text>
-                    <View style={styles.historySectionRight}>
-                      <Text style={styles.historySectionRate}>
-                        {section.takenCount}/{section.totalCount} 복용
-                      </Text>
-                      <Ionicons name="chevron-forward" size={16} color={colors.textSub} />
-                    </View>
-                  </TouchableOpacity>
-
-                  {/* 시간대별 그룹 카드 */}
-                  <View style={[styles.historyCard, softShadow(colors)]}>
-                    {section.slots.map((slot, sIdx) => (
-                      <View key={slot.timeSlot}>
-                        {sIdx > 0 && <View style={styles.historyDivider} />}
-                        {/* 시간대 헤더 */}
-                        <View style={styles.historySlotHeader}>
-                          <Text style={[styles.historySlotHeaderText, { color: SLOT_COLORS[slot.timeSlot] }]}>
-                            {HISTORY_SLOT_LABELS[slot.timeSlot]}
-                          </Text>
-                        </View>
-                        {/* 약별 행 */}
-                        {slot.logs.map((item) => {
-                          const statusCfg = STATUS_CONFIG[item.status];
-                          return (
-                            <View key={item.logId} style={styles.historyDrugRow}>
-                              <Text style={styles.historyDrugTitle} numberOfLines={1}>
-                                {item.drugName || '알 수 없는 약'}
-                              </Text>
-                              <View style={[styles.historyStatusBadge, { backgroundColor: statusCfg.color + '18' }]}>
-                                <Text style={[styles.historyStatusText, { color: statusCfg.color }]}>
-                                  {statusCfg.label}
-                                </Text>
-                              </View>
-                              <TouchableOpacity
-                                hitSlop={12}
-                                onPress={() => {
-                                  customAlert(
-                                    item.drugName || '',
-                                    `${HISTORY_SLOT_LABELS[item.timeSlot]} 복약 상태를 변경합니다.`,
-                                    [
-                                      { text: '복용', onPress: () => handleCheck(item.scheduleId, 'TAKEN', item.timeSlot, item.logDate) },
-                                      { text: '건너뜀', onPress: () => handleCheck(item.scheduleId, 'SKIPPED', item.timeSlot, item.logDate) },
-                                      { text: '취소', style: 'cancel' },
-                                    ]
-                                  );
-                                }}
-                              >
-                                <Ionicons name="ellipsis-vertical" size={16} color={colors.textDisabled} />
-                              </TouchableOpacity>
-                            </View>
-                          );
-                        })}
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              ))
-            )}
-          </>
-        )}
       </ScrollView>
       </Animated.View>
 
@@ -675,48 +450,6 @@ export const MedicationHomeScreen: React.FC = () => {
         </TouchableOpacity>
       )}
 
-      {/* 날짜 선택 캘린더 모달 (복약 일정 기간 하이라이트) */}
-      <Modal
-        visible={showCalendar}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowCalendar(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowCalendar(false)}
-        >
-          <TouchableOpacity activeOpacity={1} style={styles.modalSheet} onPress={() => {}}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalHeaderTitle}>날짜 선택</Text>
-              <TouchableOpacity onPress={() => setShowCalendar(false)} hitSlop={12}>
-                <Ionicons name="close" size={22} color={colors.text} />
-              </TouchableOpacity>
-            </View>
-            <Calendar
-              current={today}
-              onDayPress={handlePickDate}
-              markingType="custom"
-              markedDates={markedDates}
-              theme={{
-                backgroundColor: 'transparent',
-                calendarBackground: 'transparent',
-                todayTextColor: colors.primary,
-                dayTextColor: colors.text,
-                textDisabledColor: colors.textDisabled,
-                monthTextColor: colors.text,
-                arrowColor: colors.primary,
-                textSectionTitleColor: colors.textSub,
-                textMonthFontFamily: fontFamily.bold,
-                textDayHeaderFontFamily: fontFamily.semibold,
-                textDayFontFamily: fontFamily.medium,
-              }}
-            />
-            <Text style={styles.modalHint}>색칠된 날짜는 복약 일정이 있던 기간이에요</Text>
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
     </SafeAreaView>
   );
 };
@@ -842,11 +575,21 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBott
     },
     toolRow: {
       flexDirection: 'row' as const,
-      justifyContent: 'flex-end' as const,
       alignItems: 'center' as const,
       gap: sizes.spacing.sm,
       paddingHorizontal: sizes.spacing.lg,
       paddingBottom: sizes.spacing.sm,
+    },
+    historyEntryBtn: {
+      flex: 1,
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+      gap: 4,
+      paddingVertical: sizes.spacing.xs + 2,
+      paddingHorizontal: sizes.spacing.md,
+      borderRadius: sizes.radius.full,
+      borderWidth: 1,
     },
     toolChip: {
       flexDirection: 'row' as const,
@@ -938,155 +681,6 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBott
     emptyGoTodayText: {
       fontSize: sizes.font.sm,
       fontFamily: fontFamily.semibold,
-    },
-
-    // ── 복약 이력 인라인 ──
-    historySectionHeader: {
-      flexDirection: 'row' as const,
-      alignItems: 'center' as const,
-      marginTop: sizes.spacing.xl,
-      paddingVertical: sizes.spacing.sm,
-    },
-    historyTitleGroup: {
-      flexDirection: 'row' as const,
-      alignItems: 'center' as const,
-      gap: sizes.spacing.sm,
-    },
-    freeBanner: {
-      backgroundColor: colors.warningLight,
-      paddingHorizontal: sizes.spacing.md,
-      paddingVertical: sizes.spacing.sm,
-      borderRadius: sizes.radius.lg,
-      flexDirection: 'row' as const,
-      alignItems: 'center' as const,
-      justifyContent: 'space-between' as const,
-    },
-    freeBannerText: {
-      fontSize: sizes.font.sm,
-      color: '#92400E',
-      flex: 1,
-    },
-    freeBannerUpgrade: {
-      fontSize: sizes.font.sm,
-      fontFamily: fontFamily.bold,
-      color: colors.primary,
-      marginLeft: sizes.spacing.sm,
-    },
-    historyLoadingWrap: {
-      paddingVertical: sizes.spacing.xl,
-      alignItems: 'center' as const,
-    },
-    historyEmptyWrap: {
-      alignItems: 'center' as const,
-      paddingVertical: sizes.spacing.xl,
-      gap: sizes.spacing.sm,
-    },
-    historyEmptyText: {
-      fontSize: sizes.font.md,
-      fontFamily: fontFamily.semibold,
-      color: colors.textSub,
-    },
-    historyEmptySubText: {
-      fontSize: sizes.font.sm,
-      color: colors.textDisabled,
-    },
-    historySectionRow: {
-      flexDirection: 'row' as const,
-      justifyContent: 'space-between' as const,
-      alignItems: 'center' as const,
-      paddingVertical: sizes.spacing.sm,
-      marginTop: sizes.spacing.sm,
-    },
-    historySectionDate: {
-      fontSize: sizes.font.sm,
-      fontFamily: fontFamily.semibold,
-      color: colors.text,
-    },
-    historySectionRight: {
-      flexDirection: 'row' as const,
-      alignItems: 'center' as const,
-      gap: sizes.spacing.xs,
-    },
-    historySectionRate: {
-      fontSize: sizes.font.xs,
-      color: colors.textSub,
-    },
-    historyCard: {
-      backgroundColor: colors.surface,
-      borderRadius: sizes.radius.xxl,
-      overflow: 'hidden',
-    },
-    historyDivider: {
-      height: 1,
-      backgroundColor: colors.divider,
-      marginHorizontal: sizes.spacing.lg,
-    },
-    historySlotHeader: {
-      paddingHorizontal: sizes.spacing.lg,
-      paddingTop: sizes.spacing.md,
-      paddingBottom: sizes.spacing.xs,
-    },
-    historySlotHeaderText: {
-      fontSize: sizes.font.sm,
-      fontFamily: fontFamily.bold,
-    },
-    historyDrugRow: {
-      flexDirection: 'row' as const,
-      alignItems: 'center' as const,
-      justifyContent: 'space-between' as const,
-      paddingHorizontal: sizes.spacing.lg,
-      paddingVertical: sizes.spacing.sm,
-      gap: sizes.spacing.sm,
-    },
-    historyDrugTitle: {
-      fontSize: sizes.font.sm,
-      fontFamily: fontFamily.regular,
-      color: colors.text,
-      flex: 1,
-    },
-    historyStatusBadge: {
-      paddingHorizontal: sizes.spacing.sm,
-      paddingVertical: 3,
-      borderRadius: sizes.radius.full,
-    },
-    historyStatusText: {
-      fontSize: sizes.font.xs,
-      fontFamily: fontFamily.semibold,
-    },
-
-    // ── 캘린더 모달 ──
-    modalOverlay: {
-      flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.4)',
-      justifyContent: 'flex-end' as const,
-    },
-    modalSheet: {
-      backgroundColor: colors.surface,
-      paddingTop: sizes.spacing.sm,
-      paddingBottom: sizes.spacing.xl,
-      paddingHorizontal: sizes.spacing.md,
-      borderTopLeftRadius: sizes.radius.xxl,
-      borderTopRightRadius: sizes.radius.xxl,
-    },
-    modalHeader: {
-      flexDirection: 'row' as const,
-      alignItems: 'center' as const,
-      justifyContent: 'space-between' as const,
-      paddingHorizontal: sizes.spacing.md,
-      paddingTop: sizes.spacing.sm,
-      paddingBottom: sizes.spacing.xs,
-    },
-    modalHeaderTitle: {
-      fontSize: sizes.font.lg,
-      fontFamily: fontFamily.bold,
-      color: colors.text,
-    },
-    modalHint: {
-      marginTop: sizes.spacing.sm,
-      paddingHorizontal: sizes.spacing.md,
-      fontSize: sizes.font.xs,
-      color: colors.textSub,
-      textAlign: 'center' as const,
     },
 
     // ── FAB ──
