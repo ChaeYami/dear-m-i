@@ -47,6 +47,10 @@ export const EmotionSlider: React.FC<EmotionSliderProps> = ({
 
   return (
     <View style={{ gap: sizes.spacing.sm }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 2, marginBottom: 2 }}>
+        <Text style={{ fontSize: sizes.font.xs, color: '#E8A5A5', fontFamily: fontFamily.medium }}>힘듦</Text>
+        <Text style={{ fontSize: sizes.font.xs, color: '#8BC4A8', fontFamily: fontFamily.medium }}>좋음</Text>
+      </View>
       <View style={{ flexDirection: 'row', gap: 4 }}>
         {STEPS.map((n) => {
           const isSelected = n === value;

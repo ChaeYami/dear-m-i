@@ -19,6 +19,7 @@ interface Props {
   pendingScheduleIds: Set<string>;
   isEditMode?: boolean;
   selectedIds?: Set<string>;
+  checkDisabled?: boolean;
   onToggleSelect?: (scheduleId: string) => void;
   onDrugPress: (scheduleId: string, drugName: string) => void;
   onDelete: (scheduleId: string, drugName: string) => void;
@@ -31,6 +32,7 @@ export const MedicationCard: React.FC<Props> = ({
   pendingScheduleIds,
   isEditMode,
   selectedIds,
+  checkDisabled,
   onToggleSelect,
   onDrugPress,
   onDelete,
@@ -62,6 +64,7 @@ export const MedicationCard: React.FC<Props> = ({
               dosage={item.dosage}
               status={item.status}
               isPending={pendingScheduleIds.has(item.scheduleId)}
+              checkDisabled={checkDisabled}
               onDrugPress={() => isEditMode ? onToggleSelect?.(item.scheduleId) : onDrugPress(item.scheduleId, item.drugName)}
               onDelete={() => onDelete(item.scheduleId, item.drugName)}
               onTaken={() => onTaken(item.scheduleId)}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Image,
   Platform,
   ScrollView,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -39,6 +40,25 @@ export const PrescriptionUploadScreen: React.FC = () => {
 
   const isUploading = uploadStep === 'uploading_s3' || uploadStep === 'saving';
   const isLimitExceeded = uploadStep === 'error' && errorMsg.includes('limit');
+
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const pulseLoopRef = useRef<Animated.CompositeAnimation | null>(null);
+
+  useEffect(() => {
+    if (uploadStep === 'saving') {
+      pulseLoopRef.current = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, { toValue: 0.35, duration: 700, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 700, useNativeDriver: true }),
+        ])
+      );
+      pulseLoopRef.current.start();
+    } else {
+      pulseLoopRef.current?.stop();
+      pulseAnim.setValue(1);
+    }
+    return () => { pulseLoopRef.current?.stop(); };
+  }, [uploadStep]);
 
   // ─── 이미지 선택 ──────────────────────────────────────────────────────────
 
@@ -149,13 +169,14 @@ export const PrescriptionUploadScreen: React.FC = () => {
       <View style={staticStyles.progressBox}>
         {uploadStep !== 'error' && (
           <View style={[staticStyles.progressBar, { backgroundColor: colors.divider }]}>
-            <View
+            <Animated.View
               style={[
                 staticStyles.progressFill,
                 {
                   width: uploadStep === 'saving' ? '100%' : `${uploadProgress}%`,
                   backgroundColor:
                     uploadStep === 'saving' ? colors.secondary : colors.primary,
+                  opacity: uploadStep === 'saving' ? pulseAnim : 1,
                 },
               ]}
             />

@@ -10,6 +10,7 @@ interface Props {
   dosage?: string;
   status: MedicationLogStatus | null;
   isPending?: boolean;
+  checkDisabled?: boolean;
   onDrugPress: () => void;
   onDelete: () => void;
   onTaken: () => void;
@@ -21,6 +22,7 @@ export const TimeSlotRow: React.FC<Props> = ({
   dosage,
   status,
   isPending,
+  checkDisabled,
   onDrugPress,
   onDelete,
   onTaken,
@@ -97,9 +99,11 @@ export const TimeSlotRow: React.FC<Props> = ({
                 backgroundColor: colors.successLight,
                 borderColor: colors.success,
               },
+              checkDisabled && { opacity: 0.35 },
             ]}
-            onPress={onTaken}
-            activeOpacity={0.75}
+            onPress={checkDisabled ? undefined : onTaken}
+            activeOpacity={checkDisabled ? 1 : 0.75}
+            disabled={checkDisabled}
           >
             {isTaken && <Ionicons name="checkmark-circle" size={15} color={colors.success} />}
             <Text
@@ -131,9 +135,11 @@ export const TimeSlotRow: React.FC<Props> = ({
                 backgroundColor: colors.disabled,
                 borderColor: colors.textDisabled,
               },
+              checkDisabled && { opacity: 0.35 },
             ]}
-            onPress={onSkipped}
-            activeOpacity={0.75}
+            onPress={checkDisabled ? undefined : onSkipped}
+            activeOpacity={checkDisabled ? 1 : 0.75}
+            disabled={checkDisabled}
           >
             <Text
               style={{

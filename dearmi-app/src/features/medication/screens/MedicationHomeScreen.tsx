@@ -60,6 +60,18 @@ const todayStrFn = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
+const getPrevDay = (dateStr: string): string => {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() - 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+const getNextDay = (dateStr: string): string => {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 const formatHistoryDate = (dateStr: string) => {
   const d = new Date(dateStr);
   return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
@@ -271,7 +283,6 @@ export const MedicationHomeScreen: React.FC = () => {
   }, [allSchedules, today, colors]);
 
   const handlePickDate = (day: { dateString: string }) => {
-    if (day.dateString > today) return;
     setShowCalendar(false);
     if (day.dateString === today) {
       navigation.setParams({ date: undefined });
@@ -279,6 +290,25 @@ export const MedicationHomeScreen: React.FC = () => {
       navigation.push('MedicationHome', { date: day.dateString });
     }
   };
+
+  const isFutureDate = selectedDate > today;
+
+  const handleGoPrev = () => {
+    navigation.replace('MedicationHome', { date: getPrevDay(selectedDate) });
+  };
+
+  const handleGoNext = () => {
+    const next = getNextDay(selectedDate);
+    navigation.replace('MedicationHome', { date: next });
+  };
+
+  // 14일 후까지만 미래 탐색 허용
+  const maxBrowseDate = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 14);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  })();
+  const isNextDisabled = selectedDate >= maxBrowseDate;
 
   if (isLoading) return <LoadingSpinner fullscreen />;
 
@@ -290,9 +320,31 @@ export const MedicationHomeScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <ScreenHeader
         variant={isToday ? 'tab' : 'back'}
-        title={isToday ? '복약 관리' : `${mo}월 ${da}일 복약`}
+        title={isToday ? '복약 관리' : '복약 기록'}
         {...(isToday ? { hasNotification: true } : {})}
       />
+
+      {/* 과거 날짜 네비게이션 바 */}
+      {!isToday && (
+        <View style={styles.dateNavBar}>
+          <TouchableOpacity onPress={handleGoPrev} hitSlop={12} style={styles.dateNavBtn}>
+            <Ionicons name="chevron-back" size={20} color={colors.primary} />
+          </TouchableOpacity>
+          <Text style={styles.dateNavLabel}>{mo}월 {da}일</Text>
+          <TouchableOpacity
+            onPress={handleGoNext}
+            hitSlop={12}
+            style={styles.dateNavBtn}
+            disabled={isNextDisabled}
+          >
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={isNextDisabled ? colors.textDisabled : colors.primary}
+            />
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* 처방전 + 편집 버튼 툴바 */}
       {isToday && (
@@ -404,11 +456,28 @@ export const MedicationHomeScreen: React.FC = () => {
         {!hasAnySlots ? (
           <View style={styles.emptyWrap}>
             <Text style={styles.emptyText}>
-              {isToday ? '등록된 복약 일정이 없어요' : '이 날짜에 활성 복약 일정이 없어요'}
+              {isToday
+                ? '등록된 복약 일정이 없어요'
+                : isFutureDate
+                ? '이 날짜에 예정된 복약 일정이 없어요'
+                : '이 날짜에 활성 복약 일정이 없어요'}
             </Text>
             <Text style={styles.emptySubText}>
-              {isToday ? '+ 버튼을 눌러 복약 일정을 추가해보세요' : '복약 일정의 시작/종료일을 확인해주세요'}
+              {isToday
+                ? '+ 버튼을 눌러 복약 일정을 추가해보세요'
+                : isFutureDate
+                ? '복약 일정 등록 후 미리 확인할 수 있어요'
+                : '복약 일정의 시작/종료일을 확인해주세요'}
             </Text>
+            {!isToday && (
+              <TouchableOpacity
+                onPress={() => navigation.replace('MedicationHome', {})}
+                style={[styles.emptyGoTodayBtn, { backgroundColor: colors.primaryMuted, borderColor: colors.primary + '40' }]}
+              >
+                <Ionicons name="today-outline" size={14} color={colors.primary} />
+                <Text style={[styles.emptyGoTodayText, { color: colors.primary }]}>오늘 복약으로 이동</Text>
+              </TouchableOpacity>
+            )}
           </View>
         ) : (
           TIME_SLOTS.map((slot) => {
@@ -433,6 +502,7 @@ export const MedicationHomeScreen: React.FC = () => {
                     pendingScheduleIds={pendingIds}
                     isEditMode={isEditMode}
                     selectedIds={selectedIds}
+                    checkDisabled={isFutureDate}
                     onToggleSelect={toggleSelect}
                     onDrugPress={(scheduleId, drugName) =>
                       navigation.navigate('MedicationScheduleDetail', { scheduleId, drugName })
@@ -451,13 +521,15 @@ export const MedicationHomeScreen: React.FC = () => {
         {isToday && (
           <>
             <View style={styles.historySectionHeader}>
-              <SectionTitle size="md">복약 이력</SectionTitle>
-              <TouchableOpacity
-                onPress={() => setShowCalendar(true)}
-                hitSlop={12}
-              >
-                <Ionicons name="calendar-outline" size={22} color={colors.primary} />
-              </TouchableOpacity>
+              <View style={styles.historyTitleGroup}>
+                <SectionTitle size="md">복약 이력</SectionTitle>
+                <TouchableOpacity
+                  onPress={() => setShowCalendar(true)}
+                  hitSlop={12}
+                >
+                  <Ionicons name="calendar-outline" size={18} color={colors.primary} />
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* FREE 플랜 배너 */}
@@ -595,7 +667,6 @@ export const MedicationHomeScreen: React.FC = () => {
             </View>
             <Calendar
               current={today}
-              maxDate={today}
               onDayPress={handlePickDate}
               markingType="custom"
               markedDates={markedDates}
@@ -777,13 +848,53 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBott
       color: colors.textDisabled,
     },
 
+    // ── 날짜 네비게이션 바 ──
+    dateNavBar: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+      paddingHorizontal: sizes.spacing.lg,
+      paddingVertical: sizes.spacing.sm,
+      gap: sizes.spacing.xl,
+    },
+    dateNavBtn: {
+      padding: sizes.spacing.xs,
+    },
+    dateNavLabel: {
+      fontSize: sizes.font.md,
+      fontFamily: fontFamily.semibold,
+      color: colors.text,
+      minWidth: 100,
+      textAlign: 'center' as const,
+    },
+
+    // ── 과거 날짜 빈 상태 버튼 ──
+    emptyGoTodayBtn: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      gap: sizes.spacing.xs,
+      marginTop: sizes.spacing.sm,
+      paddingHorizontal: sizes.spacing.lg,
+      paddingVertical: sizes.spacing.sm,
+      borderRadius: sizes.radius.full,
+      borderWidth: 1,
+    },
+    emptyGoTodayText: {
+      fontSize: sizes.font.sm,
+      fontFamily: fontFamily.semibold,
+    },
+
     // ── 복약 이력 인라인 ──
     historySectionHeader: {
       flexDirection: 'row' as const,
       alignItems: 'center' as const,
-      justifyContent: 'space-between' as const,
       marginTop: sizes.spacing.xl,
       paddingVertical: sizes.spacing.sm,
+    },
+    historyTitleGroup: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      gap: sizes.spacing.sm,
     },
     freeBanner: {
       backgroundColor: colors.warningLight,

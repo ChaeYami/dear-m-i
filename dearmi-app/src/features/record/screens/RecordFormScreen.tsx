@@ -53,6 +53,7 @@ export const RecordFormScreen: React.FC = () => {
   const { mutate: createRecord, isPending: isCreating } = useCreateRecord();
   const { mutate: updateRecord, isPending: isUpdating } = useUpdateRecord();
   const isPending = isCreating || isUpdating;
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | undefined>(
     scheduleIdFromNav ?? existingRecord?.scheduleId
@@ -146,8 +147,12 @@ export const RecordFormScreen: React.FC = () => {
       if (!presignedRes.success || !presignedRes.data) throw new Error('업로드 URL 발급 실패');
       const { s3Key, uploadUrl } = presignedRes.data;
       await prescriptionApi.uploadToS3(uploadUrl, rxImage.uri, mimeType, () => {});
-      const today = new Date().toISOString().split('T')[0];
-      await prescriptionApi.createPrescription({ s3Key, prescribedAt: today });
+      const prescribedAt = selectedSchedule
+        ? selectedSchedule.scheduledAt.split('T')[0]
+        : consultedAt
+        ? `${consultedAt.getFullYear()}-${String(consultedAt.getMonth() + 1).padStart(2, '0')}-${String(consultedAt.getDate()).padStart(2, '0')}`
+        : new Date().toISOString().split('T')[0];
+      await prescriptionApi.createPrescription({ s3Key, prescribedAt });
       setRxDone(true);
     } catch (e) {
       customAlert('처방전 업로드 실패', e instanceof Error ? e.message : '다시 시도해 주세요.');
@@ -194,10 +199,15 @@ export const RecordFormScreen: React.FC = () => {
       consultedAt: !selectedScheduleId && consultedAt ? formatLocalDate(consultedAt) : undefined,
     };
 
+    const onSuccess = () => {
+      setSaveSuccess(true);
+      setTimeout(() => markSavedAndExit(), 800);
+    };
+
     if (isEdit && recordId) {
-      updateRecord({ id: recordId, data: payload }, { onSuccess: () => markSavedAndExit() });
+      updateRecord({ id: recordId, data: payload }, { onSuccess });
     } else {
-      createRecord(payload, { onSuccess: () => markSavedAndExit() });
+      createRecord(payload, { onSuccess });
     }
   };
 
@@ -207,12 +217,18 @@ export const RecordFormScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      {saveSuccess && (
+        <View style={[styles.successBanner, { backgroundColor: colors.successLight }]}>
+          <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+          <Text style={[styles.successBannerText, { color: colors.success }]}>기록이 저장되었어요</Text>
+        </View>
+      )}
       <ScreenHeader
         variant="form"
         title={isEdit ? '기록 수정' : '기록 작성'}
         onCancel={() => navigation.goBack()}
         onSave={handleSave}
-        saveDisabled={isPending}
+        saveDisabled={isPending || (!!contentLimit && content.length > contentLimit)}
       />
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
@@ -224,7 +240,7 @@ export const RecordFormScreen: React.FC = () => {
               activeOpacity={0.8}
             >
               <Text style={[styles.summaryToggleText, { color: colors.secondary }]}>
-                이번 주 체크인 요약 ({checkinSummary.totalCheckins}일)
+                진료 전 참고 — 이번 주 체크인 ({checkinSummary.totalCheckins}일)
               </Text>
               <Ionicons
                 name={showCheckinSummary ? 'chevron-up' : 'chevron-down'}
@@ -409,7 +425,7 @@ export const RecordFormScreen: React.FC = () => {
         )}
 
         <View style={styles.field}>
-          <Text style={[styles.fieldLabel, { color: colors.textSub }]}>오늘 컨디션</Text>
+          <Text style={[styles.fieldLabel, { color: colors.textSub }]}>진료 시 컨디션</Text>
           <EmotionSlider value={emotionScore} onChange={setEmotionScore} />
         </View>
 
@@ -483,6 +499,9 @@ export const RecordFormScreen: React.FC = () => {
         {isPremium && (
           <View style={styles.field}>
             <Text style={[styles.fieldLabel, { color: colors.textSub }]}>처방전 첨부 (선택)</Text>
+            <Text style={[styles.fieldHint, { color: colors.textDisabled }]}>
+              이 기록에 함께 보관할 처방전이에요. 복약 일정 자동 생성은 복약 탭 › 처방전에서 하세요.
+            </Text>
             {rxDone ? (
               <View style={[styles.rxDoneBox, { backgroundColor: colors.successLight }]}>
                 <Ionicons name="checkmark-circle" size={20} color={colors.success} />
@@ -532,8 +551,25 @@ const formatDate = (iso: string) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  successBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sizes.spacing.xs,
+    paddingHorizontal: sizes.spacing.lg,
+    paddingVertical: sizes.spacing.sm,
+  },
+  successBannerText: {
+    fontSize: sizes.font.sm,
+    fontFamily: fontFamily.semibold,
+  },
   content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg, paddingBottom: 40 },
   field: { gap: sizes.spacing.sm },
+  fieldHint: {
+    fontSize: sizes.font.xs,
+    fontFamily: fontFamily.regular,
+    lineHeight: 16,
+    marginTop: -sizes.spacing.xs,
+  },
   fieldLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   fieldLabel: {
     fontSize: sizes.font.sm,

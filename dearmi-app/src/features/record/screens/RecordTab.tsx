@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   FlatList,
   ActivityIndicator,
 } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -47,20 +48,43 @@ const formatRecordDate = (item: RecordSummary): { label: string; isConsulted: bo
   return { label: formatted, isConsulted: item.consultedAt != null };
 };
 
-const RecordCard: React.FC<{ item: RecordSummary; onPress: () => void; onDelete: () => void }> = ({ item, onPress, onDelete }) => {
+const RecordCard: React.FC<{ item: RecordSummary; onPress: () => void; onEdit: () => void; onDelete: () => void }> = ({ item, onPress, onEdit, onDelete }) => {
   const { colors } = useTheme();
   const emotionColor = item.emotionScore !== undefined ? getEmotionColor(item.emotionScore) : colors.primary;
   const { label: dateLabel, isConsulted } = formatRecordDate(item);
+  const swipeRef = useRef<Swipeable>(null);
 
   const handleMore = () => {
     customAlert('진료 기록', '', [
-      { text: '수정', onPress },
+      { text: '수정', onPress: onEdit },
       { text: '삭제', style: 'destructive', onPress: onDelete },
       { text: '취소', style: 'cancel' },
     ]);
   };
 
+  const renderRightActions = () => (
+    <View style={styles.swipeActions}>
+      <TouchableOpacity
+        style={[styles.swipeBtn, { backgroundColor: colors.primary }]}
+        onPress={() => { swipeRef.current?.close(); onEdit(); }}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="create-outline" size={18} color="#fff" />
+        <Text style={styles.swipeBtnText}>수정</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.swipeBtn, { backgroundColor: colors.error }]}
+        onPress={() => { swipeRef.current?.close(); onDelete(); }}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="trash-outline" size={18} color="#fff" />
+        <Text style={styles.swipeBtnText}>삭제</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
+    <Swipeable ref={swipeRef} renderRightActions={renderRightActions} overshootRight={false}>
     <View style={styles.timelineRow}>
       {/* Timeline line + dot */}
       <View style={styles.timelineLeft}>
@@ -130,6 +154,7 @@ const RecordCard: React.FC<{ item: RecordSummary; onPress: () => void; onDelete:
         )}
       </AnimatedPressable>
     </View>
+    </Swipeable>
   );
 };
 
@@ -213,6 +238,7 @@ export const RecordTab: React.FC = () => {
           <RecordCard
             item={item}
             onPress={() => navigation.navigate('RecordDetail', { recordId: item.id })}
+            onEdit={() => navigation.navigate('RecordForm', { recordId: item.id })}
             onDelete={() => handleDeleteRecord(item.id)}
           />
         )}
@@ -229,8 +255,16 @@ export const RecordTab: React.FC = () => {
         }
         ListEmptyComponent={
           <View style={styles.emptyWrap}>
+            <Ionicons name="document-text-outline" size={40} color={colors.primaryLight} />
             <Text style={[styles.emptyText, { color: colors.textSub }]}>아직 기록이 없어요</Text>
             <Text style={[styles.emptySubText, { color: colors.textDisabled }]}>진료 후 기록을 남겨보세요</Text>
+            <AnimatedPressable
+              onPress={() => navigation.navigate('RecordForm', undefined)}
+              style={[styles.emptyCtaBtn, { backgroundColor: colors.primary }]}
+            >
+              <Ionicons name="add" size={16} color={colors.textInverse} />
+              <Text style={[styles.emptyCtaText, { color: colors.textInverse }]}>기록 작성하기</Text>
+            </AnimatedPressable>
           </View>
         }
         contentContainerStyle={
@@ -333,6 +367,29 @@ const styles = StyleSheet.create({
   sectionHeaderText: {
     fontSize: sizes.font.md,
     fontFamily: fontFamily.bold,
+  },
+
+  // Swipe actions
+  swipeActions: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    marginTop: sizes.spacing.md,
+    marginRight: sizes.spacing.lg,
+    borderRadius: sizes.radius.xxl,
+    overflow: 'hidden',
+    gap: 2,
+  },
+  swipeBtn: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: sizes.spacing.lg,
+    minWidth: 64,
+  },
+  swipeBtnText: {
+    fontSize: sizes.font.xs,
+    fontFamily: fontFamily.semibold,
+    color: '#fff',
   },
 
   // Timeline layout
@@ -472,14 +529,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: sizes.spacing.sm,
+    paddingVertical: sizes.spacing.xl,
   },
   emptyText: {
     fontSize: sizes.font.lg,
     fontFamily: fontFamily.semibold,
+    marginTop: sizes.spacing.xs,
   },
   emptySubText: {
     fontSize: sizes.font.sm,
     fontFamily: fontFamily.regular,
+  },
+  emptyCtaBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sizes.spacing.xs,
+    marginTop: sizes.spacing.sm,
+    paddingHorizontal: sizes.spacing.xl,
+    paddingVertical: sizes.spacing.md,
+    borderRadius: sizes.radius.full,
+  },
+  emptyCtaText: {
+    fontSize: sizes.font.md,
+    fontFamily: fontFamily.semibold,
   },
 
   // FAB

@@ -380,8 +380,13 @@ export const CheckinHomeScreen: React.FC = () => {
                 </Text>
               </TouchableOpacity>
               {/* 체크인 완료 인디케이터 */}
-              {hasCheckin && !isSelected ? (
-                <Ionicons name="checkmark-circle" size={10} color={colors.primary} style={{ marginTop: 2 }} />
+              {hasCheckin ? (
+                <Ionicons
+                  name="checkmark-circle"
+                  size={10}
+                  color={isSelected ? 'rgba(255,255,255,0.75)' : colors.primary}
+                  style={{ marginTop: 2 }}
+                />
               ) : (
                 <View style={{ width: 10, height: 10, marginTop: 2 }} />
               )}
