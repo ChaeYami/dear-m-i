@@ -18,7 +18,7 @@ export interface OcrMedicationItem {
 }
 
 export type MedicationStackParamList = {
-  MedicationHome: { date?: string } | undefined;
+  MedicationHome: { date?: string; direction?: 'prev' | 'next' } | undefined;
   MedicationForm: {
     scheduleId?: string;
     prescriptionMedicationId?: string;

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,11 @@ import {
   ScrollView,
   TouchableOpacity,
   Modal,
+  Animated,
+  Dimensions,
 } from 'react-native';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
@@ -102,8 +106,23 @@ export const MedicationHomeScreen: React.FC = () => {
 
   const today = todayStrFn();
   const paramDate = route.params?.date;
+  const direction = route.params?.direction;
   const selectedDate = paramDate ?? today;
   const isToday = selectedDate === today;
+
+  // 방향별 슬라이드 인 애니메이션
+  const slideAnim = useRef(new Animated.Value(
+    direction === 'prev' ? -SCREEN_WIDTH : direction === 'next' ? SCREEN_WIDTH : 0
+  )).current;
+  useEffect(() => {
+    if (!direction) return;
+    Animated.spring(slideAnim, {
+      toValue: 0,
+      tension: 68,
+      friction: 11,
+      useNativeDriver: true,
+    }).start();
+  }, []);
 
   const { data, isLoading } = useTodayMedication(isToday ? undefined : selectedDate);
   const { mutate: checkMedication, isPending: isChecking } = useCheckMedication();
@@ -294,12 +313,11 @@ export const MedicationHomeScreen: React.FC = () => {
   const isFutureDate = selectedDate > today;
 
   const handleGoPrev = () => {
-    navigation.replace('MedicationHome', { date: getPrevDay(selectedDate) });
+    navigation.replace('MedicationHome', { date: getPrevDay(selectedDate), direction: 'prev' });
   };
 
   const handleGoNext = () => {
-    const next = getNextDay(selectedDate);
-    navigation.replace('MedicationHome', { date: next });
+    navigation.replace('MedicationHome', { date: getNextDay(selectedDate), direction: 'next' });
   };
 
   // 14일 후까지만 미래 탐색 허용
@@ -422,6 +440,7 @@ export const MedicationHomeScreen: React.FC = () => {
         </View>
       )}
 
+      <Animated.View style={{ flex: 1, transform: [{ translateX: slideAnim }] }}>
       <ScrollView contentContainerStyle={styles.content} {...scrollHandlers}>
         {/* 완료율 카드 */}
         <View style={styles.summaryCard}>
@@ -627,6 +646,7 @@ export const MedicationHomeScreen: React.FC = () => {
           </>
         )}
       </ScrollView>
+      </Animated.View>
 
       {/* FAB */}
       {isToday && (
