@@ -63,7 +63,7 @@ const IMAGE_PATHS = [
   "/screenshots/ko/medication-history.png",
   "/screenshots/ko/prescription-list.png",
   "/screenshots/ko/ocr-result.png",
-  "/mockup-duo.png",
+  "/iPhone 15 Pro.png",
 ];
 
 const imageCache: Record<string, string> = {};
@@ -332,7 +332,7 @@ function Slide9({ cW, cH }: { cW: number; cH: number }) {
 //   Right phone (y=90..960): bbox x=598..1057 → clip polygon(3.5% 0%, 100% 0%, 67.1% 100%, 0% 100%)
 //
 function FeatureGraphicSlide({ cW, cH }: { cW: number; cH: number }) {
-  const padL    = cW * 0.055;
+  const padL    = cW * 0.10;
 
   // Left text sizes
   const iconSize = cH * 0.200;
@@ -393,7 +393,7 @@ function FeatureGraphicSlide({ cW, cH }: { cW: number; cH: number }) {
 
       {/* ── Right panel: pre-filled mockup ── */}
       <img
-        src={img("/mockup-duo.png")}
+        src={img("/iPhone 15 Pro.png")}
         alt=""
         draggable={false}
         style={{
