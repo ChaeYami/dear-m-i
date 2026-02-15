@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(npm install *)",
-      "Bash(python -c \"from PIL import Image, ImageDraw, ImageFont; print\\('PIL OK'\\)\")"
+      "Bash(python -c \"from PIL import Image, ImageDraw, ImageFont; print\\('PIL OK'\\)\")",
+      "Bash(python *)"
     ]
   }
 }
