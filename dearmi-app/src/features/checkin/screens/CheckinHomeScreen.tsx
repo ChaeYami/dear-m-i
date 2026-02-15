@@ -332,7 +332,7 @@ export const CheckinHomeScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScreenHeader variant="tab" title={t('title')} hasNotification />
+      <ScreenHeader variant="tab" title={t('title')} hasNotification searchScope="CHECKIN" />
 
       {/* 날짜 스크롤 바 */}
       <FlatList

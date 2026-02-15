@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -38,11 +39,12 @@ public class SearchController {
             @AuthenticatedUserId UUID userId,
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String types,
+            @RequestParam(required = false) List<String> tags,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
         Set<SearchType> searchTypes = parseTypes(types);
-        SearchCommand command = new SearchCommand(userId, q, searchTypes, page, size);
+        SearchCommand command = new SearchCommand(userId, q, searchTypes, tags, page, size);
         SearchResult result = searchUseCase.search(command);
         return ApiResponse.success(SearchResponse.from(result));
     }

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_KEYS } from '@/constants/cacheKeys';
 import { CacheService } from '@/shared/cache';
-import { searchApi } from '@/features/search/api/searchApi';
+import { searchApi, type SearchType } from '@/features/search/api/searchApi';
 
 const MAX_RECENT = 5;
 
@@ -27,7 +27,7 @@ export const useRecentSearches = () => {
 };
 
 /** 통합 검색 (debounce 300ms) */
-export const useSearch = (keyword: string) => {
+export const useSearch = (keyword: string, types?: SearchType, tags?: string[]) => {
   const [debouncedKeyword, setDebouncedKeyword] = useState(keyword);
 
   useEffect(() => {
@@ -35,14 +35,16 @@ export const useSearch = (keyword: string) => {
     return () => clearTimeout(timer);
   }, [keyword]);
 
+  const hasInput = debouncedKeyword.trim().length > 0 || (tags != null && tags.length > 0);
+
   return {
     ...useQuery({
-      queryKey: QUERY_KEYS.search(debouncedKeyword),
+      queryKey: [...QUERY_KEYS.search(debouncedKeyword), types, tags],
       queryFn: async () => {
-        const { data } = await searchApi.search(debouncedKeyword);
+        const { data } = await searchApi.search(debouncedKeyword, 0, 20, types, tags);
         return data.data ?? null;
       },
-      enabled: debouncedKeyword.trim().length > 0,
+      enabled: hasInput,
     }),
     isDebouncing: keyword !== debouncedKeyword,
   };

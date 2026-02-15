@@ -18,7 +18,12 @@ export const CareHomeScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScreenHeader variant="tab" title={t('tab_care')} hasNotification />
+      <ScreenHeader
+        variant="tab"
+        title={t('tab_care')}
+        hasNotification
+        searchScope={activeTab === 'schedule' ? 'PREPNOTE' : 'RECORD'}
+      />
 
       {/* Sub-tab switcher */}
       <View style={styles.subTabBar}>

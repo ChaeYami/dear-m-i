@@ -26,4 +26,9 @@ public interface DailyCheckinRepository {
     List<DailyCheckin> searchByKeyword(UUID userId, String keyword, LocalDate fromDate, int offset, int limit);
 
     long countByKeyword(UUID userId, String keyword, LocalDate fromDate);
+
+    /** 통합 검색: memo LIKE + trigger_tags 필터 */
+    List<DailyCheckin> searchByKeywordAndTags(UUID userId, String keyword, List<String> tags, LocalDate fromDate, int offset, int limit);
+
+    long countByKeywordAndTags(UUID userId, String keyword, List<String> tags, LocalDate fromDate);
 }

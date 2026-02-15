@@ -12,18 +12,27 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { softShadow } from '@/shared/theme/shadows';
 import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
 import { CacheService } from '@/shared/cache';
 import { CACHE_KEYS } from '@/constants/cacheKeys';
 import { useSearch, useRecentSearches } from '@/features/search/hooks/useSearch';
+import type { SearchType } from '@/features/search/api/searchApi';
 import { SectionHeader } from '@/features/search/components/SearchResultSection';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { navigationRef } from '@/navigation/navigationRef';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
+import { useRoute, type RouteProp } from '@react-navigation/native';
 
 type Nav = StackNavigationProp<RootStackParamList, 'Search'>;
+
+const SCOPE_META: Record<SearchType, { placeholder: string }> = {
+  RECORD: { placeholder: '진료 기록 검색' },
+  CHECKIN: { placeholder: '하루 메모 검색' },
+  PREPNOTE: { placeholder: '준비 메모 검색' },
+};
 
 const formatDate = (iso: string) => {
   const d = new Date(iso);
@@ -75,17 +84,41 @@ const HighlightText: React.FC<{
 export const SearchScreen: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
+  const route = useRoute<RouteProp<RootStackParamList, 'Search'>>();
+  const scope = route.params?.scope as SearchType | undefined;
+  const { t } = useTranslation('checkin');
   const user = useAuthStore((s) => s.user);
   const isPremium = user?.plan === 'PREMIUM';
 
   const [keyword, setKeyword] = useState('');
   const [submitted, setSubmitted] = useState('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const inputRef = useRef<TextInput>(null);
 
   const { load: loadRecent, save: saveRecent, remove: removeRecent } = useRecentSearches();
   const [recentSearches, setRecentSearches] = useState<string[]>(() => loadRecent());
 
-  const { data, isFetching, isDebouncing } = useSearch(submitted);
+  const activeTags = scope === 'CHECKIN' ? selectedTags : undefined;
+  const { data, isFetching, isDebouncing } = useSearch(submitted, scope, activeTags);
+
+  const placeholder = scope ? SCOPE_META[scope].placeholder : '진료 기록, 준비 메모 검색';
+  const showRecords = !scope || scope === 'RECORD';
+  const showCheckins = !scope || scope === 'CHECKIN';
+  const showPrepNotes = !scope || scope === 'PREPNOTE';
+
+  const TRIGGER_TAGS = useMemo(() => [
+    t('trigger_tags.family'), t('trigger_tags.friends'), t('trigger_tags.work_relations'),
+    t('trigger_tags.partner'), t('trigger_tags.loneliness'),
+    t('trigger_tags.work_stress'), t('trigger_tags.academic'), t('trigger_tags.burnout'),
+    t('trigger_tags.sleep_lack'), t('trigger_tags.fatigue'), t('trigger_tags.pain'),
+    t('trigger_tags.weather'), t('trigger_tags.financial'),
+  ], [t]);
+
+  const toggleTag = useCallback((tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  }, []);
 
   const shadow = softShadow(colors);
 
@@ -143,7 +176,7 @@ export const SearchScreen: React.FC = () => {
   };
 
   const isLoading = isFetching || isDebouncing;
-  const hasQuery = submitted.trim().length > 0;
+  const hasQuery = submitted.trim().length > 0 || (activeTags != null && activeTags.length > 0);
 
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
@@ -271,7 +304,7 @@ export const SearchScreen: React.FC = () => {
             value={keyword}
             onChangeText={setKeyword}
             onSubmitEditing={() => handleSearch(keyword)}
-            placeholder="진료 기록, 준비 메모 검색"
+            placeholder={placeholder}
             placeholderTextColor={colors.textDisabled}
             returnKeyType="search"
             autoFocus
@@ -286,6 +319,48 @@ export const SearchScreen: React.FC = () => {
           <Text style={styles.cancelText}>취소</Text>
         </TouchableOpacity>
       </View>
+
+      {/* 체크인 태그 필터 */}
+      {scope === 'CHECKIN' && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingHorizontal: sizes.spacing.md,
+            paddingVertical: sizes.spacing.sm,
+            gap: sizes.spacing.xs,
+          }}
+          keyboardShouldPersistTaps="handled"
+        >
+          {TRIGGER_TAGS.map((tag) => {
+            const isActive = selectedTags.includes(tag);
+            return (
+              <TouchableOpacity
+                key={tag}
+                onPress={() => toggleTag(tag)}
+                style={{
+                  paddingHorizontal: 14,
+                  paddingVertical: 7,
+                  borderRadius: sizes.radius.full,
+                  borderWidth: 1,
+                  backgroundColor: isActive ? colors.accentMuted : colors.surface,
+                  borderColor: isActive ? colors.accent : colors.divider,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: sizes.font.xs,
+                    fontFamily: isActive ? fontFamily.semibold : fontFamily.regular,
+                    color: isActive ? colors.accent : colors.textSub,
+                  }}
+                >
+                  {tag}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
 
       <ScrollView
         contentContainerStyle={styles.content}
@@ -317,14 +392,16 @@ export const SearchScreen: React.FC = () => {
         {/* 검색 결과 */}
         {hasQuery && !isLoading && data && (
           <>
-            {data.recordTotal === 0 && data.checkinTotal === 0 && data.prepNoteTotal === 0 ? (
+            {(showRecords ? data.recordTotal : 0) === 0 &&
+             (showCheckins ? data.checkinTotal : 0) === 0 &&
+             (showPrepNotes ? data.prepNoteTotal : 0) === 0 ? (
               <View style={styles.emptyWrap}>
                 <Text style={styles.emptyText}>'{submitted}'에 대한 결과가 없어요.</Text>
               </View>
             ) : (
               <>
                 {/* 진료 기록 */}
-                {data.recordTotal > 0 && (
+                {showRecords && data.recordTotal > 0 && (
                   <View>
                     <SectionHeader title="진료 기록" count={data.recordTotal} />
                     {data.records.map((r) => (
@@ -347,7 +424,7 @@ export const SearchScreen: React.FC = () => {
                 )}
 
                 {/* 하루 메모 */}
-                {data.checkinTotal > 0 && (
+                {showCheckins && data.checkinTotal > 0 && (
                   <View>
                     <SectionHeader title="하루 메모" count={data.checkinTotal} />
                     {data.checkins.map((c) => (
@@ -370,7 +447,7 @@ export const SearchScreen: React.FC = () => {
                 )}
 
                 {/* 준비 메모 */}
-                {data.prepNoteTotal > 0 && (
+                {showPrepNotes && data.prepNoteTotal > 0 && (
                   <View>
                     <SectionHeader title="준비 메모" count={data.prepNoteTotal} />
                     {data.prepNotes.map((p) => (

@@ -42,7 +42,7 @@ export type RootStackParamList = {
   Main: undefined;
   Paywall: undefined;
   WebPayment: { planType: 'MONTHLY' | 'YEARLY' };
-  Search: undefined;
+  Search: { scope?: 'RECORD' | 'CHECKIN' | 'PREPNOTE' } | undefined;
   Onboarding: { forceShow?: boolean } | undefined;
 };
 

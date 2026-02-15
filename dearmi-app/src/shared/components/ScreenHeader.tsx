@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import { navigationRef } from '@/navigation/navigationRef';
 
 interface TabHeaderProps {
   variant: 'tab';
@@ -11,6 +12,8 @@ interface TabHeaderProps {
   rightContent?: React.ReactNode;
   /** 알림 빨간 점 인디케이터 */
   hasNotification?: boolean;
+  /** 검색 스코프 — 지정 시 돋보기 아이콘 표시, 해당 타입만 검색 */
+  searchScope?: 'RECORD' | 'CHECKIN' | 'PREPNOTE';
 }
 
 interface BackHeaderProps {
@@ -49,6 +52,10 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = (props) => {
       }
     };
 
+    const handleSearchPress = () => {
+      (navigationRef.current as any)?.navigate('Search', { scope: props.searchScope });
+    };
+
     return (
       <View
         style={{
@@ -85,6 +92,24 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = (props) => {
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.sm }}>
           {props.rightContent}
+          {props.searchScope && (
+            <TouchableOpacity
+              onPress={handleSearchPress}
+              hitSlop={8}
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 19,
+                backgroundColor: colors.surface,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderWidth: 1,
+                borderColor: colors.cardBorder,
+              }}
+            >
+              <Ionicons name="search-outline" size={20} color={colors.text} />
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             onPress={handleBellPress}
             hitSlop={8}

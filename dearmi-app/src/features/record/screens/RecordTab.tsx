@@ -215,7 +215,7 @@ export const RecordTab: React.FC<{ embedded?: boolean }> = ({ embedded = false }
       style={[styles.container, { backgroundColor: colors.background }]}
       edges={embedded ? [] : undefined}
     >
-      {!embedded && <ScreenHeader variant="tab" title={t('title')} hasNotification />}
+      {!embedded && <ScreenHeader variant="tab" title={t('title')} hasNotification searchScope="RECORD" />}
 
 
       {!isPremium && (

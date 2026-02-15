@@ -68,11 +68,20 @@ public class SearchUseCaseImpl implements SearchUseCase {
         }
 
         if (command.types().contains(SearchType.CHECKIN)) {
-            checkinTotal = dailyCheckinRepository.countByKeyword(
-                    command.userId(), command.keyword(), checkinCutoff);
-            List<DailyCheckin> checkinList = dailyCheckinRepository.searchByKeyword(
-                    command.userId(), command.keyword(), checkinCutoff, offset, limit);
-            checkins = checkinList.stream().map(CheckinSearchResult::from).toList();
+            boolean hasTags = command.tags() != null && !command.tags().isEmpty();
+            if (hasTags) {
+                checkinTotal = dailyCheckinRepository.countByKeywordAndTags(
+                        command.userId(), command.keyword(), command.tags(), checkinCutoff);
+                List<DailyCheckin> checkinList = dailyCheckinRepository.searchByKeywordAndTags(
+                        command.userId(), command.keyword(), command.tags(), checkinCutoff, offset, limit);
+                checkins = checkinList.stream().map(CheckinSearchResult::from).toList();
+            } else {
+                checkinTotal = dailyCheckinRepository.countByKeyword(
+                        command.userId(), command.keyword(), checkinCutoff);
+                List<DailyCheckin> checkinList = dailyCheckinRepository.searchByKeyword(
+                        command.userId(), command.keyword(), checkinCutoff, offset, limit);
+                checkins = checkinList.stream().map(CheckinSearchResult::from).toList();
+            }
         }
 
         if (command.types().contains(SearchType.PREPNOTE)) {

@@ -162,7 +162,7 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
       style={[styles.container, { backgroundColor: colors.background }]}
       edges={embedded ? [] : undefined}
     >
-      {!embedded && <ScreenHeader variant="tab" title={t('tab_schedule')} hasNotification />}
+      {!embedded && <ScreenHeader variant="tab" title={t('tab_schedule')} hasNotification searchScope="PREPNOTE" />}
 
       <ScrollView
         showsVerticalScrollIndicator={false}
