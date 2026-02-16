@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import {
@@ -34,6 +35,7 @@ type WebPaymentRouteProp = RouteProp<RootStackParamList, 'WebPayment'>;
  */
 export const WebPaymentScreen: React.FC = () => {
   const { colors } = useTheme();
+  const { t } = useTranslation(['subscription', 'common']);
   const navigation = useNavigation();
   const route = useRoute<WebPaymentRouteProp>();
   const planType = route.params?.planType ?? 'MONTHLY';
@@ -46,7 +48,7 @@ export const WebPaymentScreen: React.FC = () => {
 
   useEffect(() => {
     if (Platform.OS !== 'android') {
-      customAlert('오류', '웹 결제는 Android에서만 사용할 수 있습니다.');
+      customAlert(t('common:error'), t('subscription:web_android_only'));
       navigation.goBack();
       return;
     }
@@ -60,7 +62,7 @@ export const WebPaymentScreen: React.FC = () => {
       setStatus('preparing');
       const { data } = await subscriptionApi.preparePayment(plan);
       if (!data.success || !data.data) {
-        throw new Error(data.message ?? '결제 준비에 실패했습니다.');
+        throw new Error(data.message ?? t('subscription:web_prepare_failed'));
       }
 
       const { orderId, amount, customerName, customerEmail } = data.data;
@@ -68,12 +70,12 @@ export const WebPaymentScreen: React.FC = () => {
       // 2. 토스페이먼츠 결제 페이지 URL 구성
       const clientKey = process.env.EXPO_PUBLIC_TOSS_CLIENT_KEY;
       if (!clientKey) {
-        throw new Error('결제 설정이 올바르지 않습니다.');
+        throw new Error(t('subscription:web_config_error'));
       }
 
       const successUrl = 'dearmi://payment/success';
       const failUrl = 'dearmi://payment/fail';
-      const orderName = plan === 'MONTHLY' ? 'DearMI 프리미엄 월간' : 'DearMI 프리미엄 연간';
+      const orderName = plan === 'MONTHLY' ? t('subscription:web_order_monthly') : t('subscription:web_order_yearly');
 
       const checkoutUrl =
         `https://api.tosspayments.com/v1/payments/widget?` +
@@ -98,7 +100,7 @@ export const WebPaymentScreen: React.FC = () => {
       }
     } catch (err: any) {
       setStatus('error');
-      setErrorMessage(err?.message ?? '결제 처리 중 오류가 발생했습니다.');
+      setErrorMessage(err?.message ?? t('subscription:web_payment_error'));
     }
   };
 
@@ -126,7 +128,7 @@ export const WebPaymentScreen: React.FC = () => {
 
       if (!orderId || !paymentKey || !amount) {
         setStatus('error');
-        setErrorMessage('결제 정보가 올바르지 않습니다.');
+        setErrorMessage(t('subscription:web_invalid_info'));
         return;
       }
 
@@ -146,9 +148,9 @@ export const WebPaymentScreen: React.FC = () => {
             setUser({ ...user, plan: 'PREMIUM' });
           }
 
-          customAlert('결제 완료', '프리미엄 구독이 활성화되었습니다.', [
+          customAlert(t('subscription:web_complete'), t('subscription:web_activated'), [
             {
-              text: '확인',
+              text: t('common:confirm'),
               onPress: () => {
                 // Paywall + WebPayment 모두 닫기
                 navigation.getParent()?.goBack() ?? navigation.goBack();
@@ -156,23 +158,23 @@ export const WebPaymentScreen: React.FC = () => {
             },
           ]);
         } else {
-          throw new Error(data.message ?? '결제 승인에 실패했습니다.');
+          throw new Error(data.message ?? t('subscription:web_confirm_failed'));
         }
       } catch (err: any) {
         setStatus('error');
-        setErrorMessage(err?.message ?? '결제 승인 중 오류가 발생했습니다.');
+        setErrorMessage(err?.message ?? t('subscription:web_confirm_error'));
       }
     } else {
       // payment/fail
       setStatus('error');
-      setErrorMessage('결제가 실패했습니다. 다시 시도해 주세요.');
+      setErrorMessage(t('subscription:web_failed'));
     }
   };
 
   const statusText = {
-    preparing: '결제를 준비하고 있습니다...',
-    waiting: '결제 페이지에서 결제를 완료해 주세요',
-    confirming: '결제를 확인하고 있습니다...',
+    preparing: t('subscription:web_preparing'),
+    waiting: t('subscription:web_waiting'),
+    confirming: t('subscription:web_confirming'),
     error: errorMessage,
   };
 
@@ -250,14 +252,14 @@ export const WebPaymentScreen: React.FC = () => {
               onPress={() => startPaymentFlow(planType)}
               activeOpacity={0.85}
             >
-              <Text style={styles.retryBtnText}>다시 시도</Text>
+              <Text style={styles.retryBtnText}>{t('common:retry')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.closeBtn}
               onPress={() => navigation.goBack()}
               activeOpacity={0.7}
             >
-              <Text style={styles.closeBtnText}>닫기</Text>
+              <Text style={styles.closeBtnText}>{t('common:close')}</Text>
             </TouchableOpacity>
           </>
         )}

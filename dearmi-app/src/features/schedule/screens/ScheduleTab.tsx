@@ -29,19 +29,12 @@ import type { HospitalSchedule } from '@/shared/types/domain.types';
 type Nav = StackNavigationProp<CareStackParamList, 'CareHome'>;
 type ViewMode = 'week' | 'all';
 
-const WEEK_DAYS_LABEL = ['일', '월', '화', '수', '목', '금', '토'];
-
 const toDateString = (iso: string) => iso.split('T')[0];
 
 const formatTime = (iso: string) => {
   const timePart = iso.includes('T') ? iso.split('T')[1] : iso;
   const [h, m] = timePart.split(':');
   return `${h}:${m}`;
-};
-
-const formatDateFull = (dateStr: string) => {
-  const [, mo, d] = dateStr.split('-');
-  return `${Number(mo)}월 ${Number(d)}일`;
 };
 
 const getWeekDates = (baseDate: Date): string[] => {
@@ -65,7 +58,15 @@ const getTodayString = () => {
 export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
-  const { t } = useTranslation('common');
+  const { t } = useTranslation(['common', 'schedule']);
+  const weekDaysLabel = useMemo(() => [
+    t('common:weekday_sun'), t('common:weekday_mon'), t('common:weekday_tue'),
+    t('common:weekday_wed'), t('common:weekday_thu'), t('common:weekday_fri'), t('common:weekday_sat'),
+  ], [t]);
+  const formatDateFull = useCallback((dateStr: string) => {
+    const [, mo, d] = dateStr.split('-');
+    return t('schedule:month_day_label', { month: Number(mo), day: Number(d) });
+  }, [t]);
   const today = new Date();
   const todayStr = getTodayString();
   const [viewMode, setViewMode] = useState<ViewMode>('week');
@@ -179,8 +180,8 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
             <Ionicons name="create-outline" size={22} color={colors.accent} />
           </View>
           <View style={styles.featureCardBody}>
-            <Text style={[styles.featureCardTitle, { color: colors.text }]}>진료 준비 메모</Text>
-            <Text style={[styles.featureCardSub, { color: colors.textSub }]}>질문, 증상 등 미리 적어두고 진료실에서 활용해요</Text>
+            <Text style={[styles.featureCardTitle, { color: colors.text }]}>{t('schedule:prep_section_title')}</Text>
+            <Text style={[styles.featureCardSub, { color: colors.textSub }]}>{t('schedule:prep_section_subtitle')}</Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={colors.textDisabled} />
         </TouchableOpacity>
@@ -190,7 +191,7 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
           {/* 필터 */}
           <View style={[styles.viewToggle, { backgroundColor: colors.disabled }]}>
             {(['week', 'all'] as const).map((mode) => {
-              const label = mode === 'week' ? '주간' : '전체';
+              const label = mode === 'week' ? t('schedule:view_weekly') : t('schedule:view_all');
               const active = viewMode === mode;
               return (
                 <TouchableOpacity
@@ -225,7 +226,7 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
             <View style={styles.monthBarLeft}>
               {!isOnToday && (
                 <TouchableOpacity onPress={goToToday} hitSlop={8}>
-                  <Text style={[styles.recentBtnText, { color: colors.textSub, fontFamily: fontFamily.medium }]}>최근</Text>
+                  <Text style={[styles.recentBtnText, { color: colors.textSub, fontFamily: fontFamily.medium }]}>{t('schedule:recent')}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -256,6 +257,7 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
               highlightedDates={highlightedDates}
               colors={colors}
               todayStr={todayStr}
+              weekDaysLabel={weekDaysLabel}
               onDayPress={handleDayPress}
               onWeekChange={(weekDates) => {
                 if (!weekDates.includes(selectedDate)) {
@@ -269,9 +271,9 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
           {viewMode === 'week' && (
             <View style={styles.scheduleList}>
               <View style={styles.listHeader}>
-                <SectionTitle size="sm">이번 주 일정</SectionTitle>
+                <SectionTitle size="sm">{t('schedule:this_week_schedule')}</SectionTitle>
                 <Text style={[styles.listCount, { color: colors.textSub, fontFamily: fontFamily.medium }]}>
-                  {weekTotalCount}건
+                  {t('schedule:count_suffix', { count: weekTotalCount })}
                 </Text>
               </View>
               {weekAllGrouped.map(({ date, items }) => {
@@ -295,7 +297,7 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
                     </Text>
                     {items.length === 0 ? (
                       <Text style={[styles.noItemText, { color: colors.textDisabled, fontFamily: fontFamily.medium }]}>
-                        일정 없음
+                        {t('schedule:no_schedule_item')}
                       </Text>
                     ) : (
                       items.map((item) => (
@@ -306,6 +308,7 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
                           isPast={isPast(item.scheduledAt)}
                           onPress={() => navigation.navigate('ScheduleDetail', { scheduleId: item.id })}
                           colors={colors}
+                          doctorSuffixT={t}
                         />
                       ))
                     )}
@@ -319,19 +322,19 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
           {viewMode === 'all' && (
             <View style={styles.scheduleList}>
               <View style={styles.listHeader}>
-                <SectionTitle size="sm">전체 일정</SectionTitle>
+                <SectionTitle size="sm">{t('schedule:all_schedule')}</SectionTitle>
                 <Text style={[styles.listCount, { color: colors.textSub, fontFamily: fontFamily.medium }]}>
-                  {allDisplaySchedules.length}건
+                  {t('schedule:count_suffix', { count: allDisplaySchedules.length })}
                 </Text>
               </View>
               {allGrouped.length === 0 ? (
                 <View style={styles.emptyWrap}>
                   <Ionicons name="calendar-outline" size={40} color={colors.primaryLight} />
                   <Text style={[styles.emptyTitle, { color: colors.textSub, fontFamily: fontFamily.semibold }]}>
-                    일정이 없어요
+                    {t('schedule:all_empty_title')}
                   </Text>
                   <Text style={[styles.emptySubText, { color: colors.textDisabled, fontFamily: fontFamily.medium }]}>
-                    새 일정을 추가해 보세요
+                    {t('schedule:all_empty_desc')}
                   </Text>
                 </View>
               ) : (
@@ -348,6 +351,7 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
                         isPast={isPast(item.scheduledAt)}
                         onPress={() => navigation.navigate('ScheduleDetail', { scheduleId: item.id })}
                         colors={colors}
+                        doctorSuffixT={t}
                       />
                     ))}
                   </View>
@@ -433,7 +437,7 @@ const WeekStrip: React.FC<{
   todayStr: string;
   onDayPress: (dateString: string) => void;
   onWeekChange: (weekDates: string[]) => void;
-}> = ({ selectedDate, visibleYear, visibleMonth, highlightedDates, colors, todayStr, onDayPress, onWeekChange }) => {
+}> = ({ selectedDate, visibleYear, visibleMonth, highlightedDates, colors, todayStr, onDayPress, onWeekChange, weekDaysLabel }) => {
   const flatListRef = useRef<FlatList>(null);
   const weeks = useMemo(() => getMonthWeeks(visibleYear, visibleMonth), [visibleYear, visibleMonth]);
   const activeIndex = useMemo(() => findWeekIndex(weeks, selectedDate), [weeks, selectedDate]);
@@ -475,7 +479,7 @@ const WeekStrip: React.FC<{
           const isToday = dateStr === todayStr;
           const hasSchedule = highlightedDates.has(dateStr);
           const isCurrentMonth = d.getMonth() + 1 === visibleMonth;
-          const dayLabel = WEEK_DAYS_LABEL[idx];
+          const dayLabel = weekDaysLabel[idx];
           const dayColor = idx === 0 ? colors.error : idx === 6 ? colors.primary : colors.textSub;
 
           return (
@@ -557,7 +561,8 @@ const ScheduleListItem: React.FC<{
   isPast: boolean;
   onPress: () => void;
   colors: any;
-}> = ({ schedule, isTodayItem, isPast, onPress, colors }) => (
+  doctorSuffixT: (key: string, opts?: any) => string;
+}> = ({ schedule, isTodayItem, isPast, onPress, colors, doctorSuffixT }) => (
   <AnimatedPressable
     onPress={onPress}
     style={[
@@ -579,7 +584,7 @@ const ScheduleListItem: React.FC<{
       </Text>
       {schedule.doctorName && (
         <Text style={[styles.listItemDoctor, { color: colors.textSub, fontFamily: fontFamily.medium }]}>
-          {schedule.doctorName} 선생님
+          {doctorSuffixT('schedule:doctor_with_suffix', { name: schedule.doctorName })}
         </Text>
       )}
     </View>

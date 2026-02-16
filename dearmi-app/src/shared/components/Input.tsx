@@ -7,6 +7,7 @@ import {
   TextInputProps,
   ViewStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 
 interface InputProps extends TextInputProps {
@@ -31,6 +32,7 @@ export const Input = forwardRef<TextInput, InputProps>(
     ref,
   ) => {
     const { colors } = useTheme();
+    const { t } = useTranslation('common');
     const [isFocused, setIsFocused] = useState(false);
     const [secureVisible, setSecureVisible] = useState(false);
 
@@ -112,7 +114,7 @@ export const Input = forwardRef<TextInput, InputProps>(
                   color: colors.primary,
                 }}
               >
-                {secureVisible ? '숨기기' : '보기'}
+                {secureVisible ? t('hide') : t('show')}
               </Text>
             </TouchableOpacity>
           )}

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { useAuthStore } from '@/features/auth/store/authStore';
@@ -14,10 +15,12 @@ interface PremiumGateProps {
 
 export const PremiumGate: React.FC<PremiumGateProps> = ({
   children,
-  message = '프리미엄 플랜에서 이용할 수 있어요',
+  message,
 }) => {
   const { colors } = useTheme();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const { t } = useTranslation(['common', 'subscription']);
+  const resolvedMessage = message ?? t('common:premium_plan_only');
   const plan = useAuthStore((s) => s.user?.plan);
   const isPremium = plan === 'PREMIUM';
 
@@ -41,7 +44,7 @@ export const PremiumGate: React.FC<PremiumGateProps> = ({
             textAlign: 'center',
           }}
         >
-          {message}
+          {resolvedMessage}
         </Text>
         <TouchableOpacity
           style={{
@@ -60,7 +63,7 @@ export const PremiumGate: React.FC<PremiumGateProps> = ({
               color: colors.textInverse,
             }}
           >
-            프리미엄 시작하기
+            {t('subscription:manage_start')}
           </Text>
         </TouchableOpacity>
       </View>

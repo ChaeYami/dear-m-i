@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
@@ -100,6 +101,7 @@ const parseSections = (text: string | null): Array<{ title: string; content: str
 export const MedicationScheduleDetailScreen: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
+  const { t } = useTranslation(['prescription', 'common']);
   const { scheduleId, drugName } = useRoute<Route>().params;
   const tabBarSafeBottom = useTabBarSafeBottom();
   const { data: info, isLoading } = useMedicationScheduleDrugInfo(scheduleId);
@@ -137,14 +139,14 @@ export const MedicationScheduleDetailScreen: React.FC = () => {
         ) : info?.drugInfoPending ? (
           <View style={styles.statusWrap}>
             <Ionicons name="time-outline" size={48} color={colors.primaryLight} />
-            <Text style={styles.statusTitle}>약품 정보를 조회 중이에요</Text>
-            <Text style={styles.statusDesc}>잠시 후 자동으로 업데이트됩니다</Text>
+            <Text style={styles.statusTitle}>{t('prescription:drug_loading_title')}</Text>
+            <Text style={styles.statusDesc}>{t('prescription:drug_loading_desc')}</Text>
           </View>
         ) : !info?.drugEffect && !info?.drugCaution ? (
           <View style={styles.statusWrap}>
             <Ionicons name="information-circle-outline" size={48} color={colors.textDisabled} />
-            <Text style={styles.statusTitle}>약품 정보를 찾을 수 없어요</Text>
-            <Text style={styles.statusDesc}>우측 상단 새로고침 버튼을 눌러보세요</Text>
+            <Text style={styles.statusTitle}>{t('prescription:drug_not_found_title')}</Text>
+            <Text style={styles.statusDesc}>{t('prescription:drug_not_found_desc')}</Text>
           </View>
         ) : (
           <>
@@ -156,13 +158,13 @@ export const MedicationScheduleDetailScreen: React.FC = () => {
               </View>
               {info?.manufacturer && (
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>제조사</Text>
+                  <Text style={styles.infoLabel}>{t('prescription:manufacturer')}</Text>
                   <Text style={styles.infoValue}>{info.manufacturer}</Text>
                 </View>
               )}
               {info?.dosage && (
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>용량</Text>
+                  <Text style={styles.infoLabel}>{t('prescription:dosage_label')}</Text>
                   <Text style={styles.infoValue}>{info.dosage}</Text>
                 </View>
               )}
@@ -173,7 +175,7 @@ export const MedicationScheduleDetailScreen: React.FC = () => {
               <DrugSection
                 icon="checkmark-circle"
                 iconColor={colors.secondary}
-                title="효능·효과"
+                title={t('prescription:drug_effect')}
                 sections={parseSections(info.drugEffect)}
                 defaultOpen
               />
@@ -184,7 +186,7 @@ export const MedicationScheduleDetailScreen: React.FC = () => {
               <DrugSection
                 icon="document-text"
                 iconColor={colors.primary}
-                title="용법·용량"
+                title={t('prescription:drug_usage')}
                 sections={parseSections(info.drugUsage)}
               />
             )}
@@ -194,7 +196,7 @@ export const MedicationScheduleDetailScreen: React.FC = () => {
               <DrugSection
                 icon="warning"
                 iconColor={colors.error}
-                title="주의사항"
+                title={t('prescription:drug_caution')}
                 sections={parseSections(info.drugCaution)}
               />
             )}
@@ -211,7 +213,7 @@ export const MedicationScheduleDetailScreen: React.FC = () => {
               activeOpacity={0.8}
             >
               <Ionicons name="open-outline" size={16} color={colors.primary} />
-              <Text style={styles.nedrugLinkText}>약학정보원에서 전체 정보 보기</Text>
+              <Text style={styles.nedrugLinkText}>{t('prescription:drug_nedrug_link')}</Text>
               <Ionicons name="chevron-forward" size={14} color={colors.textDisabled} />
             </TouchableOpacity>
           </>
@@ -267,7 +269,7 @@ const DrugSection: React.FC<{
           ))}
           {hasMore && (
             <TouchableOpacity onPress={() => setIsOpen(true)} style={styles.showMoreBtn}>
-              <Text style={styles.showMoreText}>더보기 ({sections.length - (maxPreview ?? 0)}개 항목)</Text>
+              <Text style={styles.showMoreText}>{require('@/locales/i18n').default.t('prescription:drug_show_more', { count: sections.length - (maxPreview ?? 0) })}</Text>
               <Ionicons name="chevron-down" size={14} color={colors.primary} />
             </TouchableOpacity>
           )}

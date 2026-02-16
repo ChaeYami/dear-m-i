@@ -12,8 +12,10 @@
   "sleep_label": "Sleep Duration",
   "medication_toggle": "Took medication today",
   "sleep_unit": "{{hours}} hrs",
+  "sleep_unit_short": "hrs",
   "took_medication": "Taken",
   "not_took_medication": "Not taken",
+  "med_done": "Taken",
   "med_label": "Med",
   "sleep_short": "Sleep",
   "emotion_trend": "Mood Trend",
@@ -22,6 +24,7 @@
   "free_limit_banner": "Free plan shows only the last 30 days.",
   "empty_title": "No records yet",
   "empty_desc": "Record your mood from the home screen",
+  "empty_short": "No records yet",
   "graph_empty": "No records yet",
   "graph_empty_desc": "Start checking in to see your mood graph",
   "period_7d": "7D",
@@ -46,5 +49,8 @@
     "financial": "Financial worry",
     "none": "No particular reason"
   },
-  "custom_input": "Custom"
+  "custom_input": "Custom",
+  "past_date_notice": "You can view or add a record for this past date",
+  "write_for_date": "Record for {{label}}",
+  "date_label_month_day": "{{month}}/{{day}}"
 }

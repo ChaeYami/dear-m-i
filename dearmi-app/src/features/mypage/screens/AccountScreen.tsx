@@ -39,7 +39,7 @@ export const AccountScreen: React.FC = () => {
         text: t('auth:delete_account'),
         style: 'destructive',
         onPress: () => {
-          customAlert(t('common:error'), '탈퇴 API가 아직 연결되지 않았습니다.');
+          customAlert(t('common:error'), t('settings:delete_account_not_connected'));
         },
       },
     ]);

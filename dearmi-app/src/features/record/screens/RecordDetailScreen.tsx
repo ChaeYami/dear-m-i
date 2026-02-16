@@ -9,6 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
@@ -22,23 +23,27 @@ import type { CareStackParamList as RecordStackParamList } from '@/navigation/Ca
 type Nav = StackNavigationProp<RecordStackParamList, 'RecordDetail'>;
 type Route = RouteProp<RecordStackParamList, 'RecordDetail'>;
 
-const formatDate = (dateStr: string) => {
+const formatDate = (dateStr: string, locale: string) => {
   const d = new Date(dateStr + (dateStr.includes('T') ? '' : 'T00:00:00'));
-  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
+  if (locale === 'ko') {
+    return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
+  }
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 };
 
 export const RecordDetailScreen: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
+  const { t, i18n } = useTranslation(['record', 'common']);
   const { recordId } = useRoute<Route>().params;
   const { data: record, isLoading } = useRecordDetail(recordId);
   const { mutate: deleteRecord } = useDeleteRecord();
 
   const handleDelete = () => {
-    customAlert('기록 삭제', '이 진료 기록을 삭제할까요?', [
-      { text: '취소', style: 'cancel' },
+    customAlert(t('record:delete_title'), t('record:delete_message'), [
+      { text: t('common:cancel'), style: 'cancel' },
       {
-        text: '삭제',
+        text: t('common:delete'),
         style: 'destructive',
         onPress: () => deleteRecord(recordId, { onSuccess: () => navigation.goBack() }),
       },
@@ -49,8 +54,10 @@ export const RecordDetailScreen: React.FC = () => {
   if (!record) return null;
 
   const emotionColor = record.emotionScore != null ? getEmotionColor(record.emotionScore) : colors.primary;
-  const displayDate = record.consultedAt ? formatDate(record.consultedAt) : formatDate(record.createdAt.split('T')[0]);
-  const dateKind = record.consultedAt ? '진료일' : '작성일';
+  const displayDate = record.consultedAt
+    ? formatDate(record.consultedAt, i18n.language)
+    : formatDate(record.createdAt.split('T')[0], i18n.language);
+  const dateKind = record.consultedAt ? t('record:date_visit') : t('record:date_created');
 
   const styles = getStyles(colors);
 
@@ -58,7 +65,7 @@ export const RecordDetailScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <ScreenHeader
         variant="back"
-        title="진료 기록"
+        title={t('record:visit_relation_title')}
         rightContent={
           <View style={styles.headerActions}>
             <TouchableOpacity onPress={() => navigation.navigate('RecordForm', { recordId })} hitSlop={12}>
@@ -90,10 +97,10 @@ export const RecordDetailScreen: React.FC = () => {
         {/* 컨디션 */}
         {record.emotionScore != null && (
           <View style={[styles.card, softShadow(colors)]}>
-            <Text style={styles.sectionLabel}>컨디션</Text>
+            <Text style={styles.sectionLabel}>{t('record:condition')}</Text>
             <View style={styles.emotionRow}>
               <View style={[styles.emotionBadge, { backgroundColor: emotionColor + '20', borderColor: emotionColor + '40' }]}>
-                <Text style={[styles.emotionScore, { color: emotionColor }]}>{record.emotionScore}점</Text>
+                <Text style={[styles.emotionScore, { color: emotionColor }]}>{record.emotionScore}{t('common:score_unit')}</Text>
               </View>
               <View style={styles.emotionBarBg}>
                 <View style={[styles.emotionBarFill, { width: `${record.emotionScore * 10}%`, backgroundColor: emotionColor }]} />
@@ -104,14 +111,14 @@ export const RecordDetailScreen: React.FC = () => {
 
         {/* 상담 내용 */}
         <View style={[styles.card, softShadow(colors)]}>
-          <Text style={styles.sectionLabel}>상담 내용</Text>
+          <Text style={styles.sectionLabel}>{t('record:content_label')}</Text>
           <Text style={styles.contentText}>{record.content}</Text>
         </View>
 
         {/* 태그 */}
         {record.tags && record.tags.length > 0 && (
           <View style={[styles.card, softShadow(colors)]}>
-            <Text style={styles.sectionLabel}>태그</Text>
+            <Text style={styles.sectionLabel}>{t('record:tags_label')}</Text>
             <View style={styles.tagRow}>
               {record.tags.map((tag) => (
                 <View key={tag} style={[styles.tag, { backgroundColor: colors.accentMuted }]}>

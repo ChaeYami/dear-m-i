@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import {
   useNotificationSettings,
@@ -24,6 +25,7 @@ import type { NotificationSettings } from '../api';
 export const NotificationSettingsScreen: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation();
+  const { t } = useTranslation('settings');
   const { data: settings, isLoading } = useNotificationSettings();
   const { mutate: updateSettings } = useUpdateNotificationSettings();
 
@@ -141,7 +143,7 @@ export const NotificationSettingsScreen: React.FC = () => {
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
           <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>알림 설정</Text>
+        <Text style={styles.headerTitle}>{t('notification_title')}</Text>
         <View style={{ width: 48 }} />
       </View>
 
@@ -151,32 +153,32 @@ export const NotificationSettingsScreen: React.FC = () => {
         </View>
       ) : !settings ? (
         <View style={styles.loadingWrap}>
-          <Text style={styles.errorText}>설정을 불러올 수 없습니다.</Text>
+          <Text style={styles.errorText}>{t('notification_load_error')}</Text>
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.section}>
             <SettingRow
-              label="전체 알림"
-              description="모든 푸시 알림을 켜거나 끕니다"
+              label={t('notification_all')}
+              description={t('notification_all_desc')}
               value={settings.enabled}
               onToggle={(v) => handleToggle('enabled', v)}
             />
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>진료 일정 알림</Text>
+            <Text style={styles.sectionTitle}>{t('notification_schedule')}</Text>
             <SettingRow
-              label="하루 전 알림"
-              description="진료 예정일 하루 전 오전 9시에 알림"
+              label={t('notification_day_before')}
+              description={t('notification_day_before_desc')}
               value={settings.dayBefore}
               onToggle={(v) => handleToggle('dayBefore', v)}
               disabled={!settings.enabled}
             />
             <View style={styles.divider} />
             <SettingRow
-              label="당일 알림"
-              description="진료 당일 오전 8시에 알림"
+              label={t('notification_day_of')}
+              description={t('notification_day_of_desc')}
               value={settings.dayOf}
               onToggle={(v) => handleToggle('dayOf', v)}
               disabled={!settings.enabled}
@@ -184,10 +186,10 @@ export const NotificationSettingsScreen: React.FC = () => {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>복약 알림</Text>
+            <Text style={styles.sectionTitle}>{t('notification_medication_section')}</Text>
             <SettingRow
-              label="복약 시간 알림"
-              description="복약 일정에 설정한 시각에 알림"
+              label={t('notification_medication_time')}
+              description={t('notification_medication_time_desc')}
               value={settings.medEnabled}
               onToggle={(v) => handleToggle('medEnabled', v)}
               disabled={!settings.enabled}

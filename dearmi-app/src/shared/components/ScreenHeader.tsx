@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { navigationRef } from '@/navigation/navigationRef';
 
@@ -40,6 +41,7 @@ const BRAND_LOGO = require('../../../assets/banner-icon.png');
 export const ScreenHeader: React.FC<ScreenHeaderProps> = (props) => {
   const { colors } = useTheme();
   const navigation = useNavigation<any>();
+  const { t } = useTranslation('common');
   const { variant, title } = props;
 
   if (variant === 'tab') {
@@ -194,7 +196,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = (props) => {
   }
 
   // form
-  const { onCancel, onSave, saveLabel = '저장', cancelLabel = '취소', saveDisabled = false } = props;
+  const { onCancel, onSave, saveLabel = t('save'), cancelLabel = t('cancel'), saveDisabled = false } = props;
   return (
     <View
       style={{

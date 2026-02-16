@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { TimeSlotRow } from './TimeSlotRow';
 import type { TimeSlotType, MedicationLogStatus } from '@/shared/types/domain.types';
+import i18n from '@/locales/i18n';
 
 export interface SlotItem {
   scheduleId: string;
@@ -77,12 +78,16 @@ export const MedicationCard: React.FC<Props> = ({
   );
 };
 
-export const SLOT_LABELS: Record<TimeSlotType, string> = {
-  MORNING: '아침',
-  AFTERNOON: '점심',
-  EVENING: '저녁',
-  BEDTIME: '취침 전',
-};
+export const getSlotLabels = (): Record<TimeSlotType, string> => ({
+  MORNING: i18n.t('common:time_morning'),
+  AFTERNOON: i18n.t('common:time_afternoon'),
+  EVENING: i18n.t('common:time_evening'),
+  BEDTIME: i18n.t('common:time_bedtime'),
+});
+
+export const SLOT_LABELS: Record<TimeSlotType, string> = new Proxy({} as Record<TimeSlotType, string>, {
+  get: (_, key: string) => getSlotLabels()[key as TimeSlotType] ?? key,
+});
 
 export const SLOT_COLORS: Record<TimeSlotType, string> = {
   MORNING: '#F59E0B',

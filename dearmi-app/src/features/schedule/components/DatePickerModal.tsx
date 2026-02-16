@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Modal, View, Text, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
 import { Calendar } from 'react-native-calendars';
+import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 
 interface Props {
@@ -14,11 +15,15 @@ interface Props {
   onClose: () => void;
 }
 
-const KOR_DAY = ['일', '월', '화', '수', '목', '금', '토'];
-
-const formatPickedDate = (dateStr: string) => {
+const formatPickedDate = (dateStr: string, t: (k: string) => string, lang: string): string => {
   const d = new Date(dateStr);
-  return `${d.getMonth() + 1}월 ${d.getDate()}일 (${KOR_DAY[d.getDay()]})`;
+  const weekdayKeys = ['weekday_sun', 'weekday_mon', 'weekday_tue', 'weekday_wed', 'weekday_thu', 'weekday_fri', 'weekday_sat'];
+  const day = t(weekdayKeys[d.getDay()]);
+  if (lang === 'ko') {
+    return `${d.getMonth() + 1}월 ${d.getDate()}일 (${day})`;
+  }
+  const month = d.toLocaleDateString('en-US', { month: 'short' });
+  return `${month} ${d.getDate()} (${day})`;
 };
 
 export const DatePickerModal: React.FC<Props> = ({
@@ -31,6 +36,7 @@ export const DatePickerModal: React.FC<Props> = ({
   onClose,
 }) => {
   const { colors } = useTheme();
+  const { t, i18n } = useTranslation('common');
   const [picked, setPicked] = useState(initialDate);
   const today = todayStr ?? new Date().toISOString().split('T')[0];
 
@@ -117,10 +123,10 @@ export const DatePickerModal: React.FC<Props> = ({
           onPress={(e) => e.stopPropagation()}
         >
           <Text style={[styles.label, { color: colors.textSub, fontFamily: fontFamily.medium }]}>
-            날짜 선택
+            {t('date_picker_title')}
           </Text>
           <Text style={[styles.picked, { color: colors.text, fontFamily: fontFamily.bold }]}>
-            {formatPickedDate(picked)}
+            {formatPickedDate(picked, t, i18n.language)}
           </Text>
           <View style={[styles.divider, { backgroundColor: colors.divider }]} />
           <Calendar
@@ -135,7 +141,7 @@ export const DatePickerModal: React.FC<Props> = ({
           <View style={styles.actions}>
             <TouchableOpacity onPress={onClose} style={styles.actionBtn} hitSlop={8}>
               <Text style={[styles.actionText, { color: colors.textSub, fontFamily: fontFamily.medium }]}>
-                취소
+                {t('cancel')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -144,7 +150,7 @@ export const DatePickerModal: React.FC<Props> = ({
               hitSlop={8}
             >
               <Text style={[styles.actionText, { color: colors.primary, fontFamily: fontFamily.bold }]}>
-                확인
+                {t('confirm')}
               </Text>
             </TouchableOpacity>
           </View>

@@ -3,17 +3,19 @@ import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily, type ThemeMode } from '@/shared/theme';
-
-const THEME_OPTIONS: Array<{ mode: ThemeMode; label: string; icon: keyof typeof Ionicons.glyphMap; desc: string }> = [
-  { mode: 'light', label: '라이트', icon: 'sunny-outline', desc: '밝은 테마를 사용합니다' },
-  { mode: 'dark', label: '다크', icon: 'moon-outline', desc: '어두운 테마를 사용합니다' },
-  { mode: 'system', label: '디바이스 설정', icon: 'phone-portrait-outline', desc: '기기 설정에 따라 자동 전환됩니다' },
-];
 
 export const ThemeSettingsScreen: React.FC = () => {
   const { colors, mode, setMode } = useTheme();
   const navigation = useNavigation();
+  const { t } = useTranslation('settings');
+
+  const THEME_OPTIONS: Array<{ mode: ThemeMode; label: string; icon: keyof typeof Ionicons.glyphMap; desc: string }> = [
+    { mode: 'light', label: t('theme_light'), icon: 'sunny-outline', desc: t('theme_light_desc') },
+    { mode: 'dark', label: t('theme_dark'), icon: 'moon-outline', desc: t('theme_dark_desc') },
+    { mode: 'system', label: t('theme_system'), icon: 'phone-portrait-outline', desc: t('theme_system_desc') },
+  ];
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -37,7 +39,7 @@ export const ThemeSettingsScreen: React.FC = () => {
             color: colors.text,
           }}
         >
-          테마 설정
+          {t('theme_settings_title')}
         </Text>
       </View>
 

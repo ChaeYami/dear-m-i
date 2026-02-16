@@ -18,7 +18,7 @@ type MedSubTab = 'home' | 'history';
 export const MedicationTabScreen: React.FC = () => {
   useResetStackOnTabFocus();
   const { colors } = useTheme();
-  const { t } = useTranslation('common');
+  const { t } = useTranslation(['common', 'prescription']);
   const navigation = useNavigation<Nav>();
   const [activeTab, setActiveTab] = useState<MedSubTab>('home');
 
@@ -35,7 +35,7 @@ export const MedicationTabScreen: React.FC = () => {
             style={[styles.prescriptionBtn, { backgroundColor: colors.accentMuted, borderColor: colors.accent + '33' }]}
           >
             <Ionicons name="receipt-outline" size={16} color={colors.accent} />
-            <Text style={[styles.prescriptionBtnText, { color: colors.accent }]}>처방전</Text>
+            <Text style={[styles.prescriptionBtnText, { color: colors.accent }]}>{t('prescription:title')}</Text>
           </TouchableOpacity>
         }
       />

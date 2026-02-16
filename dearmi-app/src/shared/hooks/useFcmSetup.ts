@@ -3,6 +3,7 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import notificationApi from '@/features/notification/api';
+import i18n from '@/locales/i18n';
 
 /**
  * FCM 푸시 알림 초기 설정
@@ -34,7 +35,7 @@ export const useFcmSetup = () => {
     // Android 알림 채널 설정
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', {
-        name: '기본 알림',
+        name: i18n.t('common:default_notification_channel'),
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#6C63FF',

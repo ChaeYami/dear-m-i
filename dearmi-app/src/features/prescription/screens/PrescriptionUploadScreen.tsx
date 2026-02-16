@@ -15,6 +15,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { DatePickerModal } from '@/features/schedule/components/DatePickerModal';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { prescriptionApi } from '@/features/prescription/api';
@@ -28,6 +29,7 @@ type UploadStep = 'idle' | 'uploading_s3' | 'saving' | 'done' | 'error';
 export const PrescriptionUploadScreen: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
+  const { t, i18n } = useTranslation(['prescription', 'common']);
   const user = useAuthStore((s) => s.user);
   const isPremium = user?.plan === 'PREMIUM';
 
@@ -73,14 +75,14 @@ export const PrescriptionUploadScreen: React.FC = () => {
     if (source === 'camera') {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        customAlert('권한 필요', '카메라 접근 권한이 필요합니다.');
+        customAlert(t('common:permission_required'), t('prescription:camera_permission'));
         return;
       }
       result = await ImagePicker.launchCameraAsync(options);
     } else {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        customAlert('권한 필요', '갤러리 접근 권한이 필요합니다.');
+        customAlert(t('common:permission_required'), t('prescription:gallery_permission'));
         return;
       }
       result = await ImagePicker.launchImageLibraryAsync(options);
@@ -94,10 +96,10 @@ export const PrescriptionUploadScreen: React.FC = () => {
   };
 
   const showSourcePicker = () => {
-    customAlert('사진 선택', '', [
-      { text: '카메라로 촬영', onPress: () => pickImage('camera') },
-      { text: '갤러리에서 선택', onPress: () => pickImage('gallery') },
-      { text: '취소', style: 'cancel' },
+    customAlert(t('prescription:select_image'), '', [
+      { text: t('prescription:take_photo'), onPress: () => pickImage('camera') },
+      { text: t('prescription:pick_gallery'), onPress: () => pickImage('gallery') },
+      { text: t('common:cancel'), style: 'cancel' },
     ]);
   };
 
@@ -119,7 +121,7 @@ export const PrescriptionUploadScreen: React.FC = () => {
         mimeType
       );
       if (!presignedRes.success || !presignedRes.data) {
-        throw new Error('업로드 URL을 받지 못했습니다.');
+        throw new Error(t('prescription:upload_url_missing'));
       }
       const { s3Key, uploadUrl } = presignedRes.data;
 
@@ -135,7 +137,7 @@ export const PrescriptionUploadScreen: React.FC = () => {
       });
 
       if (!createRes.success || !createRes.data) {
-        throw new Error('처방전 등록에 실패했습니다.');
+        throw new Error(t('prescription:register_failed'));
       }
 
       // Step 4: OCR 결과 화면으로 이동
@@ -146,7 +148,7 @@ export const PrescriptionUploadScreen: React.FC = () => {
       if (e?.response?.status === 402) {
         setErrorMsg('limit');
       } else {
-        setErrorMsg(e instanceof Error ? e.message : '업로드 중 오류가 발생했습니다.');
+        setErrorMsg(e instanceof Error ? e.message : t('prescription:upload_error'));
       }
     }
   };
@@ -158,9 +160,9 @@ export const PrescriptionUploadScreen: React.FC = () => {
 
     const label =
       uploadStep === 'uploading_s3'
-        ? `이미지 업로드 중… ${uploadProgress}%`
+        ? t('prescription:upload_image_progress', { percent: uploadProgress })
         : uploadStep === 'saving'
-        ? '자동 인식 중…'
+        ? t('prescription:ocr_requesting')
         : uploadStep === 'error'
         ? errorMsg
         : '';
@@ -203,7 +205,7 @@ export const PrescriptionUploadScreen: React.FC = () => {
           <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </TouchableOpacity>
         <Text style={[staticStyles.headerTitle, { fontFamily: fontFamily.bold, color: colors.text }]}>
-          처방전 등록
+          {t('prescription:upload_title')}
         </Text>
         <View style={{ width: 48 }} />
       </View>
@@ -213,10 +215,10 @@ export const PrescriptionUploadScreen: React.FC = () => {
         <View style={[staticStyles.infoBanner, { backgroundColor: colors.primaryMuted, borderColor: colors.primary + '30' }]}>
           <Ionicons name="information-circle-outline" size={16} color={colors.primary} />
           <Text style={[staticStyles.infoBannerText, { color: colors.primary }]}>
-            무료 플랜은 주 1건 무료로 이용할 수 있어요.
+            {t('prescription:free_weekly_limit')}
           </Text>
           <TouchableOpacity onPress={() => navigation.navigate('Paywall' as any)} hitSlop={8}>
-            <Text style={[staticStyles.infoBannerLink, { color: colors.primary }]}>더 보기</Text>
+            <Text style={[staticStyles.infoBannerLink, { color: colors.primary }]}>{t('common:more')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -226,10 +228,10 @@ export const PrescriptionUploadScreen: React.FC = () => {
         <View style={[staticStyles.infoBanner, { backgroundColor: colors.errorLight, borderColor: colors.error + '40' }]}>
           <Ionicons name="lock-closed" size={16} color={colors.error} />
           <Text style={[staticStyles.infoBannerText, { color: colors.error }]}>
-            이번 주 무료 이용 횟수를 초과했어요.
+            {t('prescription:limit_exceeded_week')}
           </Text>
           <TouchableOpacity onPress={() => navigation.navigate('Paywall' as any)} hitSlop={8}>
-            <Text style={[staticStyles.infoBannerLink, { color: colors.error }]}>업그레이드</Text>
+            <Text style={[staticStyles.infoBannerLink, { color: colors.error }]}>{t('common:upgrade')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -252,10 +254,10 @@ export const PrescriptionUploadScreen: React.FC = () => {
             <View style={staticStyles.imagePlaceholder}>
               <Ionicons name="document-outline" size={48} color={colors.textDisabled} />
               <Text style={[staticStyles.imagePlaceholderText, { fontFamily: fontFamily.semibold, color: colors.textSub }]}>
-                처방전 사진을 선택하세요
+                {t('prescription:select_photo')}
               </Text>
               <Text style={[staticStyles.imagePlaceholderSub, { color: colors.textDisabled }]}>
-                카메라 촬영 또는 갤러리
+                {t('prescription:camera_or_gallery')}
               </Text>
             </View>
           )}
@@ -268,20 +270,20 @@ export const PrescriptionUploadScreen: React.FC = () => {
             disabled={isUploading}
           >
             <Text style={[staticStyles.reSelectText, { fontFamily: fontFamily.medium, color: colors.primary }]}>
-              다시 선택
+              {t('prescription:reselect')}
             </Text>
           </TouchableOpacity>
         ) : (
           /* 사진 미선택 시 인식 팁 */
           <View style={[staticStyles.tipBox, { backgroundColor: colors.surface, borderColor: colors.divider }]}>
             <Text style={[staticStyles.tipTitle, { fontFamily: fontFamily.semibold, color: colors.text }]}>
-              이런 정보가 잘 보여야 인식이 잘 돼요
+              {t('prescription:upload_tip_title')}
             </Text>
             {[
-              { icon: 'business-outline',  text: '병원명' },
-              { icon: 'calendar-outline',  text: '처방일' },
-              { icon: 'medical-outline',   text: '약품명 · 용량 · 복용 방법' },
-              { icon: 'time-outline',      text: '투약 일수' },
+              { icon: 'business-outline',  text: t('prescription:upload_guide_hospital') },
+              { icon: 'calendar-outline',  text: t('prescription:upload_guide_prescribed_at') },
+              { icon: 'medical-outline',   text: t('prescription:upload_guide_drug') },
+              { icon: 'time-outline',      text: t('prescription:upload_guide_duration') },
             ].map(({ icon, text }) => (
               <View key={text} style={staticStyles.tipRow}>
                 <Ionicons name={icon as any} size={15} color={colors.primary} />
@@ -290,7 +292,7 @@ export const PrescriptionUploadScreen: React.FC = () => {
             ))}
             <View style={[staticStyles.tipDivider, { backgroundColor: colors.divider }]} />
             <Text style={[staticStyles.tipHint, { color: colors.textSub }]}>
-              💡 빛 반사 없이 정면에서 촬영하면 더 정확해요
+              {t('prescription:upload_tip_hint')}
             </Text>
           </View>
         )}
@@ -298,7 +300,7 @@ export const PrescriptionUploadScreen: React.FC = () => {
         {/* 처방 날짜 선택 */}
         <View style={staticStyles.dateField}>
           <Text style={[staticStyles.dateLabel, { fontFamily: fontFamily.medium, color: colors.textSub }]}>
-            처방 날짜
+            {t('prescription:prescribed_date')}
           </Text>
           <TouchableOpacity
             style={[staticStyles.dateSelector, { backgroundColor: colors.surface, borderColor: colors.divider }]}
@@ -308,11 +310,17 @@ export const PrescriptionUploadScreen: React.FC = () => {
           >
             <Ionicons name="calendar-outline" size={18} color={colors.primary} />
             <Text style={[staticStyles.dateText, { color: colors.text }]}>
-              {`${prescribedDate.getFullYear()}년 ${prescribedDate.getMonth() + 1}월 ${prescribedDate.getDate()}일`}
+              {i18n.language === 'ko'
+                ? t('prescription:prescribed_date_format', {
+                    year: prescribedDate.getFullYear(),
+                    month: prescribedDate.getMonth() + 1,
+                    day: prescribedDate.getDate(),
+                  })
+                : prescribedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
             </Text>
           </TouchableOpacity>
           <Text style={[staticStyles.dateHint, { color: colors.textSub }]}>
-            사진을 등록하면 날짜가 자동으로 선택됩니다. 날짜 정보가 없는 경우 직접 선택해주세요.
+            {t('prescription:prescribed_date_hint')}
           </Text>
           <DatePickerModal
             visible={showDatePicker}
@@ -341,7 +349,7 @@ export const PrescriptionUploadScreen: React.FC = () => {
           activeOpacity={0.85}
         >
           <Text style={[staticStyles.uploadBtnText, { fontFamily: fontFamily.semibold, color: colors.textInverse }]}>
-            {isUploading ? '처리 중…' : '처방전 등록 및 자동 인식'}
+            {isUploading ? t('prescription:upload_btn_processing') : t('prescription:upload_btn_label')}
           </Text>
         </TouchableOpacity>
       </ScrollView>

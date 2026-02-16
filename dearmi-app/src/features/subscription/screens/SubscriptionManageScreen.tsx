@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, CompositeNavigationProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { useSubscriptionStore } from '@/features/subscription/store/subscriptionStore';
@@ -24,35 +25,39 @@ type Nav = CompositeNavigationProp<
   StackNavigationProp<RootStackParamList>
 >;
 
-const formatDate = (iso?: string) => {
-  if (!iso) return '-';
-  const d = new Date(iso);
-  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
-};
-
-const BENEFITS = [
-  '처방전 자동 인식',
-  '약품 효능·주의사항 상세 정보',
-  '복약 일정 자동 생성',
-  '전체 상담 기록 무제한 조회',
-  'PDF 진료 기록 내보내기',
-  '상담 기록 무제한 작성',
-];
-
 export const SubscriptionManageScreen: React.FC = () => {
   const { colors } = useTheme();
+  const { t, i18n } = useTranslation('subscription');
   const navigation = useNavigation<Nav>();
   const { plan, expiresAt } = useSubscriptionStore();
   const { cancelSubscription, isCancelling } = useSubscription();
 
+  const formatDate = (iso?: string) => {
+    if (!iso) return '-';
+    const d = new Date(iso);
+    if (i18n.language === 'ko') {
+      return t('manage_date_format', { year: d.getFullYear(), month: d.getMonth() + 1, day: d.getDate() });
+    }
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  };
+
+  const BENEFITS = [
+    t('feature_ocr'),
+    t('feature_drug_info'),
+    t('feature_med_schedule'),
+    t('feature_unlimited_records'),
+    t('feature_pdf'),
+    t('feature_unlimited_write'),
+  ];
+
   const handleCancel = () => {
     customAlert(
-      '구독 취소',
-      '프리미엄 구독을 취소하시겠습니까?\n만료일까지는 계속 이용할 수 있습니다.',
+      t('cancel_title'),
+      t('manage_cancel_confirm_multiline'),
       [
-        { text: '유지', style: 'cancel' },
+        { text: t('manage_keep'), style: 'cancel' },
         {
-          text: '취소하기',
+          text: t('manage_cancel_btn'),
           style: 'destructive',
           onPress: () => cancelSubscription(),
         },
@@ -176,7 +181,7 @@ export const SubscriptionManageScreen: React.FC = () => {
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
           <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>구독 관리</Text>
+        <Text style={styles.headerTitle}>{t('manage_title')}</Text>
         <View style={{ width: 60 }} />
       </View>
 
@@ -186,21 +191,21 @@ export const SubscriptionManageScreen: React.FC = () => {
           <View style={styles.planBadgeRow}>
             <View style={[styles.planBadge, isPremium && styles.planBadgePremium]}>
               <Text style={[styles.planBadgeText, isPremium && styles.planBadgeTextPremium]}>
-                {isPremium ? '프리미엄' : '무료'}
+                {isPremium ? t('premium_badge') : t('manage_free')}
               </Text>
             </View>
           </View>
           <Text style={styles.planTitle}>
-            {isPremium ? 'DearMI 프리미엄' : 'DearMI 무료 플랜'}
+            {isPremium ? t('manage_premium') : t('manage_free')}
           </Text>
           {isPremium && expiresAt && (
             <Text style={styles.planExpiry}>
-              {formatDate(expiresAt)} 갱신 예정
+              {t('manage_renew_format', { date: formatDate(expiresAt) })}
             </Text>
           )}
           {!isPremium && (
             <Text style={styles.planDesc}>
-              프리미엄으로 업그레이드하여 모든 기능을 이용해 보세요.
+              {t('manage_upgrade_desc')}
             </Text>
           )}
         </View>
@@ -208,7 +213,7 @@ export const SubscriptionManageScreen: React.FC = () => {
         {/* 프리미엄 기능 안내 */}
         {!isPremium && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>프리미엄 혜택</Text>
+            <Text style={styles.sectionTitle}>{t('manage_benefits')}</Text>
             <View style={styles.benefitList}>
               {BENEFITS.map((b) => (
                 <View key={b} style={styles.benefitRow}>
@@ -222,7 +227,7 @@ export const SubscriptionManageScreen: React.FC = () => {
               onPress={() => navigation.navigate('Paywall')}
               activeOpacity={0.85}
             >
-              <Text style={styles.upgradeBtnText}>프리미엄 시작하기</Text>
+              <Text style={styles.upgradeBtnText}>{t('manage_start')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -239,11 +244,11 @@ export const SubscriptionManageScreen: React.FC = () => {
               {isCancelling ? (
                 <ActivityIndicator size="small" color={colors.error} />
               ) : (
-                <Text style={styles.cancelBtnText}>구독 취소</Text>
+                <Text style={styles.cancelBtnText}>{t('manage_cancel')}</Text>
               )}
             </TouchableOpacity>
             <Text style={styles.cancelNote}>
-              취소 후에도 만료일까지 프리미엄 기능을 사용할 수 있습니다.
+              {t('manage_cancel_note')}
             </Text>
           </View>
         )}

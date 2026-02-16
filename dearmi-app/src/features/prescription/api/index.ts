@@ -1,4 +1,5 @@
 import axiosInstance from '@/shared/api/axiosInstance';
+import i18n from '@/locales/i18n';
 import type { ApiResponse, PagedResponse, PresignedUrlResponse } from '@/shared/types/api.types';
 import type {
   Prescription,
@@ -40,7 +41,7 @@ export const prescriptionApi = {
         if (xhr.status >= 200 && xhr.status < 300) resolve();
         else reject(new Error(`S3 업로드 실패 (${xhr.status})`));
       };
-      xhr.onerror = () => reject(new Error('S3 업로드 중 네트워크 오류가 발생했습니다.'));
+      xhr.onerror = () => reject(new Error(i18n.t('prescription:s3_network_error')));
 
       // React Native: URI를 Blob 대신 직접 전송
       xhr.send({ uri, type: mimeType, name: 'prescription.jpg' } as unknown as Document);

@@ -37,6 +37,7 @@
   "manage_start": "Start Premium",
   "manage_cancel": "Cancel Subscription",
   "manage_cancel_confirm": "Cancel your Premium subscription? You can still use it until the expiry date.",
+  "manage_cancel_confirm_multiline": "Cancel your Premium subscription?\nYou can still use it until the expiry date.",
   "manage_keep": "Keep",
   "manage_cancel_btn": "Cancel",
   "manage_cancel_note": "Premium features remain available until the expiry date.",
@@ -53,5 +54,8 @@
   "web_activated": "Premium subscription activated.",
   "web_confirm_failed": "Payment confirmation failed.",
   "web_confirm_error": "Error during payment confirmation.",
-  "web_android_only": "Web payment is only available on Android."
+  "web_android_only": "Web payment is only available on Android.",
+  "web_payment_error": "An error occurred while processing payment.",
+  "manage_renew_format": "Renews on {{date}}",
+  "manage_date_format": "{{month}}/{{day}}/{{year}}"
 }

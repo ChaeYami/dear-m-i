@@ -14,6 +14,7 @@ import {
 import { subscriptionApi } from '@/features/subscription/api/subscriptionApi';
 import { useSubscriptionStore } from '@/features/subscription/store/subscriptionStore';
 import { useAuthStore } from '@/features/auth/store/authStore';
+import i18n from '@/locales/i18n';
 
 export const PRODUCT_IDS = {
   monthly: 'com.dearmi.premium.monthly',
@@ -86,7 +87,7 @@ export const useSubscription = () => {
       }
     } catch (err: any) {
       if (err?.code !== ErrorCode.UserCancelled) {
-        customAlert('결제 오류', '결제 처리 중 오류가 발생했습니다. 다시 시도해 주세요.');
+        customAlert(i18n.t('subscription:purchase_error'), i18n.t('subscription:purchase_error_message'));
       }
     } finally {
       setIsPurchasing(false);
@@ -100,16 +101,16 @@ export const useSubscription = () => {
       await ensureIapConnection();
       const history = await getAvailablePurchases();
       if (!history || history.length === 0) {
-        customAlert('복원 완료', '복원할 구매 내역이 없습니다.');
+        customAlert(i18n.t('subscription:restore_done'), i18n.t('subscription:restore_empty'));
         return;
       }
       const latest = history[history.length - 1];
       if (latest) {
         await verifyAndSync(latest);
-        customAlert('복원 완료', '구독이 복원되었습니다.');
+        customAlert(i18n.t('subscription:restore_done'), i18n.t('subscription:restore_success'));
       }
     } catch {
-      customAlert('복원 실패', '구매 내역을 복원할 수 없습니다. 잠시 후 다시 시도해 주세요.');
+      customAlert(i18n.t('subscription:restore_failed'), i18n.t('subscription:restore_failed_message'));
     } finally {
       setIsRestoring(false);
     }
@@ -119,10 +120,10 @@ export const useSubscription = () => {
     mutationFn: () => subscriptionApi.cancel(),
     onSuccess: () => {
       syncPlanToUser('FREE', undefined);
-      customAlert('구독 취소', '구독이 취소되었습니다.');
+      customAlert(i18n.t('subscription:cancel_title'), i18n.t('subscription:cancel_done'));
     },
     onError: () => {
-      customAlert('오류', '구독 취소 중 오류가 발생했습니다.');
+      customAlert(i18n.t('common:error'), i18n.t('subscription:cancel_error'));
     },
   });
 

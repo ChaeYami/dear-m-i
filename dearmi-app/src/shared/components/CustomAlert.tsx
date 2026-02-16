@@ -16,6 +16,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import i18n from '@/locales/i18n';
 
 // ─── 전역 상태 ────────────────────────────────────────
 
@@ -48,7 +49,7 @@ export const customAlert = (
     visible: true,
     title,
     message: message || undefined,
-    buttons: buttons ?? [{ text: '확인' }],
+    buttons: buttons ?? [{ text: i18n.t('common:confirm') }],
   });
 };
 

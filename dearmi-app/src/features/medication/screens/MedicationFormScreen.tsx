@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute, RouteProp, CommonActions } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { DatePickerModal } from '@/features/schedule/components/DatePickerModal';
 import { TimePickerModal } from '@/shared/components/TimePickerModal';
 import type { StackNavigationProp } from '@react-navigation/stack';
@@ -29,12 +30,15 @@ import type { TimeSlotType } from '@/shared/types/domain.types';
 type Nav = StackNavigationProp<MedicationStackParamList, 'MedicationForm'>;
 type Route = RouteProp<MedicationStackParamList, 'MedicationForm'>;
 
-const TIME_SLOTS: Array<{ key: TimeSlotType; label: string; defaultTime: string }> = [
-  { key: 'MORNING', label: '아침', defaultTime: '08:00' },
-  { key: 'AFTERNOON', label: '점심', defaultTime: '12:00' },
-  { key: 'EVENING', label: '저녁', defaultTime: '18:00' },
-  { key: 'BEDTIME', label: '취침 전', defaultTime: '22:00' },
-];
+const useTimeSlots = (): Array<{ key: TimeSlotType; label: string; defaultTime: string }> => {
+  const { t } = useTranslation('common');
+  return [
+    { key: 'MORNING', label: t('time_morning'), defaultTime: '08:00' },
+    { key: 'AFTERNOON', label: t('time_afternoon'), defaultTime: '12:00' },
+    { key: 'EVENING', label: t('time_evening'), defaultTime: '18:00' },
+    { key: 'BEDTIME', label: t('time_bedtime'), defaultTime: '22:00' },
+  ];
+};
 
 const toLocalDateStr = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -51,6 +55,8 @@ const addDays = (d: Date, n: number) => {
 export const MedicationFormScreen: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
+  const { t, i18n } = useTranslation(['settings', 'common']);
+  const TIME_SLOTS = useTimeSlots();
   const params = useRoute<Route>().params ?? {};
   const {
     scheduleId: editScheduleId,
@@ -188,15 +194,15 @@ export const MedicationFormScreen: React.FC = () => {
 
   const validate = (): boolean => {
     if (!drugName.trim()) {
-      customAlert('필수 입력', '약품명을 입력해 주세요.');
+      customAlert(t('common:required_input'), t('settings:medication_required_drug_name'));
       return false;
     }
     if (!Object.values(activeSlots).some(Boolean)) {
-      customAlert('시간대 선택', '복약 시간대를 하나 이상 선택해 주세요.');
+      customAlert(t('settings:medication_required_time_title'), t('settings:medication_required_time_message'));
       return false;
     }
     if (!durationDays.trim() || isNaN(Number(durationDays)) || Number(durationDays) <= 0) {
-      customAlert('필수 입력', '투약 일수를 입력해 주세요.');
+      customAlert(t('common:required_input'), t('settings:medication_required_duration_message'));
       return false;
     }
     return true;
@@ -253,7 +259,11 @@ export const MedicationFormScreen: React.FC = () => {
   };
 
   const formatDateDisplay = (d: Date) =>
-    `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
+    t('settings:medication_date_format', {
+      year: d.getFullYear(),
+      month: d.getMonth() + 1,
+      day: d.getDate(),
+    });
 
   const formatTimeDisplay = (d: Date) =>
     `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
@@ -268,7 +278,7 @@ export const MedicationFormScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <ScreenHeader
         variant="form"
-        title={isFromOcr ? '복약 알림 설정' : isEdit ? '복약 일정 수정' : '복약 일정 등록'}
+        title={isFromOcr ? t('settings:medication_form_ocr_title') : isEdit ? t('settings:medication_form_edit_title') : t('settings:medication_form_title')}
         onCancel={() => navigation.goBack()}
         onSave={handleSave}
         saveDisabled={isPending}
@@ -278,11 +288,14 @@ export const MedicationFormScreen: React.FC = () => {
       {isFromOcr && (
         <View style={styles.ocrBanner}>
           <Text style={styles.ocrBannerText}>
-            {drugName || drugNameParam || '약품'}
             {remainingMeds && remainingMeds.length > 0
-              ? ` 외 ${remainingMeds.length}개`
-              : ''}
-            의 복약 시간을 설정해 주세요.
+              ? t('settings:medication_ocr_desc_with_extras', {
+                  name: drugName || drugNameParam || t('settings:medication_label'),
+                  count: remainingMeds.length,
+                })
+              : t('settings:medication_ocr_desc_single', {
+                  name: drugName || drugNameParam || t('settings:medication_label'),
+                })}
           </Text>
         </View>
       )}
@@ -301,10 +314,10 @@ export const MedicationFormScreen: React.FC = () => {
             <Ionicons name="document-text-outline" size={20} color={colors.primary} />
             <View style={{ flex: 1 }}>
               <Text style={[styles.prescriptionBannerTitle, { color: colors.primary }]}>
-                처방전 사진으로 자동 입력
+                {t('settings:medication_prescription_banner_title')}
               </Text>
               <Text style={[styles.prescriptionBannerSub, { color: colors.primary + 'aa' }]}>
-                처방전을 촬영하면 약품 정보가 자동으로 채워져요
+                {t('settings:medication_prescription_banner_sub')}
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color={colors.primary} />
@@ -313,55 +326,55 @@ export const MedicationFormScreen: React.FC = () => {
 
         {/* 약품명 */}
         <View style={styles.fieldCard}>
-          <Text style={styles.label}>약품명 *</Text>
+          <Text style={styles.label}>{t('settings:medication_drug_name_mark')}</Text>
           <TextInput
             style={styles.input}
             value={drugName}
             onChangeText={setDrugName}
-            placeholder="예: 아스피린"
+            placeholder={t('settings:medication_drug_placeholder')}
             placeholderTextColor={colors.textDisabled}
           />
         </View>
 
         {/* 용량 */}
         <View style={styles.fieldCard}>
-          <Text style={styles.label}>용량</Text>
+          <Text style={styles.label}>{t('settings:medication_dosage')}</Text>
           <TextInput
             style={styles.input}
             value={dosage}
             onChangeText={setDosage}
-            placeholder="예: 100mg, 1밀리그램"
+            placeholder={t('settings:medication_dosage_placeholder')}
             placeholderTextColor={colors.textDisabled}
           />
         </View>
 
         {/* 1회 투여량 */}
         <View style={styles.fieldCard}>
-          <Text style={styles.label}>1회 투여량</Text>
+          <Text style={styles.label}>{t('settings:medication_dose_per_time')}</Text>
           <TextInput
             style={styles.input}
             value={singleDose}
             onChangeText={setSingleDose}
-            placeholder="예: 1정, 0.5정, 5ml"
+            placeholder={t('settings:medication_dose_per_time_placeholder')}
             placeholderTextColor={colors.textDisabled}
           />
         </View>
 
         {/* 약 종류 */}
         <View style={styles.fieldCard}>
-          <Text style={styles.label}>약 종류</Text>
+          <Text style={styles.label}>{t('settings:medication_drug_kind')}</Text>
           <TextInput
             style={styles.input}
             value={drugCategory}
             onChangeText={setDrugCategory}
-            placeholder="예: 항우울제, 수면진정제"
+            placeholder={t('settings:medication_drug_kind_placeholder')}
             placeholderTextColor={colors.textDisabled}
           />
         </View>
 
         {/* 복약 시간대 */}
         <View style={styles.fieldCard}>
-          <Text style={styles.label}>복약 시간대</Text>
+          <Text style={styles.label}>{t('settings:medication_time_slot')}</Text>
           {TIME_SLOTS.map((s) => (
             <View key={s.key} style={styles.slotRow}>
               <View style={styles.slotLeft}>
@@ -417,7 +430,7 @@ export const MedicationFormScreen: React.FC = () => {
 
         {/* 시작일 */}
         <View style={styles.fieldCard}>
-          <Text style={styles.label}>시작일</Text>
+          <Text style={styles.label}>{t('settings:medication_start_date')}</Text>
           <TouchableOpacity style={styles.dateBtn} onPress={() => setShowDatePicker(true)}>
             <Text style={styles.dateBtnText}>{formatDateDisplay(startDate)}</Text>
           </TouchableOpacity>
@@ -434,17 +447,17 @@ export const MedicationFormScreen: React.FC = () => {
 
         {/* 투약 일수 */}
         <View style={styles.fieldCard}>
-          <Text style={styles.label}>투약 일수 *</Text>
+          <Text style={styles.label}>{t('settings:medication_duration_mark')}</Text>
           <TextInput
             style={styles.input}
             value={durationDays}
             onChangeText={setDurationDays}
-            placeholder="예: 7"
+            placeholder={t('settings:medication_duration_placeholder')}
             keyboardType="number-pad"
             placeholderTextColor={colors.textDisabled}
           />
           {endDate && (
-            <Text style={styles.endDateHint}>종료일: {formatDateDisplay(endDate)}</Text>
+            <Text style={styles.endDateHint}>{t('settings:medication_end_date')} {formatDateDisplay(endDate)}</Text>
           )}
         </View>
 
@@ -458,7 +471,7 @@ export const MedicationFormScreen: React.FC = () => {
               style={[styles.saveBtn, isPending && styles.saveBtnDisabled]}
             >
               <Text style={styles.saveBtnText}>
-                {isPending ? '저장 중...' : '저장하기'}
+                {isPending ? t('common:saving') : t('common:save')}
               </Text>
             </LinearGradient>
           </AnimatedPressable>
@@ -476,7 +489,7 @@ export const MedicationFormScreen: React.FC = () => {
               style={[styles.nextBtn, isPending && styles.nextBtnDisabled]}
             >
               <Text style={styles.nextBtnText}>
-                {isPending ? '저장 중...' : `다음: ${nextMed.drugName} 설정하기 \u2192`}
+                {isPending ? t('common:saving') : t('settings:medication_next_with_arrow', { name: nextMed.drugName })}
               </Text>
             </LinearGradient>
           </AnimatedPressable>
@@ -494,7 +507,7 @@ export const MedicationFormScreen: React.FC = () => {
               style={[styles.nextBtn, isPending && styles.nextBtnDisabled]}
             >
               <Text style={styles.nextBtnText}>
-                {isPending ? '저장 중...' : '저장하기'}
+                {isPending ? t('common:saving') : t('common:save')}
               </Text>
             </LinearGradient>
           </AnimatedPressable>

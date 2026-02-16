@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { usePrepNotes, useDeletePrepNote } from '@/features/prepnote/hooks/usePrepNote';
@@ -35,6 +36,7 @@ const formatDate = (iso: string) => {
 export const PrepNoteListScreen: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
+  const { t } = useTranslation(['schedule', 'common']);
   const tabBarSafeBottom = useTabBarSafeBottom();
   const { data: notes = [], isLoading } = usePrepNotes();
   const { mutate: deleteNote } = useDeletePrepNote();
@@ -65,7 +67,7 @@ export const PrepNoteListScreen: React.FC = () => {
 
     const linkedSections: Section[] = Array.from(scheduleMap.entries()).map(
       ([scheduleId, items]) => ({
-        title: scheduleInfoMap.get(scheduleId) ?? '연결된 일정',
+        title: scheduleInfoMap.get(scheduleId) ?? t('schedule:related_schedule'),
         scheduleId,
         data: items,
       })
@@ -73,16 +75,16 @@ export const PrepNoteListScreen: React.FC = () => {
 
     const result: Section[] = [...linkedSections];
     if (unlinked.length > 0) {
-      result.push({ title: '일정 없음', data: unlinked });
+      result.push({ title: t('schedule:no_schedule_value'), data: unlinked });
     }
     return result;
   }, [notes]);
 
   const handleDelete = (note: PrepNote) => {
-    customAlert('메모 삭제', '이 준비 메모를 삭제할까요?', [
-      { text: '취소', style: 'cancel' },
+    customAlert(t('schedule:prepnote_delete_title'), t('schedule:prepnote_delete_message'), [
+      { text: t('common:cancel'), style: 'cancel' },
       {
-        text: '삭제',
+        text: t('common:delete'),
         style: 'destructive',
         onPress: () => deleteNote(note.id),
       },
@@ -200,15 +202,15 @@ export const PrepNoteListScreen: React.FC = () => {
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
           <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>진료 준비 메모</Text>
+        <Text style={styles.headerTitle}>{t('schedule:prep_note_title')}</Text>
         <View style={styles.headerRight} />
       </View>
 
       {notes.length === 0 ? (
         <View style={styles.emptyWrap}>
           <Ionicons name="create-outline" size={48} color={colors.textDisabled} />
-          <Text style={styles.emptyTitle}>준비 메모가 없어요</Text>
-          <Text style={styles.emptyDesc}>진료 전 궁금한 점이나{'\n'}증상을 미리 기록해 보세요.</Text>
+          <Text style={styles.emptyTitle}>{t('schedule:prep_note_empty')}</Text>
+          <Text style={styles.emptyDesc}>{t('schedule:prep_note_empty_desc')}</Text>
         </View>
       ) : (
         <SectionList
@@ -237,7 +239,7 @@ export const PrepNoteListScreen: React.FC = () => {
               <View style={styles.cardFooter}>
                 <Text style={styles.cardDate}>{formatDate(item.updatedAt)}</Text>
                 <TouchableOpacity onPress={() => handleDelete(item)} hitSlop={8} style={styles.deleteBtn}>
-                  <Text style={styles.deleteBtnText}>삭제</Text>
+                  <Text style={styles.deleteBtnText}>{t('common:delete')}</Text>
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>

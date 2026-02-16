@@ -162,7 +162,7 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
                 returnKeyType="done"
                 onBlur={() => setSleepInput(String(parseSleepHours()))}
               />
-              <Text style={[styles.sleepUnit, { color: colors.textSub }]}>시간</Text>
+              <Text style={[styles.sleepUnit, { color: colors.textSub }]}>{t('sleep_unit_short')}</Text>
             </View>
 
             <TouchableOpacity

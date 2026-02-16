@@ -4,6 +4,7 @@ import {
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import WheelPicker from '@quidone/react-native-wheel-picker';
+import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 
 interface Props {
@@ -49,6 +50,7 @@ const TimePickerInner: React.FC<Props> = ({
   initialHour, initialMinute, onConfirm, onClose,
 }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation('common');
   // 고유 value (중간 반복 위치 기준)
   const [hourVal, setHourVal] = useState(toMidValue(initialHour, 24));
   const [minVal, setMinVal] = useState(toMidValue(Math.max(0, Math.min(59, initialMinute)), 60));
@@ -81,7 +83,7 @@ const TimePickerInner: React.FC<Props> = ({
       <GestureHandlerRootView style={{ flex: 1 }}>
         <Pressable style={styles.backdrop} onPress={onClose}>
           <Pressable style={styles.card} onPress={() => { if (editField) finishEdit(); }}>
-            <Text style={styles.label}>시간 선택</Text>
+            <Text style={styles.label}>{t('time_picker_title')}</Text>
 
             {/* 탭하면 직접 입력 */}
             <View style={styles.displayRow}>
@@ -114,7 +116,7 @@ const TimePickerInner: React.FC<Props> = ({
               )}
             </View>
             <Text style={[styles.hint, { color: colors.textDisabled }]}>
-              {editField ? '입력 후 빈 곳을 탭하면 적용' : '숫자를 탭하면 직접 입력'}
+              {editField ? t('time_picker_hint_apply') : t('time_picker_hint_edit')}
             </Text>
 
             {/* 휠 피커 */}
@@ -159,10 +161,10 @@ const TimePickerInner: React.FC<Props> = ({
             <View style={styles.divider} />
             <View style={styles.actions}>
               <TouchableOpacity onPress={onClose} style={styles.actionBtn}>
-                <Text style={[styles.actionText, { color: colors.textSub }]}>취소</Text>
+                <Text style={[styles.actionText, { color: colors.textSub }]}>{t('cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => onConfirm(hour, minute)} style={styles.actionBtn}>
-                <Text style={[styles.actionText, { color: colors.primary, fontFamily: fontFamily.bold }]}>확인</Text>
+                <Text style={[styles.actionText, { color: colors.primary, fontFamily: fontFamily.bold }]}>{t('confirm')}</Text>
               </TouchableOpacity>
             </View>
           </Pressable>

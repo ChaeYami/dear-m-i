@@ -14,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Calendar } from 'react-native-calendars';
 import { CompositeNavigationProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { softShadow } from '@/shared/theme/shadows';
@@ -63,6 +64,7 @@ const getNextDay = (dateStr: string): string => {
 export const MedicationHistoryScreen: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
+  const { t } = useTranslation(['settings', 'common']);
 
   const today = todayStrFn();
   const [selectedDate, setSelectedDate] = useState(today);
@@ -94,9 +96,9 @@ export const MedicationHistoryScreen: React.FC<{ embedded?: boolean }> = ({ embe
   };
 
   const handleDelete = (scheduleId: string, drugName: string) => {
-    customAlert('복약 일정 삭제', `'${drugName}'을(를) 삭제할까요?`, [
-      { text: '취소', style: 'cancel' },
-      { text: '삭제', style: 'destructive', onPress: () => deleteMedicationSchedule(scheduleId) },
+    customAlert(t('settings:medication_delete_title'), t('settings:medication_delete_confirm_single', { name: drugName }), [
+      { text: t('common:cancel'), style: 'cancel' },
+      { text: t('common:delete'), style: 'destructive', onPress: () => deleteMedicationSchedule(scheduleId) },
     ]);
   };
 
@@ -184,11 +186,11 @@ export const MedicationHistoryScreen: React.FC<{ embedded?: boolean }> = ({ embe
 
   const styles = getStyles(colors);
 
-  const dateLabelSuffix = isToday ? ' (오늘)' : ' (지난 기록)';
+  const dateLabelSuffix = isToday ? t('settings:medication_today_suffix') : t('settings:medication_past_suffix');
 
   return (
     <SafeAreaView style={styles.container} edges={embedded ? [] : undefined}>
-      {!embedded && <ScreenHeader variant="back" title="복약 이력" />}
+      {!embedded && <ScreenHeader variant="back" title={t('settings:medication_history_title')} />}
 
       {/* 날짜 네비게이션 */}
       <View style={styles.dateNavBar}>
@@ -199,7 +201,7 @@ export const MedicationHistoryScreen: React.FC<{ embedded?: boolean }> = ({ embe
           style={[styles.dateNavSide, isToday && { opacity: 0 }]}
           disabled={isToday}
         >
-          <Text style={styles.todayBtnText}>오늘</Text>
+          <Text style={styles.todayBtnText}>{t('settings:medication_today_label')}</Text>
         </TouchableOpacity>
 
         {/* 날짜 ← → */}
@@ -211,7 +213,7 @@ export const MedicationHistoryScreen: React.FC<{ embedded?: boolean }> = ({ embe
           >
             <Ionicons name="chevron-back" size={20} color={colors.primary} />
           </TouchableOpacity>
-          <Text style={styles.dateNavLabel}>{mo}월 {da}일</Text>
+          <Text style={styles.dateNavLabel}>{t('settings:medication_month_day', { month: mo, day: da })}</Text>
           <TouchableOpacity
             onPress={() => animateAndSet(getNextDay(selectedDate), 'next')}
             hitSlop={12}
@@ -246,7 +248,7 @@ export const MedicationHistoryScreen: React.FC<{ embedded?: boolean }> = ({ embe
             <View style={styles.summaryCard}>
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryDate}>
-                  {mo}월 {da}일{dateLabelSuffix}
+                  {t('settings:medication_month_day', { month: mo, day: da })}{dateLabelSuffix}
                 </Text>
                 <Text style={styles.summaryRate}>{takenSlots} / {totalSlots}</Text>
               </View>
@@ -259,18 +261,18 @@ export const MedicationHistoryScreen: React.FC<{ embedded?: boolean }> = ({ embe
                 />
               </View>
               {totalSlots === 0 ? (
-                <Text style={styles.summaryEmpty}>복약 일정이 없습니다</Text>
+                <Text style={styles.summaryEmpty}>{t('settings:medication_no_today')}</Text>
               ) : (
                 <Text style={styles.summaryPercent}>{`${Math.round(completionRate * 100)}%`}</Text>
               )}
-              {totalSlots > 0 && <Text style={styles.summaryLabel}>완료</Text>}
+              {totalSlots > 0 && <Text style={styles.summaryLabel}>{t('settings:medication_complete')}</Text>}
             </View>
 
             {/* 시간대별 카드 */}
             {!hasAnySlots ? (
               <View style={styles.emptyWrap}>
-                <Text style={styles.emptyText}>이 날짜에 활성 복약 일정이 없어요</Text>
-                <Text style={styles.emptySubText}>복약 일정의 시작/종료일을 확인해주세요</Text>
+                <Text style={styles.emptyText}>{t('settings:medication_no_active_for_date')}</Text>
+                <Text style={styles.emptySubText}>{t('settings:medication_check_dates_hint')}</Text>
               </View>
             ) : (
               TIME_SLOTS.map((slot) => {
@@ -320,7 +322,7 @@ export const MedicationHistoryScreen: React.FC<{ embedded?: boolean }> = ({ embe
         >
           <TouchableOpacity activeOpacity={1} style={styles.modalSheet} onPress={() => {}}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalHeaderTitle}>날짜 선택</Text>
+              <Text style={styles.modalHeaderTitle}>{t('settings:medication_select_date_title')}</Text>
               <TouchableOpacity onPress={() => setShowCalendar(false)} hitSlop={12}>
                 <Ionicons name="close" size={22} color={colors.text} />
               </TouchableOpacity>
@@ -345,7 +347,7 @@ export const MedicationHistoryScreen: React.FC<{ embedded?: boolean }> = ({ embe
                 textDayFontFamily: fontFamily.medium,
               }}
             />
-            <Text style={styles.modalHint}>색칠된 날짜는 복약 일정이 있던 기간이에요</Text>
+            <Text style={styles.modalHint}>{t('settings:medication_calendar_legend')}</Text>
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>

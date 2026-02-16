@@ -2,6 +2,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { SECURE_STORE_KEYS } from '@/constants/cacheKeys';
 import type { TokenRefreshResponse, ApiResponse } from '@/shared/types/api.types';
+import i18n from '@/locales/i18n';
 
 /**
  * Axios 인스턴스 설정
@@ -84,7 +85,7 @@ axiosInstance.interceptors.response.use(
       const refreshToken = await SecureStore.getItemAsync(SECURE_STORE_KEYS.REFRESH_TOKEN);
 
       if (!refreshToken) {
-        throw new Error('리프레시 토큰이 없습니다.');
+        throw new Error(i18n.t('auth:refresh_token_missing'));
       }
 
       // 토큰 갱신 요청 (/auth/refresh는 인터셉터 없는 순수 호출)
@@ -94,7 +95,7 @@ axiosInstance.interceptors.response.use(
       );
 
       if (!data.success || !data.data) {
-        throw new Error('토큰 갱신 실패');
+        throw new Error(i18n.t('auth:refresh_token_failed'));
       }
 
       const { accessToken: newAccessToken, refreshToken: newRefreshToken } = data.data;

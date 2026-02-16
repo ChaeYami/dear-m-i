@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { CacheService } from '@/shared/cache/CacheService';
@@ -29,32 +30,15 @@ interface Page {
   description: string;
 }
 
-const PAGES: Page[] = [
-  {
-    icon: 'calendar-outline',
-    title: '진료 일정 관리',
-    description:
-      '병원 방문 일정을 등록하면 하루 전과 당일 아침에 알림을 보내드려요.\n준비 메모도 함께 작성할 수 있어요.',
-  },
-  {
-    icon: 'happy-outline',
-    title: '하루 메모',
-    description:
-      '오늘의 감정과 수면, 떠오르는 생각을 기록해보세요.\n감정 그래프로 내 마음의 흐름을 한눈에 볼 수 있어요.',
-  },
-  {
-    icon: 'medical-outline',
-    title: '복약 관리',
-    description:
-      '복약 일정을 등록하면 시간에 맞춰 알림이 와요.\n매일 복용 여부를 체크해 이력을 남길 수 있어요.',
-  },
-  {
-    icon: 'document-text-outline',
-    title: '처방전 자동 인식 (PREMIUM)',
-    description:
-      '처방전을 사진으로 찍으면 약품 정보를 자동으로 인식해요.\n복약 일정도 한 번에 등록할 수 있어요.',
-  },
-];
+const usePages = (): Page[] => {
+  const { t } = useTranslation('common');
+  return [
+    { icon: 'calendar-outline', title: t('onboarding_schedule_title'), description: t('onboarding_schedule_desc') },
+    { icon: 'happy-outline', title: t('onboarding_checkin_title'), description: t('onboarding_checkin_desc') },
+    { icon: 'medical-outline', title: t('onboarding_medication_title'), description: t('onboarding_medication_desc') },
+    { icon: 'document-text-outline', title: t('onboarding_ocr_title'), description: t('onboarding_ocr_desc') },
+  ];
+};
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -62,6 +46,8 @@ export const OnboardingScreen: React.FC = () => {
   const { colors, isDark } = useTheme();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
+  const { t } = useTranslation('common');
+  const PAGES = usePages();
   const forceShow = route.params?.forceShow ?? false;
 
   const [currentPage, setCurrentPage] = useState(0);
@@ -110,7 +96,7 @@ export const OnboardingScreen: React.FC = () => {
           <Ionicons name="close" size={24} color={colors.text} />
         </TouchableOpacity>
         <TouchableOpacity onPress={closeAndRemember} hitSlop={12}>
-          <Text style={[styles.dontShowText, { color: colors.textSub }]}>다시 보지 않기</Text>
+          <Text style={[styles.dontShowText, { color: colors.textSub }]}>{t('onboarding_dont_show_again')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -169,13 +155,13 @@ export const OnboardingScreen: React.FC = () => {
               style={styles.primaryBtnGradient}
             >
               <Text style={[styles.primaryBtnText, { color: colors.textInverse }]}>
-                시작하기
+                {t('onboarding_start')}
               </Text>
             </LinearGradient>
           ) : (
             <View style={[styles.primaryBtnGradient, { backgroundColor: colors.primary }]}>
               <Text style={[styles.primaryBtnText, { color: colors.textInverse }]}>
-                다음
+                {t('onboarding_next')}
               </Text>
             </View>
           )}

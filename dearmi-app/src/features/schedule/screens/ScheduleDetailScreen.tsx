@@ -9,6 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
@@ -25,17 +26,22 @@ type Nav = StackNavigationProp<CareStackParamList, 'ScheduleDetail'>;
 type RootNav = any;
 type Route = RouteProp<CareStackParamList, 'ScheduleDetail'>;
 
-const formatDateTime = (iso: string) => {
-  // ISO 문자열에서 직접 파싱 (타임존 변환 방지)
+const formatDateTime = (iso: string, t: (k: string, o?: any) => string) => {
   const [datePart, timePart] = iso.split('T');
   const [y, mo, da] = datePart.split('-');
   const [h, m] = (timePart ?? '00:00').split(':');
-  return `${y}년 ${Number(mo)}월 ${Number(da)}일  ${h}:${m}`;
+  return t('schedule:datetime_format', {
+    year: y,
+    month: Number(mo),
+    day: Number(da),
+    time: `${h}:${m}`,
+  });
 };
 
 export const ScheduleDetailScreen: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
+  const { t } = useTranslation(['schedule', 'common']);
   const { scheduleId } = useRoute<Route>().params;
 
   const { data: schedule, isLoading } = useScheduleDetail(scheduleId);
@@ -44,10 +50,10 @@ export const ScheduleDetailScreen: React.FC = () => {
 
   const handleDelete = () => {
     if (!schedule) return;
-    customAlert('일정 삭제', '이 일정을 삭제할까요?', [
-      { text: '취소', style: 'cancel' },
+    customAlert(t('schedule:delete_title'), t('schedule:delete_message'), [
+      { text: t('common:cancel'), style: 'cancel' },
       {
-        text: '삭제',
+        text: t('common:delete'),
         style: 'destructive',
         onPress: () => {
           const d = new Date(schedule.scheduledAt);
@@ -76,9 +82,9 @@ export const ScheduleDetailScreen: React.FC = () => {
   if (!schedule) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-        <ScreenHeader variant="back" title="일정 상세" />
+        <ScreenHeader variant="back" title={t('schedule:detail')} />
         <View style={styles.emptyWrap}>
-          <Text style={[styles.emptyText, { color: colors.textSub, fontFamily: fontFamily.medium }]}>일정을 찾을 수 없습니다.</Text>
+          <Text style={[styles.emptyText, { color: colors.textSub, fontFamily: fontFamily.medium }]}>{t('schedule:not_found')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -86,32 +92,32 @@ export const ScheduleDetailScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScreenHeader variant="back" title="일정 상세" />
+      <ScreenHeader variant="back" title={t('schedule:detail')} />
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={[styles.card, { backgroundColor: colors.surface }, softShadow(colors)]}>
-          <InfoRow label="병원" value={schedule.hospitalName} colors={colors} />
+          <InfoRow label={t('schedule:hospital')} value={schedule.hospitalName} colors={colors} />
           {schedule.doctorName && (
-            <InfoRow label="담당 선생님" value={`${schedule.doctorName} 선생님`} colors={colors} />
+            <InfoRow label={t('schedule:doctor')} value={t('schedule:doctor_with_suffix', { name: schedule.doctorName })} colors={colors} />
           )}
-          <InfoRow label="일시" value={formatDateTime(schedule.scheduledAt)} colors={colors} />
-          {schedule.memo && <InfoRow label="메모" value={schedule.memo} multiline colors={colors} />}
+          <InfoRow label={t('schedule:datetime')} value={formatDateTime(schedule.scheduledAt, t)} colors={colors} />
+          {schedule.memo && <InfoRow label={t('schedule:memo')} value={schedule.memo} multiline colors={colors} />}
         </View>
 
         <View style={[styles.prepNoteSection, { backgroundColor: colors.surface, borderRadius: sizes.radius.xxl }, softShadow(colors)]}>
           <View style={styles.prepNoteHeader}>
-            <Text style={[styles.prepNoteSectionTitle, { color: colors.textSub, fontFamily: fontFamily.bold }]}>진료 준비 메모</Text>
+            <Text style={[styles.prepNoteSectionTitle, { color: colors.textSub, fontFamily: fontFamily.bold }]}>{t('schedule:prep_note_title')}</Text>
             <TouchableOpacity
               onPress={() =>
                 navigation.navigate('PrepNoteForm', { scheduleId: String(scheduleId) })
               }
               hitSlop={8}
             >
-              <Text style={[styles.prepNoteAddBtn, { color: colors.primary, fontFamily: fontFamily.semibold }]}>+ 메모 추가</Text>
+              <Text style={[styles.prepNoteAddBtn, { color: colors.primary, fontFamily: fontFamily.semibold }]}>{t('schedule:add_prep_note')}</Text>
             </TouchableOpacity>
           </View>
           {prepNotes.length === 0 ? (
-            <Text style={[styles.prepNoteEmpty, { color: colors.textDisabled, fontFamily: fontFamily.medium }]}>아직 준비 메모가 없어요.</Text>
+            <Text style={[styles.prepNoteEmpty, { color: colors.textDisabled, fontFamily: fontFamily.medium }]}>{t('schedule:no_prep_notes')}</Text>
           ) : (
             prepNotes.map((note) => (
               <AnimatedPressable
@@ -137,7 +143,7 @@ export const ScheduleDetailScreen: React.FC = () => {
           onPress={handleLinkRecord}
         >
           <Ionicons name="document-text-outline" size={18} color={colors.secondary} />
-          <Text style={[styles.linkButtonText, { color: colors.secondary, fontFamily: fontFamily.semibold }]}>상담 기록 연결하기</Text>
+          <Text style={[styles.linkButtonText, { color: colors.secondary, fontFamily: fontFamily.semibold }]}>{t('schedule:connect_record')}</Text>
         </AnimatedPressable>
 
         <View style={styles.actions}>
@@ -145,14 +151,14 @@ export const ScheduleDetailScreen: React.FC = () => {
             style={[styles.actionBtn, { backgroundColor: colors.primary }]}
             onPress={() => navigation.navigate('ScheduleForm', { schedule })}
           >
-            <Text style={[styles.actionBtnText, { color: colors.textInverse, fontFamily: fontFamily.semibold }]}>수정</Text>
+            <Text style={[styles.actionBtnText, { color: colors.textInverse, fontFamily: fontFamily.semibold }]}>{t('common:edit')}</Text>
           </AnimatedPressable>
           <AnimatedPressable
             style={[styles.actionBtn, { backgroundColor: colors.errorLight, borderWidth: 1, borderColor: colors.error }]}
             onPress={handleDelete}
             disabled={isDeleting}
           >
-            <Text style={[styles.actionBtnText, { color: colors.error, fontFamily: fontFamily.semibold }]}>{isDeleting ? '삭제 중…' : '삭제'}</Text>
+            <Text style={[styles.actionBtnText, { color: colors.error, fontFamily: fontFamily.semibold }]}>{isDeleting ? t('common:deleting') : t('common:delete')}</Text>
           </AnimatedPressable>
         </View>
       </ScrollView>

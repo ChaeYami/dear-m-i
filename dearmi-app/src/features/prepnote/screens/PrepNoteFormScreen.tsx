@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
@@ -30,6 +31,7 @@ const formatDate = (iso: string) => {
 export const PrepNoteFormScreen: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
+  const { t } = useTranslation(['schedule', 'common', 'record']);
   const params = useRoute<Route>().params;
   const noteId = params?.noteId;
   const initialScheduleId = params?.scheduleId;
@@ -67,7 +69,7 @@ export const PrepNoteFormScreen: React.FC = () => {
 
   const handleSave = () => {
     if (!content.trim()) {
-      customAlert('필수 입력', '내용을 입력해 주세요.');
+      customAlert(t('common:required_input'), t('common:content_required'));
       return;
     }
 
@@ -151,7 +153,7 @@ export const PrepNoteFormScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <ScreenHeader
         variant="form"
-        title={isEdit ? '메모 수정' : '준비 메모 작성'}
+        title={isEdit ? t('schedule:prep_note_edit') : t('schedule:prep_note_add')}
         onCancel={() => navigation.goBack()}
         onSave={handleSave}
         saveDisabled={isPending}
@@ -161,7 +163,7 @@ export const PrepNoteFormScreen: React.FC = () => {
         {/* 일정 연결 (수정 모드에서는 비활성) */}
         {!isEdit && (
           <View style={styles.field}>
-            <Text style={styles.label}>연결 일정 (선택)</Text>
+            <Text style={styles.label}>{t('schedule:link_schedule')}</Text>
             <TouchableOpacity
               style={styles.scheduleSelector}
               onPress={() => setShowSchedulePicker((v) => !v)}
@@ -170,7 +172,7 @@ export const PrepNoteFormScreen: React.FC = () => {
               <Text style={selectedSchedule ? styles.scheduleName : styles.schedulePlaceholder}>
                 {selectedSchedule
                   ? `${selectedSchedule.hospitalName} · ${formatDate(selectedSchedule.scheduledAt)}`
-                  : '일정 선택 (선택 사항)'}
+                  : t('schedule:link_schedule_placeholder')}
               </Text>
               <Text style={styles.dropdownArrow}><Ionicons name={showSchedulePicker ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textSub} /></Text>
             </TouchableOpacity>
@@ -184,11 +186,11 @@ export const PrepNoteFormScreen: React.FC = () => {
                     setShowSchedulePicker(false);
                   }}
                 >
-                  <Text style={styles.dropdownItemText}>선택 안 함</Text>
+                  <Text style={styles.dropdownItemText}>{t('schedule:link_none')}</Text>
                 </TouchableOpacity>
                 {top10.length === 0 && (
                   <View style={styles.dropdownItem}>
-                    <Text style={[styles.dropdownItemText, { color: colors.textDisabled }]}>다가오는 일정이 없습니다</Text>
+                    <Text style={[styles.dropdownItemText, { color: colors.textDisabled }]}>{t('schedule:upcoming_empty')}</Text>
                   </View>
                 )}
                 {top10.map((s) => (
@@ -222,11 +224,11 @@ export const PrepNoteFormScreen: React.FC = () => {
         {/* 내용 */}
         <View style={styles.field}>
           <Text style={styles.label}>
-            내용 <Text style={styles.required}>*</Text>
+            {t('record:content_label')} <Text style={styles.required}>*</Text>
           </Text>
           <TextInput
             style={styles.textArea}
-            placeholder="진료 전 궁금한 점, 증상, 질문 등을 자유롭게 적어 두세요."
+            placeholder={t('schedule:prep_note_placeholder')}
             placeholderTextColor={colors.textDisabled}
             value={content}
             onChangeText={setContent}

@@ -16,6 +16,7 @@ import { useNavigation, useRoute, type RouteProp } from '@react-navigation/nativ
 import { LinearGradient } from 'expo-linear-gradient';
 import { CompositeNavigationProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { softShadow, floatingShadow } from '@/shared/theme/shadows';
@@ -69,6 +70,7 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
+  const { t } = useTranslation(['settings', 'common']);
   const tabBarSafeBottom = useTabBarSafeBottom();
   const scrollHandlers = useTabBarScrollHide();
 
@@ -111,10 +113,10 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
 
   const handleDeleteSelected = () => {
     if (selectedIds.size === 0) return;
-    customAlert('복약 일정 삭제', `${selectedIds.size}개 약품을 삭제할까요?`, [
-      { text: '취소', style: 'cancel' },
+    customAlert(t('settings:medication_delete_title'), t('settings:medication_delete_confirm_count', { count: selectedIds.size }), [
+      { text: t('common:cancel'), style: 'cancel' },
       {
-        text: '삭제',
+        text: t('common:delete'),
         style: 'destructive',
         onPress: () => {
           selectedIds.forEach((id) => deleteMedicationSchedule(id));
@@ -126,9 +128,9 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
   };
 
   const handleDelete = (scheduleId: string, drugName: string) => {
-    customAlert('복약 일정 삭제', `'${drugName}'을(를) 삭제할까요?`, [
-      { text: '취소', style: 'cancel' },
-      { text: '삭제', style: 'destructive', onPress: () => deleteMedicationSchedule(scheduleId) },
+    customAlert(t('settings:medication_delete_title'), t('settings:medication_delete_confirm_single', { name: drugName }), [
+      { text: t('common:cancel'), style: 'cancel' },
+      { text: t('common:delete'), style: 'destructive', onPress: () => deleteMedicationSchedule(scheduleId) },
     ]);
   };
 
@@ -184,7 +186,9 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
 
   const completionRate = totalSlots > 0 ? takenSlots / totalSlots : 0;
   const [, mo, da] = selectedDate.split('-').map(Number);
-  const dateLabel = isToday ? `${mo}월 ${da}일` : `${mo}월 ${da}일 (지난 기록)`;
+  const dateLabel = isToday
+    ? t('settings:medication_month_day', { month: mo, day: da })
+    : t('settings:medication_month_day_past', { month: mo, day: da });
 
   const isFutureDate = selectedDate > today;
 
@@ -222,7 +226,7 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
       {!embedded && (
         <ScreenHeader
           variant={isToday ? 'tab' : 'back'}
-          title={isToday ? '복약 관리' : '복약 기록'}
+          title={isToday ? t('settings:medication_management_tab') : t('settings:medication_history_tab')}
           {...(isToday ? { hasNotification: true } : {})}
         />
       )}
@@ -236,7 +240,7 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
           style={[styles.dateNavSide, isToday && { opacity: 0 }]}
           disabled={isToday}
         >
-          <Text style={styles.todayBtnText}>오늘</Text>
+          <Text style={styles.todayBtnText}>{t('settings:medication_today_label')}</Text>
         </TouchableOpacity>
 
         {/* 날짜 ← → */}
@@ -244,7 +248,7 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
           <TouchableOpacity onPress={handleGoPrev} hitSlop={12} style={styles.dateNavBtn}>
             <Ionicons name="chevron-back" size={20} color={colors.primary} />
           </TouchableOpacity>
-          <Text style={styles.dateNavLabel}>{mo}월 {da}일</Text>
+          <Text style={styles.dateNavLabel}>{t('settings:medication_month_day', { month: mo, day: da })}</Text>
           <TouchableOpacity
             onPress={handleGoNext}
             hitSlop={12}
@@ -297,7 +301,7 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
               size={20}
               color={colors.primary}
             />
-            <Text style={styles.selectAllText}>전체 선택</Text>
+            <Text style={styles.selectAllText}>{t('common:select_all')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.deleteSelectedBtn, selectedIds.size === 0 && styles.deleteSelectedBtnDisabled]}
@@ -306,7 +310,7 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
           >
             <Ionicons name="trash-outline" size={16} color={selectedIds.size > 0 ? colors.error : colors.textDisabled} />
             <Text style={[styles.deleteSelectedText, selectedIds.size === 0 && styles.deleteSelectedTextDisabled]}>
-              삭제 ({selectedIds.size})
+              {t('settings:medication_delete_with_count', { count: selectedIds.size })}
             </Text>
           </TouchableOpacity>
         </View>
@@ -349,12 +353,12 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
             />
           </View>
           {totalSlots === 0 ? (
-            <Text style={styles.summaryEmpty}>오늘 복약 일정이 없습니다</Text>
+            <Text style={styles.summaryEmpty}>{t('settings:medication_no_today')}</Text>
           ) : (
             <Text style={styles.summaryPercent}>{`${Math.round(completionRate * 100)}%`}</Text>
           )}
           {totalSlots > 0 && (
-            <Text style={styles.summaryLabel}>완료</Text>
+            <Text style={styles.summaryLabel}>{t('settings:medication_complete')}</Text>
           )}
         </View>
 
@@ -363,17 +367,17 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
           <View style={styles.emptyWrap}>
             <Text style={styles.emptyText}>
               {isToday
-                ? '등록된 복약 일정이 없어요'
+                ? t('settings:medication_empty_title')
                 : isFutureDate
-                ? '이 날짜에 예정된 복약 일정이 없어요'
-                : '이 날짜에 활성 복약 일정이 없어요'}
+                ? t('settings:medication_no_today_planned')
+                : t('settings:medication_no_active_for_date')}
             </Text>
             <Text style={styles.emptySubText}>
               {isToday
-                ? '+ 버튼을 눌러 복약 일정을 추가해보세요'
+                ? t('settings:medication_empty_desc')
                 : isFutureDate
-                ? '복약 일정 등록 후 미리 확인할 수 있어요'
-                : '복약 일정의 시작/종료일을 확인해주세요'}
+                ? t('settings:medication_register_first')
+                : t('settings:medication_check_dates_hint')}
             </Text>
             {!isToday && (
               <TouchableOpacity
@@ -381,7 +385,7 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
                 style={[styles.emptyGoTodayBtn, { backgroundColor: colors.primaryMuted, borderColor: colors.primary + '40' }]}
               >
                 <Ionicons name="today-outline" size={14} color={colors.primary} />
-                <Text style={[styles.emptyGoTodayText, { color: colors.primary }]}>오늘 복약으로 이동</Text>
+                <Text style={[styles.emptyGoTodayText, { color: colors.primary }]}>{t('settings:medication_go_today')}</Text>
               </TouchableOpacity>
             )}
           </View>

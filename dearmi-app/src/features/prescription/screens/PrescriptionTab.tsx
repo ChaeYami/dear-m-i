@@ -14,8 +14,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/constants/cacheKeys';
+import { useTranslation } from 'react-i18next';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { customAlert } from '@/shared/components/CustomAlert';
+import i18n from '@/locales/i18n';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { softShadow } from '@/shared/theme/shadows';
 import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
@@ -37,7 +39,7 @@ if (Platform.OS === 'android') {
 type Nav = StackNavigationProp<MedicationStackParamList, 'PrescriptionList'>;
 
 const formatDate = (dateStr?: string) => {
-  if (!dateStr) return '날짜 미상';
+  if (!dateStr) return i18n.t('prescription:unknown_date');
   const d = new Date(dateStr);
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 };
@@ -46,7 +48,9 @@ const MedicationRow: React.FC<{
   med: PrescriptionMedication;
   onPress: () => void;
   colors: ReturnType<typeof useTheme>['colors'];
-}> = ({ med, onPress, colors }) => (
+}> = ({ med, onPress, colors }) => {
+  const { t } = useTranslation('prescription');
+  return (
   <AnimatedPressable
     onPress={onPress}
     style={{
@@ -72,14 +76,15 @@ const MedicationRow: React.FC<{
         {med.medicationName}
       </Text>
       <Text style={{ fontSize: sizes.font.xs, fontFamily: fontFamily.regular, color: colors.textSub, marginTop: 2 }}>
-        {[med.dosage, med.frequency, med.durationDays !== undefined ? `${med.durationDays}일` : undefined]
+        {[med.dosage, med.frequency, med.durationDays !== undefined ? t('duration_days_value', { count: med.durationDays }) : undefined]
           .filter(Boolean)
-          .join(' · ') || '정보 없음'}
+          .join(' · ') || t('no_info')}
       </Text>
     </View>
     <Ionicons name="chevron-forward" size={16} color={colors.textDisabled} />
   </AnimatedPressable>
-);
+  );
+};
 
 const MedicationDivider: React.FC<{ colors: any }> = ({ colors }) => (
   <View style={{ height: 1, backgroundColor: colors.divider, marginHorizontal: sizes.spacing.lg }} />
@@ -99,11 +104,12 @@ const PrescriptionCard: React.FC<{
   colors: ReturnType<typeof useTheme>['colors'];
   shadow: object;
 }> = ({ item, expanded, selected, selectionMode, onToggle, onMedPress, onDelete, onViewOcr, onWriteRecord, onWriteSchedule, colors, shadow }) => {
+  const { t } = useTranslation('prescription');
   const OCR_STATUS_CONFIG: Record<OcrStatus, { label: string; color: string; bg: string }> = {
-    PENDING: { label: '분석 대기', color: colors.warning, bg: colors.warningLight },
-    PROCESSING: { label: '분석 중', color: colors.primary, bg: colors.primaryMuted },
-    COMPLETED: { label: '분석 완료', color: colors.success, bg: colors.successLight },
-    FAILED: { label: '인식 실패', color: colors.error, bg: colors.errorLight },
+    PENDING: { label: t('status_pending'), color: colors.warning, bg: colors.warningLight },
+    PROCESSING: { label: t('status_processing'), color: colors.primary, bg: colors.primaryMuted },
+    COMPLETED: { label: t('status_completed'), color: colors.success, bg: colors.successLight },
+    FAILED: { label: t('status_failed'), color: colors.error, bg: colors.errorLight },
   };
 
   const statusCfg = item.ocrStatus ? OCR_STATUS_CONFIG[item.ocrStatus] : null;
@@ -149,7 +155,7 @@ const PrescriptionCard: React.FC<{
             {formatDate(item.prescribedAt)}
           </Text>
           <Text style={{ fontFamily: fontFamily.semibold, fontSize: sizes.font.md, color: colors.text }}>
-            {item.hospitalName ?? '병원명 미상'}
+            {item.hospitalName ?? t('unknown_hospital')}
           </Text>
         </View>
         <View style={{ alignItems: 'flex-end', gap: sizes.spacing.xs }}>
@@ -174,7 +180,7 @@ const PrescriptionCard: React.FC<{
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
             <Ionicons name="medical-outline" size={14} color={colors.textSub} />
             <Text style={{ fontSize: sizes.font.xs, fontFamily: fontFamily.regular, color: colors.textSub }}>
-              {item.medications.length}종
+              {t('medication_count', { count: item.medications.length })}
             </Text>
           </View>
           {!selectionMode && (
@@ -198,7 +204,7 @@ const PrescriptionCard: React.FC<{
               textAlign: 'center',
               paddingVertical: sizes.spacing.lg,
             }}>
-              등록된 약품이 없습니다
+              {t('no_medications')}
             </Text>
           ) : (
             item.medications.map((med, idx) => (
@@ -234,7 +240,7 @@ const PrescriptionCard: React.FC<{
               onPress={onWriteSchedule}
             >
               <Text style={{ fontFamily: fontFamily.medium, fontSize: sizes.font.sm, color: colors.primary }}>
-                일정 추가
+                {t('add_schedule_btn')}
               </Text>
             </TouchableOpacity>
 
@@ -250,7 +256,7 @@ const PrescriptionCard: React.FC<{
               onPress={onWriteRecord}
             >
               <Text style={{ fontFamily: fontFamily.medium, fontSize: sizes.font.sm, color: colors.primary }}>
-                기록하기
+                {t('record_btn')}
               </Text>
             </TouchableOpacity>
 
@@ -268,7 +274,7 @@ const PrescriptionCard: React.FC<{
                 onPress={onViewOcr}
               >
                 <Text style={{ fontFamily: fontFamily.medium, fontSize: sizes.font.sm, color: colors.primary }}>
-                  인식 결과 보기
+                  {t('view_ocr_result')}
                 </Text>
               </TouchableOpacity>
             )}
@@ -283,7 +289,7 @@ const PrescriptionCard: React.FC<{
               onPress={onDelete}
             >
               <Text style={{ fontFamily: fontFamily.medium, fontSize: sizes.font.sm, color: colors.error }}>
-                삭제
+                {i18n.t('common:delete')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -296,6 +302,7 @@ const PrescriptionCard: React.FC<{
 export const PrescriptionTab: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
+  const { t } = useTranslation(['prescription', 'common']);
   const tabBarSafeBottom = useTabBarSafeBottom();
   const queryClient = useQueryClient();
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
@@ -361,21 +368,21 @@ export const PrescriptionTab: React.FC = () => {
   };
 
   const handleDelete = (item: Prescription) => {
-    customAlert('처방전 삭제', '이 처방전을 삭제할까요?', [
-      { text: '취소', style: 'cancel' },
-      { text: '삭제', style: 'destructive', onPress: () => deletePrescription(String(item.id)) },
+    customAlert(t('prescription:delete_title'), t('prescription:delete_message'), [
+      { text: t('common:cancel'), style: 'cancel' },
+      { text: t('common:delete'), style: 'destructive', onPress: () => deletePrescription(String(item.id)) },
     ]);
   };
 
   const handleBulkDelete = () => {
     if (selectedIds.size === 0) return;
     customAlert(
-      `${selectedIds.size}건 삭제`,
-      '선택한 처방전을 모두 삭제할까요?\n삭제된 데이터는 복구할 수 없습니다.',
+      t('prescription:delete_selected_title', { count: selectedIds.size }),
+      t('prescription:delete_selected_message'),
       [
-        { text: '취소', style: 'cancel' },
+        { text: t('common:cancel'), style: 'cancel' },
         {
-          text: '삭제',
+          text: t('common:delete'),
           style: 'destructive',
           onPress: () => {
             bulkDelete([...selectedIds], {
@@ -410,18 +417,18 @@ export const PrescriptionTab: React.FC = () => {
           fontFamily: fontFamily.bold,
           color: colors.text,
         }}>
-          {selectionMode ? `${selectedIds.size}건 선택됨` : '처방 목록'}
+          {selectionMode ? t('prescription:selected_count', { count: selectedIds.size }) : t('prescription:list_title')}
         </Text>
         {selectionMode ? (
           <TouchableOpacity onPress={toggleSelectAll} hitSlop={12}>
             <Text style={{ fontSize: sizes.font.sm, fontFamily: fontFamily.semibold, color: colors.primary }}>
-              {allSelected ? '전체 해제' : '전체 선택'}
+              {allSelected ? t('prescription:deselect_all') : t('common:select_all')}
             </Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity onPress={enterSelectionMode} hitSlop={12}>
             <Text style={{ fontSize: sizes.font.sm, fontFamily: fontFamily.semibold, color: colors.primary }}>
-              선택
+              {t('prescription:select_btn')}
             </Text>
           </TouchableOpacity>
         )}
@@ -506,10 +513,10 @@ export const PrescriptionTab: React.FC = () => {
             paddingTop: 120,
           }}>
             <Text style={{ fontSize: sizes.font.lg, fontFamily: fontFamily.semibold, color: colors.textSub }}>
-              처방전이 없어요
+              {t('prescription:empty_title')}
             </Text>
             <Text style={{ fontSize: sizes.font.sm, fontFamily: fontFamily.regular, color: colors.textDisabled }}>
-              처방전을 촬영해서 등록해보세요
+              {t('prescription:empty_desc')}
             </Text>
           </View>
         }
@@ -573,7 +580,7 @@ export const PrescriptionTab: React.FC = () => {
               fontFamily: fontFamily.bold,
               color: selectedIds.size === 0 ? colors.textDisabled : colors.textInverse,
             }}>
-              {isBulkDeleting ? '삭제 중...' : selectedIds.size === 0 ? '항목을 선택하세요' : `${selectedIds.size}건 삭제`}
+              {isBulkDeleting ? t('common:deleting') : selectedIds.size === 0 ? t('common:selection_required') : t('prescription:delete_count_btn', { count: selectedIds.size })}
             </Text>
           </TouchableOpacity>
         </View>

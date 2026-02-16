@@ -50,11 +50,20 @@ const generateDates = (days: number): string[] => {
   return dates;
 };
 
-const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
+const useDayNames = () => {
+  const { t } = useTranslation('common');
+  return useMemo(() => [
+    t('weekday_sun'), t('weekday_mon'), t('weekday_tue'), t('weekday_wed'),
+    t('weekday_thu'), t('weekday_fri'), t('weekday_sat'),
+  ], [t]);
+};
 
-const formatDateLabel = (dateStr: string) => {
-  const [, mo, da] = dateStr.split('-');
-  return `${Number(mo)}월 ${Number(da)}일`;
+const useFormatDateLabel = () => {
+  const { t } = useTranslation('checkin');
+  return (dateStr: string) => {
+    const [, mo, da] = dateStr.split('-');
+    return t('date_label_month_day', { month: Number(mo), day: Number(da) });
+  };
 };
 
 export const CheckinHomeScreen: React.FC = () => {
@@ -62,7 +71,10 @@ export const CheckinHomeScreen: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const { t } = useTranslation('checkin');
+  const { t: tCommon } = useTranslation('common');
   const emotionLabel = useEmotionLabel();
+  const DAY_NAMES = useDayNames();
+  const formatDateLabel = useFormatDateLabel();
   const tabBarSafeBottom = useTabBarSafeBottom();
   const scrollHandlers = useTabBarScrollHide();
 
@@ -402,12 +414,12 @@ export const CheckinHomeScreen: React.FC = () => {
       >
         {/* 선택된 날짜 라벨 */}
         <Text style={styles.selectedDateLabel}>
-          {isToday ? '오늘' : formatDateLabel(selectedDate)}
+          {isToday ? t('today') : formatDateLabel(selectedDate)}
         </Text>
         {/* 과거 날짜 안내 */}
         {!isToday && (
           <Text style={[styles.pastDateNotice, { color: colors.textDisabled }]}>
-            지난 날짜의 기록을 조회하거나 추가할 수 있어요
+            {t('past_date_notice')}
           </Text>
         )}
 
@@ -420,7 +432,7 @@ export const CheckinHomeScreen: React.FC = () => {
           {!selectedCheckin ? (
             <>
               <Ionicons name="create-outline" size={36} color={colors.textDisabled} />
-              <Text style={styles.emptyText}>기록이 없어요</Text>
+              <Text style={styles.emptyText}>{t('empty_short')}</Text>
               <TouchableOpacity
                 onPress={() => setShowForm(true)}
                 activeOpacity={0.85}
@@ -433,7 +445,7 @@ export const CheckinHomeScreen: React.FC = () => {
                   end={{ x: 1, y: 1 }}
                 >
                   <Text style={styles.writeBtnText}>
-                    {isToday ? t('write_today') : `${formatDateLabel(selectedDate)} 기록하기`}
+                    {isToday ? t('write_today') : t('write_for_date', { label: formatDateLabel(selectedDate) })}
                   </Text>
                 </LinearGradient>
               </TouchableOpacity>
@@ -487,7 +499,7 @@ export const CheckinHomeScreen: React.FC = () => {
                 {selectedCheckin.sleepHours != null && (
                   <View style={styles.metaChip}>
                     <Ionicons name="moon-outline" size={14} color={colors.textSub} />
-                    <Text style={styles.metaText}>{selectedCheckin.sleepHours}시간</Text>
+                    <Text style={styles.metaText}>{t('sleep_unit', { hours: selectedCheckin.sleepHours })}</Text>
                   </View>
                 )}
                 {isToday && medCompleted != null && (
@@ -498,7 +510,7 @@ export const CheckinHomeScreen: React.FC = () => {
                       color={medCompleted ? colors.success : colors.textSub}
                     />
                     <Text style={[styles.metaText, medCompleted && styles.metaTextSuccess]}>
-                      {medCompleted ? '복용 완료' : '미복용'}
+                      {medCompleted ? t('med_done') : t('not_took_medication')}
                     </Text>
                   </View>
                 )}

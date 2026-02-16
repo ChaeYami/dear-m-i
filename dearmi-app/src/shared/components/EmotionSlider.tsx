@@ -10,12 +10,14 @@ export const getEmotionColor = (score: number): string => {
   return '#8BC4A8';
 };
 
+import i18n from '@/locales/i18n';
+
 export const getEmotionLabel = (score: number): string => {
-  if (score <= 2) return '매우 힘듦';
-  if (score <= 4) return '힘듦';
-  if (score <= 6) return '보통';
-  if (score <= 8) return '좋음';
-  return '매우 좋음';
+  if (score <= 2) return i18n.t('common:emotion_very_bad');
+  if (score <= 4) return i18n.t('common:emotion_bad');
+  if (score <= 6) return i18n.t('common:emotion_normal');
+  if (score <= 8) return i18n.t('common:emotion_good');
+  return i18n.t('common:emotion_very_good');
 };
 
 export const useEmotionLabel = () => {
@@ -48,8 +50,8 @@ export const EmotionSlider: React.FC<EmotionSliderProps> = ({
   return (
     <View style={{ gap: sizes.spacing.sm }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 2, marginBottom: 2 }}>
-        <Text style={{ fontSize: sizes.font.xs, color: '#E8A5A5', fontFamily: fontFamily.medium }}>힘듦</Text>
-        <Text style={{ fontSize: sizes.font.xs, color: '#8BC4A8', fontFamily: fontFamily.medium }}>좋음</Text>
+        <Text style={{ fontSize: sizes.font.xs, color: '#E8A5A5', fontFamily: fontFamily.medium }}>{t('emotion_bad')}</Text>
+        <Text style={{ fontSize: sizes.font.xs, color: '#8BC4A8', fontFamily: fontFamily.medium }}>{t('emotion_good')}</Text>
       </View>
       <View style={{ flexDirection: 'row', gap: 4 }}>
         {STEPS.map((n) => {

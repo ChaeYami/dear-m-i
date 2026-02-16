@@ -13,24 +13,25 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { useSubscription } from '@/features/subscription/hooks/useSubscription';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
 
 type PlanOption = 'monthly' | 'yearly';
 
-const FEATURES = [
-  { icon: 'document-text-outline', text: '처방전 자동 인식' },
-  { icon: 'medical-outline', text: '약품 효능·주의사항 상세 정보' },
-  { icon: 'notifications-outline', text: '복약 일정 자동 생성' },
-  { icon: 'calendar-outline', text: '전체 상담 기록 무제한 조회' },
-  { icon: 'document-outline', text: 'PDF 진료 기록 내보내기' },
-  { icon: 'create-outline', text: '상담 기록 무제한 작성' },
-];
-
 export const PaywallScreen: React.FC = () => {
   const { colors } = useTheme();
+  const { t } = useTranslation('subscription');
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const FEATURES = [
+    { icon: 'document-text-outline', text: t('feature_ocr') },
+    { icon: 'medical-outline', text: t('feature_drug_info') },
+    { icon: 'notifications-outline', text: t('feature_med_schedule') },
+    { icon: 'calendar-outline', text: t('feature_unlimited_records') },
+    { icon: 'document-outline', text: t('feature_pdf') },
+    { icon: 'create-outline', text: t('feature_unlimited_write') },
+  ];
   const [selected, setSelected] = useState<PlanOption>('yearly');
   const {
     purchaseMonthly,
@@ -199,11 +200,10 @@ export const PaywallScreen: React.FC = () => {
       >
         {/* 헤더 */}
         <View style={styles.headerSection}>
-          <Text style={styles.badge}>PREMIUM</Text>
-          <Text style={styles.title}>DearMI 프리미엄</Text>
+          <Text style={styles.badge}>{t('paywall_badge')}</Text>
+          <Text style={styles.title}>{t('paywall_title')}</Text>
           <Text style={styles.subtitle}>
-            처방전 자동 인식, 약품 정보, 전체 기록 조회까지{'\n'}
-            건강 관리를 더 스마트하게
+            {t('paywall_subtitle')}
           </Text>
         </View>
 
@@ -225,13 +225,13 @@ export const PaywallScreen: React.FC = () => {
             activeOpacity={0.8}
           >
             <Text style={[styles.planLabel, selected === 'monthly' && styles.planLabelSelected]}>
-              월간 플랜
+              {t('plan_monthly')}
             </Text>
             <Text style={[styles.planPrice, selected === 'monthly' && styles.planPriceSelected]}>
               ₩4,900
             </Text>
             <Text style={[styles.planUnit, selected === 'monthly' && styles.planUnitSelected]}>
-              /월
+              {t('per_month')}
             </Text>
           </TouchableOpacity>
 
@@ -241,16 +241,16 @@ export const PaywallScreen: React.FC = () => {
             activeOpacity={0.8}
           >
             <View style={styles.saveBadge}>
-              <Text style={styles.saveBadgeText}>2개월 무료</Text>
+              <Text style={styles.saveBadgeText}>{t('save_badge')}</Text>
             </View>
             <Text style={[styles.planLabel, selected === 'yearly' && styles.planLabelSelected]}>
-              연간 플랜
+              {t('plan_yearly')}
             </Text>
             <Text style={[styles.planPrice, selected === 'yearly' && styles.planPriceSelected]}>
               ₩39,900
             </Text>
             <Text style={[styles.planUnit, selected === 'yearly' && styles.planUnitSelected]}>
-              /년
+              {t('per_year')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -268,7 +268,7 @@ export const PaywallScreen: React.FC = () => {
             <ActivityIndicator color={colors.textInverse} />
           ) : (
             <Text style={styles.purchaseBtnText}>
-              {selected === 'monthly' ? '월간 구독 시작하기' : '연간 구독 시작하기'}
+              {selected === 'monthly' ? t('subscribe_monthly') : t('subscribe_yearly')}
             </Text>
           )}
         </TouchableOpacity>
@@ -282,7 +282,7 @@ export const PaywallScreen: React.FC = () => {
           {isRestoring ? (
             <ActivityIndicator size="small" color={colors.textSub} />
           ) : (
-            <Text style={styles.restoreBtnText}>구매 복원하기</Text>
+            <Text style={styles.restoreBtnText}>{t('restore_purchase')}</Text>
           )}
         </TouchableOpacity>
 
@@ -297,14 +297,13 @@ export const PaywallScreen: React.FC = () => {
             disabled={isBusy}
             activeOpacity={0.7}
           >
-            <Text style={styles.webPayBtnText}>토스페이먼츠로 결제하기</Text>
+            <Text style={styles.webPayBtnText}>{t('toss_pay')}</Text>
           </TouchableOpacity>
         )}
 
         {Platform.OS === 'ios' && (
           <Text style={styles.legalText}>
-            구독은 iTunes 계정으로 청구됩니다. 갱신일 24시간 전에 자동 갱신이 취소되지 않으면
-            구독이 자동 갱신됩니다. 구독 관리는 앱스토어 계정 설정에서 할 수 있습니다.
+            {t('ios_legal')}
           </Text>
         )}
       </View>

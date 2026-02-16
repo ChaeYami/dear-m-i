@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { DatePickerModal } from '@/features/schedule/components/DatePickerModal';
 import { TimePickerModal } from '@/shared/components/TimePickerModal';
 import type { StackNavigationProp } from '@react-navigation/stack';
@@ -38,6 +39,7 @@ const buildInitialDate = (defaultDate?: string): Date => {
 export const ScheduleFormScreen: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
+  const { t, i18n } = useTranslation(['schedule', 'common']);
   const route = useRoute<Route>();
   const { schedule, defaultDate, defaultHospitalName } = route.params ?? {};
 
@@ -96,7 +98,7 @@ export const ScheduleFormScreen: React.FC = () => {
 
   const handleSave = () => {
     if (!hospitalName.trim()) {
-      customAlert('필수 입력', '병원명을 입력해 주세요.');
+      customAlert(t('common:required_input'), t('schedule:hospital_required'));
       return;
     }
 
@@ -125,8 +127,12 @@ export const ScheduleFormScreen: React.FC = () => {
     }
   };
 
-  const formatDateDisplay = (d: Date) =>
-    `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
+  const formatDateDisplay = (d: Date) => {
+    if (i18n.language === 'ko') {
+      return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
+    }
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  };
 
   const formatTimeDisplay = (d: Date) =>
     `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
@@ -135,7 +141,7 @@ export const ScheduleFormScreen: React.FC = () => {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScreenHeader
         variant="form"
-        title={isEdit ? '일정 수정' : '일정 추가'}
+        title={isEdit ? t('schedule:edit') : t('schedule:add')}
         onCancel={() => navigation.goBack()}
         onSave={handleSave}
         saveDisabled={isPending}
@@ -144,14 +150,14 @@ export const ScheduleFormScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {/* 병원 정보 섹션 */}
         <GlassCard intensity={40} style={styles.sectionCard}>
-          <SectionTitle size="sm">병원 정보</SectionTitle>
+          <SectionTitle size="sm">{t('schedule:section_hospital')}</SectionTitle>
           <View style={styles.sectionFields}>
-            <Field label="병원명" required colors={colors}>
+            <Field label={t('schedule:hospital_name')} required colors={colors}>
               {/* 자동완성 래퍼 */}
               <View style={styles.autocompleteWrap}>
                 <TextInput
                   style={[styles.input, { backgroundColor: 'transparent', borderColor: colors.divider, color: colors.text }]}
-                  placeholder="병원 이름을 입력하세요"
+                  placeholder={t('schedule:hospital_placeholder')}
                   placeholderTextColor={colors.textDisabled}
                   value={hospitalName}
                   onChangeText={setHospitalName}
@@ -180,10 +186,10 @@ export const ScheduleFormScreen: React.FC = () => {
               </View>
             </Field>
 
-            <Field label="담당 선생님 (선택)" colors={colors}>
+            <Field label={t('schedule:doctor_optional')} colors={colors}>
               <TextInput
                 style={[styles.input, { backgroundColor: 'transparent', borderColor: colors.divider, color: colors.text }]}
-                placeholder="담당 선생님 이름"
+                placeholder={t('schedule:doctor_placeholder')}
                 placeholderTextColor={colors.textDisabled}
                 value={doctorName}
                 onChangeText={setDoctorName}
@@ -194,9 +200,9 @@ export const ScheduleFormScreen: React.FC = () => {
 
         {/* 일정 섹션 */}
         <GlassCard intensity={40} style={styles.sectionCard}>
-          <SectionTitle size="sm">일정</SectionTitle>
+          <SectionTitle size="sm">{t('schedule:section_schedule')}</SectionTitle>
           <View style={styles.sectionFields}>
-            <Field label="날짜" colors={colors}>
+            <Field label={t('schedule:date')} colors={colors}>
               <TouchableOpacity
                 style={[styles.pickerButton, { backgroundColor: 'transparent', borderColor: colors.divider }]}
                 onPress={() => setShowDatePicker(true)}
@@ -205,7 +211,7 @@ export const ScheduleFormScreen: React.FC = () => {
               </TouchableOpacity>
             </Field>
 
-            <Field label="시간" colors={colors}>
+            <Field label={t('schedule:time')} colors={colors}>
               <TouchableOpacity
                 style={[styles.pickerButton, { backgroundColor: 'transparent', borderColor: colors.divider }]}
                 onPress={() => setShowTimePicker(true)}
@@ -248,12 +254,12 @@ export const ScheduleFormScreen: React.FC = () => {
 
         {/* 메모 섹션 */}
         <GlassCard intensity={40} style={styles.sectionCard}>
-          <SectionTitle size="sm">메모</SectionTitle>
+          <SectionTitle size="sm">{t('schedule:section_memo')}</SectionTitle>
           <View style={styles.sectionFields}>
-            <Field label="메모 (선택)" colors={colors}>
+            <Field label={t('schedule:memo_optional')} colors={colors}>
               <TextInput
                 style={[styles.input, styles.textArea, { backgroundColor: 'transparent', borderColor: colors.divider, color: colors.text }]}
-                placeholder="메모를 입력하세요"
+                placeholder={t('schedule:memo_placeholder')}
                 placeholderTextColor={colors.textDisabled}
                 value={memo}
                 onChangeText={setMemo}

@@ -49,15 +49,16 @@ const formatRecordDate = (item: RecordSummary): { label: string; isConsulted: bo
 
 const RecordCard: React.FC<{ item: RecordSummary; onPress: () => void; onEdit: () => void; onDelete: () => void }> = ({ item, onPress, onEdit, onDelete }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation(['record', 'common']);
   const emotionColor = item.emotionScore !== undefined ? getEmotionColor(item.emotionScore) : colors.primary;
   const { label: dateLabel, isConsulted } = formatRecordDate(item);
   const swipeRef = useRef<Swipeable>(null);
 
   const handleMore = () => {
-    customAlert('진료 기록', '', [
-      { text: '수정', onPress: onEdit },
-      { text: '삭제', style: 'destructive', onPress: onDelete },
-      { text: '취소', style: 'cancel' },
+    customAlert(t('record:visit_relation_title'), '', [
+      { text: t('common:edit'), onPress: onEdit },
+      { text: t('common:delete'), style: 'destructive', onPress: onDelete },
+      { text: t('common:cancel'), style: 'cancel' },
     ]);
   };
 
@@ -69,7 +70,7 @@ const RecordCard: React.FC<{ item: RecordSummary; onPress: () => void; onEdit: (
         activeOpacity={0.8}
       >
         <Ionicons name="create-outline" size={18} color="#fff" />
-        <Text style={styles.swipeBtnText}>수정</Text>
+        <Text style={styles.swipeBtnText}>{t('common:edit')}</Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.swipeBtn, { backgroundColor: colors.error }]}
@@ -77,7 +78,7 @@ const RecordCard: React.FC<{ item: RecordSummary; onPress: () => void; onEdit: (
         activeOpacity={0.8}
       >
         <Ionicons name="trash-outline" size={18} color="#fff" />
-        <Text style={styles.swipeBtnText}>삭제</Text>
+        <Text style={styles.swipeBtnText}>{t('common:delete')}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -112,7 +113,7 @@ const RecordCard: React.FC<{ item: RecordSummary; onPress: () => void; onEdit: (
             {dateLabel}
           </Text>
           <Text style={[styles.dateLabelKind, { color: colors.textDisabled }]}>
-            {isConsulted ? '진료일' : '작성일'}
+            {isConsulted ? t('record:date_visit') : t('record:date_created')}
           </Text>
           <TouchableOpacity onPress={handleMore} hitSlop={12} style={styles.moreBtn}>
             <Ionicons name="ellipsis-vertical" size={16} color={colors.textSub} />
@@ -123,12 +124,12 @@ const RecordCard: React.FC<{ item: RecordSummary; onPress: () => void; onEdit: (
           {item.hospitalName ? (
             <Text style={[styles.cardHospital, { color: colors.primary }]}>{item.hospitalName}</Text>
           ) : (
-            <Text style={[styles.cardHospital, { color: colors.textDisabled }]}>일정 미연결</Text>
+            <Text style={[styles.cardHospital, { color: colors.textDisabled }]}>{t('record:not_connected_schedule')}</Text>
           )}
           {item.emotionScore !== undefined && (
             <View style={[styles.emotionBadge, { backgroundColor: emotionColor + '20', borderColor: emotionColor + '40' }]}>
               <Text style={[styles.emotionScore, { color: emotionColor }]}>
-                {item.emotionScore}점
+                {item.emotionScore}{t('common:score_unit')}
               </Text>
             </View>
           )}
@@ -177,16 +178,16 @@ const EmotionBar: React.FC<{ score: number }> = ({ score }) => {
 export const RecordTab: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
-  const { t } = useTranslation('record');
+  const { t } = useTranslation(['record', 'common']);
   const isPremium = useAuthStore((s) => s.user?.plan === 'PREMIUM');
   const tabBarSafeBottom = useTabBarSafeBottom();
   const scrollHandlers = useTabBarScrollHide();
   const { mutate: deleteRecord } = useDeleteRecord();
 
   const handleDeleteRecord = (id: string) => {
-    customAlert('기록 삭제', '이 진료 기록을 삭제할까요?', [
-      { text: '취소', style: 'cancel' },
-      { text: '삭제', style: 'destructive', onPress: () => deleteRecord(id) },
+    customAlert(t('record:delete_title'), t('record:delete_message'), [
+      { text: t('common:cancel'), style: 'cancel' },
+      { text: t('common:delete'), style: 'destructive', onPress: () => deleteRecord(id) },
     ]);
   };
 
@@ -223,11 +224,11 @@ export const RecordTab: React.FC<{ embedded?: boolean }> = ({ embedded = false }
           <View style={styles.freeBannerLeft}>
             <Ionicons name="lock-closed-outline" size={14} color={colors.text} />
             <Text style={[styles.freeBannerText, { color: colors.text }]}>
-              무료 플랜은 최근 2개월 기록만 조회됩니다.
+              {t('record:free_limit_banner')}
             </Text>
           </View>
           <TouchableOpacity onPress={() => navigation.navigate('Paywall')} hitSlop={8}>
-            <Text style={[styles.freeBannerUpgrade, { color: colors.primary }]}>업그레이드</Text>
+            <Text style={[styles.freeBannerUpgrade, { color: colors.primary }]}>{t('common:upgrade')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -257,14 +258,14 @@ export const RecordTab: React.FC<{ embedded?: boolean }> = ({ embedded = false }
         ListEmptyComponent={
           <View style={styles.emptyWrap}>
             <Ionicons name="document-text-outline" size={40} color={colors.primaryLight} />
-            <Text style={[styles.emptyText, { color: colors.textSub }]}>아직 기록이 없어요</Text>
-            <Text style={[styles.emptySubText, { color: colors.textDisabled }]}>진료 후 기록을 남겨보세요</Text>
+            <Text style={[styles.emptyText, { color: colors.textSub }]}>{t('record:empty_title')}</Text>
+            <Text style={[styles.emptySubText, { color: colors.textDisabled }]}>{t('record:empty_desc')}</Text>
             <AnimatedPressable
               onPress={() => navigation.navigate('RecordForm', undefined)}
               style={[styles.emptyCtaBtn, { backgroundColor: colors.primary }]}
             >
               <Ionicons name="add" size={16} color={colors.textInverse} />
-              <Text style={[styles.emptyCtaText, { color: colors.textInverse }]}>기록 작성하기</Text>
+              <Text style={[styles.emptyCtaText, { color: colors.textInverse }]}>{t('record:empty_write')}</Text>
             </AnimatedPressable>
           </View>
         }

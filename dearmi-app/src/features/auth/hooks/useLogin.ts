@@ -4,6 +4,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { authApi } from '@/features/auth/api';
+import i18n from '@/locales/i18n';
 
 /** 딥링크 쿼리 파라미터 파서 */
 const parseUrlParams = (url: string): Record<string, string> => {
@@ -60,7 +61,7 @@ export const useLogin = () => {
       }
 
       if (result.type !== 'success') {
-        throw new Error('로그인이 취소되었습니다.');
+        throw new Error(i18n.t('auth:login_cancelled'));
       }
 
       const params = parseUrlParams(result.url);
@@ -68,7 +69,7 @@ export const useLogin = () => {
       const refreshToken = params['refresh_token'];
 
       if (!accessToken || !refreshToken) {
-        throw new Error('서버로부터 토큰을 받지 못했습니다.');
+        throw new Error(i18n.t('auth:login_no_token'));
       }
 
       await setTokens(accessToken, refreshToken);
@@ -78,7 +79,7 @@ export const useLogin = () => {
         setUser(data.data);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : '로그인 중 오류가 발생했습니다.');
+      setError(e instanceof Error ? e.message : i18n.t('auth:login_error'));
     } finally {
       setIsLoading(false);
     }
@@ -89,10 +90,10 @@ export const useLogin = () => {
     setError(null);
 
     try {
-      const { data } = await authApi.devLogin('test@test.com', '테스트유저');
+      const { data } = await authApi.devLogin('test@test.com', i18n.t('auth:dev_user_name'));
 
       if (!data.success || !data.data) {
-        throw new Error('Dev 로그인 실패');
+        throw new Error(i18n.t('auth:dev_login_failed'));
       }
 
       await setTokens(data.data.accessToken, data.data.refreshToken);
@@ -102,7 +103,7 @@ export const useLogin = () => {
         setUser(meRes.data.data);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Dev 로그인 중 오류가 발생했습니다.');
+      setError(e instanceof Error ? e.message : i18n.t('auth:dev_login_error'));
     } finally {
       setIsLoading(false);
     }

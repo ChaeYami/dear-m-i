@@ -12,8 +12,10 @@
   "sleep_label": "수면 시간",
   "medication_toggle": "오늘 약 복용 여부",
   "sleep_unit": "{{hours}}시간",
+  "sleep_unit_short": "시간",
   "took_medication": "복용",
   "not_took_medication": "미복용",
+  "med_done": "복용 완료",
   "med_label": "약",
   "sleep_short": "수면",
   "emotion_trend": "감정 추이",
@@ -22,6 +24,7 @@
   "free_limit_banner": "무료 플랜은 최근 30일 기록만 조회됩니다.",
   "empty_title": "아직 기록이 없어요",
   "empty_desc": "홈에서 오늘의 기분을 기록해 보세요",
+  "empty_short": "기록이 없어요",
   "graph_empty": "아직 기록이 없어요",
   "graph_empty_desc": "체크인을 시작하면 감정 그래프가 나타납니다",
   "period_7d": "7일",
@@ -46,5 +49,8 @@
     "financial": "경제적 걱정",
     "none": "특별한 이유 없음"
   },
-  "custom_input": "직접 입력"
+  "custom_input": "직접 입력",
+  "past_date_notice": "지난 날짜의 기록을 조회하거나 추가할 수 있어요",
+  "write_for_date": "{{label}} 기록하기",
+  "date_label_month_day": "{{month}}월 {{day}}일"
 }

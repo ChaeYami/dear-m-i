@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { SkeletonLoader } from '@/shared/components/SkeletonLoader';
 import { useMedicationDetail } from '@/features/prescription/hooks/usePrescription';
@@ -98,6 +99,7 @@ const DrugSection: React.FC<{
 export const MedicationDetailScreen: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
+  const { t } = useTranslation('prescription');
   const { medicationId, medicationName } = useRoute<Route>().params;
   const queryClient = useQueryClient();
 
@@ -142,14 +144,14 @@ export const MedicationDetailScreen: React.FC = () => {
         ) : isPending ? (
           <View style={styles.statusWrap}>
             <Ionicons name="time-outline" size={48} color={colors.primaryLight} />
-            <Text style={styles.statusTitle}>약품 정보를 조회 중이에요</Text>
-            <Text style={styles.statusDesc}>우측 상단 새로고침 버튼을 눌러보세요</Text>
+            <Text style={styles.statusTitle}>{t('drug_loading_title')}</Text>
+            <Text style={styles.statusDesc}>{t('drug_not_found_desc')}</Text>
           </View>
         ) : noInfo ? (
           <View style={styles.statusWrap}>
             <Ionicons name="information-circle-outline" size={48} color={colors.textDisabled} />
-            <Text style={styles.statusTitle}>약품 정보를 찾을 수 없어요</Text>
-            <Text style={styles.statusDesc}>우측 상단 새로고침 버튼을 눌러보세요</Text>
+            <Text style={styles.statusTitle}>{t('drug_not_found_title')}</Text>
+            <Text style={styles.statusDesc}>{t('drug_not_found_desc')}</Text>
           </View>
         ) : (
           <>
@@ -161,32 +163,32 @@ export const MedicationDetailScreen: React.FC = () => {
               </View>
               {med?.manufacturer && (
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>제조사</Text>
+                  <Text style={styles.infoLabel}>{t('manufacturer')}</Text>
                   <Text style={styles.infoValue}>{med.manufacturer}</Text>
                 </View>
               )}
               {med?.dosage && (
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>용량</Text>
+                  <Text style={styles.infoLabel}>{t('dosage_label')}</Text>
                   <Text style={styles.infoValue}>{med.dosage}</Text>
                 </View>
               )}
               {med?.singleDose && (
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>1회 투여량</Text>
+                  <Text style={styles.infoLabel}>{t('dose_per_time_label')}</Text>
                   <Text style={styles.infoValue}>{med.singleDose}</Text>
                 </View>
               )}
               {med?.frequency && (
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>용법</Text>
+                  <Text style={styles.infoLabel}>{t('frequency_label')}</Text>
                   <Text style={styles.infoValue}>{med.frequency}</Text>
                 </View>
               )}
               {med?.durationDays !== undefined && (
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>투약일수</Text>
-                  <Text style={styles.infoValue}>{med.durationDays}일</Text>
+                  <Text style={styles.infoLabel}>{t('duration_label')}</Text>
+                  <Text style={styles.infoValue}>{t('duration_days_value', { count: med.durationDays })}</Text>
                 </View>
               )}
             </View>
@@ -196,7 +198,7 @@ export const MedicationDetailScreen: React.FC = () => {
               <DrugSection
                 icon="checkmark-circle"
                 iconColor={colors.secondary}
-                title="효능·효과"
+                title={t('drug_effect')}
                 sections={parseSections(med.drugEffect)}
                 defaultOpen
               />
@@ -207,7 +209,7 @@ export const MedicationDetailScreen: React.FC = () => {
               <DrugSection
                 icon="warning"
                 iconColor={colors.error}
-                title="주의사항"
+                title={t('drug_caution')}
                 sections={parseSections(med.drugCaution)}
               />
             )}
@@ -224,7 +226,7 @@ export const MedicationDetailScreen: React.FC = () => {
               activeOpacity={0.8}
             >
               <Ionicons name="open-outline" size={16} color={colors.primary} />
-              <Text style={styles.nedrugLinkText}>약학정보원에서 전체 정보 보기</Text>
+              <Text style={styles.nedrugLinkText}>{t('drug_nedrug_link')}</Text>
               <Ionicons name="chevron-forward" size={14} color={colors.textDisabled} />
             </TouchableOpacity>
           </>

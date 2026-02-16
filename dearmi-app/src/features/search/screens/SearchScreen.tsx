@@ -28,10 +28,13 @@ import { useRoute, type RouteProp } from '@react-navigation/native';
 
 type Nav = StackNavigationProp<RootStackParamList, 'Search'>;
 
-const SCOPE_META: Record<SearchType, { placeholder: string }> = {
-  RECORD: { placeholder: '진료 기록 검색' },
-  CHECKIN: { placeholder: '하루 메모 검색' },
-  PREPNOTE: { placeholder: '준비 메모 검색' },
+const useScopeMeta = (): Record<SearchType, { placeholder: string }> => {
+  const { t } = useTranslation('common');
+  return {
+    RECORD: { placeholder: t('search_placeholder_record') },
+    CHECKIN: { placeholder: t('search_placeholder_checkin') },
+    PREPNOTE: { placeholder: t('search_placeholder_prepnote') },
+  };
 };
 
 const formatDate = (iso: string) => {
@@ -87,6 +90,8 @@ export const SearchScreen: React.FC = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'Search'>>();
   const scope = route.params?.scope as SearchType | undefined;
   const { t } = useTranslation('checkin');
+  const { t: tCommon } = useTranslation('common');
+  const SCOPE_META = useScopeMeta();
   const user = useAuthStore((s) => s.user);
   const isPremium = user?.plan === 'PREMIUM';
 
@@ -101,7 +106,7 @@ export const SearchScreen: React.FC = () => {
   const activeTags = scope === 'CHECKIN' ? selectedTags : undefined;
   const { data, isFetching, isDebouncing } = useSearch(submitted, scope, activeTags);
 
-  const placeholder = scope ? SCOPE_META[scope].placeholder : '진료 기록, 준비 메모 검색';
+  const placeholder = scope ? SCOPE_META[scope].placeholder : tCommon('search_placeholder_all');
   const showRecords = !scope || scope === 'RECORD';
   const showCheckins = !scope || scope === 'CHECKIN';
   const showPrepNotes = !scope || scope === 'PREPNOTE';
@@ -316,7 +321,7 @@ export const SearchScreen: React.FC = () => {
           )}
         </View>
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={8} style={styles.cancelBtn}>
-          <Text style={styles.cancelText}>취소</Text>
+          <Text style={styles.cancelText}>{tCommon('cancel')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -371,7 +376,7 @@ export const SearchScreen: React.FC = () => {
         {!isPremium && (
           <View style={styles.freeBanner}>
             <Text style={styles.freeBannerText}>
-              무료 플랜에서는 최근 2개월 이내 결과만 검색돼요.
+              {tCommon('search_free_banner')}
             </Text>
             <TouchableOpacity
               onPress={() => {
@@ -379,7 +384,7 @@ export const SearchScreen: React.FC = () => {
                 setTimeout(() => (navigationRef.current as any)?.navigate('Paywall'), 300);
               }}
             >
-              <Text style={styles.freeBannerLink}>업그레이드 →</Text>
+              <Text style={styles.freeBannerLink}>{tCommon('upgrade_arrow')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -396,14 +401,14 @@ export const SearchScreen: React.FC = () => {
              (showCheckins ? data.checkinTotal : 0) === 0 &&
              (showPrepNotes ? data.prepNoteTotal : 0) === 0 ? (
               <View style={styles.emptyWrap}>
-                <Text style={styles.emptyText}>'{submitted}'에 대한 결과가 없어요.</Text>
+                <Text style={styles.emptyText}>{tCommon('search_no_result', { keyword: submitted })}</Text>
               </View>
             ) : (
               <>
                 {/* 진료 기록 */}
                 {showRecords && data.recordTotal > 0 && (
                   <View>
-                    <SectionHeader title="진료 기록" count={data.recordTotal} />
+                    <SectionHeader title={tCommon('search_section_record')} count={data.recordTotal} />
                     {data.records.map((r) => (
                       <AnimatedPressable
                         key={r.id}
@@ -426,7 +431,7 @@ export const SearchScreen: React.FC = () => {
                 {/* 하루 메모 */}
                 {showCheckins && data.checkinTotal > 0 && (
                   <View>
-                    <SectionHeader title="하루 메모" count={data.checkinTotal} />
+                    <SectionHeader title={tCommon('search_section_checkin')} count={data.checkinTotal} />
                     {data.checkins.map((c) => (
                       <AnimatedPressable
                         key={c.id}
@@ -449,7 +454,7 @@ export const SearchScreen: React.FC = () => {
                 {/* 준비 메모 */}
                 {showPrepNotes && data.prepNoteTotal > 0 && (
                   <View>
-                    <SectionHeader title="준비 메모" count={data.prepNoteTotal} />
+                    <SectionHeader title={tCommon('search_section_prepnote')} count={data.prepNoteTotal} />
                     {data.prepNotes.map((p) => (
                       <AnimatedPressable
                         key={p.id}
@@ -477,9 +482,9 @@ export const SearchScreen: React.FC = () => {
         {!hasQuery && recentSearches.length > 0 && (
           <View style={styles.recentSection}>
             <View style={styles.recentHeader}>
-              <Text style={styles.recentTitle}>최근 검색어</Text>
+              <Text style={styles.recentTitle}>{tCommon('search_recent')}</Text>
               <TouchableOpacity onPress={handleClearAll} hitSlop={8}>
-                <Text style={styles.recentClearAll}>전체 삭제</Text>
+                <Text style={styles.recentClearAll}>{tCommon('search_clear_all')}</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.recentChipWrap}>
@@ -502,7 +507,7 @@ export const SearchScreen: React.FC = () => {
 
         {!hasQuery && recentSearches.length === 0 && (
           <View style={styles.emptyWrap}>
-            <Text style={styles.emptyText}>검색어를 입력해 보세요.</Text>
+            <Text style={styles.emptyText}>{tCommon('search_empty_hint')}</Text>
           </View>
         )}
       </ScrollView>
