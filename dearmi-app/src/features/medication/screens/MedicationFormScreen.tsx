@@ -24,6 +24,7 @@ import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
 import { useCreateMedicationSchedule, useUpdateMedicationSchedule, useAllMedicationSchedules } from '@/features/medication/hooks/useMedication';
 import { useMedicationDetail } from '@/features/prescription/hooks/usePrescription';
 import { useUnsavedChangesWarning } from '@/shared/hooks/useUnsavedChangesWarning';
+import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
 import type { TimeSlotType } from '@/shared/types/domain.types';
 
@@ -272,6 +273,7 @@ export const MedicationFormScreen: React.FC = () => {
   const showNextButton = isFromOcr && nextMed;
   const showFinishButton = isFromOcr && !nextMed;
 
+  const tabBarSafeBottom = useTabBarSafeBottom();
   const styles = getStyles(colors);
 
   return (
@@ -301,8 +303,12 @@ export const MedicationFormScreen: React.FC = () => {
       )}
 
       <ScrollView
-        contentContainerStyle={[styles.content, showNextButton && styles.contentWithNext]}
-        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={[
+          styles.content,
+          showNextButton && styles.contentWithNext,
+          !isFromOcr && { paddingBottom: tabBarSafeBottom },
+        ]}
+        keyboardShouldPersistTaps="always"
       >
         {/* 처방전 등록 배너 — 신규 등록 모드에서만 */}
         {!isFromOcr && !isEdit && (

@@ -149,9 +149,10 @@ export const RootNavigator: React.FC = () => {
   };
 
   /**
-   * 복약 알림 액션 버튼 처리.
-   * opensAppToForeground=true 로 등록되어 있어 액션 탭 시 앱이 열리며 이 핸들러가 실행된다.
-   * API 호출 후 복약 탭으로 이동해 체크 결과를 즉시 확인할 수 있게 한다.
+   * 복약 알림 액션 버튼(TAKEN/SKIPPED) 처리.
+   * 카테고리는 opensAppToForeground=false 로 등록되어 있어, 액션 탭은 앱을 열지 않고
+   * 짧은 백그라운드 JS 컨텍스트에서 이 핸들러만 실행해 API 호출로 상태를 기록한다.
+   * 이미 앱이 포그라운드인 경우엔 복약 탭으로 이동해 결과를 즉시 확인할 수 있게 한다.
    * API 실패는 조용히 무시 — 사용자는 다음번 복약 탭에서 상태를 재확인할 수 있다.
    */
   const handleMedicationAction = async (
@@ -170,7 +171,7 @@ export const RootNavigator: React.FC = () => {
       // 푸시 액션 실패는 UI 알림 없이 무시. 다음 앱 열람 시 상태가 동기화된다.
     }
 
-    // 앱이 열린 상태이니 복약 탭으로 이동해 즉시 반영된 상태 확인 가능하게
+    // 앱이 포그라운드인 경우에만 의미있는 네비게이션 — 백그라운드 호출 시엔 무시됨
     if (navigationRef.isReady()) {
       (navigationRef.current as any)?.navigate('Main', { screen: 'Medication' });
     }

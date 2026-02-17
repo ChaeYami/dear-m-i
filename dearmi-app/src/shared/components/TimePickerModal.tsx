@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Modal, View, Text, StyleSheet, TouchableOpacity, Pressable, Platform,
 } from 'react-native';
@@ -40,20 +40,46 @@ export const TimePickerModal: React.FC<Props> = (props) => {
 };
 
 const AndroidTimePicker: React.FC<Props> = ({ initialHour, initialMinute, onConfirm, onClose }) => {
+  // 콜백을 ref 로 홀드 — effect 의존성을 비워 재실행 없이 최신 콜백 호출
+  const onConfirmRef = useRef(onConfirm);
+  const onCloseRef = useRef(onClose);
+  onConfirmRef.current = onConfirm;
+  onCloseRef.current = onClose;
+
+  // 다이얼로그가 현재 열려있는지 추적 — 이미 사용자가 닫았는데 cleanup 이 dismiss 를
+  // 추가 호출해 터치 핸들러 상태를 교란하던 문제 방지
+  const dialogOpenRef = useRef(false);
+
   useEffect(() => {
-    DateTimePickerAndroid.open({
-      value: buildInitial(initialHour, initialMinute),
-      mode: 'time',
-      is24Hour: true,
-      onChange: (event: DateTimePickerEvent, date?: Date) => {
-        if (event.type === 'set' && date) {
-          onConfirm(date.getHours(), date.getMinutes());
-        } else {
-          onClose();
-        }
-      },
-    });
-    // imperative 1회만 띄우고, 다이얼로그 자체가 모달 역할을 한다
+    let cancelled = false;
+
+    // 다음 tick 에서 오픈 — 진행 중인 렌더/네이티브 애니메이션 완료 후
+    const t = setTimeout(() => {
+      if (cancelled) return;
+      dialogOpenRef.current = true;
+      DateTimePickerAndroid.open({
+        value: buildInitial(initialHour, initialMinute),
+        mode: 'time',
+        is24Hour: true,
+        onChange: (event: DateTimePickerEvent, date?: Date) => {
+          dialogOpenRef.current = false;
+          if (event.type === 'set' && date) {
+            onConfirmRef.current(date.getHours(), date.getMinutes());
+          } else {
+            onCloseRef.current();
+          }
+        },
+      });
+    }, 0);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+      // 이미 사용자 확정/취소로 닫힌 경우엔 dismiss 호출하지 않음
+      if (dialogOpenRef.current) {
+        DateTimePickerAndroid.dismiss('time').catch(() => {});
+      }
+    };
   }, []);
 
   return null;
