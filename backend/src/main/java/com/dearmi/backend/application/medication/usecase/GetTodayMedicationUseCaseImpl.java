@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,13 +26,17 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class GetTodayMedicationUseCaseImpl implements GetTodayMedicationUseCase {
 
+    // 서버 JVM 이 UTC 인 환경(ECS Fargate 등)에서 사용자의 '오늘' 과 어긋나지 않도록
+    // NotificationScheduler 와 동일하게 KST 기준으로 오늘을 계산한다.
+    private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
+
     private final MedicationScheduleRepository medicationScheduleRepository;
     private final MedicationLogRepository medicationLogRepository;
 
     @Override
     @Transactional(readOnly = true)
     public TodayMedicationResult getToday(UUID userId) {
-        return getForDate(userId, LocalDate.now());
+        return getForDate(userId, LocalDate.now(SEOUL));
     }
 
     @Override
