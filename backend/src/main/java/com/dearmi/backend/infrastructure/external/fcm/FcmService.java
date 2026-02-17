@@ -112,6 +112,10 @@ public class FcmService {
                 if (data != null) dataOnlyData.putAll(data);
                 dataOnlyData.put("title", title);
                 dataOnlyData.put("message", body);
+                // Android: expo-notifications 의 NotificationData 는 data["categoryId"] 를 읽는다
+                //   (categoryIdentifier 가 아님 — node_modules/.../NotificationData.kt 에서 확인됨)
+                // iOS 는 APNs aps.category 로 받으므로 data 필드는 선택. 호환성을 위해 둘 다 넣는다.
+                dataOnlyData.put("categoryId", apnsCategoryId);
                 dataOnlyData.put("categoryIdentifier", apnsCategoryId);
                 builder.putAllData(dataOnlyData);
 

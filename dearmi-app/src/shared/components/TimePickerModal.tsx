@@ -1,9 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Modal, View, Text, StyleSheet, TouchableOpacity, Pressable, TextInput,
+  Modal, View, Text, StyleSheet, TouchableOpacity, Pressable, Platform,
 } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import WheelPicker from '@quidone/react-native-wheel-picker';
+import DateTimePicker, {
+  DateTimePickerAndroid,
+  type DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 
@@ -15,193 +17,86 @@ interface Props {
   onClose: () => void;
 }
 
-const pad = (n: number) => String(n).padStart(2, '0');
-
-// 무한 스크롤 시뮬레이션: 데이터를 여러 번 반복
-// 각 항목에 고유 index를 value로 사용, realValue로 실제 시/분 값 추적
-const REPEATS = 5;
-const MID = Math.floor(REPEATS / 2);
-
-interface WheelItem { value: number; label: string; realValue: number }
-
-const buildData = (count: number): WheelItem[] => {
-  const items: WheelItem[] = [];
-  for (let r = 0; r < REPEATS; r++) {
-    for (let i = 0; i < count; i++) {
-      items.push({ value: r * count + i, label: pad(i), realValue: i });
-    }
-  }
-  return items;
+const buildInitial = (h: number, m: number) => {
+  const d = new Date();
+  d.setHours(h, Math.max(0, Math.min(59, m)), 0, 0);
+  return d;
 };
 
-const HOUR_DATA = buildData(24);
-const MINUTE_DATA = buildData(60);
-
-/** 실제 값 → 중간 반복 위치의 고유 value */
-const toMidValue = (realVal: number, cycleSize: number) => MID * cycleSize + realVal;
-
-/** visible=false → unmount, true → fresh mount */
+/**
+ * 시간 선택 모달.
+ * - iOS: Modal 안에 네이티브 spinner 렌더링 + 취소/확인 버튼
+ * - Android: 네이티브 time picker 다이얼로그를 imperative API 로 호출 (즉시 오픈, 자체 버튼 포함)
+ *
+ * 네이티브 컴포넌트를 쓰므로 WheelPicker 마운트 비용이 없어 지연 없이 바로 뜬다.
+ */
 export const TimePickerModal: React.FC<Props> = (props) => {
   if (!props.visible) return null;
-  return <TimePickerInner {...props} />;
+
+  if (Platform.OS === 'android') {
+    return <AndroidTimePicker {...props} />;
+  }
+  return <IosTimePicker {...props} />;
 };
 
-const TimePickerInner: React.FC<Props> = ({
+const AndroidTimePicker: React.FC<Props> = ({ initialHour, initialMinute, onConfirm, onClose }) => {
+  useEffect(() => {
+    DateTimePickerAndroid.open({
+      value: buildInitial(initialHour, initialMinute),
+      mode: 'time',
+      is24Hour: true,
+      onChange: (event: DateTimePickerEvent, date?: Date) => {
+        if (event.type === 'set' && date) {
+          onConfirm(date.getHours(), date.getMinutes());
+        } else {
+          onClose();
+        }
+      },
+    });
+    // imperative 1회만 띄우고, 다이얼로그 자체가 모달 역할을 한다
+  }, []);
+
+  return null;
+};
+
+const IosTimePicker: React.FC<Props> = ({
   initialHour, initialMinute, onConfirm, onClose,
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation('common');
-  // 고유 value (중간 반복 위치 기준)
-  const [hourVal, setHourVal] = useState(toMidValue(initialHour, 24));
-  const [minVal, setMinVal] = useState(toMidValue(Math.max(0, Math.min(59, initialMinute)), 60));
-  const [editField, setEditField] = useState<'h' | 'm' | null>(null);
-  const [editText, setEditText] = useState('');
-  const inputRef = useRef<TextInput>(null);
-
-  const hour = hourVal % 24;
-  const minute = minVal % 60;
-
-  const startEdit = (field: 'h' | 'm') => {
-    setEditField(field);
-    setEditText(pad(field === 'h' ? hour : minute));
-    setTimeout(() => inputRef.current?.focus(), 50);
-  };
-
-  /**
-   * 편집 중인 텍스트를 현재 필드에 적용.
-   * 비동기 state 업데이트 경합 없이 컨펌 흐름이 바로 다음 값을 쓸 수 있도록 계산된 hour/minute 를 반환한다.
-   */
-  const commitEdit = (): { h: number; m: number } => {
-    let h = hour;
-    let m = minute;
-    const parsed = parseInt(editText, 10);
-    if (!isNaN(parsed)) {
-      if (editField === 'h') {
-        h = Math.max(0, Math.min(23, parsed));
-        setHourVal(toMidValue(h, 24));
-      } else if (editField === 'm') {
-        m = Math.max(0, Math.min(59, parsed));
-        setMinVal(toMidValue(m, 60));
-      }
-    }
-    setEditField(null);
-    return { h, m };
-  };
-
-  const handleConfirm = () => {
-    const { h, m } = editField ? commitEdit() : { h: hour, m: minute };
-    onConfirm(h, m);
-  };
-
-  const handleBackdropPress = () => {
-    // 편집 중이면 먼저 커밋(저장 UX 와 일관), 편집 중 아닐 때만 닫기
-    if (editField) {
-      commitEdit();
-      return;
-    }
-    onClose();
-  };
+  const [value, setValue] = useState(() => buildInitial(initialHour, initialMinute));
 
   const styles = getStyles(colors);
 
   return (
-    <Modal visible transparent animationType="none" statusBarTranslucent>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <Pressable style={styles.backdrop} onPress={handleBackdropPress}>
-          {/*
-           * 카드 자체는 View 로 유지해야 WheelPicker 내부의 pan 제스처가 Pressable 에
-           * 빼앗기지 않는다. 터치 이벤트는 responder 로 잡아 backdrop 으로 전파만 막음.
-           */}
-          <View style={styles.card} onStartShouldSetResponder={() => true}>
-            <Text style={styles.label}>{t('time_picker_title')}</Text>
-
-            {/* 탭하면 직접 입력 */}
-            <View style={styles.displayRow}>
-              {editField === 'h' ? (
-                <TextInput
-                  ref={inputRef}
-                  style={[styles.displayInput, { borderColor: colors.primary, color: colors.text }]}
-                  value={editText} onChangeText={setEditText}
-                  onBlur={commitEdit} onSubmitEditing={commitEdit}
-                  keyboardType="number-pad" maxLength={2} selectTextOnFocus
-                  returnKeyType="done"
-                />
-              ) : (
-                <TouchableOpacity onPress={() => startEdit('h')}>
-                  <Text style={styles.displayNum}>{pad(hour)}</Text>
-                </TouchableOpacity>
-              )}
-              <Text style={styles.displayColon}>:</Text>
-              {editField === 'm' ? (
-                <TextInput
-                  ref={inputRef}
-                  style={[styles.displayInput, { borderColor: colors.primary, color: colors.text }]}
-                  value={editText} onChangeText={setEditText}
-                  onBlur={commitEdit} onSubmitEditing={commitEdit}
-                  keyboardType="number-pad" maxLength={2} selectTextOnFocus
-                  returnKeyType="done"
-                />
-              ) : (
-                <TouchableOpacity onPress={() => startEdit('m')}>
-                  <Text style={styles.displayNum}>{pad(minute)}</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-            <Text style={[styles.hint, { color: colors.textDisabled }]}>
-              {editField ? t('time_picker_hint_apply') : t('time_picker_hint_edit')}
-            </Text>
-
-            {/* 휠 피커 */}
-            <View style={styles.wheelsRow}>
-              <WheelPicker
-                data={HOUR_DATA}
-                value={hourVal}
-                onValueChanged={({ item }: { item: WheelItem }) => setHourVal(item.value)}
-                itemHeight={44}
-                visibleItemCount={5}
-                width={90}
-                itemTextStyle={{
-                  fontSize: 20,
-                  fontFamily: fontFamily.medium,
-                  color: colors.textDisabled,
-                }}
-                overlayItemStyle={{
-                  backgroundColor: colors.primaryMuted,
-                  borderRadius: sizes.radius.lg,
-                }}
-              />
-              <Text style={styles.colon}>:</Text>
-              <WheelPicker
-                data={MINUTE_DATA}
-                value={minVal}
-                onValueChanged={({ item }: { item: WheelItem }) => setMinVal(item.value)}
-                itemHeight={44}
-                visibleItemCount={5}
-                width={90}
-                itemTextStyle={{
-                  fontSize: 20,
-                  fontFamily: fontFamily.medium,
-                  color: colors.textDisabled,
-                }}
-                overlayItemStyle={{
-                  backgroundColor: colors.primaryMuted,
-                  borderRadius: sizes.radius.lg,
-                }}
-              />
-            </View>
-
-            <View style={styles.divider} />
-            <View style={styles.actions}>
-              <TouchableOpacity onPress={onClose} style={styles.actionBtn}>
-                <Text style={[styles.actionText, { color: colors.textSub }]}>{t('cancel')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleConfirm} style={styles.actionBtn}>
-                <Text style={[styles.actionText, { color: colors.primary, fontFamily: fontFamily.bold }]}>{t('confirm')}</Text>
-              </TouchableOpacity>
-            </View>
+    <Modal visible transparent animationType="fade" statusBarTranslucent>
+      <Pressable style={styles.backdrop} onPress={onClose}>
+        <View style={styles.card} onStartShouldSetResponder={() => true}>
+          <Text style={styles.label}>{t('time_picker_title')}</Text>
+          <DateTimePicker
+            value={value}
+            mode="time"
+            display="spinner"
+            is24Hour
+            onChange={(_: DateTimePickerEvent, d?: Date) => { if (d) setValue(d); }}
+            textColor={colors.text}
+            themeVariant="dark"
+            style={styles.picker}
+          />
+          <View style={styles.divider} />
+          <View style={styles.actions}>
+            <TouchableOpacity onPress={onClose} style={styles.actionBtn}>
+              <Text style={[styles.actionText, { color: colors.textSub }]}>{t('cancel')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => onConfirm(value.getHours(), value.getMinutes())}
+              style={styles.actionBtn}
+            >
+              <Text style={[styles.actionText, { color: colors.primary, fontFamily: fontFamily.bold }]}>{t('confirm')}</Text>
+            </TouchableOpacity>
           </View>
-        </Pressable>
-      </GestureHandlerRootView>
+        </View>
+      </Pressable>
     </Modal>
   );
 };
@@ -213,44 +108,22 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
       alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28,
     },
     card: {
-      width: '100%', maxWidth: 300, backgroundColor: colors.surface,
+      width: '100%', maxWidth: 320, backgroundColor: colors.surface,
       borderRadius: sizes.radius.xxl,
-      paddingTop: sizes.spacing.xl, paddingBottom: sizes.spacing.lg, paddingHorizontal: sizes.spacing.lg,
+      paddingTop: sizes.spacing.lg, paddingBottom: sizes.spacing.lg, paddingHorizontal: sizes.spacing.lg,
       alignItems: 'center',
       shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.15, shadowRadius: 24, elevation: 12,
     },
     label: {
       fontSize: sizes.font.sm, fontFamily: fontFamily.medium, color: colors.textSub,
+      marginBottom: sizes.spacing.xs,
     },
-    displayRow: {
-      flexDirection: 'row', alignItems: 'center', marginVertical: sizes.spacing.md,
-    },
-    displayNum: {
-      fontSize: sizes.font.xxl + 4, fontFamily: fontFamily.bold, color: colors.text,
-    },
-    displayColon: {
-      fontSize: sizes.font.xxl + 4, fontFamily: fontFamily.bold, color: colors.textSub,
-      marginHorizontal: sizes.spacing.xs,
-    },
-    displayInput: {
-      fontSize: sizes.font.xxl + 4, fontFamily: fontFamily.bold,
-      textAlign: 'center', minWidth: 60,
-      borderWidth: 2, borderRadius: sizes.radius.lg,
-      paddingHorizontal: sizes.spacing.sm, paddingVertical: sizes.spacing.xs,
-    },
-    hint: {
-      fontSize: sizes.font.xs, marginBottom: sizes.spacing.sm,
-    },
-    wheelsRow: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    },
-    colon: {
-      fontSize: 24, fontFamily: fontFamily.bold, color: colors.textSub,
-      paddingHorizontal: sizes.spacing.sm,
+    picker: {
+      alignSelf: 'stretch',
     },
     divider: {
       height: 1, backgroundColor: colors.divider, alignSelf: 'stretch',
-      marginTop: sizes.spacing.md, marginBottom: sizes.spacing.sm,
+      marginTop: sizes.spacing.sm, marginBottom: sizes.spacing.xs,
     },
     actions: {
       flexDirection: 'row', justifyContent: 'flex-end', gap: sizes.spacing.lg, alignSelf: 'stretch',
