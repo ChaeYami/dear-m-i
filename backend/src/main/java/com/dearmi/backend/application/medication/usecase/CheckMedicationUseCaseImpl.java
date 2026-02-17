@@ -13,11 +13,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class CheckMedicationUseCaseImpl implements CheckMedicationUseCase {
+
+    // JVM 기본 TZ(ECS=UTC) 가 KST 와 어긋나 logDate 가 미래로 오판되는 문제 방지.
+    // NotificationScheduler/getToday 와 '오늘' 기준 일치.
+    private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
 
     private final MedicationScheduleRepository medicationScheduleRepository;
     private final MedicationLogRepository medicationLogRepository;
@@ -25,8 +30,8 @@ public class CheckMedicationUseCaseImpl implements CheckMedicationUseCase {
     @Override
     @Transactional
     public MedicationLogResult check(CheckMedicationCommand command) {
-        // 미래 날짜 체크 차단
-        if (command.logDate().isAfter(LocalDate.now())) {
+        // 미래 날짜 체크 차단 (KST 기준)
+        if (command.logDate().isAfter(LocalDate.now(SEOUL))) {
             throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
 

@@ -128,7 +128,7 @@ export const RootNavigator: React.FC = () => {
     const data = response.notification.request.content.data as Record<string, unknown>;
     const actionId = response.actionIdentifier;
 
-    // 복약 알림 액션 버튼 (TAKEN/SKIPPED) — 앱 진입 없이 백그라운드에서 API 호출로 상태 기록
+    // 복약 알림 액션 버튼 (TAKEN/SKIPPED) — 앱이 열리면 API 호출 + 복약 관리 탭으로 이동해 즉시 반영 확인
     if (actionId === 'TAKEN' || actionId === 'SKIPPED') {
       handleMedicationAction(data, actionId);
       return;
@@ -171,10 +171,9 @@ export const RootNavigator: React.FC = () => {
 
   /**
    * 복약 알림 액션 버튼(TAKEN/SKIPPED) 처리.
-   * 카테고리는 opensAppToForeground=false 로 등록되어 있어, 액션 탭은 앱을 열지 않고
-   * 짧은 백그라운드 JS 컨텍스트에서 이 핸들러만 실행해 API 호출로 상태를 기록한다.
-   * 이미 앱이 포그라운드인 경우엔 복약 탭으로 이동해 결과를 즉시 확인할 수 있게 한다.
-   * API 실패는 조용히 무시 — 사용자는 다음번 복약 탭에서 상태를 재확인할 수 있다.
+   * 카테고리는 opensAppToForeground=true — JS 가 킬 상태여도 확실히 깨어 이 핸들러 실행을 보장.
+   * API 호출 후 캐시를 무효화하고 복약 관리 탭으로 이동해 반영된 상태를 즉시 확인할 수 있게 한다.
+   * API 실패는 조용히 무시 — 사용자는 다음번 복약 탭 진입 시 상태가 동기화된다.
    */
   const handleMedicationAction = async (
     data: Record<string, unknown>,
@@ -191,8 +190,9 @@ export const RootNavigator: React.FC = () => {
       // 앱이 열려있을 경우 복약 목록 캐시를 무효화해 즉시 반영
       queryClient.invalidateQueries({ queryKey: ['todayMedication'] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.medicationLogs() });
-    } catch {
-      // 푸시 액션 실패는 UI 알림 없이 무시. 다음 앱 열람 시 상태가 동기화된다.
+    } catch (e) {
+      // 조용한 실패는 '복용 상태 반영 안 됨' 류 버그의 진단을 어렵게 해 로그 남김
+      console.warn('[medication action] check API failed', e);
     }
 
     // 앱이 포그라운드인 경우에만 의미있는 네비게이션 — 백그라운드 호출 시엔 무시됨

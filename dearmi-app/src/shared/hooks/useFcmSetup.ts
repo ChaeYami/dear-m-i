@@ -46,18 +46,21 @@ export const useFcmSetup = () => {
     //   iOS: APNs aps.category 와 매칭되어 시스템이 액션 버튼을 렌더
     //   Android: FCM data payload 의 categoryId 와 매칭되어 expo-notifications 가 재빌드
     //
-    // opensAppToForeground: false → 앱을 열지 않고 백그라운드 태스크에서 API 호출만 수행
-    // (알림 본체 탭은 별도로 앱을 열어 '오늘 복약 관리' 화면으로 이동)
+    // opensAppToForeground: true — 앱이 킬 상태여도 JS 가 확실히 깨어 핸들러가 실행되도록.
+    // (opensAppToForeground: false 는 Android/iOS 모두 킬 상태에서 reliable 하지 않아
+    //  액션이 API 호출까지 이어지지 않는 케이스가 있음)
+    // RootNavigator 가 useLastNotificationResponse 로 런치 응답을 잡아 API + 캐시 invalidate 수행,
+    // 사용자는 곧바로 복약 관리 탭의 반영된 상태를 확인할 수 있다.
     await Notifications.setNotificationCategoryAsync('MEDICATION_REMINDER', [
       {
         identifier: 'TAKEN',
         buttonTitle: i18n.t('settings:medication_status_taken'),
-        options: { opensAppToForeground: false },
+        options: { opensAppToForeground: true },
       },
       {
         identifier: 'SKIPPED',
         buttonTitle: i18n.t('settings:medication_status_skipped'),
-        options: { opensAppToForeground: false, isDestructive: true },
+        options: { opensAppToForeground: true, isDestructive: true },
       },
     ]);
 
