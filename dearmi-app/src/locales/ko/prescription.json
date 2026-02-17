@@ -16,6 +16,7 @@
   "upload_url_missing": "업로드 URL을 받지 못했습니다.",
   "register_failed": "처방전 등록에 실패했습니다.",
   "s3_network_error": "S3 업로드 중 네트워크 오류가 발생했습니다.",
+  "s3_upload_failed": "S3 업로드 실패 ({{status}})",
   "premium_feature": "프리미엄 기능",
   "ocr_premium_only": "처방전 자동 인식은 프리미엄 플랜 전용 기능입니다.",
   "processing": "처리 중…",

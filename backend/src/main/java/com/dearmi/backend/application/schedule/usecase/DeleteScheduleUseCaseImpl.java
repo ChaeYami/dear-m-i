@@ -5,6 +5,7 @@ import com.dearmi.backend.common.exception.ErrorCode;
 import com.dearmi.backend.domain.counseling.CounselingRecordRepository;
 import com.dearmi.backend.domain.hospital.HospitalSchedule;
 import com.dearmi.backend.domain.hospital.HospitalScheduleRepository;
+import com.dearmi.backend.domain.notification.NotificationRepository;
 import com.dearmi.backend.domain.prepnote.PrepNoteRepository;
 import com.dearmi.backend.domain.prescription.PrescriptionRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class DeleteScheduleUseCaseImpl implements DeleteScheduleUseCase {
     private final CounselingRecordRepository counselingRecordRepository;
     private final PrescriptionRepository prescriptionRepository;
     private final PrepNoteRepository prepNoteRepository;
+    private final NotificationRepository notificationRepository;
 
     @Override
     @Transactional
@@ -38,5 +40,6 @@ public class DeleteScheduleUseCaseImpl implements DeleteScheduleUseCase {
         counselingRecordRepository.detachSchedule(scheduleId);
         prescriptionRepository.detachSchedule(scheduleId);
         prepNoteRepository.detachSchedule(scheduleId);
+        notificationRepository.clearResourceId(scheduleId);
     }
 }

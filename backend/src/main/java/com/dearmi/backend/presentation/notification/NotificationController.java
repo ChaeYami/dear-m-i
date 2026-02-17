@@ -1,15 +1,23 @@
 package com.dearmi.backend.presentation.notification;
 
 import com.dearmi.backend.application.notification.usecase.GetNotificationSettingUseCase;
+import com.dearmi.backend.application.notification.usecase.GetNotificationsUseCase;
+import com.dearmi.backend.application.notification.usecase.GetUnreadCountUseCase;
+import com.dearmi.backend.application.notification.usecase.MarkAllNotificationsReadUseCase;
+import com.dearmi.backend.application.notification.usecase.MarkNotificationReadUseCase;
 import com.dearmi.backend.application.notification.usecase.UpdateFcmTokenUseCase;
 import com.dearmi.backend.application.notification.usecase.UpdateNotificationSettingUseCase;
 import com.dearmi.backend.common.response.ApiResponse;
+import com.dearmi.backend.common.response.PageResponse;
 import com.dearmi.backend.infrastructure.security.AuthenticatedUserId;
 import com.dearmi.backend.presentation.notification.dto.FcmTokenRequest;
+import com.dearmi.backend.presentation.notification.dto.NotificationResponse;
 import com.dearmi.backend.presentation.notification.dto.NotificationSettingResponse;
+import com.dearmi.backend.presentation.notification.dto.UnreadCountResponse;
 import com.dearmi.backend.presentation.notification.dto.UpdateSettingRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -22,6 +30,10 @@ public class NotificationController {
     private final UpdateFcmTokenUseCase updateFcmTokenUseCase;
     private final GetNotificationSettingUseCase getNotificationSettingUseCase;
     private final UpdateNotificationSettingUseCase updateNotificationSettingUseCase;
+    private final GetNotificationsUseCase getNotificationsUseCase;
+    private final GetUnreadCountUseCase getUnreadCountUseCase;
+    private final MarkNotificationReadUseCase markNotificationReadUseCase;
+    private final MarkAllNotificationsReadUseCase markAllNotificationsReadUseCase;
 
     /** POST /api/v1/notifications/token — FCM 토큰 등록/갱신 */
     @PostMapping("/token")
@@ -56,5 +68,47 @@ public class NotificationController {
                         )
                 )
         );
+    }
+
+    /** GET /api/v1/notifications?page=&size= — 알림 히스토리 페이지 조회 (최신순) */
+    @GetMapping
+    public ApiResponse<PageResponse<NotificationResponse>> getHistory(
+            @AuthenticatedUserId UUID userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return ApiResponse.success(
+                PageResponse.from(
+                        getNotificationsUseCase.getNotifications(userId, page, size)
+                                .map(NotificationResponse::from)
+                )
+        );
+    }
+
+    /** GET /api/v1/notifications/unread-count — 안 읽은 알림 개수 (벨 인디케이터용) */
+    @GetMapping("/unread-count")
+    public ApiResponse<UnreadCountResponse> getUnreadCount(
+            @AuthenticatedUserId UUID userId
+    ) {
+        return ApiResponse.success(new UnreadCountResponse(getUnreadCountUseCase.getUnreadCount(userId)));
+    }
+
+    /** PATCH /api/v1/notifications/{id}/read — 단일 알림 읽음 처리 */
+    @PatchMapping("/{id}/read")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void markRead(
+            @AuthenticatedUserId UUID userId,
+            @PathVariable UUID id
+    ) {
+        markNotificationReadUseCase.markRead(userId, id);
+    }
+
+    /** PATCH /api/v1/notifications/read-all — 모든 알림 읽음 처리 */
+    @PatchMapping("/read-all")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void markAllRead(
+            @AuthenticatedUserId UUID userId
+    ) {
+        markAllNotificationsReadUseCase.markAllRead(userId);
     }
 }

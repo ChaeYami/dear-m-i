@@ -5,6 +5,7 @@ import com.dearmi.backend.common.exception.ErrorCode;
 import com.dearmi.backend.domain.medication.MedicationLogRepository;
 import com.dearmi.backend.domain.medication.MedicationSchedule;
 import com.dearmi.backend.domain.medication.MedicationScheduleRepository;
+import com.dearmi.backend.domain.notification.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ public class DeleteMedicationScheduleUseCaseImpl implements DeleteMedicationSche
 
     private final MedicationScheduleRepository medicationScheduleRepository;
     private final MedicationLogRepository medicationLogRepository;
+    private final NotificationRepository notificationRepository;
 
     @Override
     @Transactional
@@ -28,6 +30,9 @@ public class DeleteMedicationScheduleUseCaseImpl implements DeleteMedicationSche
 
         // ⑤ 원칙: medication_logs CASCADE 삭제
         medicationLogRepository.deleteByMedicationScheduleId(scheduleId);
+
+        // ⑤ 원칙: notifications.resource_id SET NULL (히스토리 자체는 유지)
+        notificationRepository.clearResourceId(scheduleId);
 
         // 소프트딜리트
         schedule.softDelete();

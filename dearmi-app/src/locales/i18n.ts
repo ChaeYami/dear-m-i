@@ -13,6 +13,7 @@ import koPrescription from './ko/prescription.json';
 import koSubscription from './ko/subscription.json';
 import koSettings from './ko/settings.json';
 import koLegal from './ko/legal.json';
+import koNotifications from './ko/notifications.json';
 
 // en
 import enCommon from './en/common.json';
@@ -24,6 +25,7 @@ import enPrescription from './en/prescription.json';
 import enSubscription from './en/subscription.json';
 import enSettings from './en/settings.json';
 import enLegal from './en/legal.json';
+import enNotifications from './en/notifications.json';
 
 const LANGUAGE_KEY = 'app_language';
 
@@ -39,7 +41,7 @@ const getInitialLanguage = (): string => {
 i18n.use(initReactI18next).init({
   lng: getInitialLanguage(),
   fallbackLng: 'en',
-  ns: ['common', 'auth', 'schedule', 'record', 'checkin', 'prescription', 'subscription', 'settings', 'legal'],
+  ns: ['common', 'auth', 'schedule', 'record', 'checkin', 'prescription', 'subscription', 'settings', 'legal', 'notifications'],
   defaultNS: 'common',
   resources: {
     ko: {
@@ -52,6 +54,7 @@ i18n.use(initReactI18next).init({
       subscription: koSubscription,
       settings: koSettings,
       legal: koLegal,
+      notifications: koNotifications,
     },
     en: {
       common: enCommon,
@@ -63,6 +66,7 @@ i18n.use(initReactI18next).init({
       subscription: enSubscription,
       settings: enSettings,
       legal: enLegal,
+      notifications: enNotifications,
     },
   },
   interpolation: { escapeValue: false },

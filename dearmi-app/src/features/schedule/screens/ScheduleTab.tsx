@@ -435,6 +435,7 @@ const WeekStrip: React.FC<{
   highlightedDates: Set<string>;
   colors: any;
   todayStr: string;
+  weekDaysLabel: string[];
   onDayPress: (dateString: string) => void;
   onWeekChange: (weekDates: string[]) => void;
 }> = ({ selectedDate, visibleYear, visibleMonth, highlightedDates, colors, todayStr, onDayPress, onWeekChange, weekDaysLabel }) => {

@@ -20,6 +20,7 @@ import { CacheService } from '@/shared/cache';
 import { CACHE_KEYS } from '@/constants/cacheKeys';
 import { useSearch, useRecentSearches } from '@/features/search/hooks/useSearch';
 import type { SearchType } from '@/features/search/api/searchApi';
+import { PRESET_TAG_KEYS, expandTagForSearch } from '@/features/checkin/triggerTags';
 import { SectionHeader } from '@/features/search/components/SearchResultSection';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { navigationRef } from '@/navigation/navigationRef';
@@ -103,7 +104,11 @@ export const SearchScreen: React.FC = () => {
   const { load: loadRecent, save: saveRecent, remove: removeRecent } = useRecentSearches();
   const [recentSearches, setRecentSearches] = useState<string[]>(() => loadRecent());
 
-  const activeTags = scope === 'CHECKIN' ? selectedTags : undefined;
+  // 백엔드에 보낼 때는 key 를 한/영 전체 형태로 확장 — 레거시 문자열 데이터도 매칭
+  const activeTags = useMemo(() => {
+    if (scope !== 'CHECKIN') return undefined;
+    return selectedTags.flatMap(expandTagForSearch);
+  }, [scope, selectedTags]);
   const { data, isFetching, isDebouncing } = useSearch(submitted, scope, activeTags);
 
   const placeholder = scope ? SCOPE_META[scope].placeholder : tCommon('search_placeholder_all');
@@ -111,13 +116,11 @@ export const SearchScreen: React.FC = () => {
   const showCheckins = !scope || scope === 'CHECKIN';
   const showPrepNotes = !scope || scope === 'PREPNOTE';
 
-  const TRIGGER_TAGS = useMemo(() => [
-    t('trigger_tags.family'), t('trigger_tags.friends'), t('trigger_tags.work_relations'),
-    t('trigger_tags.partner'), t('trigger_tags.loneliness'),
-    t('trigger_tags.work_stress'), t('trigger_tags.academic'), t('trigger_tags.burnout'),
-    t('trigger_tags.sleep_lack'), t('trigger_tags.fatigue'), t('trigger_tags.pain'),
-    t('trigger_tags.weather'), t('trigger_tags.financial'),
-  ], [t]);
+  // 'none' 은 "특별한 이유 없음" — 필터 칩으로는 굳이 노출하지 않음 (폼에서만 의미 있음)
+  const TRIGGER_TAGS = useMemo(
+    () => PRESET_TAG_KEYS.filter((k) => k !== 'none'),
+    [],
+  );
 
   const toggleTag = useCallback((tag: string) => {
     setSelectedTags((prev) =>
@@ -337,12 +340,12 @@ export const SearchScreen: React.FC = () => {
           }}
           keyboardShouldPersistTaps="handled"
         >
-          {TRIGGER_TAGS.map((tag) => {
-            const isActive = selectedTags.includes(tag);
+          {TRIGGER_TAGS.map((tagKey) => {
+            const isActive = selectedTags.includes(tagKey);
             return (
               <TouchableOpacity
-                key={tag}
-                onPress={() => toggleTag(tag)}
+                key={tagKey}
+                onPress={() => toggleTag(tagKey)}
                 style={{
                   paddingHorizontal: 14,
                   paddingVertical: 7,
@@ -359,7 +362,7 @@ export const SearchScreen: React.FC = () => {
                     color: isActive ? colors.accent : colors.textSub,
                   }}
                 >
-                  {tag}
+                  {t(`trigger_tags.${tagKey}`)}
                 </Text>
               </TouchableOpacity>
             );

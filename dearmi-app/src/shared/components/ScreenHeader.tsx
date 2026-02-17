@@ -5,13 +5,17 @@ import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { navigationRef } from '@/navigation/navigationRef';
+import { useUnreadNotificationCount } from '@/features/notification/hooks/useNotificationHistory';
 
 interface TabHeaderProps {
   variant: 'tab';
   title: string;
   /** 알림 벨 앞쪽(왼쪽)에 렌더할 추가 우측 컨텐츠 */
   rightContent?: React.ReactNode;
-  /** 알림 빨간 점 인디케이터 */
+  /**
+   * @deprecated 빨간 점은 내부 `useUnreadNotificationCount` 쿼리가 결정한다.
+   * 이 prop 은 호환용으로만 남겨두며, 전달되더라도 무시된다.
+   */
   hasNotification?: boolean;
   /** 검색 스코프 — 지정 시 돋보기 아이콘 표시, 해당 타입만 검색 */
   searchScope?: 'RECORD' | 'CHECKIN' | 'PREPNOTE';
@@ -38,82 +42,60 @@ type ScreenHeaderProps = TabHeaderProps | BackHeaderProps | FormHeaderProps;
 
 const BRAND_LOGO = require('../../../assets/banner-icon.png');
 
-export const ScreenHeader: React.FC<ScreenHeaderProps> = (props) => {
+const TabHeader: React.FC<TabHeaderProps> = (props) => {
   const { colors } = useTheme();
   const navigation = useNavigation<any>();
-  const { t } = useTranslation('common');
-  const { variant, title } = props;
+  const { data: unreadCount = 0 } = useUnreadNotificationCount();
+  const hasUnread = unreadCount > 0;
 
-  if (variant === 'tab') {
-    const handleBellPress = () => {
-      const parent = navigation.getParent();
-      if (parent) {
-        parent.navigate('MyPage', { screen: 'NotificationSettings' });
-      } else {
-        navigation.navigate('NotificationSettings' as never);
-      }
-    };
+  const handleBellPress = () => {
+    // 벨은 어느 탭에서 눌러도 같은 Root 모달을 연다 (탭 스택을 오염시키지 않음)
+    (navigationRef.current as any)?.navigate('NotificationHistory');
+  };
 
-    const handleSearchPress = () => {
-      (navigationRef.current as any)?.navigate('Search', { scope: props.searchScope });
-    };
+  const handleSearchPress = () => {
+    (navigationRef.current as any)?.navigate('Search', { scope: props.searchScope });
+  };
 
-    return (
-      <View
-        style={{
-          height: sizes.headerHeight,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: sizes.spacing.lg,
-        }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 0 }}>
-          <Image
-            source={BRAND_LOGO}
-            style={{
-              width: 26,
-              height: 26,
-              borderRadius: 7,
-              marginRight: sizes.spacing.sm,
-            }}
-            resizeMode="cover"
-          />
-          <Text
-            style={{
-              fontFamily: fontFamily.bold,
-              fontSize: sizes.font.lg,
-              color: colors.text,
-              letterSpacing: -0.2,
-              flexShrink: 1,
-            }}
-            numberOfLines={1}
-          >
-            {title}
-          </Text>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.sm }}>
-          {props.rightContent}
-          {props.searchScope && (
-            <TouchableOpacity
-              onPress={handleSearchPress}
-              hitSlop={8}
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 19,
-                backgroundColor: colors.surface,
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderWidth: 1,
-                borderColor: colors.cardBorder,
-              }}
-            >
-              <Ionicons name="search-outline" size={20} color={colors.text} />
-            </TouchableOpacity>
-          )}
+  return (
+    <View
+      style={{
+        height: sizes.headerHeight,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: sizes.spacing.lg,
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 0 }}>
+        <Image
+          source={BRAND_LOGO}
+          style={{
+            width: 26,
+            height: 26,
+            borderRadius: 7,
+            marginRight: sizes.spacing.sm,
+          }}
+          resizeMode="cover"
+        />
+        <Text
+          style={{
+            fontFamily: fontFamily.bold,
+            fontSize: sizes.font.lg,
+            color: colors.text,
+            letterSpacing: -0.2,
+            flexShrink: 1,
+          }}
+          numberOfLines={1}
+        >
+          {props.title}
+        </Text>
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.sm }}>
+        {props.rightContent}
+        {props.searchScope && (
           <TouchableOpacity
-            onPress={handleBellPress}
+            onPress={handleSearchPress}
             hitSlop={8}
             style={{
               width: 38,
@@ -126,26 +108,53 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = (props) => {
               borderColor: colors.cardBorder,
             }}
           >
-            <Ionicons name="notifications-outline" size={20} color={colors.text} />
-            {props.hasNotification ? (
-              <View
-                style={{
-                  position: 'absolute',
-                  top: 8,
-                  right: 9,
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: colors.error,
-                  borderWidth: 1.5,
-                  borderColor: colors.surface,
-                }}
-              />
-            ) : null}
+            <Ionicons name="search-outline" size={20} color={colors.text} />
           </TouchableOpacity>
-        </View>
+        )}
+        <TouchableOpacity
+          onPress={handleBellPress}
+          hitSlop={8}
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: 19,
+            backgroundColor: colors.surface,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderWidth: 1,
+            borderColor: colors.cardBorder,
+          }}
+        >
+          <Ionicons name="notifications-outline" size={20} color={colors.text} />
+          {hasUnread ? (
+            <View
+              style={{
+                position: 'absolute',
+                top: 8,
+                right: 9,
+                width: 8,
+                height: 8,
+                borderRadius: 4,
+                backgroundColor: colors.error,
+                borderWidth: 1.5,
+                borderColor: colors.surface,
+              }}
+            />
+          ) : null}
+        </TouchableOpacity>
       </View>
-    );
+    </View>
+  );
+};
+
+export const ScreenHeader: React.FC<ScreenHeaderProps> = (props) => {
+  const { colors } = useTheme();
+  const navigation = useNavigation<any>();
+  const { t } = useTranslation('common');
+  const { variant, title } = props;
+
+  if (variant === 'tab') {
+    return <TabHeader {...(props as TabHeaderProps)} />;
   }
 
   if (variant === 'back') {

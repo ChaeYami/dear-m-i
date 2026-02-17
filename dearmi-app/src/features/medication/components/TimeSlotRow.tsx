@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
 import type { MedicationLogStatus } from '@/shared/types/domain.types';
@@ -29,6 +30,7 @@ export const TimeSlotRow: React.FC<Props> = ({
   onSkipped,
 }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation('settings');
   const isTaken = status === 'TAKEN';
   const isSkipped = status === 'SKIPPED';
 
@@ -113,7 +115,7 @@ export const TimeSlotRow: React.FC<Props> = ({
                 color: isTaken ? colors.success : colors.textSub,
               }}
             >
-              복용
+              {t('medication_status_taken')}
             </Text>
           </TouchableOpacity>
 
@@ -148,7 +150,7 @@ export const TimeSlotRow: React.FC<Props> = ({
                 color: isSkipped ? colors.textDisabled : colors.textSub,
               }}
             >
-              건너뜀
+              {t('medication_status_skipped')}
             </Text>
           </TouchableOpacity>
         </View>

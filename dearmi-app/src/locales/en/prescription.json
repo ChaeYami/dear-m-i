@@ -16,6 +16,7 @@
   "upload_url_missing": "Failed to get upload URL.",
   "register_failed": "Failed to register prescription.",
   "s3_network_error": "Network error during S3 upload.",
+  "s3_upload_failed": "S3 upload failed ({{status}})",
   "premium_feature": "Premium Feature",
   "ocr_premium_only": "Prescription auto-scan is a premium-only feature.",
   "processing": "Processing…",

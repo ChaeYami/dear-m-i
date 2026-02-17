@@ -1,0 +1,23 @@
+{
+  "notification.schedule.day.before.title": "내일 {{0}} 예약이 있어요",
+  "notification.schedule.day.before.body": "잊지 말고 준비하세요!",
+  "notification.schedule.day.of.title": "오늘 {{0}} 예약이 있어요",
+  "notification.schedule.day.of.body": "{{0}}에 예약되어 있습니다",
+  "notification.schedule.day.of.body.with.prep": "{{0}}에 예약되어 있습니다\n오늘 상담 준비 메모가 있어요",
+  "notification.checkin.reminder.title": "오늘 하루는 어땠나요?",
+  "notification.checkin.reminder.body": "감정을 기록하고 하루를 마무리해보세요",
+  "notification.medication.reminder.title": "{{0}} 복약 시간입니다",
+  "notification.medication.reminder.body": "지금 복약할 시간이에요",
+  "history_title": "알림",
+  "empty_title": "알림이 없어요",
+  "empty_desc": "받은 알림이 여기에 표시됩니다",
+  "mark_all_read": "모두 읽음",
+  "section_today": "오늘",
+  "section_yesterday": "어제",
+  "section_earlier": "이전",
+  "relative_just_now": "방금 전",
+  "relative_minutes_ago": "{{count}}분 전",
+  "relative_hours_ago": "{{count}}시간 전",
+  "relative_days_ago": "{{count}}일 전",
+  "resource_deleted": "관련 항목이 삭제되었어요"
+}

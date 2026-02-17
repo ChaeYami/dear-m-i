@@ -15,6 +15,7 @@ import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { getEmotionColor, useEmotionLabel } from '@/shared/components/EmotionSlider';
+import { displayTag } from '@/features/checkin/triggerTags';
 import { formatDate } from '@/shared/utils/dateUtils';
 import { useCheckinHistory } from '@/features/checkin/hooks/useCheckin';
 import { useAuthStore } from '@/features/auth/store/authStore';
@@ -249,7 +250,7 @@ export const CheckinHistoryScreen: React.FC = () => {
               <View style={styles.tagRow}>
                 {item.triggerTags.map((tag) => (
                   <View key={tag} style={styles.tag}>
-                    <Text style={styles.tagText}>{tag}</Text>
+                    <Text style={styles.tagText}>{displayTag(tag, t)}</Text>
                   </View>
                 ))}
               </View>

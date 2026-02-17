@@ -174,7 +174,8 @@ export const MyPageScreen: React.FC = () => {
           marginTop: sizes.spacing.md,
         },
         subCardPremium: {
-          backgroundColor: colors.primaryMuted,
+          borderWidth: 1,
+          borderColor: colors.primary + '40',
         },
         subCardLeft: { flex: 1, gap: sizes.spacing.xs },
         subCardBadge: {

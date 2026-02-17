@@ -18,6 +18,8 @@ import { PaywallScreen } from '@/features/subscription/screens/PaywallScreen';
 import { WebPaymentScreen } from '@/features/subscription/screens/WebPaymentScreen';
 import { SearchScreen } from '@/features/search/screens/SearchScreen';
 import { OnboardingScreen } from '@/features/onboarding/screens/OnboardingScreen';
+import { NotificationHistoryScreen } from '@/features/notification/screens/NotificationHistoryScreen';
+import { medicationApi } from '@/features/medication/api/medicationApi';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { useSubscriptionStore } from '@/features/subscription/store/subscriptionStore';
 import { authApi } from '@/features/auth/api';
@@ -44,6 +46,7 @@ export type RootStackParamList = {
   WebPayment: { planType: 'MONTHLY' | 'YEARLY' };
   Search: { scope?: 'RECORD' | 'CHECKIN' | 'PREPNOTE' } | undefined;
   Onboarding: { forceShow?: boolean } | undefined;
+  NotificationHistory: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -81,6 +84,15 @@ export const RootNavigator: React.FC = () => {
 
     responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
       const data = response.notification.request.content.data as Record<string, unknown>;
+      const actionId = response.actionIdentifier;
+
+      // 복약 알림 액션 버튼 (TAKEN/SKIPPED) — 앱 열지 않고 백그라운드에서 체크
+      if (actionId === 'TAKEN' || actionId === 'SKIPPED') {
+        handleMedicationAction(data, actionId);
+        return;
+      }
+
+      // 알림 탭 (기본 동작) — 관련 화면으로 딥링크
       navigateToScheduleDetail(data);
     });
 
@@ -116,6 +128,28 @@ export const RootNavigator: React.FC = () => {
         params: { scheduleId: Number(scheduleId) },
       },
     });
+  };
+
+  /**
+   * 복약 알림 액션 버튼 처리.
+   * iOS `opensAppToForeground: false` 로 등록되어 있어 앱이 포그라운드로 오지 않고 바로 API 호출한다.
+   * API 실패는 조용히 무시 — 사용자는 다음번 복약 탭에서 상태를 재확인할 수 있다.
+   */
+  const handleMedicationAction = async (
+    data: Record<string, unknown>,
+    status: 'TAKEN' | 'SKIPPED',
+  ) => {
+    const scheduleId = typeof data?.scheduleId === 'string' ? data.scheduleId : undefined;
+    const timeSlot = data?.timeSlot as 'MORNING' | 'AFTERNOON' | 'EVENING' | 'BEDTIME' | undefined;
+    const logDate = typeof data?.logDate === 'string' ? data.logDate : undefined;
+
+    if (!scheduleId || !timeSlot || !logDate) return;
+
+    try {
+      await medicationApi.check(scheduleId, { logDate, timeSlot, status });
+    } catch {
+      // 푸시 액션 실패는 UI 알림 없이 무시. 다음 앱 열람 시 상태가 동기화된다.
+    }
   };
 
   const initializeApp = async () => {
@@ -246,6 +280,11 @@ export const RootNavigator: React.FC = () => {
             name="Onboarding"
             component={OnboardingScreen}
             options={{ presentation: 'modal', gestureEnabled: false } as any}
+          />
+          <Stack.Screen
+            name="NotificationHistory"
+            component={NotificationHistoryScreen}
+            options={{ presentation: 'modal' } as any}
           />
         </Stack.Navigator>
 

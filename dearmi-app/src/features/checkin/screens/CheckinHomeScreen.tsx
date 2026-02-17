@@ -22,6 +22,7 @@ import { useResetStackOnTabFocus } from '@/shared/hooks/useResetStackOnTabFocus'
 import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import { useTabBarScrollHide } from '@/shared/hooks/useTabBarScrollHide';
 import { getEmotionColor, useEmotionLabel } from '@/shared/components/EmotionSlider';
+import { displayTag } from '@/features/checkin/triggerTags';
 import { EmotionGraph } from '@/features/checkin/components/EmotionGraph';
 import { DailyCheckinForm } from '@/features/checkin/components/DailyCheckinForm';
 import { useCheckinHistory } from '@/features/checkin/hooks/useCheckin';
@@ -483,7 +484,7 @@ export const CheckinHomeScreen: React.FC = () => {
                 <View style={styles.tagRow}>
                   {selectedCheckin.triggerTags.map((tag) => (
                     <View key={tag} style={styles.tag}>
-                      <Text style={styles.tagText}>{tag}</Text>
+                      <Text style={styles.tagText}>{displayTag(tag, t)}</Text>
                     </View>
                   ))}
                 </View>

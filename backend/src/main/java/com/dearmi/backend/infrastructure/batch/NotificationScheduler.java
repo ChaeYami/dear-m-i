@@ -1,5 +1,6 @@
 package com.dearmi.backend.infrastructure.batch;
 
+import com.dearmi.backend.application.notification.NotificationSender;
 import com.dearmi.backend.domain.checkin.DailyCheckinRepository;
 import com.dearmi.backend.domain.hospital.HospitalSchedule;
 import com.dearmi.backend.domain.hospital.HospitalScheduleRepository;
@@ -9,13 +10,12 @@ import com.dearmi.backend.domain.medication.MedicationLogRepository;
 import com.dearmi.backend.domain.medication.TimeSlot;
 import com.dearmi.backend.domain.notification.NotificationSetting;
 import com.dearmi.backend.domain.notification.NotificationSettingRepository;
+import com.dearmi.backend.domain.notification.NotificationType;
 import com.dearmi.backend.domain.prepnote.PrepNoteRepository;
 import com.dearmi.backend.domain.user.User;
 import com.dearmi.backend.domain.user.UserRepository;
-import com.dearmi.backend.infrastructure.external.fcm.FcmService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.MessageSource;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -32,7 +32,8 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * 병원 일정 D-1/D-0 + 체크인 리마인더 + 복약 알림 스케줄러
+ * 병원 일정 D-1/D-0 + 체크인 리마인더 + 복약 알림 스케줄러.
+ * 각 발송 지점은 NotificationSender 를 통해 히스토리 저장 후 FCM 푸시를 수행한다.
  */
 @Slf4j
 @Component
@@ -49,8 +50,7 @@ public class NotificationScheduler {
     private final DailyCheckinRepository dailyCheckinRepository;
     private final PrepNoteRepository prepNoteRepository;
     private final UserRepository userRepository;
-    private final FcmService fcmService;
-    private final MessageSource messageSource;
+    private final NotificationSender notificationSender;
 
     // ──────────────────────────────────────────────────────────────────────────
     // 병원 일정 알림 (매일 오전 9시)
@@ -89,11 +89,17 @@ public class NotificationScheduler {
             User user = userOpt.get();
 
             Locale locale = toLocale(user.getPreferredLocale());
-            fcmService.sendNotification(
+            notificationSender.sendAndLog(
+                    user.getId(),
+                    NotificationType.DAY_BEFORE,
+                    "notification.schedule.day.before.title",
+                    List.of(schedule.getHospitalName()),
+                    "notification.schedule.day.before.body",
+                    List.of(),
+                    schedule.getId(),
+                    null,
                     user.getFcmToken(),
-                    messageSource.getMessage("notification.schedule.day.before.title",
-                            new Object[]{schedule.getHospitalName()}, locale),
-                    messageSource.getMessage("notification.schedule.day.before.body", null, locale),
+                    locale,
                     Map.of("scheduleId", schedule.getId().toString(), "type", "DAY_BEFORE")
             );
         }
@@ -128,11 +134,17 @@ public class NotificationScheduler {
                     ? "notification.schedule.day.of.body.with.prep"
                     : "notification.schedule.day.of.body";
 
-            fcmService.sendNotification(
+            notificationSender.sendAndLog(
+                    user.getId(),
+                    NotificationType.DAY_OF,
+                    "notification.schedule.day.of.title",
+                    List.of(schedule.getHospitalName()),
+                    bodyKey,
+                    List.of(timeStr),
+                    schedule.getId(),
+                    null,
                     user.getFcmToken(),
-                    messageSource.getMessage("notification.schedule.day.of.title",
-                            new Object[]{schedule.getHospitalName()}, locale),
-                    messageSource.getMessage(bodyKey, new Object[]{timeStr}, locale),
+                    locale,
                     Map.of("scheduleId", schedule.getId().toString(), "type", "DAY_OF")
             );
         }
@@ -161,10 +173,17 @@ public class NotificationScheduler {
             User user = userOpt.get();
 
             Locale locale = toLocale(user.getPreferredLocale());
-            fcmService.sendNotification(
+            notificationSender.sendAndLog(
+                    user.getId(),
+                    NotificationType.CHECKIN,
+                    "notification.checkin.reminder.title",
+                    List.of(),
+                    "notification.checkin.reminder.body",
+                    List.of(),
+                    null,
+                    null,
                     user.getFcmToken(),
-                    messageSource.getMessage("notification.checkin.reminder.title", null, locale),
-                    messageSource.getMessage("notification.checkin.reminder.body", null, locale),
+                    locale,
                     Map.of("type", "CHECKIN")
             );
         }
@@ -211,14 +230,21 @@ public class NotificationScheduler {
         log.debug("복약 알림 발송: userId={}, drug={}, slot={}", schedule.getUserId(), schedule.getDrugName(), slot);
 
         Locale locale = toLocale(user.getPreferredLocale());
-        fcmService.sendNotification(
+        notificationSender.sendAndLog(
+                user.getId(),
+                NotificationType.MEDICATION,
+                "notification.medication.reminder.title",
+                List.of(schedule.getDrugName()),
+                "notification.medication.reminder.body",
+                List.of(),
+                schedule.getId(),
+                slot.name(),
                 user.getFcmToken(),
-                messageSource.getMessage("notification.medication.reminder.title",
-                        new Object[]{schedule.getDrugName()}, locale),
-                messageSource.getMessage("notification.medication.reminder.body", null, locale),
+                locale,
                 Map.of(
                         "scheduleId", schedule.getId().toString(),
                         "timeSlot",   slot.name(),
+                        "logDate",    today.toString(),
                         "type",       "MEDICATION"
                 )
         );

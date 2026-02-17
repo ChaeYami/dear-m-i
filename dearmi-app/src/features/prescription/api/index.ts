@@ -39,7 +39,7 @@ export const prescriptionApi = {
       };
       xhr.onload = () => {
         if (xhr.status >= 200 && xhr.status < 300) resolve();
-        else reject(new Error(`S3 업로드 실패 (${xhr.status})`));
+        else reject(new Error(i18n.t('prescription:s3_upload_failed', { status: xhr.status })));
       };
       xhr.onerror = () => reject(new Error(i18n.t('prescription:s3_network_error')));
 

@@ -15,6 +15,7 @@ import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { EmotionSlider } from '@/shared/components/EmotionSlider';
 import { TriggerTagSelector } from '@/features/checkin/components/TriggerTagSelector';
+import { normalizeTag } from '@/features/checkin/triggerTags';
 import { useCreateCheckin } from '@/features/checkin/hooks/useCheckin';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import type { DailyCheckin } from '@/shared/types/domain.types';
@@ -40,7 +41,10 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
   const memoLimit = isPremium ? undefined : FREE_MEMO_LIMIT;
 
   const [emotionScore, setEmotionScore] = useState(existingCheckin?.emotionScore ?? 5);
-  const [triggerTags, setTriggerTags] = useState<string[]>(existingCheckin?.triggerTags ?? []);
+  // 레거시 레코드의 Korean/English preset 문자열을 key 로 정규화해 편집/표시 일관성 유지
+  const [triggerTags, setTriggerTags] = useState<string[]>(
+    (existingCheckin?.triggerTags ?? []).map(normalizeTag)
+  );
   const [memo, setMemo] = useState(existingCheckin?.memo ?? '');
   const [sleepInput, setSleepInput] = useState(String(existingCheckin?.sleepHours ?? 7));
   // 복약 여부는 복약 탭 완료율 기반 자동 — 폼에서 수동 설정 안 함
