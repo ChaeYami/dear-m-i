@@ -16,6 +16,7 @@ import com.dearmi.backend.domain.user.User;
 import com.dearmi.backend.domain.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -57,6 +58,11 @@ public class NotificationScheduler {
     // ──────────────────────────────────────────────────────────────────────────
 
     @Scheduled(cron = "0 0 9 * * *", zone = "Asia/Seoul")
+    @SchedulerLock(
+            name = "sendScheduleNotifications",
+            lockAtMostFor = "PT5M",      // 최대 5분간 잠금 (태스크가 죽어도 5분 뒤에는 락 해제)
+            lockAtLeastFor = "PT1M"       // 최소 1분 — 짧은 재시작 중 중복 실행 방지
+    )
     public void sendScheduleNotifications() {
         LocalDate today = LocalDate.now(SEOUL);
         log.info("병원 알림 스케줄러 실행: date={}", today);
@@ -155,6 +161,11 @@ public class NotificationScheduler {
     // ──────────────────────────────────────────────────────────────────────────
 
     @Scheduled(cron = "0 * * * * *", zone = "Asia/Seoul")
+    @SchedulerLock(
+            name = "sendCheckinReminders",
+            lockAtMostFor = "PT50S",     // cron 주기(1분) 보다 짧게 — 다음 tick 전에 반드시 락 해제
+            lockAtLeastFor = "PT50S"     // 한 tick 당 한 인스턴스만 실행
+    )
     public void sendCheckinReminders() {
         LocalTime now   = LocalTime.now(SEOUL).truncatedTo(ChronoUnit.MINUTES);
         LocalDate today = LocalDate.now(SEOUL);
@@ -194,6 +205,11 @@ public class NotificationScheduler {
     // ──────────────────────────────────────────────────────────────────────────
 
     @Scheduled(cron = "0 * * * * *", zone = "Asia/Seoul")
+    @SchedulerLock(
+            name = "sendMedicationReminders",
+            lockAtMostFor = "PT50S",
+            lockAtLeastFor = "PT50S"
+    )
     public void sendMedicationReminders() {
         LocalTime now   = LocalTime.now(SEOUL).truncatedTo(ChronoUnit.MINUTES);
         LocalDate today = LocalDate.now(SEOUL);

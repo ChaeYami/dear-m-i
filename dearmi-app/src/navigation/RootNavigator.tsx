@@ -86,14 +86,14 @@ export const RootNavigator: React.FC = () => {
       const data = response.notification.request.content.data as Record<string, unknown>;
       const actionId = response.actionIdentifier;
 
-      // 복약 알림 액션 버튼 (TAKEN/SKIPPED) — 앱 열지 않고 백그라운드에서 체크
+      // 복약 알림 액션 버튼 (TAKEN/SKIPPED) — 앱이 열리며 API 호출 + 복약 탭으로 이동
       if (actionId === 'TAKEN' || actionId === 'SKIPPED') {
         handleMedicationAction(data, actionId);
         return;
       }
 
-      // 알림 탭 (기본 동작) — 관련 화면으로 딥링크
-      navigateToScheduleDetail(data);
+      // 알림 탭 (기본 동작) — 타입별 딥링크
+      navigateFromNotification(data);
     });
 
     return () => {
@@ -117,11 +117,29 @@ export const RootNavigator: React.FC = () => {
     }, 0);
   }, [isLoading, isAuthenticated]);
 
-  const navigateToScheduleDetail = (data: Record<string, unknown>) => {
-    const scheduleId = data?.scheduleId;
-    if (!scheduleId || !navigationRef.isReady()) return;
+  /**
+   * 알림 탭(default) 시 타입별로 해당 화면으로 라우트.
+   * MEDICATION → Medication 탭 (오늘 목록에서 바로 체크 가능)
+   * DAY_BEFORE/DAY_OF → Care > ScheduleDetail
+   * CHECKIN → Checkin 탭
+   */
+  const navigateFromNotification = (data: Record<string, unknown>) => {
+    if (!navigationRef.isReady()) return;
+    const type = data?.type;
+    const nav = navigationRef.current as any;
 
-    (navigationRef.current as any)?.navigate('Main', {
+    if (type === 'MEDICATION') {
+      nav?.navigate('Main', { screen: 'Medication' });
+      return;
+    }
+    if (type === 'CHECKIN') {
+      nav?.navigate('Main', { screen: 'Checkin' });
+      return;
+    }
+    // DAY_BEFORE / DAY_OF / 기타 — hospital_schedule id 로 간주
+    const scheduleId = data?.scheduleId;
+    if (!scheduleId) return;
+    nav?.navigate('Main', {
       screen: 'Care',
       params: {
         screen: 'ScheduleDetail',
@@ -132,7 +150,8 @@ export const RootNavigator: React.FC = () => {
 
   /**
    * 복약 알림 액션 버튼 처리.
-   * iOS `opensAppToForeground: false` 로 등록되어 있어 앱이 포그라운드로 오지 않고 바로 API 호출한다.
+   * opensAppToForeground=true 로 등록되어 있어 액션 탭 시 앱이 열리며 이 핸들러가 실행된다.
+   * API 호출 후 복약 탭으로 이동해 체크 결과를 즉시 확인할 수 있게 한다.
    * API 실패는 조용히 무시 — 사용자는 다음번 복약 탭에서 상태를 재확인할 수 있다.
    */
   const handleMedicationAction = async (
@@ -149,6 +168,11 @@ export const RootNavigator: React.FC = () => {
       await medicationApi.check(scheduleId, { logDate, timeSlot, status });
     } catch {
       // 푸시 액션 실패는 UI 알림 없이 무시. 다음 앱 열람 시 상태가 동기화된다.
+    }
+
+    // 앱이 열린 상태이니 복약 탭으로 이동해 즉시 반영된 상태 확인 가능하게
+    if (navigationRef.isReady()) {
+      (navigationRef.current as any)?.navigate('Main', { screen: 'Medication' });
     }
   };
 
@@ -294,7 +318,7 @@ export const RootNavigator: React.FC = () => {
             onDismiss={() => setActiveNotification(null)}
             onPress={() => {
               const data = activeNotification.request.content.data as Record<string, unknown>;
-              navigateToScheduleDetail(data);
+              navigateFromNotification(data);
               setActiveNotification(null);
             }}
           />

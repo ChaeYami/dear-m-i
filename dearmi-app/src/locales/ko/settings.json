@@ -107,6 +107,8 @@
   "theme_dark_desc": "어두운 테마를 사용합니다",
   "theme_system": "디바이스 설정",
   "theme_system_desc": "기기 설정에 따라 자동 전환됩니다",
+  "medication_action_detail": "상세 보기",
+  "medication_action_edit": "수정",
   "medication_prescription_banner_title": "처방전 사진으로 자동 입력",
   "medication_prescription_banner_sub": "처방전을 촬영하면 약품 정보가 자동으로 채워져요",
   "medication_ocr_desc_with_extras": "{{name}} 외 {{count}}개의 복약 시간을 설정해 주세요.",

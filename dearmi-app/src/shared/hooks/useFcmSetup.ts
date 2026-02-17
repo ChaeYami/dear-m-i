@@ -44,17 +44,22 @@ export const useFcmSetup = () => {
 
     // 복약 알림: 복용/건너뜀 액션 버튼 카테고리 등록
     //   iOS: APNs aps.category 와 매칭되어 시스템이 액션 버튼을 렌더
-    //   Android: FCM data payload 의 categoryIdentifier 와 매칭되어 expo-notifications 가 재빌드
+    //   Android: FCM data payload 의 categoryId 와 매칭되어 expo-notifications 가 재빌드
+    //
+    // opensAppToForeground 플랫폼별 분기:
+    //   - iOS: false → 앱 안 열고 짧은 background JS 컨텍스트에서 API 호출
+    //   - Android: true → kill 상태일 때 JS 리스너가 안 떠서, 앱 열며 확실히 처리
+    const opensForeground = Platform.OS === 'android';
     await Notifications.setNotificationCategoryAsync('MEDICATION_REMINDER', [
       {
         identifier: 'TAKEN',
         buttonTitle: i18n.t('settings:medication_status_taken'),
-        options: { opensAppToForeground: false },
+        options: { opensAppToForeground: opensForeground },
       },
       {
         identifier: 'SKIPPED',
         buttonTitle: i18n.t('settings:medication_status_skipped'),
-        options: { opensAppToForeground: false, isDestructive: true },
+        options: { opensAppToForeground: opensForeground, isDestructive: true },
       },
     ]);
 

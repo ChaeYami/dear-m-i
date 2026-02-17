@@ -79,6 +79,10 @@ dependencies {
     // OpenAPI (Swagger UI)
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6'
 
+    // ShedLock (multi-instance 분산 스케줄러 락 — ECS 다중 태스크 환경에서 @Scheduled 중복 실행 방지)
+    implementation 'net.javacrumbs.shedlock:shedlock-spring:5.16.0'
+    implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:5.16.0'
+
     // 테스트
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'

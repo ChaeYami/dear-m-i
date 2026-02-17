@@ -107,6 +107,8 @@
   "theme_dark_desc": "Use the dark theme",
   "theme_system": "System",
   "theme_system_desc": "Follow device settings",
+  "medication_action_detail": "View Details",
+  "medication_action_edit": "Edit",
   "medication_prescription_banner_title": "Auto-fill from prescription photo",
   "medication_prescription_banner_sub": "Snap a prescription to auto-fill medication details",
   "medication_ocr_desc_with_extras": "Set medication times for {{name}} and {{count}} more.",

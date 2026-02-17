@@ -134,6 +134,26 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
     ]);
   };
 
+  /** 약품 행 탭 → 상세 보기 / 수정 / 삭제 액션 시트 */
+  const showItemActions = (scheduleId: string, drugName: string) => {
+    customAlert(drugName, '', [
+      {
+        text: t('settings:medication_action_detail'),
+        onPress: () => navigation.navigate('MedicationScheduleDetail', { scheduleId, drugName }),
+      },
+      {
+        text: t('settings:medication_action_edit'),
+        onPress: () => navigation.navigate('MedicationForm', { scheduleId }),
+      },
+      {
+        text: t('common:delete'),
+        style: 'destructive',
+        onPress: () => handleDelete(scheduleId, drugName),
+      },
+      { text: t('common:cancel'), style: 'cancel' },
+    ]);
+  };
+
   const handleCheck = (scheduleId: string, status: 'TAKEN' | 'SKIPPED', timeSlot: TimeSlotType, logDate?: string) => {
     setPendingIds((prev) => new Set(prev).add(scheduleId));
     checkMedication(
@@ -330,11 +350,12 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
                     if (isEditMode) { setIsEditMode(false); setSelectedIds(new Set()); }
                     else { setIsEditMode(true); }
                   }}
-                  hitSlop={8}
+                  hitSlop={16}
+                  style={styles.editModeBtn}
                 >
                   <Ionicons
                     name={isEditMode ? 'checkmark-circle' : 'create-outline'}
-                    size={18}
+                    size={22}
                     color={isEditMode ? colors.primary : colors.textSub}
                   />
                 </TouchableOpacity>
@@ -414,9 +435,7 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
                     selectedIds={selectedIds}
                     checkDisabled={isFutureDate}
                     onToggleSelect={toggleSelect}
-                    onDrugPress={(scheduleId, drugName) =>
-                      navigation.navigate('MedicationScheduleDetail', { scheduleId, drugName })
-                    }
+                    onDrugPress={(scheduleId, drugName) => showItemActions(scheduleId, drugName)}
                     onDelete={(scheduleId, drugName) => handleDelete(scheduleId, drugName)}
                     onTaken={(scheduleId) => handleCheck(scheduleId, 'TAKEN', slot)}
                     onSkipped={(scheduleId) => handleCheck(scheduleId, 'SKIPPED', slot)}
@@ -468,7 +487,11 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBott
     summaryRateRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 8,
+      gap: 10,
+    },
+    editModeBtn: {
+      padding: sizes.spacing.xs,
+      marginLeft: 2,
     },
     summaryDate: {
       fontSize: sizes.font.md,
