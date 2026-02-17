@@ -67,22 +67,52 @@ const TimePickerInner: React.FC<Props> = ({
     setTimeout(() => inputRef.current?.focus(), 50);
   };
 
-  const finishEdit = () => {
+  /**
+   * 편집 중인 텍스트를 현재 필드에 적용.
+   * 비동기 state 업데이트 경합 없이 컨펌 흐름이 바로 다음 값을 쓸 수 있도록 계산된 hour/minute 를 반환한다.
+   */
+  const commitEdit = (): { h: number; m: number } => {
+    let h = hour;
+    let m = minute;
     const parsed = parseInt(editText, 10);
     if (!isNaN(parsed)) {
-      if (editField === 'h') setHourVal(toMidValue(Math.max(0, Math.min(23, parsed)), 24));
-      else setMinVal(toMidValue(Math.max(0, Math.min(59, parsed)), 60));
+      if (editField === 'h') {
+        h = Math.max(0, Math.min(23, parsed));
+        setHourVal(toMidValue(h, 24));
+      } else if (editField === 'm') {
+        m = Math.max(0, Math.min(59, parsed));
+        setMinVal(toMidValue(m, 60));
+      }
     }
     setEditField(null);
+    return { h, m };
+  };
+
+  const handleConfirm = () => {
+    const { h, m } = editField ? commitEdit() : { h: hour, m: minute };
+    onConfirm(h, m);
+  };
+
+  const handleBackdropPress = () => {
+    // 편집 중이면 먼저 커밋(저장 UX 와 일관), 편집 중 아닐 때만 닫기
+    if (editField) {
+      commitEdit();
+      return;
+    }
+    onClose();
   };
 
   const styles = getStyles(colors);
 
   return (
-    <Modal visible transparent animationType="fade" statusBarTranslucent>
+    <Modal visible transparent animationType="none" statusBarTranslucent>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <Pressable style={styles.backdrop} onPress={onClose}>
-          <Pressable style={styles.card} onPress={() => { if (editField) finishEdit(); }}>
+        <Pressable style={styles.backdrop} onPress={handleBackdropPress}>
+          {/*
+           * 카드 자체는 View 로 유지해야 WheelPicker 내부의 pan 제스처가 Pressable 에
+           * 빼앗기지 않는다. 터치 이벤트는 responder 로 잡아 backdrop 으로 전파만 막음.
+           */}
+          <View style={styles.card} onStartShouldSetResponder={() => true}>
             <Text style={styles.label}>{t('time_picker_title')}</Text>
 
             {/* 탭하면 직접 입력 */}
@@ -92,8 +122,9 @@ const TimePickerInner: React.FC<Props> = ({
                   ref={inputRef}
                   style={[styles.displayInput, { borderColor: colors.primary, color: colors.text }]}
                   value={editText} onChangeText={setEditText}
-                  onBlur={finishEdit} onSubmitEditing={finishEdit}
+                  onBlur={commitEdit} onSubmitEditing={commitEdit}
                   keyboardType="number-pad" maxLength={2} selectTextOnFocus
+                  returnKeyType="done"
                 />
               ) : (
                 <TouchableOpacity onPress={() => startEdit('h')}>
@@ -106,8 +137,9 @@ const TimePickerInner: React.FC<Props> = ({
                   ref={inputRef}
                   style={[styles.displayInput, { borderColor: colors.primary, color: colors.text }]}
                   value={editText} onChangeText={setEditText}
-                  onBlur={finishEdit} onSubmitEditing={finishEdit}
+                  onBlur={commitEdit} onSubmitEditing={commitEdit}
                   keyboardType="number-pad" maxLength={2} selectTextOnFocus
+                  returnKeyType="done"
                 />
               ) : (
                 <TouchableOpacity onPress={() => startEdit('m')}>
@@ -163,11 +195,11 @@ const TimePickerInner: React.FC<Props> = ({
               <TouchableOpacity onPress={onClose} style={styles.actionBtn}>
                 <Text style={[styles.actionText, { color: colors.textSub }]}>{t('cancel')}</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => onConfirm(hour, minute)} style={styles.actionBtn}>
+              <TouchableOpacity onPress={handleConfirm} style={styles.actionBtn}>
                 <Text style={[styles.actionText, { color: colors.primary, fontFamily: fontFamily.bold }]}>{t('confirm')}</Text>
               </TouchableOpacity>
             </View>
-          </Pressable>
+          </View>
         </Pressable>
       </GestureHandlerRootView>
     </Modal>

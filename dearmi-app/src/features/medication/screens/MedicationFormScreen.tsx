@@ -462,8 +462,12 @@ export const MedicationFormScreen: React.FC = () => {
         </View>
 
         {/* 저장 버튼 — OCR 흐름이 아닐 때만 스크롤 내 표시 */}
+        {/*
+         * ScrollView + keyboardShouldPersistTaps="handled" 조합에서 AnimatedPressable 이
+         * 키보드 해제 우선순위에 밀려 첫 탭이 먹히는 버그가 있어 TouchableOpacity 사용.
+         */}
         {!isFromOcr && (
-          <AnimatedPressable onPress={handleSave} disabled={isPending}>
+          <TouchableOpacity onPress={handleSave} disabled={isPending} activeOpacity={0.85}>
             <LinearGradient
               colors={[colors.primaryVivid, colors.primaryVividDark]}
               start={{ x: 0, y: 0 }}
@@ -474,14 +478,14 @@ export const MedicationFormScreen: React.FC = () => {
                 {isPending ? t('common:saving') : t('common:save')}
               </Text>
             </LinearGradient>
-          </AnimatedPressable>
+          </TouchableOpacity>
         )}
       </ScrollView>
 
       {/* OCR 흐름: 다음 약품 버튼 */}
       {showNextButton && (
         <View style={styles.nextBtnWrap}>
-          <AnimatedPressable onPress={handleSaveAndNext} disabled={isPending}>
+          <TouchableOpacity onPress={handleSaveAndNext} disabled={isPending} activeOpacity={0.85}>
             <LinearGradient
               colors={[colors.secondary, colors.secondaryLight]}
               start={{ x: 0, y: 0 }}
@@ -492,14 +496,14 @@ export const MedicationFormScreen: React.FC = () => {
                 {isPending ? t('common:saving') : t('settings:medication_next_with_arrow', { name: nextMed.drugName })}
               </Text>
             </LinearGradient>
-          </AnimatedPressable>
+          </TouchableOpacity>
         </View>
       )}
 
       {/* OCR 흐름: 마지막 약 저장 버튼 */}
       {showFinishButton && (
         <View style={styles.nextBtnWrap}>
-          <AnimatedPressable onPress={handleSaveAndFinish} disabled={isPending}>
+          <TouchableOpacity onPress={handleSaveAndFinish} disabled={isPending} activeOpacity={0.85}>
             <LinearGradient
               colors={[colors.primaryVivid, colors.primaryVividDark]}
               start={{ x: 0, y: 0 }}
@@ -510,7 +514,7 @@ export const MedicationFormScreen: React.FC = () => {
                 {isPending ? t('common:saving') : t('common:save')}
               </Text>
             </LinearGradient>
-          </AnimatedPressable>
+          </TouchableOpacity>
         </View>
       )}
     </SafeAreaView>
