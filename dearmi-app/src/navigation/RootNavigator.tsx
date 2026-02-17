@@ -20,6 +20,8 @@ import { SearchScreen } from '@/features/search/screens/SearchScreen';
 import { OnboardingScreen } from '@/features/onboarding/screens/OnboardingScreen';
 import { NotificationHistoryScreen } from '@/features/notification/screens/NotificationHistoryScreen';
 import { medicationApi } from '@/features/medication/api/medicationApi';
+import { useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/constants/cacheKeys';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { useSubscriptionStore } from '@/features/subscription/store/subscriptionStore';
 import { authApi } from '@/features/auth/api';
@@ -59,9 +61,15 @@ export const RootNavigator: React.FC = () => {
   const { t } = useTranslation();
   const { isAuthenticated, restoreTokens, setUser, logout } = useAuthStore();
   const { fetchSubscription } = useSubscriptionStore();
+  const queryClient = useQueryClient();
 
   const notificationListener = useRef<Notifications.EventSubscription | null>(null);
   const responseListener = useRef<Notifications.EventSubscription | null>(null);
+
+  // cold-start 진입 시 킬 상태에서 탭된 알림 — addNotificationResponseReceivedListener 는
+  // 구독 시점 이전 응답을 받지 못하므로 hook 으로 별도 처리
+  const lastResponse = Notifications.useLastNotificationResponse();
+  const processedLastResponseRef = useRef(false);
 
   const navTheme = {
     ...(isDark ? DarkTheme : DefaultTheme),
@@ -83,17 +91,7 @@ export const RootNavigator: React.FC = () => {
     });
 
     responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
-      const data = response.notification.request.content.data as Record<string, unknown>;
-      const actionId = response.actionIdentifier;
-
-      // 복약 알림 액션 버튼 (TAKEN/SKIPPED) — 앱이 열리며 API 호출 + 복약 탭으로 이동
-      if (actionId === 'TAKEN' || actionId === 'SKIPPED') {
-        handleMedicationAction(data, actionId);
-        return;
-      }
-
-      // 알림 탭 (기본 동작) — 타입별 딥링크
-      navigateFromNotification(data);
+      handleNotificationResponse(response);
     });
 
     return () => {
@@ -101,6 +99,14 @@ export const RootNavigator: React.FC = () => {
       responseListener.current?.remove();
     };
   }, []);
+
+  // 킬 상태에서 탭된 알림 — nav/auth ready 이후 1회만 처리
+  useEffect(() => {
+    if (!lastResponse || processedLastResponseRef.current) return;
+    if (isLoading || !isAuthenticated || !navigationRef.isReady()) return;
+    processedLastResponseRef.current = true;
+    handleNotificationResponse(lastResponse);
+  }, [lastResponse, isLoading, isAuthenticated]);
 
   // 첫 진입 시 온보딩 자동 표시 (인증 + 로딩 완료 후 1회)
   const onboardingShownRef = useRef(false);
@@ -116,6 +122,21 @@ export const RootNavigator: React.FC = () => {
       }
     }, 0);
   }, [isLoading, isAuthenticated]);
+
+  /** 인바운드 알림 응답 라우팅: 액션 버튼 or 본체 탭. */
+  const handleNotificationResponse = (response: Notifications.NotificationResponse) => {
+    const data = response.notification.request.content.data as Record<string, unknown>;
+    const actionId = response.actionIdentifier;
+
+    // 복약 알림 액션 버튼 (TAKEN/SKIPPED) — 앱 진입 없이 백그라운드에서 API 호출로 상태 기록
+    if (actionId === 'TAKEN' || actionId === 'SKIPPED') {
+      handleMedicationAction(data, actionId);
+      return;
+    }
+
+    // 본체 탭 — 타입별 딥링크
+    navigateFromNotification(data);
+  };
 
   /**
    * 알림 탭(default) 시 타입별로 해당 화면으로 라우트.
@@ -167,6 +188,9 @@ export const RootNavigator: React.FC = () => {
 
     try {
       await medicationApi.check(scheduleId, { logDate, timeSlot, status });
+      // 앱이 열려있을 경우 복약 목록 캐시를 무효화해 즉시 반영
+      queryClient.invalidateQueries({ queryKey: ['todayMedication'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.medicationLogs() });
     } catch {
       // 푸시 액션 실패는 UI 알림 없이 무시. 다음 앱 열람 시 상태가 동기화된다.
     }

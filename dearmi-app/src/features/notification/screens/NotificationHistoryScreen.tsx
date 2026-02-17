@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,17 +8,21 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Swipeable } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
+import { customAlert } from '@/shared/components/CustomAlert';
 import { navigationRef } from '@/navigation/navigationRef';
 import {
   useNotificationHistory,
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
+  useDeleteNotification,
+  useDeleteAllNotifications,
 } from '@/features/notification/hooks/useNotificationHistory';
 import type { NotificationItem, NotificationType } from '@/features/notification/api';
 
@@ -49,6 +53,71 @@ const diffInMinutes = (iso: string) =>
 const isSameDay = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
+interface NotificationRowProps {
+  item: NotificationItem;
+  onPress: () => void;
+  onDelete: () => void;
+  formatRelative: (iso: string) => string;
+  colors: ReturnType<typeof useTheme>['colors'];
+  styles: ReturnType<typeof makeStyles>;
+  t: ReturnType<typeof useTranslation>['t'];
+}
+
+const NotificationRow: React.FC<NotificationRowProps> = ({
+  item, onPress, onDelete, formatRelative, colors, styles, t,
+}) => {
+  const swipeRef = useRef<Swipeable>(null);
+  const unread = !item.readAt;
+  // 리소스 삭제 여부: 타입상 resourceId 가 있어야 하는데 null 로 들어온 경우
+  const resourceExpected = item.type !== 'CHECKIN';
+  const resourceMissing = resourceExpected && !item.resourceId;
+
+  const title = t(item.titleKey as any, {
+    ns: 'notifications',
+    keySeparator: false,
+    ...paramsObj(item.titleParams),
+  });
+  const body = t(item.bodyKey as any, {
+    ns: 'notifications',
+    keySeparator: false,
+    ...paramsObj(item.bodyParams),
+  });
+
+  const renderRightActions = () => (
+    <TouchableOpacity
+      style={[styles.swipeDeleteBtn, { backgroundColor: colors.error }]}
+      onPress={() => { swipeRef.current?.close(); onDelete(); }}
+      activeOpacity={0.8}
+    >
+      <Ionicons name="trash-outline" size={18} color="#fff" />
+      <Text style={styles.swipeDeleteText}>{t('notifications:delete')}</Text>
+    </TouchableOpacity>
+  );
+
+  return (
+    <Swipeable ref={swipeRef} renderRightActions={renderRightActions} overshootRight={false}>
+      <TouchableOpacity
+        style={[styles.item, unread && styles.itemUnread]}
+        onPress={onPress}
+        activeOpacity={0.7}
+      >
+        <View style={[styles.iconWrap, unread && styles.iconWrapUnread]}>
+          <Ionicons name={typeIcon(item.type)} size={18} color={colors.primary} />
+        </View>
+        <View style={styles.body}>
+          <Text style={[styles.title, unread && styles.titleUnread]}>{title}</Text>
+          <Text style={styles.subtitle}>{body}</Text>
+          <Text style={styles.meta}>
+            {formatRelative(item.createdAt)}
+            {resourceMissing ? ` · ${t('notifications:resource_deleted')}` : ''}
+          </Text>
+        </View>
+        {unread ? <View style={styles.unreadDot} /> : null}
+      </TouchableOpacity>
+    </Swipeable>
+  );
+};
+
 export const NotificationHistoryScreen: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<any>();
@@ -57,6 +126,8 @@ export const NotificationHistoryScreen: React.FC = () => {
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useNotificationHistory();
   const { mutate: markRead } = useMarkNotificationRead();
   const { mutate: markAllRead } = useMarkAllNotificationsRead();
+  const { mutate: deleteOne } = useDeleteNotification();
+  const { mutate: deleteAll } = useDeleteAllNotifications();
 
   const items: NotificationItem[] = useMemo(
     () => data?.pages.flatMap((p) => p.content) ?? [],
@@ -97,6 +168,37 @@ export const NotificationHistoryScreen: React.FC = () => {
     return t('notifications:relative_days_ago', { count: days });
   };
 
+  const confirmDeleteAll = () => {
+    customAlert(
+      t('notifications:delete_all_confirm_title'),
+      t('notifications:delete_all_confirm_body'),
+      [
+        { text: t('common:cancel'), style: 'cancel' },
+        { text: t('notifications:delete_all'), style: 'destructive', onPress: () => deleteAll() },
+      ],
+    );
+  };
+
+  const openHeaderMenu = () => {
+    const buttons = [] as Array<{ text: string; style?: 'cancel' | 'destructive'; onPress?: () => void }>;
+    if (hasUnread) buttons.push({ text: t('notifications:mark_all_read'), onPress: () => markAllRead() });
+    if (items.length > 0) buttons.push({ text: t('notifications:delete_all'), style: 'destructive', onPress: confirmDeleteAll });
+    buttons.push({
+      text: t('menu_notification', { ns: 'settings' }),
+      onPress: () => {
+        navigation.goBack();
+        setTimeout(() => {
+          (navigationRef.current as any)?.navigate('Main', {
+            screen: 'MyPage',
+            params: { screen: 'NotificationSettings' },
+          });
+        }, 150);
+      },
+    });
+    buttons.push({ text: t('common:cancel'), style: 'cancel' });
+    customAlert(t('notifications:more_actions'), '', buttons);
+  };
+
   const handleItemPress = (item: NotificationItem) => {
     if (!item.readAt) markRead(item.id);
 
@@ -114,23 +216,76 @@ export const NotificationHistoryScreen: React.FC = () => {
         nav.navigate('Main', { screen: 'Care' });
       }
     } else if (item.type === 'MEDICATION') {
-      if (item.resourceId) {
-        nav.navigate('Main', {
-          screen: 'Medication',
-          params: {
-            screen: 'MedicationScheduleDetail',
-            params: { scheduleId: item.resourceId, drugName: item.titleParams[0] ?? '' },
-          },
-        });
-      } else {
-        nav.navigate('Main', { screen: 'Medication' });
-      }
+      // 푸시 알림 본체 탭과 동일하게 복약 관리 탭(오늘 목록)으로 이동 — 바로 체크 가능
+      nav.navigate('Main', { screen: 'Medication' });
     } else if (item.type === 'CHECKIN') {
       nav.navigate('Main', { screen: 'Checkin' });
     }
   };
 
-  const styles = useMemo(() => StyleSheet.create({
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  if (isLoading) return <LoadingSpinner fullscreen />;
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader
+        variant="back"
+        title={t('notifications:history_title')}
+        rightContent={
+          <TouchableOpacity onPress={openHeaderMenu} hitSlop={8}>
+            <Ionicons name="ellipsis-horizontal" size={20} color={colors.textSub} />
+          </TouchableOpacity>
+        }
+      />
+
+      {items.length === 0 ? (
+        <View style={styles.emptyWrap}>
+          <View style={styles.emptyIcon}>
+            <Ionicons name="notifications-off-outline" size={32} color={colors.textDisabled} />
+          </View>
+          <Text style={styles.emptyTitle}>{t('notifications:empty_title')}</Text>
+          <Text style={styles.emptyDesc}>{t('notifications:empty_desc')}</Text>
+        </View>
+      ) : (
+        <SectionList
+          sections={sections}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          stickySectionHeadersEnabled
+          renderSectionHeader={({ section }) => (
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>{section.title}</Text>
+            </View>
+          )}
+          renderItem={({ item }) => (
+            <NotificationRow
+              item={item}
+              onPress={() => handleItemPress(item)}
+              onDelete={() => deleteOne(item.id)}
+              formatRelative={formatRelative}
+              colors={colors}
+              styles={styles}
+              t={t}
+            />
+          )}
+          onEndReached={() => {
+            if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+          }}
+          onEndReachedThreshold={0.4}
+          ListFooterComponent={
+            isFetchingNextPage ? (
+              <ActivityIndicator color={colors.primary} style={styles.footerSpinner} />
+            ) : null
+          }
+        />
+      )}
+    </SafeAreaView>
+  );
+};
+
+const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
+  StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     listContent: { paddingBottom: 40 },
     sectionHeader: {
@@ -195,17 +350,6 @@ export const NotificationHistoryScreen: React.FC = () => {
       backgroundColor: colors.error,
       marginTop: 6,
     },
-    markAllBtn: {
-      paddingHorizontal: sizes.spacing.sm,
-      paddingVertical: 6,
-      borderRadius: sizes.radius.full,
-      backgroundColor: colors.primaryMuted,
-    },
-    markAllText: {
-      fontSize: sizes.font.sm,
-      fontFamily: fontFamily.semibold,
-      color: colors.primary,
-    },
     emptyWrap: {
       flex: 1,
       alignItems: 'center',
@@ -234,107 +378,15 @@ export const NotificationHistoryScreen: React.FC = () => {
     footerSpinner: {
       paddingVertical: sizes.spacing.lg,
     },
-  }), [colors]);
-
-  if (isLoading) return <LoadingSpinner fullscreen />;
-
-  return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <ScreenHeader
-        variant="back"
-        title={t('notifications:history_title')}
-        rightContent={
-          hasUnread ? (
-            <TouchableOpacity style={styles.markAllBtn} onPress={() => markAllRead()} hitSlop={8}>
-              <Text style={styles.markAllText}>{t('notifications:mark_all_read')}</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              onPress={() => {
-                navigation.goBack();
-                setTimeout(() => {
-                  (navigationRef.current as any)?.navigate('Main', {
-                    screen: 'MyPage',
-                    params: { screen: 'NotificationSettings' },
-                  });
-                }, 150);
-              }}
-              hitSlop={8}
-            >
-              <Ionicons name="settings-outline" size={20} color={colors.textSub} />
-            </TouchableOpacity>
-          )
-        }
-      />
-
-      {items.length === 0 ? (
-        <View style={styles.emptyWrap}>
-          <View style={styles.emptyIcon}>
-            <Ionicons name="notifications-off-outline" size={32} color={colors.textDisabled} />
-          </View>
-          <Text style={styles.emptyTitle}>{t('notifications:empty_title')}</Text>
-          <Text style={styles.emptyDesc}>{t('notifications:empty_desc')}</Text>
-        </View>
-      ) : (
-        <SectionList
-          sections={sections}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          stickySectionHeadersEnabled
-          renderSectionHeader={({ section }) => (
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>{section.title}</Text>
-            </View>
-          )}
-          renderItem={({ item }) => {
-            const unread = !item.readAt;
-            // 리소스 삭제 여부: 타입상 resourceId 가 있어야 하는데 null 로 들어온 경우
-            const resourceExpected = item.type !== 'CHECKIN';
-            const resourceMissing = resourceExpected && !item.resourceId;
-
-            const title = t(item.titleKey as any, {
-              ns: 'notifications',
-              keySeparator: false,
-              ...paramsObj(item.titleParams),
-            });
-            const body = t(item.bodyKey as any, {
-              ns: 'notifications',
-              keySeparator: false,
-              ...paramsObj(item.bodyParams),
-            });
-
-            return (
-              <TouchableOpacity
-                style={[styles.item, unread && styles.itemUnread]}
-                onPress={() => handleItemPress(item)}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.iconWrap, unread && styles.iconWrapUnread]}>
-                  <Ionicons name={typeIcon(item.type)} size={18} color={colors.primary} />
-                </View>
-                <View style={styles.body}>
-                  <Text style={[styles.title, unread && styles.titleUnread]}>{title}</Text>
-                  <Text style={styles.subtitle}>{body}</Text>
-                  <Text style={styles.meta}>
-                    {formatRelative(item.createdAt)}
-                    {resourceMissing ? ` · ${t('notifications:resource_deleted')}` : ''}
-                  </Text>
-                </View>
-                {unread ? <View style={styles.unreadDot} /> : null}
-              </TouchableOpacity>
-            );
-          }}
-          onEndReached={() => {
-            if (hasNextPage && !isFetchingNextPage) fetchNextPage();
-          }}
-          onEndReachedThreshold={0.4}
-          ListFooterComponent={
-            isFetchingNextPage ? (
-              <ActivityIndicator color={colors.primary} style={styles.footerSpinner} />
-            ) : null
-          }
-        />
-      )}
-    </SafeAreaView>
-  );
-};
+    swipeDeleteBtn: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: 88,
+      gap: 4,
+    },
+    swipeDeleteText: {
+      fontSize: sizes.font.xs,
+      fontFamily: fontFamily.semibold,
+      color: '#fff',
+    },
+  });

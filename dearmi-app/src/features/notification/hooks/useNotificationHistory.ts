@@ -102,3 +102,70 @@ export const useMarkAllNotificationsRead = () => {
     },
   });
 };
+
+/** 단일 알림 삭제 (optimistic update) */
+export const useDeleteNotification = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => notificationApi.deleteOne(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.notificationHistory() });
+
+      let removedUnread = false;
+      queryClient.setQueriesData<{ pages: Array<{ content: NotificationItem[] }> } | undefined>(
+        { queryKey: QUERY_KEYS.notificationHistory() },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((p) => ({
+              ...p,
+              content: p.content.filter((item) => {
+                if (item.id === id) {
+                  if (!item.readAt) removedUnread = true;
+                  return false;
+                }
+                return true;
+              }),
+            })),
+          };
+        }
+      );
+
+      if (removedUnread) {
+        queryClient.setQueryData<number>(QUERY_KEYS.notificationUnreadCount(), (old) =>
+          old != null ? Math.max(0, old - 1) : old
+        );
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notificationUnreadCount() });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notificationHistory() });
+    },
+  });
+};
+
+/** 모두 삭제 */
+export const useDeleteAllNotifications = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => notificationApi.deleteAll(),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.notificationHistory() });
+
+      queryClient.setQueriesData<{ pages: Array<{ content: NotificationItem[] }> } | undefined>(
+        { queryKey: QUERY_KEYS.notificationHistory() },
+        (old) => {
+          if (!old) return old;
+          return { ...old, pages: old.pages.map((p) => ({ ...p, content: [] })) };
+        }
+      );
+
+      queryClient.setQueryData(QUERY_KEYS.notificationUnreadCount(), 0);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notificationUnreadCount() });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notificationHistory() });
+    },
+  });
+};

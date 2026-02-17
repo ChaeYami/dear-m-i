@@ -55,6 +55,12 @@ const notificationApi = {
 
   markAllRead: () =>
     axiosInstance.patch<void>('/api/v1/notifications/read-all'),
+
+  deleteOne: (id: string) =>
+    axiosInstance.delete<void>(`/api/v1/notifications/${id}`),
+
+  deleteAll: () =>
+    axiosInstance.delete<void>('/api/v1/notifications'),
 };
 
 export default notificationApi;
