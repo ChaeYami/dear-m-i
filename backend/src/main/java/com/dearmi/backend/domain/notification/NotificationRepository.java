@@ -19,6 +19,9 @@ public interface NotificationRepository {
     /** 해당 유저의 안 읽은 알림을 모두 읽음 처리. 반환값은 업데이트된 행 수. */
     int markAllReadByUserId(UUID userId);
 
+    /** 해당 유저의 알림을 모두 소프트 삭제. 반환값은 업데이트된 행 수. */
+    int softDeleteAllByUserId(UUID userId);
+
     /** 리소스 삭제 시 역참조를 SET NULL. */
     int clearResourceId(UUID resourceId);
 }

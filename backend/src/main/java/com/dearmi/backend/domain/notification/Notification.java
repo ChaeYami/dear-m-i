@@ -77,4 +77,10 @@ public class Notification extends BaseTimestampEntity {
             this.readAt = LocalDateTime.now();
         }
     }
+
+    public void markDeleted() {
+        if (this.deletedAt == null) {
+            this.deletedAt = LocalDateTime.now();
+        }
+    }
 }

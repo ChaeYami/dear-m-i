@@ -47,6 +47,11 @@ public class NotificationRepositoryImpl implements NotificationRepository {
     }
 
     @Override
+    public int softDeleteAllByUserId(UUID userId) {
+        return jpa.softDeleteAllByUserId(userId, LocalDateTime.now());
+    }
+
+    @Override
     public int clearResourceId(UUID resourceId) {
         return jpa.clearResourceId(resourceId);
     }

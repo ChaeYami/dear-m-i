@@ -1,5 +1,7 @@
 package com.dearmi.backend.presentation.notification;
 
+import com.dearmi.backend.application.notification.usecase.DeleteAllNotificationsUseCase;
+import com.dearmi.backend.application.notification.usecase.DeleteNotificationUseCase;
 import com.dearmi.backend.application.notification.usecase.GetNotificationSettingUseCase;
 import com.dearmi.backend.application.notification.usecase.GetNotificationsUseCase;
 import com.dearmi.backend.application.notification.usecase.GetUnreadCountUseCase;
@@ -34,6 +36,8 @@ public class NotificationController {
     private final GetUnreadCountUseCase getUnreadCountUseCase;
     private final MarkNotificationReadUseCase markNotificationReadUseCase;
     private final MarkAllNotificationsReadUseCase markAllNotificationsReadUseCase;
+    private final DeleteNotificationUseCase deleteNotificationUseCase;
+    private final DeleteAllNotificationsUseCase deleteAllNotificationsUseCase;
 
     /** POST /api/v1/notifications/token — FCM 토큰 등록/갱신 */
     @PostMapping("/token")
@@ -110,5 +114,24 @@ public class NotificationController {
             @AuthenticatedUserId UUID userId
     ) {
         markAllNotificationsReadUseCase.markAllRead(userId);
+    }
+
+    /** DELETE /api/v1/notifications/{id} — 단일 알림 삭제 (소프트) */
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteNotification(
+            @AuthenticatedUserId UUID userId,
+            @PathVariable UUID id
+    ) {
+        deleteNotificationUseCase.delete(userId, id);
+    }
+
+    /** DELETE /api/v1/notifications — 모든 알림 삭제 (소프트) */
+    @DeleteMapping
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteAll(
+            @AuthenticatedUserId UUID userId
+    ) {
+        deleteAllNotificationsUseCase.deleteAll(userId);
     }
 }
