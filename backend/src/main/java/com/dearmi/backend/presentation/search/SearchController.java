@@ -7,7 +7,10 @@ import com.dearmi.backend.application.search.usecase.SearchUseCase;
 import com.dearmi.backend.common.response.ApiResponse;
 import com.dearmi.backend.infrastructure.security.AuthenticatedUserId;
 import com.dearmi.backend.presentation.search.dto.SearchResponse;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -22,6 +25,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/search")
 @RequiredArgsConstructor
+@Validated
 public class SearchController {
 
     private final SearchUseCase searchUseCase;
@@ -40,8 +44,8 @@ public class SearchController {
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String types,
             @RequestParam(required = false) List<String> tags,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     ) {
         Set<SearchType> searchTypes = parseTypes(types);
         SearchCommand command = new SearchCommand(userId, q, searchTypes, tags, page, size);

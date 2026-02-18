@@ -6,6 +6,7 @@ import com.dearmi.backend.common.exception.ErrorCode;
 import com.dearmi.backend.domain.counseling.CounselingRecordRepository;
 import com.dearmi.backend.domain.hospital.HospitalSchedule;
 import com.dearmi.backend.domain.hospital.HospitalScheduleRepository;
+import com.dearmi.backend.domain.notification.NotificationRepository;
 import com.dearmi.backend.domain.prepnote.PrepNoteRepository;
 import com.dearmi.backend.domain.prescription.PrescriptionRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -31,6 +32,7 @@ class DeleteScheduleUseCaseImplTest {
     @Mock private CounselingRecordRepository counselingRecordRepository;
     @Mock private PrescriptionRepository prescriptionRepository;
     @Mock private PrepNoteRepository prepNoteRepository;
+    @Mock private NotificationRepository notificationRepository;
 
     @InjectMocks
     private DeleteScheduleUseCaseImpl deleteScheduleUseCase;

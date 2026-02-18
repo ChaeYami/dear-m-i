@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/constants/cacheKeys';
 import { medicationApi } from '@/features/medication/api/medicationApi';
+import { haptics } from '@/shared/utils/haptics';
 import type { CreateMedicationScheduleRequest, UpdateMedicationScheduleRequest, CheckMedicationRequest } from '@/shared/types/domain.types';
 
 /** 특정 날짜(기본=오늘) 복약 현황 */
@@ -11,6 +12,8 @@ export const useTodayMedication = (date?: string) =>
       const { data } = await medicationApi.getToday(date);
       return data.data ?? { schedules: [] };
     },
+    // 매분 알림이 오는 즉시성 데이터 — 전역 5분 stale 보다 짧게.
+    staleTime: 30_000,
   });
 
 /** 사용자의 모든 복약 일정 (캘린더 마킹용) */
@@ -71,7 +74,9 @@ export const useCheckMedication = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['todayMedication'] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.medicationLogs() });
+      haptics.success();
     },
+    onError: () => haptics.error(),
   });
 };
 

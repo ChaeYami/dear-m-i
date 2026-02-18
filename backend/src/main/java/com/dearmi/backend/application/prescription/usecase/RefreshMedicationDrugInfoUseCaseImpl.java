@@ -31,6 +31,6 @@ public class RefreshMedicationDrugInfoUseCaseImpl implements RefreshMedicationDr
                 .findByIdAndUserIdAndDeletedAtIsNull(medication.getPrescriptionId(), userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
-        prescriptionMedDrugInfoService.refreshAsync(medicationId);
+        prescriptionMedDrugInfoService.refreshAsync(medicationId, userId);
     }
 }

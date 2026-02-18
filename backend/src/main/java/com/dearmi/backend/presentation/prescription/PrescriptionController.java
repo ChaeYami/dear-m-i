@@ -21,8 +21,11 @@ import com.dearmi.backend.presentation.prescription.dto.PresignedUrlResponse;
 import com.dearmi.backend.presentation.prescription.dto.PrescriptionDetailResponse;
 import com.dearmi.backend.presentation.prescription.dto.UpdateMedicationsRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -30,6 +33,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/prescriptions")
 @RequiredArgsConstructor
+@Validated
 public class PrescriptionController {
 
     private final GenerateUploadUrlUseCase generateUploadUrlUseCase;
@@ -55,8 +59,8 @@ public class PrescriptionController {
     @GetMapping
     public ApiResponse<PageResponse<PrescriptionDetailResponse>> getList(
             @AuthenticatedUserId UUID userId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     ) {
         return ApiResponse.success(
                 PageResponse.from(

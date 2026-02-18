@@ -13,6 +13,8 @@ import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { SectionTitle } from '@/shared/components/SectionTitle';
 import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import { useAuthStore } from '@/features/auth/store/authStore';
+import { authApi } from '@/features/auth/api';
+import { haptics } from '@/shared/utils/haptics';
 import type { MyPageStackParamList } from '@/navigation/MyPageNavigator';
 
 type Nav = StackNavigationProp<MyPageStackParamList, 'Account'>;
@@ -33,13 +35,23 @@ export const AccountScreen: React.FC = () => {
   };
 
   const handleDeleteAccount = () => {
+    haptics.warning();
     customAlert(t('auth:delete_account'), t('auth:delete_account_confirm'), [
       { text: t('common:cancel'), style: 'cancel' },
       {
         text: t('auth:delete_account'),
         style: 'destructive',
-        onPress: () => {
-          customAlert(t('common:error'), t('settings:delete_account_not_connected'));
+        onPress: async () => {
+          try {
+            await authApi.withdraw();
+            haptics.success();
+            // 서버: refresh_tokens 즉시 삭제 → 이 시점부터 토큰 무효.
+            // 로컬 토큰/캐시 정리 후 로그인 화면으로 자연 복귀.
+            await logout();
+          } catch (e) {
+            haptics.error();
+            customAlert(t('common:error'), t('auth:delete_account_failed'));
+          }
         },
       },
     ]);

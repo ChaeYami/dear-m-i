@@ -42,7 +42,7 @@ class CreateRecordPlanLimitTest {
         when(subscriptionRepository.findByUserId(userId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> createRecordUseCase.create(
-                new CreateRecordCommand(userId, null, (short) 5, LONG_CONTENT, List.of())))
+                new CreateRecordCommand(userId, null, (short) 5, LONG_CONTENT, List.of(), null)))
                 .isInstanceOf(CustomException.class)
                 .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode())
                         .isEqualTo(ErrorCode.CONTENT_LIMIT_EXCEEDED.getCode()));
@@ -59,7 +59,7 @@ class CreateRecordPlanLimitTest {
                 .thenAnswer(inv -> inv.getArgument(0));
 
         createRecordUseCase.create(
-                new CreateRecordCommand(userId, null, (short) 5, content200, List.of()));
+                new CreateRecordCommand(userId, null, (short) 5, content200, List.of(), null));
 
         verify(counselingRecordRepository).save(any());
         verifyNoInteractions(subscriptionRepository); // 200자 이하는 플랜 체크 안 함
@@ -76,7 +76,7 @@ class CreateRecordPlanLimitTest {
                 .thenAnswer(inv -> inv.getArgument(0));
 
         createRecordUseCase.create(
-                new CreateRecordCommand(userId, null, (short) 5, LONG_CONTENT, List.of()));
+                new CreateRecordCommand(userId, null, (short) 5, LONG_CONTENT, List.of(), null));
 
         verify(counselingRecordRepository).save(any());
     }
@@ -89,7 +89,7 @@ class CreateRecordPlanLimitTest {
                 .thenAnswer(inv -> inv.getArgument(0));
 
         createRecordUseCase.create(
-                new CreateRecordCommand(userId, null, (short) 5, null, List.of()));
+                new CreateRecordCommand(userId, null, (short) 5, null, List.of(), null));
 
         verify(counselingRecordRepository).save(any());
         verifyNoInteractions(subscriptionRepository);

@@ -6,6 +6,7 @@ import com.dearmi.backend.domain.medication.MedicationLog;
 import com.dearmi.backend.domain.medication.MedicationLogRepository;
 import com.dearmi.backend.domain.medication.MedicationSchedule;
 import com.dearmi.backend.domain.medication.MedicationScheduleRepository;
+import com.dearmi.backend.domain.notification.NotificationRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +25,7 @@ class DeleteMedicationScheduleUseCaseImplTest {
 
     @Mock private MedicationScheduleRepository medicationScheduleRepository;
     @Mock private MedicationLogRepository medicationLogRepository;
+    @Mock private NotificationRepository notificationRepository;
 
     @InjectMocks
     private DeleteMedicationScheduleUseCaseImpl deleteUseCase;

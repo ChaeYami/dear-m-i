@@ -6,6 +6,7 @@ import com.dearmi.backend.application.auth.dto.UserResult;
 import com.dearmi.backend.application.auth.usecase.GetCurrentUserUseCase;
 import com.dearmi.backend.application.auth.usecase.LogoutUseCase;
 import com.dearmi.backend.application.auth.usecase.TokenRefreshUseCase;
+import com.dearmi.backend.application.auth.usecase.WithdrawUseCase;
 import com.dearmi.backend.common.response.ApiResponse;
 import com.dearmi.backend.infrastructure.security.AuthenticatedUserId;
 import com.dearmi.backend.presentation.auth.dto.AuthTokenResponse;
@@ -26,6 +27,7 @@ public class AuthController {
     private final TokenRefreshUseCase tokenRefreshUseCase;
     private final LogoutUseCase logoutUseCase;
     private final GetCurrentUserUseCase getCurrentUserUseCase;
+    private final WithdrawUseCase withdrawUseCase;
 
     /**
      * Refresh Token으로 새 Access/Refresh Token 발급 (Rotation)
@@ -58,5 +60,17 @@ public class AuthController {
         UserResult result = getCurrentUserUseCase.getCurrentUser(userId);
         return ResponseEntity.ok(ApiResponse.success(
                 new UserResponse(result.userId(), result.email(), result.name(), result.plan())));
+    }
+
+    /**
+     * 회원 탈퇴 (원칙 ⑥)
+     * - PII 익명화 + soft delete
+     * - refresh_tokens 즉시 삭제 → 동일 토큰으로 재요청 시 401
+     * - 30일 후 HardDeleteWithdrawnUsersJob 이 row 와 S3 객체 영구 삭제
+     */
+    @DeleteMapping("/me")
+    public ResponseEntity<ApiResponse<Void>> withdraw(@AuthenticatedUserId UUID userId) {
+        withdrawUseCase.withdraw(userId);
+        return ResponseEntity.ok(ApiResponse.success());
     }
 }

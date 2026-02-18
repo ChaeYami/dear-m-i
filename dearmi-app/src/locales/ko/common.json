@@ -25,6 +25,8 @@
   "offline": "인터넷 연결이 없습니다. 일부 기능이 제한될 수 있어요.",
   "update_required": "업데이트 필요",
   "update_message": "최신 버전으로 업데이트해 주세요.",
+  "update_subtitle": "더 안전하고 편리한 이용을 위해 새 버전이 필요해요.",
+  "update_open_store": "스토어 열기",
   "update": "업데이트",
   "free_plan": "무료 플랜",
   "premium_plan": "프리미엄",

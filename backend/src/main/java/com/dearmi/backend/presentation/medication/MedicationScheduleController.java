@@ -168,7 +168,7 @@ public class MedicationScheduleController {
         // 소유권 검증
         var result = getMedicationScheduleDrugInfoUseCase.getDrugInfo(userId, id);
         // 비동기 재조회 트리거
-        medicationDrugInfoService.fetchDrugInfoForce(id);
+        medicationDrugInfoService.fetchDrugInfoForce(id, userId);
         return ApiResponse.success(MedicationDrugInfoResponse.from(result));
     }
 

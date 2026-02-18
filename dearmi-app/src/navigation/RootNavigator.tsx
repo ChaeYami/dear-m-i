@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Image, Linking, Platform, StyleSheet, View } from 'react-native';
-import { customAlert } from '@/shared/components/CustomAlert';
+import { Image, Platform, StyleSheet, View } from 'react-native';
+import { ForceUpdateScreen } from '@/shared/components/ForceUpdateScreen';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -28,6 +28,7 @@ import { authApi } from '@/features/auth/api';
 import axiosInstance from '@/shared/api/axiosInstance';
 import { useTheme } from '@/shared/theme';
 import { CacheService } from '@/shared/cache/CacheService';
+import { haptics } from '@/shared/utils/haptics';
 import { CACHE_KEYS } from '@/constants/cacheKeys';
 import type { ApiResponse, AppVersionResponse } from '@/shared/types/api.types';
 
@@ -56,7 +57,7 @@ const Stack = createStackNavigator<RootStackParamList>();
 export const RootNavigator: React.FC = () => {
   const { colors, isDark } = useTheme();
   const [isLoading, setIsLoading] = useState(true);
-  const [isForceUpdateBlocked, setIsForceUpdateBlocked] = useState(false);
+  const [forceUpdate, setForceUpdate] = useState<{ message?: string; storeUrl: string } | null>(null);
   const [activeNotification, setActiveNotification] = useState<Notifications.Notification | null>(null);
   const { t } = useTranslation();
   const { isAuthenticated, restoreTokens, setUser, logout } = useAuthStore();
@@ -190,9 +191,11 @@ export const RootNavigator: React.FC = () => {
       // 앱이 열려있을 경우 복약 목록 캐시를 무효화해 즉시 반영
       queryClient.invalidateQueries({ queryKey: ['todayMedication'] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.medicationLogs() });
+      haptics.success();
     } catch (e) {
       // 조용한 실패는 '복용 상태 반영 안 됨' 류 버그의 진단을 어렵게 해 로그 남김
       console.warn('[medication action] check API failed', e);
+      haptics.error();
     }
 
     // 앱이 포그라운드인 경우에만 의미있는 네비게이션 — 백그라운드 호출 시엔 무시됨
@@ -249,34 +252,19 @@ export const RootNavigator: React.FC = () => {
     const { forceUpdate, updateMessage, storeUrl } = data.data;
 
     if (forceUpdate) {
-      setIsForceUpdateBlocked(true);
+      // ForceUpdateScreen 으로 NavigationContainer 마운트 자체를 차단 →
+      // 어떤 인터랙션으로도 우회 불가 (원칙 ③).
+      setForceUpdate({ message: updateMessage, storeUrl });
       setIsLoading(false);
-
-      customAlert(
-        t('update_required'),
-        updateMessage || t('update_message'),
-        [
-          {
-            text: t('update'),
-            onPress: () => {
-              Linking.openURL(storeUrl);
-              setTimeout(() => {
-                customAlert(
-                  t('update_required'),
-                  updateMessage || t('update_message'),
-                  [{ text: t('update'), onPress: () => Linking.openURL(storeUrl) }]
-                );
-              }, 1000);
-            },
-          },
-        ]
-      );
-
       throw new Error('force_update');
     }
   };
 
-  if (isLoading || isForceUpdateBlocked) {
+  if (forceUpdate) {
+    return <ForceUpdateScreen message={forceUpdate.message} storeUrl={forceUpdate.storeUrl} />;
+  }
+
+  if (isLoading) {
     return <LoadingSpinner fullscreen />;
   }
 

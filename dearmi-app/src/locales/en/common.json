@@ -25,6 +25,8 @@
   "offline": "No internet connection. Some features may be limited.",
   "update_required": "Update Required",
   "update_message": "Please update to the latest version.",
+  "update_subtitle": "A new version is needed for a safer and better experience.",
+  "update_open_store": "Open Store",
   "update": "Update",
   "free_plan": "Free Plan",
   "premium_plan": "Premium",

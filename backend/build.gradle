@@ -173,4 +173,6 @@ def loadDotEnv = { task ->
 
 bootRun {
     loadDotEnv(it)
+    // 로컬 개발: 항상 local 프로필 강제 (운영 default 가 prod 로 바뀌었기 때문에)
+    systemProperty 'spring.profiles.active', System.getProperty('spring.profiles.active', 'local')
 }

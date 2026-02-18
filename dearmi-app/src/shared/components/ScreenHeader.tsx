@@ -7,6 +7,15 @@ import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { navigationRef } from '@/navigation/navigationRef';
 import { useUnreadNotificationCount } from '@/features/notification/hooks/useNotificationHistory';
 
+const a11y = {
+  search: { accessibilityRole: 'button' as const, accessibilityLabel: '검색' },
+  bell: (unread: boolean) => ({
+    accessibilityRole: 'button' as const,
+    accessibilityLabel: unread ? '알림 (읽지 않은 알림 있음)' : '알림',
+  }),
+  back: { accessibilityRole: 'button' as const, accessibilityLabel: '뒤로 가기' },
+};
+
 interface TabHeaderProps {
   variant: 'tab';
   title: string;
@@ -97,6 +106,7 @@ const TabHeader: React.FC<TabHeaderProps> = (props) => {
           <TouchableOpacity
             onPress={handleSearchPress}
             hitSlop={8}
+            {...a11y.search}
             style={{
               width: 38,
               height: 38,
@@ -114,6 +124,7 @@ const TabHeader: React.FC<TabHeaderProps> = (props) => {
         <TouchableOpacity
           onPress={handleBellPress}
           hitSlop={8}
+          {...a11y.bell(hasUnread)}
           style={{
             width: 38,
             height: 38,
@@ -171,6 +182,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = (props) => {
         <TouchableOpacity
           onPress={handleBack}
           hitSlop={8}
+          {...a11y.back}
           style={{
             width: 36,
             height: 36,

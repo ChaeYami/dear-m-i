@@ -28,4 +28,17 @@ public interface MedicationScheduleJpaRepository extends JpaRepository<Medicatio
            "AND (s.startDate IS NULL OR s.startDate <= :date) " +
            "AND (s.endDate IS NULL OR s.endDate >= :date)")
     List<MedicationSchedule> findActiveForDate(@Param("date") LocalDate date);
+
+    @Query("SELECT s FROM MedicationSchedule s WHERE s.deletedAt IS NULL " +
+           "AND (s.startDate IS NULL OR s.startDate <= :date) " +
+           "AND (s.endDate IS NULL OR s.endDate >= :date) " +
+           "AND ( " +
+           "  (s.morning   = TRUE AND s.morningTime   = :minute) " +
+           "  OR (s.afternoon = TRUE AND s.afternoonTime = :minute) " +
+           "  OR (s.evening   = TRUE AND s.eveningTime   = :minute) " +
+           "  OR (s.bedtime   = TRUE AND s.bedtimeTime   = :minute) " +
+           ")")
+    List<MedicationSchedule> findDueForMinute(
+            @Param("date") LocalDate date,
+            @Param("minute") java.time.LocalTime minute);
 }

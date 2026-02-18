@@ -6,9 +6,11 @@ spring:
   application:
     name: dear-mi-backend
 
-  # 활성 프로파일 (환경변수로 재정의 가능: SPRING_PROFILES_ACTIVE=prod)
+  # 활성 프로파일 — default 는 prod (안전 기본값).
+  # 로컬 개발 시 SPRING_PROFILES_ACTIVE=local 로 명시 (gradle bootRun 이 자동 주입).
+  # 운영 누락/오설정 시에도 DevAuthController 같은 local 전용 빈이 등록되지 않도록 보장.
   profiles:
-    active: local
+    active: ${SPRING_PROFILES_ACTIVE:prod}
 
   # OAuth2 소셜 로그인 설정 (프로파일별 client-id/secret 오버라이드)
   security:

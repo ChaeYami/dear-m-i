@@ -53,6 +53,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      "./plugins/withAdiRegistration.js",
       "expo-web-browser",
       "@react-native-community/datetimepicker",
       [

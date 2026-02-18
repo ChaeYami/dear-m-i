@@ -18,8 +18,11 @@ import com.dearmi.backend.presentation.notification.dto.NotificationSettingRespo
 import com.dearmi.backend.presentation.notification.dto.UnreadCountResponse;
 import com.dearmi.backend.presentation.notification.dto.UpdateSettingRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -27,6 +30,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/notifications")
 @RequiredArgsConstructor
+@Validated
 public class NotificationController {
 
     private final UpdateFcmTokenUseCase updateFcmTokenUseCase;
@@ -78,8 +82,8 @@ public class NotificationController {
     @GetMapping
     public ApiResponse<PageResponse<NotificationResponse>> getHistory(
             @AuthenticatedUserId UUID userId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     ) {
         return ApiResponse.success(
                 PageResponse.from(

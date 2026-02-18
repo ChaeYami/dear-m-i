@@ -53,11 +53,12 @@ public class CreatePrescriptionUseCaseImpl implements CreatePrescriptionUseCase 
 
         // 트랜잭션 커밋 완료 후 OCR 시작 — 커밋 전 @Async 호출 시 DB에서 처방전을 찾지 못하는 문제 방지
         UUID prescriptionId = saved.getId();
+        UUID userId = saved.getUserId();
         String s3Key = saved.getS3Key();
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                ocrProcessorService.processAsync(prescriptionId, s3Key);
+                ocrProcessorService.processAsync(prescriptionId, userId, s3Key);
             }
         });
 

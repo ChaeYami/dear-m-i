@@ -58,15 +58,17 @@ public class OcrProcessorService {
      *   2. 드러그인포 조회: 약품별 병렬 실행 (실패해도 OCR 결과에 영향 없음)
      */
     @Async("ocrTaskExecutor")
-    public void processAsync(UUID prescriptionId, String s3Key) {
-        log.info("OCR 시작: prescriptionId={}, s3Key={}", prescriptionId, s3Key);
+    public void processAsync(UUID prescriptionId, UUID userId, String s3Key) {
+        log.info("OCR 시작: prescriptionId={}, userId={}, s3Key={}", prescriptionId, userId, s3Key);
         // ── 1단계: OCR + 결과 저장 (트랜잭션 즉시 커밋) ─────────────────────────
         List<PrescriptionMedication> savedMedications = new ArrayList<>();
 
         boolean ocrSucceeded = Boolean.TRUE.equals(transactionTemplate.execute(status -> {
-            Prescription prescription = prescriptionRepository.findById(prescriptionId).orElse(null);
+            // ④ 원칙: async 진입점에서도 ownership 재검증 (호출자 누락/오용 방어)
+            Prescription prescription = prescriptionRepository
+                    .findByIdAndUserIdAndDeletedAtIsNull(prescriptionId, userId).orElse(null);
             if (prescription == null) {
-                log.warn("OCR 대상 처방전을 찾을 수 없음: prescriptionId={}", prescriptionId);
+                log.warn("OCR 대상 처방전 없음(또는 타 유저): prescriptionId={}, userId={}", prescriptionId, userId);
                 return false;
             }
 
@@ -110,8 +112,9 @@ public class OcrProcessorService {
                 return true;
 
             } catch (PrescriptionOcrException e) {
-                log.error("OCR 실패: prescriptionId={}", prescriptionId, e);
-                Prescription p = prescriptionRepository.findById(prescriptionId).orElse(null);
+                log.error("OCR 실패: prescriptionId={}, userId={}", prescriptionId, userId, e);
+                Prescription p = prescriptionRepository
+                        .findByIdAndUserIdAndDeletedAtIsNull(prescriptionId, userId).orElse(null);
                 if (p != null) { p.failOcr(); prescriptionRepository.save(p); }
                 return false;
             }

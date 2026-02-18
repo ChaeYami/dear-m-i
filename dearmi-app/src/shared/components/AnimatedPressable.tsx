@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { Pressable, ViewStyle, StyleProp } from 'react-native';
+import { AccessibilityProps, Pressable, ViewStyle, StyleProp } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -10,7 +10,7 @@ const AnimatedPress = Animated.createAnimatedComponent(Pressable);
 
 const SPRING = { damping: 14, stiffness: 280, mass: 0.5 };
 
-interface AnimatedPressableProps {
+interface AnimatedPressableProps extends AccessibilityProps {
   children: React.ReactNode;
   onPress?: () => void;
   onLongPress?: () => void;
@@ -28,6 +28,7 @@ export const AnimatedPressable: React.FC<AnimatedPressableProps> = ({
   style,
   scaleValue = 0.975,
   activeOpacity = 0.88,
+  ...a11yProps
 }) => {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
@@ -55,6 +56,7 @@ export const AnimatedPressable: React.FC<AnimatedPressableProps> = ({
       onPressOut={handlePressOut}
       disabled={disabled}
       style={[animStyle, style]}
+      {...a11yProps}
     >
       {children}
     </AnimatedPress>

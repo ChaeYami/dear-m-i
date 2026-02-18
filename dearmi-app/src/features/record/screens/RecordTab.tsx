@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -23,8 +23,9 @@ import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import { useTabBarScrollHide } from '@/shared/hooks/useTabBarScrollHide';
 import { useTimeline, useDeleteRecord } from '@/features/record/hooks/useRecord';
+import { haptics } from '@/shared/utils/haptics';
 import { getEmotionColor } from '@/shared/components/EmotionSlider';
-import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
+import { RecordCardSkeleton } from '@/shared/components/RecordCardSkeleton';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import type { CareStackParamList } from '@/navigation/CareNavigator';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
@@ -47,7 +48,7 @@ const formatRecordDate = (item: RecordSummary): { label: string; isConsulted: bo
   return { label: formatted, isConsulted: item.consultedAt != null };
 };
 
-const RecordCard: React.FC<{ item: RecordSummary; onPress: () => void; onEdit: () => void; onDelete: () => void }> = ({ item, onPress, onEdit, onDelete }) => {
+const RecordCard: React.FC<{ item: RecordSummary; onPress: () => void; onEdit: () => void; onDelete: () => void }> = React.memo(({ item, onPress, onEdit, onDelete }) => {
   const { colors } = useTheme();
   const { t } = useTranslation(['record', 'common']);
   const emotionColor = item.emotionScore !== undefined ? getEmotionColor(item.emotionScore) : colors.primary;
@@ -115,7 +116,13 @@ const RecordCard: React.FC<{ item: RecordSummary; onPress: () => void; onEdit: (
           <Text style={[styles.dateLabelKind, { color: colors.textDisabled }]}>
             {isConsulted ? t('record:date_visit') : t('record:date_created')}
           </Text>
-          <TouchableOpacity onPress={handleMore} hitSlop={12} style={styles.moreBtn}>
+          <TouchableOpacity
+            onPress={handleMore}
+            hitSlop={12}
+            style={styles.moreBtn}
+            accessibilityRole="button"
+            accessibilityLabel={t('record:visit_relation_title')}
+          >
             <Ionicons name="ellipsis-vertical" size={16} color={colors.textSub} />
           </TouchableOpacity>
         </View>
@@ -156,7 +163,8 @@ const RecordCard: React.FC<{ item: RecordSummary; onPress: () => void; onEdit: (
     </View>
     </Swipeable>
   );
-};
+});
+RecordCard.displayName = 'RecordCard';
 
 const EmotionBar: React.FC<{ score: number }> = ({ score }) => {
   const { colors } = useTheme();
@@ -184,12 +192,30 @@ export const RecordTab: React.FC<{ embedded?: boolean }> = ({ embedded = false }
   const scrollHandlers = useTabBarScrollHide();
   const { mutate: deleteRecord } = useDeleteRecord();
 
-  const handleDeleteRecord = (id: string) => {
+  const handleDeleteRecord = useCallback((id: string) => {
+    haptics.warning();
     customAlert(t('record:delete_title'), t('record:delete_message'), [
       { text: t('common:cancel'), style: 'cancel' },
       { text: t('common:delete'), style: 'destructive', onPress: () => deleteRecord(id) },
     ]);
-  };
+  }, [deleteRecord, t]);
+
+  const handleNavigateDetail = useCallback((id: string) => {
+    navigation.navigate('RecordDetail', { recordId: id });
+  }, [navigation]);
+
+  const handleNavigateEdit = useCallback((id: string) => {
+    navigation.navigate('RecordForm', { recordId: id });
+  }, [navigation]);
+
+  const renderItem = useCallback(({ item }: { item: RecordSummary }) => (
+    <RecordCard
+      item={item}
+      onPress={() => handleNavigateDetail(item.id)}
+      onEdit={() => handleNavigateEdit(item.id)}
+      onDelete={() => handleDeleteRecord(item.id)}
+    />
+  ), [handleNavigateDetail, handleNavigateEdit, handleDeleteRecord]);
 
   const {
     data,
@@ -209,7 +235,17 @@ export const RecordTab: React.FC<{ embedded?: boolean }> = ({ embedded = false }
     if (hasNextPage && !isFetchingNextPage) fetchNextPage();
   };
 
-  if (isLoading) return <LoadingSpinner fullscreen />;
+  if (isLoading) {
+    return (
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        edges={embedded ? [] : undefined}
+      >
+        {!embedded && <ScreenHeader variant="tab" title={t('title')} hasNotification searchScope="RECORD" />}
+        <RecordCardSkeleton />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView
@@ -236,16 +272,13 @@ export const RecordTab: React.FC<{ embedded?: boolean }> = ({ embedded = false }
       <FlatList
         data={items}
         keyExtractor={(item) => `record-${item.id}`}
-        renderItem={({ item }) => (
-          <RecordCard
-            item={item}
-            onPress={() => navigation.navigate('RecordDetail', { recordId: item.id })}
-            onEdit={() => navigation.navigate('RecordForm', { recordId: item.id })}
-            onDelete={() => handleDeleteRecord(item.id)}
-          />
-        )}
+        renderItem={renderItem}
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.3}
+        removeClippedSubviews
+        windowSize={10}
+        maxToRenderPerBatch={8}
+        initialNumToRender={10}
         {...scrollHandlers}
         ListFooterComponent={
           isFetchingNextPage ? (
@@ -279,6 +312,8 @@ export const RecordTab: React.FC<{ embedded?: boolean }> = ({ embedded = false }
       <AnimatedPressable
         onPress={() => navigation.navigate('RecordForm', undefined)}
         style={[styles.fab, { bottom: tabBarSafeBottom + sizes.spacing.md }]}
+        accessibilityRole="button"
+        accessibilityLabel={t('record:empty_write')}
       >
         <LinearGradient
           colors={[colors.primaryVivid, colors.primaryVividDark]}

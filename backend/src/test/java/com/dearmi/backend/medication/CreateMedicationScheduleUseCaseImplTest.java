@@ -2,6 +2,7 @@ package com.dearmi.backend.medication;
 
 import com.dearmi.backend.application.medication.dto.CreateMedicationScheduleCommand;
 import com.dearmi.backend.application.medication.dto.MedicationScheduleResult;
+import com.dearmi.backend.application.medication.service.MedicationDrugInfoService;
 import com.dearmi.backend.application.medication.usecase.CreateMedicationScheduleUseCaseImpl;
 import com.dearmi.backend.common.exception.CustomException;
 import com.dearmi.backend.domain.medication.MedicationSchedule;
@@ -32,6 +33,7 @@ class CreateMedicationScheduleUseCaseImplTest {
     @Mock private MedicationScheduleRepository medicationScheduleRepository;
     @Mock private PrescriptionMedicationRepository prescriptionMedicationRepository;
     @Mock private PrescriptionRepository prescriptionRepository;
+    @Mock private MedicationDrugInfoService medicationDrugInfoService;
 
     @InjectMocks
     private CreateMedicationScheduleUseCaseImpl createUseCase;
@@ -41,7 +43,7 @@ class CreateMedicationScheduleUseCaseImplTest {
     void create_manual_success() {
         UUID userId = UUID.randomUUID();
         CreateMedicationScheduleCommand command = new CreateMedicationScheduleCommand(
-                userId, null, "아스피린", "100mg", (short) 1,
+                userId, null, "아스피린", "100mg", null, null, (short) 1,
                 LocalDate.now(), LocalDate.now().plusDays(30),
                 true, false, false, false,
                 null, null, null, null
@@ -85,7 +87,7 @@ class CreateMedicationScheduleUseCaseImplTest {
 
         // drugName null → pre-fill에서 채워짐
         CreateMedicationScheduleCommand command = new CreateMedicationScheduleCommand(
-                userId, pmId, null, null, null, null, null,
+                userId, pmId, null, null, null, null, null, null, null,
                 true, false, false, false, null, null, null, null
         );
 
@@ -111,7 +113,7 @@ class CreateMedicationScheduleUseCaseImplTest {
                 .thenReturn(Optional.empty()); // 타인 소유 → 404
 
         CreateMedicationScheduleCommand command = new CreateMedicationScheduleCommand(
-                userId, pmId, null, null, null, null, null,
+                userId, pmId, null, null, null, null, null, null, null,
                 true, false, false, false, null, null, null, null
         );
 
@@ -125,7 +127,7 @@ class CreateMedicationScheduleUseCaseImplTest {
     void create_without_drug_name_throws_invalid_request() {
         UUID userId = UUID.randomUUID();
         CreateMedicationScheduleCommand command = new CreateMedicationScheduleCommand(
-                userId, null, null, null, null, null, null,
+                userId, null, null, null, null, null, null, null, null,
                 true, false, false, false, null, null, null, null
         );
 

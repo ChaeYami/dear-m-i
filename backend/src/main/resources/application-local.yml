@@ -31,6 +31,12 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.orm.jdbc.bind: TRACE
 
+# CORS — 로컬: localhost 모든 포트 + Swagger 접근 허용
+cors:
+  allowed-origin-patterns:
+    - http://localhost:*
+    - http://127.0.0.1:*
+
 # JWT 설정 (로컬 테스트용 - 운영에서는 환경변수로 주입)
 jwt:
   secret: ${JWT_SECRET:local-dev-secret-key-must-be-at-least-256-bits-long-for-hs256}

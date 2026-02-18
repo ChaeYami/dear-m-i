@@ -39,7 +39,7 @@ public class RetryOcrUseCaseImpl implements RetryOcrUseCase {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                ocrProcessorService.processAsync(prescriptionId, s3Key);
+                ocrProcessorService.processAsync(prescriptionId, userId, s3Key);
             }
         });
     }

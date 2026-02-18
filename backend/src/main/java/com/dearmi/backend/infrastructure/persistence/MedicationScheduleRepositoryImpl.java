@@ -45,4 +45,9 @@ public class MedicationScheduleRepositoryImpl implements MedicationScheduleRepos
     public List<MedicationSchedule> findActiveForDate(LocalDate date) {
         return jpa.findActiveForDate(date);
     }
+
+    @Override
+    public List<MedicationSchedule> findDueForMinute(LocalDate date, java.time.LocalTime minute) {
+        return jpa.findDueForMinute(date, minute);
+    }
 }

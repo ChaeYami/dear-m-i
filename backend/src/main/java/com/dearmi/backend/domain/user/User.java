@@ -49,4 +49,18 @@ public class User extends BaseTimeEntity {
     public void updatePreferredLocale(String preferredLocale) {
         this.preferredLocale = preferredLocale;
     }
+
+    /**
+     * 탈퇴 처리 — PII 즉시 익명화 + softDelete.
+     * 30일 유예 기간 동안 row 는 유지되지만 식별 정보는 모두 제거된다.
+     * email 은 unique 제약 회피를 위해 placeholder 로 치환한다.
+     */
+    public void withdraw() {
+        this.email = "withdrawn-" + this.id + "@dearmi.local";
+        this.name = null;
+        this.oauthProvider = null;
+        this.oauthProviderId = null;
+        this.fcmToken = null;
+        softDelete();
+    }
 }

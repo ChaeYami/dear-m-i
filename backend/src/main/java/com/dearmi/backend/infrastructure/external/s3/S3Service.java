@@ -6,15 +6,23 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
+import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -65,6 +73,38 @@ public class S3Service implements StoragePort {
                 .bucket(bucket)
                 .key(s3Key)
                 .build());
+    }
+
+    /**
+     * 주어진 prefix 하위 모든 오브젝트 삭제 (탈퇴 유저 데이터 영구 삭제용).
+     * S3 DeleteObjects 는 최대 1000개씩 → 페이지네이션 + 배치.
+     */
+    public int deleteAllByPrefix(String prefix) {
+        int deletedTotal = 0;
+        String continuationToken = null;
+        do {
+            ListObjectsV2Request.Builder listBuilder = ListObjectsV2Request.builder()
+                    .bucket(bucket)
+                    .prefix(prefix);
+            if (continuationToken != null) listBuilder.continuationToken(continuationToken);
+
+            ListObjectsV2Response listResponse = s3Client.listObjectsV2(listBuilder.build());
+            List<S3Object> contents = listResponse.contents();
+            if (contents.isEmpty()) break;
+
+            List<ObjectIdentifier> ids = new ArrayList<>(contents.size());
+            for (S3Object o : contents) ids.add(ObjectIdentifier.builder().key(o.key()).build());
+
+            s3Client.deleteObjects(DeleteObjectsRequest.builder()
+                    .bucket(bucket)
+                    .delete(Delete.builder().objects(ids).quiet(true).build())
+                    .build());
+            deletedTotal += ids.size();
+
+            continuationToken = Boolean.TRUE.equals(listResponse.isTruncated())
+                    ? listResponse.nextContinuationToken() : null;
+        } while (continuationToken != null);
+        return deletedTotal;
     }
 
     /** ClaudeVisionClient 내부에서만 사용: S3 오브젝트 바이트 읽기 */

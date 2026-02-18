@@ -26,19 +26,21 @@ public class MedicationDrugInfoService {
 
     @Async("ocrTaskExecutor")
     @Transactional
-    public void fetchDrugInfoAsync(UUID scheduleId) {
-        fetchAndSave(scheduleId, false);
+    public void fetchDrugInfoAsync(UUID scheduleId, UUID userId) {
+        fetchAndSave(scheduleId, userId, false);
     }
 
     /** 강제 재조회 (이미 조회된 약도 갱신) */
     @Async("ocrTaskExecutor")
     @Transactional
-    public void fetchDrugInfoForce(UUID scheduleId) {
-        fetchAndSave(scheduleId, true);
+    public void fetchDrugInfoForce(UUID scheduleId, UUID userId) {
+        fetchAndSave(scheduleId, userId, true);
     }
 
-    private void fetchAndSave(UUID scheduleId, boolean force) {
-        var schedule = medicationScheduleRepository.findById(scheduleId).orElse(null);
+    private void fetchAndSave(UUID scheduleId, UUID userId, boolean force) {
+        // ④ 원칙: async 진입점에서도 ownership 재검증
+        var schedule = medicationScheduleRepository
+                .findByIdAndUserIdAndDeletedAtIsNull(scheduleId, userId).orElse(null);
         if (schedule == null) return;
         if (!force && schedule.getDrugInfoFetchedAt() != null) return;
 

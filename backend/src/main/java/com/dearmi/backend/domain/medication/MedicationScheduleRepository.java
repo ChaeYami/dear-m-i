@@ -20,4 +20,10 @@ public interface MedicationScheduleRepository {
 
     /** 해당 날짜에 활성화된 모든 복약 일정 조회 (배치용) */
     List<MedicationSchedule> findActiveForDate(LocalDate date);
+
+    /**
+     * 매분 알림용: 해당 날짜에 활성화 + 4 슬롯 중 하나라도 enabled 이고 시간이 정확히 minute 인 일정만.
+     * NotificationScheduler 매분 풀스캔 → due-only 쿼리로 전환.
+     */
+    List<MedicationSchedule> findDueForMinute(LocalDate date, java.time.LocalTime minute);
 }

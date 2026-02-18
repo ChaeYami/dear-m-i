@@ -3,7 +3,9 @@
     "allow": [
       "Bash(npm install *)",
       "Bash(python -c \"from PIL import Image, ImageDraw, ImageFont; print\\('PIL OK'\\)\")",
-      "Bash(python *)"
+      "Bash(python *)",
+      "Bash(git -C /Users/scy/dev/dear-m-i log --all --full-history -- backend/.env)",
+      "Bash(git check-ignore *)"
     ]
   }
 }

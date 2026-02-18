@@ -48,7 +48,7 @@ class SearchUseCaseImplTest {
                 .findByUserIdAndDeletedAtIsNullAndCreatedAtAfterOrderByCreatedAtDesc(eq(userId), any()))
                 .thenReturn(List.of());
 
-        SearchCommand command = new SearchCommand(userId, "불안", Set.of(SearchType.RECORD), 0, 20);
+        SearchCommand command = new SearchCommand(userId, "불안", Set.of(SearchType.RECORD), null, 0, 20);
         searchUseCase.search(command);
 
         verify(counselingRecordRepository)
@@ -67,7 +67,7 @@ class SearchUseCaseImplTest {
         when(counselingRecordRepository.findByUserIdAndDeletedAtIsNullOrderByCreatedAtDesc(userId))
                 .thenReturn(List.of());
 
-        searchUseCase.search(new SearchCommand(userId, "스트레스", Set.of(SearchType.RECORD), 0, 20));
+        searchUseCase.search(new SearchCommand(userId, "스트레스", Set.of(SearchType.RECORD), null, 0, 20));
 
         verify(counselingRecordRepository).findByUserIdAndDeletedAtIsNullOrderByCreatedAtDesc(userId);
     }
@@ -88,7 +88,7 @@ class SearchUseCaseImplTest {
                 .thenReturn(List.of(matching, notMatching));
 
         SearchResult result = searchUseCase.search(
-                new SearchCommand(userId, "불안", Set.of(SearchType.RECORD), 0, 20));
+                new SearchCommand(userId, "불안", Set.of(SearchType.RECORD), null, 0, 20));
 
         assertThat(result.records()).hasSize(1);
         assertThat(result.records().get(0).content()).contains("불안감");
@@ -111,7 +111,7 @@ class SearchUseCaseImplTest {
                 .thenReturn(List.of(matching, notMatching));
 
         SearchResult result = searchUseCase.search(
-                new SearchCommand(userId, "스트레스", Set.of(SearchType.RECORD), 0, 20));
+                new SearchCommand(userId, "스트레스", Set.of(SearchType.RECORD), null, 0, 20));
 
         assertThat(result.records()).hasSize(1);
         assertThat(result.recordTotal()).isEqualTo(1);
@@ -133,7 +133,7 @@ class SearchUseCaseImplTest {
                 .thenReturn(List.of(r1, r2));
 
         SearchResult result = searchUseCase.search(
-                new SearchCommand(userId, "  ", Set.of(SearchType.RECORD), 0, 20));
+                new SearchCommand(userId, "  ", Set.of(SearchType.RECORD), null, 0, 20));
 
         assertThat(result.records()).hasSize(2);
         assertThat(result.recordTotal()).isEqualTo(2);
@@ -153,7 +153,7 @@ class SearchUseCaseImplTest {
                 .thenReturn(List.of(checkin));
 
         SearchResult result = searchUseCase.search(
-                new SearchCommand(userId, "피곤", Set.of(SearchType.CHECKIN), 0, 20));
+                new SearchCommand(userId, "피곤", Set.of(SearchType.CHECKIN), null, 0, 20));
 
         assertThat(result.checkins()).hasSize(1);
         assertThat(result.checkinTotal()).isEqualTo(1);
@@ -173,7 +173,7 @@ class SearchUseCaseImplTest {
                 .thenReturn(List.of(note));
 
         SearchResult result = searchUseCase.search(
-                new SearchCommand(userId, "약", Set.of(SearchType.PREPNOTE), 0, 20));
+                new SearchCommand(userId, "약", Set.of(SearchType.PREPNOTE), null, 0, 20));
 
         assertThat(result.prepNotes()).hasSize(1);
         assertThat(result.prepNoteTotal()).isEqualTo(1);
@@ -188,7 +188,7 @@ class SearchUseCaseImplTest {
         when(dailyCheckinRepository.searchByKeyword(any(), any(), any(), anyInt(), anyInt()))
                 .thenReturn(List.of());
 
-        searchUseCase.search(new SearchCommand(userId, "불안", Set.of(SearchType.CHECKIN), 0, 20));
+        searchUseCase.search(new SearchCommand(userId, "불안", Set.of(SearchType.CHECKIN), null, 0, 20));
 
         verifyNoInteractions(counselingRecordRepository);
         verifyNoInteractions(prepNoteRepository);
@@ -203,7 +203,7 @@ class SearchUseCaseImplTest {
         when(prepNoteRepository.searchByKeyword(any(), any(), any(), anyInt(), anyInt()))
                 .thenReturn(List.of());
 
-        searchUseCase.search(new SearchCommand(userId, null, Set.of(SearchType.PREPNOTE), 2, 10));
+        searchUseCase.search(new SearchCommand(userId, null, Set.of(SearchType.PREPNOTE), null, 2, 10));
 
         ArgumentCaptor<Integer> offsetCaptor = ArgumentCaptor.forClass(Integer.class);
         ArgumentCaptor<Integer> limitCaptor = ArgumentCaptor.forClass(Integer.class);

@@ -214,7 +214,9 @@ public class NotificationScheduler {
         LocalTime now   = LocalTime.now(SEOUL).truncatedTo(ChronoUnit.MINUTES);
         LocalDate today = LocalDate.now(SEOUL);
 
-        List<MedicationSchedule> schedules = medicationScheduleRepository.findActiveForDate(today);
+        // 활성 일정 풀스캔 → 분 정확히 매치되는 일정만 가져오는 due-only 쿼리.
+        // partial index (V17) 가 (slot_time) WHERE slot=true AND deleted_at IS NULL 구조로 색인.
+        List<MedicationSchedule> schedules = medicationScheduleRepository.findDueForMinute(today, now);
         if (schedules.isEmpty()) return;
 
         for (MedicationSchedule schedule : schedules) {
