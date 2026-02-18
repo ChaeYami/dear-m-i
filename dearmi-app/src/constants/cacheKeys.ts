@@ -82,4 +82,8 @@ export const QUERY_KEYS = {
   // 알림 히스토리
   notificationHistory: () => ['notificationHistory'] as const,
   notificationUnreadCount: () => ['notificationUnreadCount'] as const,
+
+  // 부작용 로그
+  sideEffects: () => ['sideEffects'] as const,
+  sideEffectsSince: (sinceIso: string) => ['sideEffects', 'since', sinceIso] as const,
 } as const;

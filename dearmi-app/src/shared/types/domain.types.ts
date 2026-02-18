@@ -42,6 +42,14 @@ export interface CreateScheduleRequest {
 export type UpdateScheduleRequest = Partial<CreateScheduleRequest>;
 
 /** 상담 기록 */
+/** 정신과 진료 기록 구조화 섹션 */
+export interface RecordSections {
+  diagnosis?: string;
+  rxChanges?: string;
+  nextSteps?: string;
+  keyTakeaway?: string;
+}
+
 export interface CounselingRecord {
   id: string;
   scheduleId?: string;
@@ -50,6 +58,8 @@ export interface CounselingRecord {
   emotionScore?: number;
   tags?: string[];
   consultedAt?: string; // YYYY-MM-DD — 일정 미연결 기록의 진료 날짜
+  sections?: RecordSections;
+  visitSatisfaction?: number; // 1-10, 진료 자체에 대한 만족도
   createdAt: string;
   updatedAt: string;
 }
@@ -61,6 +71,8 @@ export interface CreateRecordRequest {
   emotionScore?: number;
   tags?: string[];
   consultedAt?: string; // YYYY-MM-DD
+  sections?: RecordSections;
+  visitSatisfaction?: number;
 }
 
 /** 상담 기록 수정 요청 */
@@ -309,22 +321,58 @@ export interface MedicationStats {
 
 // ─── 진료 준비 메모 ────────────────────────────────────────────────────────────
 
+/** 정신과 진료 준비 메모 구조화 섹션 */
+export interface PrepNoteSections {
+  moodChanges?: string;
+  sideEffects?: string;
+  sleepAppetite?: string;
+  newSymptoms?: string;
+  questions?: string[];
+  selfHarmThoughts?: string;
+}
+
 export interface PrepNote {
   id: string; // UUID
   scheduleId?: string | null; // UUID (null = 미연결)
   content: string;
+  sections?: PrepNoteSections;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreatePrepNoteRequest {
   scheduleId?: string; // UUID
-  content: string;
+  content?: string;
+  sections?: PrepNoteSections;
 }
 
 export interface UpdatePrepNoteRequest {
-  content: string;
+  content?: string;
+  sections?: PrepNoteSections;
 }
+
+// ─── 부작용 로그 ───────────────────────────────────────────────────────────────
+
+export interface SideEffectLog {
+  id: string;
+  medicationScheduleId?: string | null;
+  occurredAt: string; // ISO instant
+  symptom: string;
+  severity?: number | null; // 1-5
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateSideEffectRequest {
+  medicationScheduleId?: string;
+  occurredAt: string;
+  symptom: string;
+  severity?: number;
+  notes?: string;
+}
+
+export type UpdateSideEffectRequest = CreateSideEffectRequest;
 
 // ─── 통합 검색 ─────────────────────────────────────────────────────────────────
 

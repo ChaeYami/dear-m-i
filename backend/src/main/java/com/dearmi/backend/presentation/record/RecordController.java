@@ -60,7 +60,9 @@ public class RecordController {
                 request.emotionScore(),
                 request.content(),
                 request.tags(),
-                request.consultedAt()
+                request.consultedAt(),
+                request.sections(),
+                request.visitSatisfaction()
         );
         return ApiResponse.success(RecordResponse.from(createRecordUseCase.create(command)));
     }
@@ -87,7 +89,9 @@ public class RecordController {
                 request.emotionScore(),
                 request.content(),
                 request.tags(),
-                request.consultedAt()
+                request.consultedAt(),
+                request.sections(),
+                request.visitSatisfaction()
         );
         return ApiResponse.success(RecordResponse.from(updateRecordUseCase.update(command)));
     }

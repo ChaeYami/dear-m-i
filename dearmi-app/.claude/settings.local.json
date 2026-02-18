@@ -5,7 +5,10 @@
       "Bash(node node_modules/expo-modules-autolinking/bin/expo-modules-autolinking react-native-config --json)",
       "Bash(find *)",
       "Bash(./gradlew compileJava -q)",
-      "Bash(./gradlew compileJava)"
+      "Bash(./gradlew compileJava)",
+      "Bash(grep -E \"\\\\.\\(tsx?|jsx?\\)$\")",
+      "Bash(./gradlew compileJava --no-daemon)",
+      "Bash(./gradlew compileTestJava --no-daemon)"
     ]
   }
 }

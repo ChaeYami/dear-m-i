@@ -41,7 +41,7 @@ class CreatePrepNoteUseCaseImplTest {
         when(prepNoteRepository.save(any())).thenReturn(saved);
 
         PrepNoteResult result = createPrepNoteUseCase.create(
-                new CreatePrepNoteCommand(userId, null, "질문 리스트"));
+                new CreatePrepNoteCommand(userId, null, "질문 리스트", null));
 
         assertThat(result.content()).isEqualTo("질문 리스트");
         assertThat(result.scheduleId()).isNull();
@@ -63,7 +63,7 @@ class CreatePrepNoteUseCaseImplTest {
         when(prepNoteRepository.save(any())).thenReturn(saved);
 
         PrepNoteResult result = createPrepNoteUseCase.create(
-                new CreatePrepNoteCommand(userId, scheduleId, "증상 메모"));
+                new CreatePrepNoteCommand(userId, scheduleId, "증상 메모", null));
 
         assertThat(result.scheduleId()).isEqualTo(scheduleId);
         verify(hospitalScheduleRepository).findByIdAndUserIdAndDeletedAtIsNull(scheduleId, userId);
@@ -79,7 +79,7 @@ class CreatePrepNoteUseCaseImplTest {
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> createPrepNoteUseCase.create(
-                new CreatePrepNoteCommand(userId, scheduleId, "내용")))
+                new CreatePrepNoteCommand(userId, scheduleId, "내용", null)))
                 .isInstanceOf(CustomException.class)
                 .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode())
                         .isEqualTo(ErrorCode.NOT_FOUND.getCode()));

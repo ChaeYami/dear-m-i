@@ -14,6 +14,8 @@ import koSubscription from './ko/subscription.json';
 import koSettings from './ko/settings.json';
 import koLegal from './ko/legal.json';
 import koNotifications from './ko/notifications.json';
+import koPrepnote from './ko/prepnote.json';
+import koSideeffect from './ko/sideeffect.json';
 
 // en
 import enCommon from './en/common.json';
@@ -26,6 +28,8 @@ import enSubscription from './en/subscription.json';
 import enSettings from './en/settings.json';
 import enLegal from './en/legal.json';
 import enNotifications from './en/notifications.json';
+import enPrepnote from './en/prepnote.json';
+import enSideeffect from './en/sideeffect.json';
 
 const LANGUAGE_KEY = 'app_language';
 
@@ -41,7 +45,7 @@ const getInitialLanguage = (): string => {
 i18n.use(initReactI18next).init({
   lng: getInitialLanguage(),
   fallbackLng: 'en',
-  ns: ['common', 'auth', 'schedule', 'record', 'checkin', 'prescription', 'subscription', 'settings', 'legal', 'notifications'],
+  ns: ['common', 'auth', 'schedule', 'record', 'checkin', 'prescription', 'subscription', 'settings', 'legal', 'notifications', 'prepnote', 'sideeffect'],
   defaultNS: 'common',
   resources: {
     ko: {
@@ -55,6 +59,8 @@ i18n.use(initReactI18next).init({
       settings: koSettings,
       legal: koLegal,
       notifications: koNotifications,
+      prepnote: koPrepnote,
+      sideeffect: koSideeffect,
     },
     en: {
       common: enCommon,
@@ -67,6 +73,8 @@ i18n.use(initReactI18next).init({
       settings: enSettings,
       legal: enLegal,
       notifications: enNotifications,
+      prepnote: enPrepnote,
+      sideeffect: enSideeffect,
     },
   },
   interpolation: { escapeValue: false },

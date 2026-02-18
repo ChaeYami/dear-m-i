@@ -1,6 +1,7 @@
 package com.dearmi.backend.presentation.record.dto;
 
 import com.dearmi.backend.application.record.dto.RecordResult;
+import com.dearmi.backend.domain.counseling.RecordSections;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -14,6 +15,8 @@ public record RecordResponse(
         String content,
         List<String> tags,
         LocalDate consultedAt,
+        RecordSections sections,
+        Short visitSatisfaction,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
@@ -25,6 +28,8 @@ public record RecordResponse(
                 result.content(),
                 result.tags(),
                 result.consultedAt(),
+                result.sections(),
+                result.visitSatisfaction(),
                 result.createdAt(),
                 result.updatedAt()
         );

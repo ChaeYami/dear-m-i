@@ -24,7 +24,7 @@ public class UpdatePrepNoteUseCaseImpl implements UpdatePrepNoteUseCase {
                 .findByIdAndUserIdAndDeletedAtIsNull(command.prepNoteId(), command.userId())
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
-        note.update(command.content());
+        note.update(command.content(), command.sections());
         return PrepNoteResult.from(prepNoteRepository.save(note));
     }
 }

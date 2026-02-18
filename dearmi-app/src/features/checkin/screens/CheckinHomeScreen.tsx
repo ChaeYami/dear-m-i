@@ -18,6 +18,7 @@ import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { softShadow } from '@/shared/theme/shadows';
 import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
+import { navigationRef } from '@/navigation/navigationRef';
 import { useResetStackOnTabFocus } from '@/shared/hooks/useResetStackOnTabFocus';
 import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import { useTabBarScrollHide } from '@/shared/hooks/useTabBarScrollHide';
@@ -345,7 +346,25 @@ export const CheckinHomeScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScreenHeader variant="tab" title={t('title')} hasNotification searchScope="CHECKIN" />
+      <ScreenHeader
+        variant="tab"
+        title={t('title')}
+        hasNotification
+        searchScope="CHECKIN"
+        rightContent={
+          <TouchableOpacity
+            onPress={() => (navigationRef.current as any)?.navigate('QuickLog')}
+            hitSlop={8}
+            style={{
+              width: 32, height: 32, borderRadius: 16,
+              backgroundColor: colors.primaryMuted,
+              alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            <Ionicons name="add" size={18} color={colors.primary} />
+          </TouchableOpacity>
+        }
+      />
 
       {/* 날짜 스크롤 바 */}
       <FlatList

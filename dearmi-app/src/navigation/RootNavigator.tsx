@@ -19,6 +19,8 @@ import { WebPaymentScreen } from '@/features/subscription/screens/WebPaymentScre
 import { SearchScreen } from '@/features/search/screens/SearchScreen';
 import { OnboardingScreen } from '@/features/onboarding/screens/OnboardingScreen';
 import { NotificationHistoryScreen } from '@/features/notification/screens/NotificationHistoryScreen';
+import { SideEffectLogScreen } from '@/features/sideeffect/screens/SideEffectLogScreen';
+import { QuickLogScreen } from '@/features/quicklog/screens/QuickLogScreen';
 import { medicationApi } from '@/features/medication/api/medicationApi';
 import { useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/constants/cacheKeys';
@@ -50,6 +52,8 @@ export type RootStackParamList = {
   Search: { scope?: 'RECORD' | 'CHECKIN' | 'PREPNOTE' } | undefined;
   Onboarding: { forceShow?: boolean } | undefined;
   NotificationHistory: undefined;
+  SideEffectLog: undefined;
+  QuickLog: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -321,6 +325,16 @@ export const RootNavigator: React.FC = () => {
           <Stack.Screen
             name="NotificationHistory"
             component={NotificationHistoryScreen}
+            options={{ presentation: 'modal' } as any}
+          />
+          <Stack.Screen
+            name="SideEffectLog"
+            component={SideEffectLogScreen}
+            options={{ presentation: 'modal' } as any}
+          />
+          <Stack.Screen
+            name="QuickLog"
+            component={QuickLogScreen}
             options={{ presentation: 'modal' } as any}
           />
         </Stack.Navigator>

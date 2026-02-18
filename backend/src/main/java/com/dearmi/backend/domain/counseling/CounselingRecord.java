@@ -5,6 +5,8 @@ import com.dearmi.backend.common.converter.AesEncryptionConverter;
 import com.dearmi.backend.common.converter.TagsJsonConverter;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -47,14 +49,27 @@ public class CounselingRecord extends BaseTimeEntity {
     @Column(name = "consulted_at")
     private LocalDate consultedAt;
 
+    /** 정신과 특화 구조화 섹션 — 자세한 키 구조는 RecordSections 참고. */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    @Builder.Default
+    private RecordSections sections = new RecordSections();
+
+    /** 진료 후 만족도 (1-10). emotion_score 와 분리 — 진료 자체에 대한 평가. */
+    @Column(name = "visit_satisfaction")
+    private Short visitSatisfaction;
+
     public void detachSchedule() {
         this.scheduleId = null;
     }
 
-    public void update(Short emotionScore, String content, List<String> tags, LocalDate consultedAt) {
+    public void update(Short emotionScore, String content, List<String> tags, LocalDate consultedAt,
+                       RecordSections sections, Short visitSatisfaction) {
         this.emotionScore = emotionScore;
         this.content = content;
         this.tags = tags;
         this.consultedAt = consultedAt;
+        if (sections != null) this.sections = sections;
+        this.visitSatisfaction = visitSatisfaction;
     }
 }

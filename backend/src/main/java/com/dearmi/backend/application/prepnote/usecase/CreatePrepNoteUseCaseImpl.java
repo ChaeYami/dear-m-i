@@ -7,6 +7,7 @@ import com.dearmi.backend.common.exception.ErrorCode;
 import com.dearmi.backend.domain.hospital.HospitalScheduleRepository;
 import com.dearmi.backend.domain.prepnote.PrepNote;
 import com.dearmi.backend.domain.prepnote.PrepNoteRepository;
+import com.dearmi.backend.domain.prepnote.PrepNoteSections;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,7 @@ public class CreatePrepNoteUseCaseImpl implements CreatePrepNoteUseCase {
                 .userId(command.userId())
                 .scheduleId(command.scheduleId())
                 .content(command.content())
+                .sections(command.sections() != null ? command.sections() : new PrepNoteSections())
                 .build();
 
         return PrepNoteResult.from(prepNoteRepository.save(note));

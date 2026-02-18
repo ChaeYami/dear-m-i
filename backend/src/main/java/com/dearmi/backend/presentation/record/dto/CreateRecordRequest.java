@@ -1,5 +1,6 @@
 package com.dearmi.backend.presentation.record.dto;
 
+import com.dearmi.backend.domain.counseling.RecordSections;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
@@ -17,5 +18,10 @@ public record CreateRecordRequest(
 
         List<String> tags,
 
-        LocalDate consultedAt
+        LocalDate consultedAt,
+
+        RecordSections sections,
+
+        @Min(1) @Max(10)
+        Short visitSatisfaction
 ) {}

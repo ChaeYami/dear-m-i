@@ -30,6 +30,7 @@ import { useUnsavedChangesWarning } from '@/shared/hooks/useUnsavedChangesWarnin
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import { prescriptionApi } from '@/features/prescription/api';
 import type { CareStackParamList as RecordStackParamList } from '@/navigation/CareNavigator';
+import type { RecordSections } from '@/shared/types/domain.types';
 
 type Nav = StackNavigationProp<RecordStackParamList, 'RecordForm'>;
 type Route = RouteProp<RecordStackParamList, 'RecordForm'>;
@@ -66,6 +67,10 @@ export const RecordFormScreen: React.FC = () => {
   const [content, setContent] = useState(existingRecord?.content ?? '');
   const [tags, setTags] = useState<string[]>(existingRecord?.tags ?? []);
   const [tagInput, setTagInput] = useState('');
+  const [sections, setSections] = useState<RecordSections>({
+    diagnosis: '', rxChanges: '', nextSteps: '', keyTakeaway: '',
+  });
+  const [visitSatisfaction, setVisitSatisfaction] = useState<number | null>(null);
   const [showSchedulePicker, setShowSchedulePicker] = useState(false);
   const [showPrepNotes, setShowPrepNotes] = useState(false);
   const [showCheckinSummary, setShowCheckinSummary] = useState(false);
@@ -89,6 +94,15 @@ export const RecordFormScreen: React.FC = () => {
     setContent(existingRecord.content ?? '');
     setTags(existingRecord.tags ?? []);
     setConsultedAt(existingRecord.consultedAt ? new Date(existingRecord.consultedAt) : null);
+    if (existingRecord.sections) {
+      setSections({
+        diagnosis: existingRecord.sections.diagnosis ?? '',
+        rxChanges: existingRecord.sections.rxChanges ?? '',
+        nextSteps: existingRecord.sections.nextSteps ?? '',
+        keyTakeaway: existingRecord.sections.keyTakeaway ?? '',
+      });
+    }
+    if (existingRecord.visitSatisfaction != null) setVisitSatisfaction(existingRecord.visitSatisfaction);
     setHydrated(true);
   }, [isEdit, existingRecord, hydrated]);
 
@@ -199,6 +213,8 @@ export const RecordFormScreen: React.FC = () => {
       tags: tags.length > 0 ? tags : undefined,
       // 일정 미연결이고 직접 날짜를 선택한 경우만 전송
       consultedAt: !selectedScheduleId && consultedAt ? formatLocalDate(consultedAt) : undefined,
+      sections,
+      visitSatisfaction: visitSatisfaction ?? undefined,
     };
 
     const onSuccess = () => {
@@ -433,6 +449,34 @@ export const RecordFormScreen: React.FC = () => {
         <View style={styles.field}>
           <Text style={[styles.fieldLabel, { color: colors.textSub }]}>{t('record:condition_at_visit')}</Text>
           <EmotionSlider value={emotionScore} onChange={setEmotionScore} />
+        </View>
+
+        {/* 정신과 진료 기록 구조화 섹션 */}
+        {([
+          { key: 'diagnosis', label: t('record:section_diagnosis'), placeholder: t('record:section_diagnosis_placeholder') },
+          { key: 'rxChanges', label: t('record:section_rx_changes'), placeholder: t('record:section_rx_changes_placeholder') },
+          { key: 'nextSteps', label: t('record:section_next_steps'), placeholder: t('record:section_next_steps_placeholder') },
+          { key: 'keyTakeaway', label: t('record:section_key_takeaway'), placeholder: t('record:section_key_takeaway_placeholder') },
+        ] as const).map((s) => (
+          <View key={s.key} style={styles.field}>
+            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>{s.label}</Text>
+            <TextInput
+              style={[styles.textArea, { backgroundColor: colors.surface, borderColor: colors.divider, color: colors.text, minHeight: 70 }]}
+              placeholder={s.placeholder}
+              placeholderTextColor={colors.textDisabled}
+              value={sections[s.key] ?? ''}
+              onChangeText={(v) => setSections((prev) => ({ ...prev, [s.key]: v }))}
+              multiline
+              textAlignVertical="top"
+            />
+          </View>
+        ))}
+
+        {/* 진료 후 만족도 */}
+        <View style={styles.field}>
+          <Text style={[styles.fieldLabel, { color: colors.textSub }]}>{t('record:visit_satisfaction')}</Text>
+          <Text style={[styles.fieldHint, { color: colors.textDisabled }]}>{t('record:visit_satisfaction_hint')}</Text>
+          <EmotionSlider value={visitSatisfaction ?? 5} onChange={setVisitSatisfaction} />
         </View>
 
         <View style={styles.field}>

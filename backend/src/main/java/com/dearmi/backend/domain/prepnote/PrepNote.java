@@ -3,6 +3,8 @@ package com.dearmi.backend.domain.prepnote;
 import com.dearmi.backend.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.util.UUID;
 
@@ -29,11 +31,18 @@ public class PrepNote extends BaseTimeEntity {
     @Column(columnDefinition = "text")
     private String content;
 
+    /** 정신과 특화 구조화 섹션 — 자세한 키 구조는 PrepNoteSections 참고. */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    @Builder.Default
+    private PrepNoteSections sections = new PrepNoteSections();
+
     public void detachSchedule() {
         this.scheduleId = null;
     }
 
-    public void update(String content) {
+    public void update(String content, PrepNoteSections sections) {
         this.content = content;
+        if (sections != null) this.sections = sections;
     }
 }

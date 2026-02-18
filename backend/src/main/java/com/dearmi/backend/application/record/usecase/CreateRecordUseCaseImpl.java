@@ -6,6 +6,7 @@ import com.dearmi.backend.common.exception.CustomException;
 import com.dearmi.backend.common.exception.ErrorCode;
 import com.dearmi.backend.domain.counseling.CounselingRecord;
 import com.dearmi.backend.domain.counseling.CounselingRecordRepository;
+import com.dearmi.backend.domain.counseling.RecordSections;
 import com.dearmi.backend.domain.subscription.SubscriptionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -40,6 +41,8 @@ public class CreateRecordUseCaseImpl implements CreateRecordUseCase {
                 .content(command.content())
                 .tags(command.tags())
                 .consultedAt(command.consultedAt())
+                .sections(command.sections() != null ? command.sections() : new RecordSections())
+                .visitSatisfaction(command.visitSatisfaction())
                 .build();
 
         return RecordResult.from(counselingRecordRepository.save(record));
