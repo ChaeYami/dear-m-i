@@ -20,6 +20,7 @@ google-services.json
 GoogleService-Info.plist
 firebase-adminsdk*.json
 dearmi-app/.env
+dearmi-app/assets/adi-registration.properties
 
 # ────────────────────────────────────────────────────────────
 # Backend (Spring Boot / Gradle)
