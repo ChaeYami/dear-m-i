@@ -73,6 +73,13 @@ dependencies {
     // Firebase Admin SDK (FCM 푸시 알림)
     implementation 'com.google.firebase:firebase-admin:9.3.0'
 
+    // Google Play Developer API — 구독 영수증 서버 검증
+    implementation 'com.google.apis:google-api-services-androidpublisher:v3-rev20260318-2.0.0'
+    implementation 'com.google.auth:google-auth-library-oauth2-http:1.23.0'
+
+    // App Store Server API / JWS 검증 — 애플 공식 SDK
+    implementation 'com.apple.itunes.storekit:app-store-server-library:3.1.0'
+
     // Bucket4j (Rate Limiting)
     implementation 'com.bucket4j:bucket4j-core:8.10.1'
 

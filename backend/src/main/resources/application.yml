@@ -95,6 +95,23 @@ encryption:
 fcm:
   service-account-key: ${FCM_SERVICE_ACCOUNT_KEY}
 
+# IAP 영수증 서버 검증 설정
+iap:
+  play:
+    # Google Cloud 서비스 계정 JSON (AndroidPublisher API 권한 + Play Console 연동 필요)
+    service-account-json: ${PLAY_DEVELOPER_API_JSON:}
+    # 앱 패키지명 — subscriptionsv2.get 호출 시 사용
+    package-name: ${PLAY_PACKAGE_NAME:com.chloee0033.dearmiapp}
+  apple:
+    # App Store Connect 의 bundle ID
+    bundle-id: ${APPLE_BUNDLE_ID:com.chloee0033.dearmiapp}
+    # App Store Connect > App 정보 > Apple ID (숫자)
+    app-apple-id: ${APPLE_APP_APPLE_ID:0}
+    # SANDBOX / PRODUCTION — 개발 중엔 SANDBOX, 출시 후 PRODUCTION
+    environment: ${APPLE_ENV:SANDBOX}
+    # Apple Root CA 인증서 경로. classpath:apple-root-ca-g3.cer 가 기본 (resources/ 에 번들)
+    root-cert-path: ${APPLE_ROOT_CERT_PATH:classpath:apple-root-ca-g3.cer}
+
 # 로깅 기본 설정
 logging:
   level:

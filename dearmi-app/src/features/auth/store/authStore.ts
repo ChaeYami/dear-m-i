@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import { SECURE_STORE_KEYS } from '@/constants/cacheKeys';
+import { queryClient } from '@/shared/api/queryClient';
+import { useSubscriptionStore } from '@/features/subscription/store/subscriptionStore';
 import type { User } from '@/shared/types/domain.types';
 
 /** 인증 상태 */
@@ -57,11 +59,15 @@ export const useAuthStore = create<AuthStore>((set) => ({
     set({ user });
   },
 
-  // 로그아웃: 메모리 + SecureStore 모두 정리
+  // 로그아웃: 메모리 + SecureStore + 다른 사용자 state(구독/쿼리 캐시) 까지 모두 정리
+  //   subscriptionStore 를 reset 안 하면 이전 사용자의 PREMIUM 이 다음 사용자에게 그대로 보인다
+  //   React Query 캐시도 클리어 — 이전 사용자의 기록/알림/복약 등 재사용 방지
   logout: async () => {
     await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.ACCESS_TOKEN);
     await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.REFRESH_TOKEN);
     set({ accessToken: null, refreshToken: null, user: null, isAuthenticated: false });
+    useSubscriptionStore.getState().reset();
+    queryClient.clear();
   },
 
   // 앱 시작 시 저장된 토큰 복원

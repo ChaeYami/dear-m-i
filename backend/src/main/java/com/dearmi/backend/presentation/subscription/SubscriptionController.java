@@ -7,6 +7,9 @@ import com.dearmi.backend.application.subscription.usecase.CancelSubscriptionUse
 import com.dearmi.backend.application.subscription.usecase.GetSubscriptionUseCase;
 import com.dearmi.backend.common.response.ApiResponse;
 import com.dearmi.backend.domain.subscription.PaymentProvider;
+import com.dearmi.backend.infrastructure.external.iap.AppStoreIapValidator;
+import com.dearmi.backend.infrastructure.external.iap.GooglePlayIapValidator;
+import com.dearmi.backend.infrastructure.external.iap.IapValidator;
 import com.dearmi.backend.infrastructure.security.AuthenticatedUserId;
 import com.dearmi.backend.presentation.subscription.dto.SubscriptionResponse;
 import com.dearmi.backend.presentation.subscription.dto.VerifyIapRequest;
@@ -14,7 +17,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @RestController
@@ -25,6 +27,8 @@ public class SubscriptionController {
     private final GetSubscriptionUseCase getSubscriptionUseCase;
     private final ActivatePremiumUseCase activatePremiumUseCase;
     private final CancelSubscriptionUseCase cancelSubscriptionUseCase;
+    private final AppStoreIapValidator appStoreValidator;
+    private final GooglePlayIapValidator playStoreValidator;
 
     /** GET /api/v1/subscriptions — 현재 구독 상태 조회 */
     @GetMapping
@@ -34,37 +38,43 @@ public class SubscriptionController {
     }
 
     /**
-     * POST /api/v1/subscriptions/verify/app-store — iOS IAP 영수증 검증 및 PREMIUM 활성화
-     * TODO: 실제 App Store 서버 검증 연동 (v1.1)
+     * POST /api/v1/subscriptions/verify/app-store — iOS IAP 영수증 서버 검증 후 PREMIUM 활성화.
+     * receiptData 는 JWS signedTransactionInfo. SignedDataVerifier 가 서명/체인 검증 + expiresDate 파싱.
      */
     @PostMapping("/verify/app-store")
     public ApiResponse<SubscriptionResponse> verifyAppStore(
             @AuthenticatedUserId UUID userId,
             @Valid @RequestBody VerifyIapRequest request
     ) {
+        IapValidator.ValidationResult verified = appStoreValidator.validate(
+                request.productId(), request.originalTransactionId(), request.receiptData());
+
         ActivatePremiumCommand command = new ActivatePremiumCommand(
                 userId,
                 PaymentProvider.APP_STORE,
-                request.originalTransactionId(),
-                LocalDateTime.now().plusYears(1)   // TODO: 영수증에서 실제 만료일 파싱
+                verified.originalTransactionId(),
+                verified.expiresAt()
         );
         return ApiResponse.success(SubscriptionResponse.from(activatePremiumUseCase.activate(command)));
     }
 
     /**
-     * POST /api/v1/subscriptions/verify/play-store — Android 구매 검증 및 PREMIUM 활성화
-     * TODO: 실제 Google Play Developer API 검증 연동 (v1.1)
+     * POST /api/v1/subscriptions/verify/play-store — Android 구독 영수증 서버 검증 후 PREMIUM 활성화.
+     * AndroidPublisher.purchases.subscriptionsv2.get(packageName, purchaseToken) 호출 — 상태/만료일 파싱.
      */
     @PostMapping("/verify/play-store")
     public ApiResponse<SubscriptionResponse> verifyPlayStore(
             @AuthenticatedUserId UUID userId,
             @Valid @RequestBody VerifyIapRequest request
     ) {
+        IapValidator.ValidationResult verified = playStoreValidator.validate(
+                request.productId(), request.originalTransactionId(), request.receiptData());
+
         ActivatePremiumCommand command = new ActivatePremiumCommand(
                 userId,
                 PaymentProvider.PLAY_STORE,
-                request.originalTransactionId(),
-                LocalDateTime.now().plusYears(1)   // TODO: 구매 토큰에서 실제 만료일 파싱
+                verified.originalTransactionId(),
+                verified.expiresAt()
         );
         return ApiResponse.success(SubscriptionResponse.from(activatePremiumUseCase.activate(command)));
     }

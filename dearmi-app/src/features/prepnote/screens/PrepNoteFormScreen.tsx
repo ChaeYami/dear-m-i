@@ -559,7 +559,7 @@ const MiniEmotionChart: React.FC<MiniChartProps> = ({ history, colors, styles, t
 
   return (
     <View style={styles.summaryCard}>
-      <Text style={styles.summaryTitle}>{t('checkin:emotion_graph_title') ?? 'Emotion'}</Text>
+      <Text style={styles.summaryTitle}>{t('checkin:emotion_trend')}</Text>
       <LineChart
         data={{ labels, datasets: [{ data: scores }] }}
         width={screenWidth}

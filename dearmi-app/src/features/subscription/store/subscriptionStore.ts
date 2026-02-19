@@ -8,6 +8,8 @@ interface SubscriptionState {
   isLoading: boolean;
   fetchSubscription: (onPlanChange?: (plan: SubscriptionPlan) => void) => Promise<void>;
   setPlan: (plan: SubscriptionPlan, expiresAt?: string) => void;
+  /** 로그아웃/계정 전환 시 호출 — stale PREMIUM state 가 다음 사용자에게 누출되는 것 방지 */
+  reset: () => void;
 }
 
 export const useSubscriptionStore = create<SubscriptionState>((set) => ({
@@ -33,4 +35,6 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
   },
 
   setPlan: (plan, expiresAt) => set({ plan, expiresAt }),
+
+  reset: () => set({ plan: 'FREE', expiresAt: undefined, isLoading: false }),
 }));

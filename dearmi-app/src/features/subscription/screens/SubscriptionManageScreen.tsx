@@ -27,7 +27,7 @@ type Nav = CompositeNavigationProp<
 
 export const SubscriptionManageScreen: React.FC = () => {
   const { colors } = useTheme();
-  const { t, i18n } = useTranslation('subscription');
+  const { t, i18n } = useTranslation(['subscription', 'settings']);
   const navigation = useNavigation<Nav>();
   const { plan, expiresAt } = useSubscriptionStore();
   const { cancelSubscription, isCancelling } = useSubscription();
@@ -191,7 +191,7 @@ export const SubscriptionManageScreen: React.FC = () => {
           <View style={styles.planBadgeRow}>
             <View style={[styles.planBadge, isPremium && styles.planBadgePremium]}>
               <Text style={[styles.planBadgeText, isPremium && styles.planBadgeTextPremium]}>
-                {isPremium ? t('premium_badge') : t('manage_free')}
+                {isPremium ? t('settings:premium_badge') : t('manage_free')}
               </Text>
             </View>
           </View>

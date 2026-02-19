@@ -11,8 +11,9 @@ export interface SubscriptionStatus {
 }
 
 export interface VerifyIapRequest {
+  productId: string;               // com.dearmi.premium.{monthly|yearly}
   originalTransactionId: string;
-  receiptData: string;
+  receiptData: string;             // iOS: JWS, Android: purchaseToken
 }
 
 export type WebPlanType = 'MONTHLY' | 'YEARLY';

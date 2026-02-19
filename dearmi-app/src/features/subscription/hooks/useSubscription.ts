@@ -46,13 +46,15 @@ export const useSubscription = () => {
     // Android: transactionId, purchaseToken as receiptData
     const originalTransactionId = purchase.transactionId ?? purchase.id;
     const receiptData = purchase.purchaseToken ?? purchase.transactionId ?? '';
+    // productId — 서버에서 구매 상품/기대 상품 일치 검증에 사용
+    const productId = (purchase as any).productId ?? (purchase as any).sku ?? '';
 
     const verifyFn =
       Platform.OS === 'ios'
         ? subscriptionApi.verifyAppStore
         : subscriptionApi.verifyPlayStore;
 
-    const { data } = await verifyFn({ originalTransactionId, receiptData });
+    const { data } = await verifyFn({ productId, originalTransactionId, receiptData });
     if (data.success && data.data) {
       syncPlanToUser(data.data.plan, data.data.expiresAt);
     }
