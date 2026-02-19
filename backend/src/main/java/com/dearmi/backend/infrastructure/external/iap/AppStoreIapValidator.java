@@ -44,12 +44,22 @@ public class AppStoreIapValidator implements IapValidator {
 
     public AppStoreIapValidator(
             @Value("${iap.apple.bundle-id:}") String bundleId,
-            @Value("${iap.apple.app-apple-id:0}") long appAppleId,
+            // String 으로 수신 후 내부 파싱 — task def 에 실수로 ARN 등 비숫자가 들어와도
+            // 빈 생성 단계에서 앱 전체가 죽지 않도록 방어.
+            @Value("${iap.apple.app-apple-id:0}") String appAppleIdStr,
             @Value("${iap.apple.environment:SANDBOX}") String envName,
             @Value("${iap.apple.root-cert-path:classpath:apple-root-ca-g3.cer}") String rootCertPath
     ) {
         this.bundleId = bundleId;
-        this.appAppleId = appAppleId;
+        long parsed;
+        try {
+            parsed = appAppleIdStr == null ? 0 : Long.parseLong(appAppleIdStr.trim());
+        } catch (NumberFormatException e) {
+            log.warn("[IAP] APPLE_APP_APPLE_ID is not numeric ('{}') — Apple validator will skip init",
+                    appAppleIdStr);
+            parsed = 0;
+        }
+        this.appAppleId = parsed;
         this.envName = envName;
         this.rootCertPath = rootCertPath;
     }
@@ -58,6 +68,10 @@ public class AppStoreIapValidator implements IapValidator {
     void init() {
         if (bundleId == null || bundleId.isBlank()) {
             log.warn("[IAP] APPLE_BUNDLE_ID not set — App Store receipt validation will fail");
+            return;
+        }
+        if (appAppleId <= 0) {
+            log.warn("[IAP] APPLE_APP_APPLE_ID not set — App Store receipt validation will fail");
             return;
         }
         try {
