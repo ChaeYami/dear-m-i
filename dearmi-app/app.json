@@ -2,7 +2,7 @@
   "expo": {
     "name": "DearMI",
     "slug": "dearmi-app",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "scheme": "dearmi",
     "orientation": "portrait",
     "icon": "./assets/adaptive-icon.png",
@@ -46,7 +46,7 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.chloee0033.dearmiapp",
-      "versionCode": 1,
+      "versionCode": 2,
       "googleServicesFile": "./google-services.json"
     },
     "web": {
