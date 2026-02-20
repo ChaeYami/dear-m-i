@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum PlanType {
-    MONTHLY(4_900),
+    MONTHLY(3_900),
     YEARLY(39_900);
 
     private final int amount;

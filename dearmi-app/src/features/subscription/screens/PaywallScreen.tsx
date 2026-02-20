@@ -228,7 +228,7 @@ export const PaywallScreen: React.FC = () => {
               {t('plan_monthly')}
             </Text>
             <Text style={[styles.planPrice, selected === 'monthly' && styles.planPriceSelected]}>
-              ₩4,900
+              ₩3,900
             </Text>
             <Text style={[styles.planUnit, selected === 'monthly' && styles.planUnitSelected]}>
               {t('per_month')}
