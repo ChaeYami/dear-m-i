@@ -4,9 +4,10 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-
   ScrollView,
   ActivityIndicator,
+  Linking,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -50,7 +51,13 @@ export const SubscriptionManageScreen: React.FC = () => {
     t('feature_unlimited_write'),
   ];
 
+  // IAP 구독은 백엔드에서 직접 취소 못 함 — Google/Apple 정책상 사용자가 스토어에서 직접 취소해야 함.
+  // 버튼은 해당 스토어 구독 관리 페이지로 딥링크만 열어줌.
   const handleCancel = () => {
+    const storeUrl = Platform.OS === 'ios'
+      ? 'https://apps.apple.com/account/subscriptions'
+      : 'https://play.google.com/store/account/subscriptions?sku=com.dearmi.premium.monthly&package=com.chloee0033.dearmiapp';
+
     customAlert(
       t('cancel_title'),
       t('manage_cancel_confirm_multiline'),
@@ -59,7 +66,7 @@ export const SubscriptionManageScreen: React.FC = () => {
         {
           text: t('manage_cancel_btn'),
           style: 'destructive',
-          onPress: () => cancelSubscription(),
+          onPress: () => Linking.openURL(storeUrl).catch(() => {}),
         },
       ]
     );

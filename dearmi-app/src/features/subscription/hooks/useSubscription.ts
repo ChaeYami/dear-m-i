@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import { customAlert } from '@/shared/components/CustomAlert';
 import { useMutation } from '@tanstack/react-query';
@@ -8,6 +8,8 @@ import {
   requestPurchase,
   getAvailablePurchases,
   finishTransaction,
+  purchaseUpdatedListener,
+  purchaseErrorListener,
   ErrorCode,
   type Purchase,
 } from 'react-native-iap';
@@ -40,6 +42,54 @@ export const useSubscription = () => {
     setPlan(plan, expiresAt);
     if (user) setUser({ ...user, plan });
   };
+
+  // react-native-iap v15: requestPurchase 의 동기 리턴값이 불안정하므로
+  // purchaseUpdatedListener 로 purchase 이벤트를 잡아 verify + finishTransaction 처리.
+  // mount 시 1회 구독, unmount 시 해제.
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    let initialized = false;
+    (async () => {
+      try {
+        await initConnection();
+        initialized = true;
+      } catch {
+        // already connected
+      }
+    })();
+
+    const purchaseSub = purchaseUpdatedListener(async (purchase: Purchase) => {
+      if (!mountedRef.current) return;
+      try {
+        await verifyAndSync(purchase);
+      } catch (e) {
+        console.warn('[IAP] verifyAndSync failed from listener', e);
+      }
+      try {
+        await finishTransaction({ purchase, isConsumable: false });
+      } catch (e) {
+        console.warn('[IAP] finishTransaction failed', e);
+      }
+    });
+
+    const errorSub = purchaseErrorListener((err) => {
+      if (!mountedRef.current) return;
+      if (err?.code !== ErrorCode.UserCancelled) {
+        console.warn('[IAP] purchase error', err);
+        customAlert(i18n.t('subscription:purchase_error'), i18n.t('subscription:purchase_error_message'));
+      }
+    });
+
+    return () => {
+      mountedRef.current = false;
+      purchaseSub.remove();
+      errorSub.remove();
+      if (initialized) {
+        // endConnection 호출은 라이브러리에 따라 다름 — 앱 전체 수명동안 연결 유지가 안전
+      }
+    };
+  }, []);
 
   const verifyAndSync = async (purchase: Purchase) => {
     // iOS: transactionId as originalTransactionId, purchaseToken (JWS) as receiptData
@@ -74,24 +124,19 @@ export const useSubscription = () => {
     try {
       await ensureIapConnection();
       await fetchProducts({ skus: [productId] });
-      const result = await requestPurchase({
+      // v15: 결과는 purchaseUpdatedListener 로 비동기 도착. 여기선 구매 요청만 트리거.
+      await requestPurchase({
         request: Platform.OS === 'ios'
           ? { ios: { sku: productId } }
           : { android: { skus: [productId] } },
         type: 'subs',
       });
-      const purchases = Array.isArray(result) ? result : result ? [result] : [];
-      for (const p of purchases) {
-        if (p) {
-          await verifyAndSync(p);
-          await finishTransaction({ purchase: p, isConsumable: false });
-        }
-      }
     } catch (err: any) {
       if (err?.code !== ErrorCode.UserCancelled) {
         customAlert(i18n.t('subscription:purchase_error'), i18n.t('subscription:purchase_error_message'));
       }
     } finally {
+      // 실제 완료는 listener 에서 처리되지만 UI 상 로딩 잠그는 건 여기서 풀어줌
       setIsPurchasing(false);
     }
   };
