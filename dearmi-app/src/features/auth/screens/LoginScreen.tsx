@@ -5,6 +5,7 @@ import {
   Image,
   TouchableOpacity,
   Platform,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,9 +22,21 @@ import { softShadow, subtleShadow } from '@/shared/theme/shadows';
 import { useLogin } from '@/features/auth/hooks/useLogin';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 
+const LEGAL_URLS = {
+  terms: {
+    ko: 'https://secretive-enthusiasm-4ee.notion.site/KO-348c270714d880e78508c1188f50a509',
+    en: 'https://secretive-enthusiasm-4ee.notion.site/EN-348c270714d88069884fe644df60d3d4',
+  },
+  privacy: {
+    ko: 'https://secretive-enthusiasm-4ee.notion.site/KO-344c270714d880c399c3f664783e011e',
+    en: 'https://secretive-enthusiasm-4ee.notion.site/EN-348c270714d8802c9d8bf90b11926a8e',
+  },
+} as const;
+
 export const LoginScreen: React.FC = () => {
   const { colors } = useTheme();
-  const { t } = useTranslation('auth');
+  const { t, i18n } = useTranslation('auth');
+  const lang = i18n.language.startsWith('ko') ? 'ko' : 'en';
   const { loginWithGoogle, loginWithApple, loginWithDev, isLoading, error, clearError } = useLogin();
   const isDev = __DEV__;
 
@@ -281,7 +294,21 @@ export const LoginScreen: React.FC = () => {
             marginTop: sizes.spacing.lg,
           }}
         >
-          {t('terms_agreement')}
+          {t('terms_prefix')}
+          <Text
+            onPress={() => Linking.openURL(LEGAL_URLS.terms[lang])}
+            style={{ color: colors.primary, textDecorationLine: 'underline' }}
+          >
+            {t('terms_service')}
+          </Text>
+          {t('terms_middle')}
+          <Text
+            onPress={() => Linking.openURL(LEGAL_URLS.privacy[lang])}
+            style={{ color: colors.primary, textDecorationLine: 'underline' }}
+          >
+            {t('privacy_policy')}
+          </Text>
+          {t('terms_suffix')}
         </Text>
       </Animated.View>
     </SafeAreaView>

@@ -13,4 +13,6 @@ public interface SubscriptionRepository {
 
     /** 만료된 프리미엄 구독 목록 (배치 다운그레이드용) */
     List<Subscription> findExpiredPremiumSubscriptions(LocalDateTime now);
+
+    Optional<Subscription> findByOriginalTransactionId(String originalTransactionId);
 }

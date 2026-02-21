@@ -30,4 +30,9 @@ public class SubscriptionRepositoryImpl implements SubscriptionRepository {
     public List<Subscription> findExpiredPremiumSubscriptions(LocalDateTime now) {
         return jpa.findExpiredPremiumSubscriptions(now);
     }
+
+    @Override
+    public Optional<Subscription> findByOriginalTransactionId(String originalTransactionId) {
+        return jpa.findByOriginalTransactionId(originalTransactionId);
+    }
 }

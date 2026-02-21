@@ -2,6 +2,9 @@ package com.dearmi.backend.infrastructure.external.iap;
 
 import com.apple.itunes.storekit.model.Environment;
 import com.apple.itunes.storekit.model.JWSTransactionDecodedPayload;
+import com.apple.itunes.storekit.model.NotificationTypeV2;
+import com.apple.itunes.storekit.model.ResponseBodyV2DecodedPayload;
+import com.apple.itunes.storekit.model.Subtype;
 import com.apple.itunes.storekit.verification.SignedDataVerifier;
 import com.dearmi.backend.common.exception.CustomException;
 import com.dearmi.backend.common.exception.ErrorCode;
@@ -152,4 +155,55 @@ public class AppStoreIapValidator implements IapValidator {
         }
     }
 
+    /**
+     * Apple Server-to-Server 알림 JWS 검증 후 핵심 필드 반환.
+     * notificationType / subtype / originalTransactionId / expiresAt(nullable).
+     */
+    public NotificationResult verifyAndDecodeNotification(String signedPayload) {
+        if (verifier == null) {
+            log.error("[Apple Webhook] verifier not initialized");
+            throw new CustomException(ErrorCode.EXTERNAL_SERVICE_ERROR);
+        }
+        try {
+            ResponseBodyV2DecodedPayload notification = verifier.verifyAndDecodeNotification(signedPayload);
+
+            NotificationTypeV2 type = notification.getNotificationType();
+            Subtype subtype = notification.getSubtype();
+
+            var data = notification.getData();
+            if (data == null) {
+                log.warn("[Apple Webhook] notification data null: type={}", type);
+                return new NotificationResult(type, subtype, null, null);
+            }
+
+            String signedTxn = data.getSignedTransactionInfo();
+            if (signedTxn == null) {
+                return new NotificationResult(type, subtype, null, null);
+            }
+
+            JWSTransactionDecodedPayload txn = verifier.verifyAndDecodeTransaction(signedTxn);
+            String originalTxnId = txn.getOriginalTransactionId();
+
+            LocalDateTime expiresAt = null;
+            if (txn.getExpiresDate() != null) {
+                expiresAt = LocalDateTime.ofInstant(
+                        Instant.ofEpochMilli(txn.getExpiresDate()), ZoneId.systemDefault());
+            }
+
+            return new NotificationResult(type, subtype, originalTxnId, expiresAt);
+
+        } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("[Apple Webhook] notification decode failed", e);
+            throw new CustomException(ErrorCode.EXTERNAL_SERVICE_ERROR);
+        }
+    }
+
+    public record NotificationResult(
+            NotificationTypeV2 type,
+            Subtype subtype,
+            String originalTransactionId,
+            LocalDateTime expiresAt
+    ) {}
 }

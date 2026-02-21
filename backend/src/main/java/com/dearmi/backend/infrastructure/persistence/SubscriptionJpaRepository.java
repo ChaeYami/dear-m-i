@@ -16,4 +16,6 @@ public interface SubscriptionJpaRepository extends JpaRepository<Subscription, U
 
     @Query("SELECT s FROM Subscription s WHERE s.plan = 'PREMIUM' AND s.expiresAt IS NOT NULL AND s.expiresAt < :now")
     List<Subscription> findExpiredPremiumSubscriptions(@Param("now") LocalDateTime now);
+
+    Optional<Subscription> findByOriginalTransactionId(String originalTransactionId);
 }
