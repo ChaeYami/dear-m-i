@@ -118,5 +118,8 @@
   "prescribed_date": "처방 날짜",
   "prescribed_date_format": "{{year}}년 {{month}}월 {{day}}일",
   "prescribed_date_hint": "사진을 등록하면 날짜가 자동으로 선택됩니다. 날짜 정보가 없는 경우 직접 선택해주세요.",
-  "upload_image_progress": "이미지 업로드 중… {{percent}}%"
+  "upload_image_progress": "이미지 업로드 중… {{percent}}%",
+  "review_confirm": "내용 확인",
+  "review_required_title": "확인이 필요해요",
+  "review_required_desc": "{{count}}개 항목을 아직 확인하지 않았어요. 각 약품 내용을 확인한 후 저장해 주세요."
 }

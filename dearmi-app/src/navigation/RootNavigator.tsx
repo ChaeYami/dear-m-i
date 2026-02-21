@@ -31,6 +31,7 @@ import axiosInstance from '@/shared/api/axiosInstance';
 import { useTheme } from '@/shared/theme';
 import { CacheService } from '@/shared/cache/CacheService';
 import { haptics } from '@/shared/utils/haptics';
+import { customAlert } from '@/shared/components/CustomAlert';
 import { CACHE_KEYS } from '@/constants/cacheKeys';
 import type { ApiResponse, AppVersionResponse } from '@/shared/types/api.types';
 
@@ -197,9 +198,15 @@ export const RootNavigator: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.medicationLogs() });
       haptics.success();
     } catch (e) {
-      // 조용한 실패는 '복용 상태 반영 안 됨' 류 버그의 진단을 어렵게 해 로그 남김
       console.warn('[medication action] check API failed', e);
       haptics.error();
+      // 앱이 포그라운드일 때만 알림 — 백그라운드 호출 시 alert 무시됨
+      if (navigationRef.isReady()) {
+        customAlert(
+          t('common:save_failed'),
+          t('common:try_again_later'),
+        );
+      }
     }
 
     // 앱이 포그라운드인 경우에만 의미있는 네비게이션 — 백그라운드 호출 시엔 무시됨

@@ -11,6 +11,7 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp, CommonActions } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { useTranslation } from 'react-i18next';
@@ -199,13 +200,19 @@ const FailedView: React.FC<{
 const MedicationRow: React.FC<{
   item: EditableMedication;
   index: number;
+  isReviewed: boolean;
   onChange: (index: number, field: keyof EditableMedication, value: string) => void;
   onRemove: (index: number) => void;
+  onToggleReview: (key: string) => void;
   colors: ReturnType<typeof useTheme>['colors'];
-}> = ({ item, index, onChange, onRemove, colors }) => {
-  const { t } = useTranslation('prescription');
+}> = ({ item, index, isReviewed, onChange, onRemove, onToggleReview, colors }) => {
+  const { t } = useTranslation(['prescription', 'common']);
   return (
-    <View style={[staticStyles.medRow, { backgroundColor: colors.surface, borderColor: colors.divider }]}>
+    <View style={[
+      staticStyles.medRow,
+      { backgroundColor: colors.surface, borderColor: isReviewed ? colors.success : colors.divider },
+      isReviewed && { borderWidth: 1.5 },
+    ]}>
       <View style={staticStyles.medRowHeader}>
         <Text style={[staticStyles.medRowIndex, { fontFamily: fontFamily.semibold, color: colors.textSub }]}>
           #{index + 1}
@@ -247,13 +254,32 @@ const MedicationRow: React.FC<{
         />
         <TextInput
           style={[staticStyles.medInput, staticStyles.medInputShort, { backgroundColor: colors.background, borderColor: colors.divider, color: colors.text }]}
-          placeholder={t('duration_days')}
+          placeholder={t('prescription:duration_days')}
           placeholderTextColor={colors.textDisabled}
           value={item.durationDays}
           onChangeText={(v) => onChange(index, 'durationDays', v)}
           keyboardType="numeric"
         />
       </View>
+      {/* 검토 완료 토글 */}
+      <TouchableOpacity
+        style={[
+          staticStyles.reviewToggle,
+          { borderColor: isReviewed ? colors.success : colors.divider },
+          isReviewed && { backgroundColor: colors.successLight },
+        ]}
+        onPress={() => onToggleReview(item.key)}
+        activeOpacity={0.75}
+      >
+        <Ionicons
+          name={isReviewed ? 'checkmark-circle' : 'ellipse-outline'}
+          size={17}
+          color={isReviewed ? colors.success : colors.textDisabled}
+        />
+        <Text style={[staticStyles.reviewToggleText, { color: isReviewed ? colors.success : colors.textSub }]}>
+          {isReviewed ? t('common:done') : t('prescription:review_confirm')}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -283,6 +309,15 @@ export const OcrResultScreen: React.FC = () => {
   const [medications, setMedications] = useState<EditableMedication[]>([]);
   const [editMode, setEditMode] = useState(false);
   const [duplicateWarningShown, setDuplicateWarningShown] = useState(false);
+  const [reviewedKeys, setReviewedKeys] = useState<Set<string>>(new Set());
+
+  const toggleReview = (key: string) => {
+    setReviewedKeys((prev) => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  };
 
   // 저장 버튼 눌러 성공한 경우에만 true — 아니면 unmount 시 처방전 자동 삭제
   const savedRef = useRef(false);
@@ -362,6 +397,16 @@ export const OcrResultScreen: React.FC = () => {
     const invalid = medications.some((m) => !m.medicationName.trim());
     if (invalid) {
       customAlert(t('prescription:input_error'), t('prescription:drug_name_required'));
+      return;
+    }
+
+    const unreviewed = medications.filter((m) => !reviewedKeys.has(m.key));
+    if (unreviewed.length > 0) {
+      customAlert(
+        t('prescription:review_required_title'),
+        t('prescription:review_required_desc', { count: unreviewed.length }),
+        [{ text: t('common:confirm') }]
+      );
       return;
     }
 
@@ -528,8 +573,10 @@ export const OcrResultScreen: React.FC = () => {
                 key={med.key}
                 item={med}
                 index={index}
+                isReviewed={reviewedKeys.has(med.key)}
                 onChange={handleChangeMed}
                 onRemove={handleRemoveMed}
+                onToggleReview={toggleReview}
                 colors={colors}
               />
             ))}
@@ -637,6 +684,21 @@ const staticStyles = StyleSheet.create({
   medInputRow: { flexDirection: 'row', gap: sizes.spacing.sm },
   medInputHalf: { flex: 1 },
   medInputShort: { width: 140 },
+  reviewToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-end',
+    paddingHorizontal: sizes.spacing.md,
+    paddingVertical: sizes.spacing.xs + 2,
+    borderRadius: sizes.radius.full,
+    borderWidth: 1,
+    marginTop: sizes.spacing.xs,
+  },
+  reviewToggleText: {
+    fontSize: sizes.font.sm,
+    fontFamily: fontFamily.medium,
+  },
   addMedBtn: {
     borderWidth: 1.5,
     borderStyle: 'dashed',

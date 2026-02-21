@@ -118,5 +118,8 @@
   "prescribed_date": "Prescribed Date",
   "prescribed_date_format": "{{month}}/{{day}}/{{year}}",
   "prescribed_date_hint": "The date is auto-filled from the photo. Select manually if it's missing.",
-  "upload_image_progress": "Uploading image… {{percent}}%"
+  "upload_image_progress": "Uploading image… {{percent}}%",
+  "review_confirm": "Confirm",
+  "review_required_title": "Review needed",
+  "review_required_desc": "{{count}} item(s) haven't been reviewed yet. Please confirm each medication before saving."
 }

@@ -103,6 +103,9 @@ export const PrescriptionUploadScreen: React.FC = () => {
     ]);
   };
 
+  const handleCamera = () => pickImage('camera');
+  const handleGallery = () => pickImage('gallery');
+
   // ─── 업로드 플로우 ────────────────────────────────────────────────────────
 
   const handleUpload = async () => {
@@ -238,30 +241,56 @@ export const PrescriptionUploadScreen: React.FC = () => {
 
       <ScrollView contentContainerStyle={staticStyles.content}>
         {/* 이미지 미리보기 / 선택 영역 */}
-        <TouchableOpacity
-          style={[
-            staticStyles.imageArea,
-            { borderColor: colors.divider, backgroundColor: colors.surface },
-            isLimitExceeded && staticStyles.imageAreaBlocked,
-          ]}
-          onPress={showSourcePicker}
-          disabled={isUploading || isLimitExceeded}
-          activeOpacity={0.8}
-        >
-          {imageAsset ? (
+        {imageAsset ? (
+          <TouchableOpacity
+            style={[
+              staticStyles.imageArea,
+              { borderColor: colors.divider, backgroundColor: colors.surface },
+            ]}
+            onPress={showSourcePicker}
+            disabled={isUploading}
+            activeOpacity={0.8}
+          >
             <Image source={{ uri: imageAsset.uri }} style={staticStyles.previewImage} resizeMode="contain" />
-          ) : (
-            <View style={staticStyles.imagePlaceholder}>
-              <Ionicons name="document-outline" size={48} color={colors.textDisabled} />
-              <Text style={[staticStyles.imagePlaceholderText, { fontFamily: fontFamily.semibold, color: colors.textSub }]}>
-                {t('prescription:select_photo')}
+          </TouchableOpacity>
+        ) : (
+          <View
+            style={[
+              staticStyles.imageArea,
+              staticStyles.imageAreaEmpty,
+              { borderColor: colors.divider, backgroundColor: colors.surface },
+              isLimitExceeded && staticStyles.imageAreaBlocked,
+            ]}
+          >
+            <Ionicons name="document-outline" size={44} color={colors.textDisabled} />
+            <Text style={[staticStyles.imagePlaceholderText, { fontFamily: fontFamily.semibold, color: colors.textSub }]}>
+              {t('prescription:select_photo')}
+            </Text>
+            {/* 카메라 (primary) / 갤러리 (secondary) 명시적 분리 */}
+            <TouchableOpacity
+              style={[staticStyles.ctaPrimary, { backgroundColor: colors.primary }]}
+              onPress={handleCamera}
+              disabled={isUploading || isLimitExceeded}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="camera-outline" size={18} color={colors.textInverse} />
+              <Text style={[staticStyles.ctaPrimaryText, { color: colors.textInverse }]}>
+                {t('prescription:take_photo')}
               </Text>
-              <Text style={[staticStyles.imagePlaceholderSub, { color: colors.textDisabled }]}>
-                {t('prescription:camera_or_gallery')}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[staticStyles.ctaSecondary, { borderColor: colors.primary }]}
+              onPress={handleGallery}
+              disabled={isUploading || isLimitExceeded}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="images-outline" size={18} color={colors.primary} />
+              <Text style={[staticStyles.ctaSecondaryText, { color: colors.primary }]}>
+                {t('prescription:pick_gallery')}
               </Text>
-            </View>
-          )}
-        </TouchableOpacity>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {imageAsset ? (
           <TouchableOpacity
@@ -372,11 +401,17 @@ const staticStyles = StyleSheet.create({
   },
   content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg },
   imageArea: {
-    height: 300,
     borderRadius: sizes.radius.lg,
     borderWidth: 2,
     borderStyle: 'dashed',
     overflow: 'hidden',
+    height: 280,
+  },
+  imageAreaEmpty: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: sizes.spacing.md,
+    paddingHorizontal: sizes.spacing.xl,
   },
   previewImage: { width: '100%', height: '100%' },
   imagePlaceholder: {
@@ -387,8 +422,36 @@ const staticStyles = StyleSheet.create({
   },
   imagePlaceholderText: {
     fontSize: sizes.font.md,
+    marginBottom: sizes.spacing.xs,
   },
   imagePlaceholderSub: { fontSize: sizes.font.sm },
+  ctaPrimary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sizes.spacing.sm,
+    width: '100%',
+    paddingVertical: sizes.spacing.md,
+    borderRadius: sizes.radius.md,
+    justifyContent: 'center',
+  },
+  ctaPrimaryText: {
+    fontSize: sizes.font.md,
+    fontFamily: fontFamily.semibold,
+  },
+  ctaSecondary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sizes.spacing.sm,
+    width: '100%',
+    paddingVertical: sizes.spacing.md - 2,
+    borderRadius: sizes.radius.md,
+    borderWidth: 1.5,
+    justifyContent: 'center',
+  },
+  ctaSecondaryText: {
+    fontSize: sizes.font.md,
+    fontFamily: fontFamily.medium,
+  },
   reSelectBtn: { alignSelf: 'center' },
   dateField: { gap: sizes.spacing.sm },
   dateLabel: {

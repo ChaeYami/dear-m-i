@@ -500,7 +500,11 @@ export const RecordFormScreen: React.FC = () => {
             )}
           </View>
           <TextInput
-            style={[styles.textArea, { backgroundColor: colors.surface, borderColor: colors.divider, color: colors.text }, content.length > (contentLimit ?? Infinity) && { borderColor: colors.error }]}
+            style={[
+              styles.textArea,
+              { backgroundColor: colors.surface, borderColor: colors.divider, color: colors.text },
+              contentLimit && content.length >= contentLimit * 0.9 && { borderColor: colors.warning },
+            ]}
             placeholder={t('record:content_placeholder')}
             placeholderTextColor={colors.textDisabled}
             value={content}
@@ -508,6 +512,7 @@ export const RecordFormScreen: React.FC = () => {
             multiline
             numberOfLines={6}
             textAlignVertical="top"
+            maxLength={contentLimit}
           />
         </View>
 

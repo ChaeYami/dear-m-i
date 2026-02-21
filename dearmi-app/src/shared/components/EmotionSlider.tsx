@@ -50,8 +50,8 @@ export const EmotionSlider: React.FC<EmotionSliderProps> = ({
   return (
     <View style={{ gap: sizes.spacing.sm }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 2, marginBottom: 2 }}>
-        <Text style={{ fontSize: sizes.font.xs, color: '#E8A5A5', fontFamily: fontFamily.medium }}>{t('emotion_bad')}</Text>
-        <Text style={{ fontSize: sizes.font.xs, color: '#8BC4A8', fontFamily: fontFamily.medium }}>{t('emotion_good')}</Text>
+        <Text style={{ fontSize: sizes.font.xs, color: '#E8A5A5', fontFamily: fontFamily.medium }}>← {t('emotion_bad')}</Text>
+        <Text style={{ fontSize: sizes.font.xs, color: '#8BC4A8', fontFamily: fontFamily.medium }}>{t('emotion_good')} →</Text>
       </View>
       <View style={{ flexDirection: 'row', gap: 4 }}>
         {STEPS.map((n) => {
@@ -78,7 +78,16 @@ export const EmotionSlider: React.FC<EmotionSliderProps> = ({
                   backgroundColor: stepColor,
                   borderColor: stepColor,
                 },
-                isSelected && { transform: [{ scaleY: 1.15 }] },
+                isSelected && {
+                  transform: [{ scaleY: 1.22 }],
+                  borderWidth: 2.5,
+                  borderColor: '#fff',
+                  shadowColor: stepColor,
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.55,
+                  shadowRadius: 4,
+                  elevation: 4,
+                },
               ]}
             >
               <Text
@@ -89,6 +98,7 @@ export const EmotionSlider: React.FC<EmotionSliderProps> = ({
                     color: colors.textDisabled,
                   },
                   (isSelected || isPast) && { color: '#FFFFFF' },
+                  isSelected && { fontFamily: fontFamily.bold },
                 ]}
               >
                 {n}

@@ -48,7 +48,6 @@ export const TimeSlotRow: React.FC<Props> = ({
     >
       <AnimatedPressable
         onPress={onDrugPress}
-        onLongPress={onDelete}
         style={{ flex: 1 }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
@@ -96,12 +95,20 @@ export const TimeSlotRow: React.FC<Props> = ({
                 backgroundColor: colors.surface,
                 minWidth: 64,
                 justifyContent: 'center',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.08,
+                shadowRadius: 2,
+                elevation: 2,
               },
               isTaken && {
                 backgroundColor: colors.successLight,
                 borderColor: colors.success,
+                shadowColor: colors.success,
+                shadowOpacity: 0.22,
+                elevation: 3,
               },
-              checkDisabled && { opacity: 0.35 },
+              checkDisabled && { opacity: 0.35, elevation: 0, shadowOpacity: 0 },
             ]}
             onPress={checkDisabled ? undefined : onTaken}
             activeOpacity={checkDisabled ? 1 : 0.75}
@@ -132,12 +139,19 @@ export const TimeSlotRow: React.FC<Props> = ({
                 backgroundColor: colors.surface,
                 minWidth: 64,
                 justifyContent: 'center',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.08,
+                shadowRadius: 2,
+                elevation: 2,
               },
               isSkipped && {
                 backgroundColor: colors.disabled,
                 borderColor: colors.textDisabled,
+                shadowOpacity: 0,
+                elevation: 0,
               },
-              checkDisabled && { opacity: 0.35 },
+              checkDisabled && { opacity: 0.35, elevation: 0, shadowOpacity: 0 },
             ]}
             onPress={checkDisabled ? undefined : onSkipped}
             activeOpacity={checkDisabled ? 1 : 0.75}

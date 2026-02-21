@@ -48,6 +48,8 @@ export const ScheduleDetailScreen: React.FC = () => {
   const { data: prepNotes = [] } = usePrepNotesBySchedule(String(scheduleId));
   const { mutate: deleteSchedule, isPending: isDeleting } = useDeleteSchedule();
 
+  const isPastSchedule = schedule ? new Date(schedule.scheduledAt) < new Date() : false;
+
   const handleDelete = () => {
     if (!schedule) return;
     customAlert(t('schedule:delete_title'), t('schedule:delete_message'), [
@@ -104,22 +106,89 @@ export const ScheduleDetailScreen: React.FC = () => {
           {schedule.memo && <InfoRow label={t('schedule:memo')} value={schedule.memo} multiline colors={colors} />}
         </View>
 
-        <View style={[styles.prepNoteSection, { backgroundColor: colors.surface, borderRadius: sizes.radius.xxl }, softShadow(colors)]}>
-          <View style={styles.prepNoteHeader}>
-            <Text style={[styles.prepNoteSectionTitle, { color: colors.textSub, fontFamily: fontFamily.bold }]}>{t('schedule:prep_note_title')}</Text>
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate('PrepNoteForm', { scheduleId: String(scheduleId) })
-              }
-              hitSlop={8}
-            >
-              <Text style={[styles.prepNoteAddBtn, { color: colors.primary, fontFamily: fontFamily.semibold }]}>{t('schedule:add_prep_note')}</Text>
-            </TouchableOpacity>
+        {/* 진료 사건 타임라인 — 준비 → 방문 → 기록 */}
+        <View style={[styles.timelineCard, { backgroundColor: colors.surface }, softShadow(colors)]}>
+          <Text style={[styles.timelineTitle, { color: colors.textSub, fontFamily: fontFamily.bold }]}>
+            {t('schedule:event_timeline_title')}
+          </Text>
+
+          {/* 1단계: 준비 메모 */}
+          <View style={styles.timelineRow}>
+            <View style={[
+              styles.timelineDot,
+              { backgroundColor: prepNotes.length > 0 ? colors.success : colors.divider },
+            ]}>
+              <Ionicons
+                name={prepNotes.length > 0 ? 'checkmark' : 'create-outline'}
+                size={12}
+                color={prepNotes.length > 0 ? '#fff' : colors.textSub}
+              />
+            </View>
+            <View style={styles.timelineContent}>
+              <Text style={[styles.timelineLabel, { color: colors.text, fontFamily: fontFamily.semibold }]}>
+                {t('schedule:timeline_prep')}
+                {prepNotes.length > 0 && (
+                  <Text style={{ color: colors.success, fontFamily: fontFamily.medium }}>{` ${t('schedule:count_suffix', { count: prepNotes.length })}`}</Text>
+                )}
+              </Text>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('PrepNoteForm', { scheduleId: String(scheduleId) })}
+                hitSlop={8}
+              >
+                <Text style={[styles.timelineAction, { color: colors.primary }]}>
+                  {prepNotes.length > 0 ? t('common:add') : t('schedule:add_prep_note')}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          {prepNotes.length === 0 ? (
-            <Text style={[styles.prepNoteEmpty, { color: colors.textDisabled, fontFamily: fontFamily.medium }]}>{t('schedule:no_prep_notes')}</Text>
-          ) : (
-            prepNotes.map((note) => (
+
+          <View style={[styles.timelineLine, { backgroundColor: colors.divider }]} />
+
+          {/* 2단계: 진료 방문 */}
+          <View style={styles.timelineRow}>
+            <View style={[
+              styles.timelineDot,
+              { backgroundColor: isPastSchedule ? colors.secondary : colors.primaryLight },
+            ]}>
+              <Ionicons name="medical" size={12} color="#fff" />
+            </View>
+            <View style={styles.timelineContent}>
+              <Text style={[styles.timelineLabel, { color: colors.text, fontFamily: fontFamily.semibold }]}>
+                {t('schedule:timeline_visit')}
+              </Text>
+              <Text style={[styles.timelineSub, { color: colors.textSub }]}>
+                {formatDateTime(schedule.scheduledAt, t)}
+              </Text>
+            </View>
+          </View>
+
+          <View style={[styles.timelineLine, { backgroundColor: colors.divider }]} />
+
+          {/* 3단계: 진료 기록 */}
+          <View style={styles.timelineRow}>
+            <View style={[styles.timelineDot, { backgroundColor: colors.divider }]}>
+              <Ionicons name="document-text-outline" size={12} color={colors.textSub} />
+            </View>
+            <View style={styles.timelineContent}>
+              <Text style={[styles.timelineLabel, { color: colors.text, fontFamily: fontFamily.semibold }]}>
+                {t('schedule:timeline_record')}
+              </Text>
+              <TouchableOpacity onPress={handleLinkRecord} hitSlop={8}>
+                <Text style={[styles.timelineAction, { color: colors.secondary }]}>
+                  {t('schedule:connect_record')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        {/* 준비 메모 목록 */}
+        {prepNotes.length > 0 && (
+          <View style={[styles.prepNoteSection, { backgroundColor: colors.surface, borderRadius: sizes.radius.xxl }, softShadow(colors)]}>
+            <View style={styles.prepNoteHeader}>
+              <Text style={[styles.prepNoteSectionTitle, { color: colors.textSub, fontFamily: fontFamily.bold }]}>{t('schedule:prep_note_title')}</Text>
+            </View>
+            {prepNotes.map((note) => (
               <AnimatedPressable
                 key={note.id}
                 style={[styles.prepNoteCard, { backgroundColor: colors.primaryMuted + '40', borderLeftColor: colors.primary }]}
@@ -134,17 +203,9 @@ export const ScheduleDetailScreen: React.FC = () => {
                   {note.content}
                 </Text>
               </AnimatedPressable>
-            ))
-          )}
-        </View>
-
-        <AnimatedPressable
-          style={[styles.linkButton, { backgroundColor: colors.surface, borderColor: colors.secondary }, softShadow(colors)]}
-          onPress={handleLinkRecord}
-        >
-          <Ionicons name="document-text-outline" size={18} color={colors.secondary} />
-          <Text style={[styles.linkButtonText, { color: colors.secondary, fontFamily: fontFamily.semibold }]}>{t('schedule:connect_record')}</Text>
-        </AnimatedPressable>
+            ))}
+          </View>
+        )}
 
         <View style={styles.actions}>
           <AnimatedPressable
@@ -249,6 +310,50 @@ const styles = StyleSheet.create({
   },
   linkButtonText: {
     fontSize: sizes.font.md,
+  },
+  timelineCard: {
+    borderRadius: sizes.radius.xxl,
+    padding: sizes.spacing.lg,
+    gap: 0,
+  },
+  timelineTitle: {
+    fontSize: sizes.font.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: sizes.spacing.md,
+  },
+  timelineRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: sizes.spacing.md,
+  },
+  timelineDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  timelineLine: {
+    width: 2,
+    height: 20,
+    marginLeft: 11,
+    marginVertical: 4,
+  },
+  timelineContent: {
+    flex: 1,
+    paddingBottom: 4,
+  },
+  timelineLabel: {
+    fontSize: sizes.font.md,
+    marginBottom: 2,
+  },
+  timelineAction: {
+    fontSize: sizes.font.sm,
+  },
+  timelineSub: {
+    fontSize: sizes.font.sm,
   },
   actions: { flexDirection: 'row', gap: sizes.spacing.md },
   actionBtn: {

@@ -63,5 +63,9 @@
   "all_empty_desc": "Add a new schedule",
   "doctor_with_suffix": "Dr. {{name}}",
   "month_day_label": "{{month}}/{{day}}",
-  "datetime_format": "{{month}}/{{day}}/{{year}}  {{time}}"
+  "datetime_format": "{{month}}/{{day}}/{{year}}  {{time}}",
+  "event_timeline_title": "Visit Timeline",
+  "timeline_prep": "Prep",
+  "timeline_visit": "Visit",
+  "timeline_record": "Record"
 }

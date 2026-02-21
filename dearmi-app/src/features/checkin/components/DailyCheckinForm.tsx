@@ -132,7 +132,7 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
             style={[
               styles.textArea,
               { backgroundColor: colors.surface, borderColor: colors.divider, color: colors.text },
-              memo.length > (memoLimit ?? Infinity) && { borderColor: colors.error },
+              memoLimit && memo.length >= memoLimit * 0.9 && { borderColor: colors.warning },
             ]}
             placeholder={t('memo_placeholder')}
             placeholderTextColor={colors.textDisabled}
@@ -141,6 +141,7 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
             multiline
             numberOfLines={4}
             textAlignVertical="top"
+            maxLength={memoLimit}
           />
         </View>
 

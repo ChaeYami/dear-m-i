@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   Animated,
   Dimensions,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
 } from 'react-native';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -70,7 +72,7 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
-  const { t } = useTranslation(['settings', 'common']);
+  const { t } = useTranslation(['settings', 'common', 'sideeffect']);
   const tabBarSafeBottom = useTabBarSafeBottom();
   const scrollHandlers = useTabBarScrollHide();
 
@@ -102,6 +104,18 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // 현재 시각 기준 자동 스크롤 — 오늘 화면에서만 동작
+  const scrollViewRef = useRef<ScrollView>(null);
+  const slotYPositions = useRef<Partial<Record<TimeSlotType, number>>>({});
+
+  const getCurrentSlot = (): TimeSlotType => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'MORNING';
+    if (hour < 17) return 'AFTERNOON';
+    if (hour < 21) return 'EVENING';
+    return 'BEDTIME';
+  };
 
   const toggleSelect = (scheduleId: string) => {
     setSelectedIds((prev) => {
@@ -203,6 +217,23 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
     }
     return { totalSlots: total, takenSlots: taken };
   }, [data]);
+
+  // 데이터 로드 완료 후 현재 시각 슬롯으로 스크롤 (오늘 + 슬롯 있을 때만)
+  useEffect(() => {
+    if (!isToday || !hasAnySlots || isLoading) return;
+    const target = getCurrentSlot();
+    // 이전 슬롯부터 타겟 슬롯 사이 중 마지막으로 존재하는 슬롯을 찾아 스크롤
+    const slot = TIME_SLOTS.slice(0, TIME_SLOTS.indexOf(target) + 1)
+      .reverse()
+      .find((s) => slotGroups[s].length > 0);
+    if (!slot) return;
+    setTimeout(() => {
+      const y = slotYPositions.current[slot];
+      if (y != null) {
+        scrollViewRef.current?.scrollTo({ y: Math.max(0, y - 12), animated: true });
+      }
+    }, 200);
+  }, [isLoading, hasAnySlots]);
 
   const completionRate = totalSlots > 0 ? takenSlots / totalSlots : 0;
   const [, mo, da] = selectedDate.split('-').map(Number);
@@ -337,7 +368,21 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
       )}
 
       <Animated.View style={{ flex: 1, transform: [{ translateX: slideAnim }] }}>
-      <ScrollView contentContainerStyle={styles.content} {...scrollHandlers}>
+      <ScrollView ref={scrollViewRef} contentContainerStyle={styles.content} {...scrollHandlers}>
+        {/* 빠른 기록 — 부작용 기록 */}
+        {isToday && (
+          <TouchableOpacity
+            style={[styles.sideEffectChip, { backgroundColor: colors.errorLight, borderColor: colors.error + '40' }]}
+            onPress={() => navigation.navigate('SideEffectLog' as any)}
+            activeOpacity={0.75}
+          >
+            <Ionicons name="medical-outline" size={14} color={colors.error} />
+            <Text style={[styles.sideEffectChipText, { color: colors.error }]}>
+              {t('sideeffect:quick_side_effect')}
+            </Text>
+          </TouchableOpacity>
+        )}
+
         {/* 완료율 카드 */}
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
@@ -355,9 +400,12 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
                 >
                   <Ionicons
                     name={isEditMode ? 'checkmark-circle' : 'create-outline'}
-                    size={22}
+                    size={18}
                     color={isEditMode ? colors.primary : colors.textSub}
                   />
+                  <Text style={[styles.editModeBtnText, { color: isEditMode ? colors.primary : colors.textSub }]}>
+                    {isEditMode ? t('common:done') : t('common:edit')}
+                  </Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -415,7 +463,11 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
             if (slotGroups[slot].length === 0) return null;
             const notifyTime = slotGroups[slot][0]?.notifyTime;
             return (
-              <View key={slot} style={styles.slotGroup}>
+              <View
+                key={slot}
+                style={styles.slotGroup}
+                onLayout={(e) => { slotYPositions.current[slot] = e.nativeEvent.layout.y; }}
+              >
                 <View style={styles.slotHeaderRow}>
                   <Text style={[styles.slotHeaderLabel, { color: SLOT_COLORS[slot] }]}>
                     {SLOT_LABELS[slot]}
@@ -475,6 +527,20 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBott
   StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     content: { padding: sizes.spacing.lg, paddingBottom: tabBarSafeBottom + 80, gap: sizes.spacing.md },
+    sideEffectChip: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      alignSelf: 'flex-start' as const,
+      gap: 5,
+      paddingHorizontal: sizes.spacing.md,
+      paddingVertical: sizes.spacing.xs + 2,
+      borderRadius: sizes.radius.full,
+      borderWidth: 1,
+    },
+    sideEffectChipText: {
+      fontSize: sizes.font.sm,
+      fontFamily: fontFamily.semibold,
+    },
     summaryCard: {
       gap: sizes.spacing.sm,
       marginBottom: sizes.spacing.xs,
@@ -490,8 +556,15 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBott
       gap: 10,
     },
     editModeBtn: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      gap: 4,
       padding: sizes.spacing.xs,
       marginLeft: 2,
+    },
+    editModeBtnText: {
+      fontSize: sizes.font.sm,
+      fontFamily: fontFamily.semibold,
     },
     summaryDate: {
       fontSize: sizes.font.md,

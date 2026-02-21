@@ -1,20 +1,35 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
 import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { useResetStackOnTabFocus } from '@/shared/hooks/useResetStackOnTabFocus';
 import { ScheduleTab } from '@/features/schedule/screens/ScheduleTab';
 import { RecordTab } from '@/features/record/screens/RecordTab';
+import { navigationRef } from '@/navigation/navigationRef';
+import type { CareStackParamList } from '@/navigation/CareNavigator';
 
 type CareSubTab = 'schedule' | 'record';
+type Nav = StackNavigationProp<CareStackParamList, 'CareHome'>;
 
 export const CareHomeScreen: React.FC = () => {
   useResetStackOnTabFocus();
   const { colors } = useTheme();
-  const { t } = useTranslation('common');
+  const { t } = useTranslation(['common', 'sideeffect', 'prepnote']);
+  const navigation = useNavigation<Nav>();
   const [activeTab, setActiveTab] = useState<CareSubTab>('schedule');
+
+  const goSideEffect = () => {
+    (navigationRef.current as any)?.navigate('SideEffectLog');
+  };
+
+  const goPrepNote = () => {
+    navigation.navigate('PrepNoteList');
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -57,6 +72,26 @@ export const CareHomeScreen: React.FC = () => {
         })}
       </View>
 
+      {/* 빠른 접근 칩 행 */}
+      <View style={styles.quickRow}>
+        <TouchableOpacity
+          style={[styles.quickChip, { backgroundColor: colors.errorLight, borderColor: colors.error + '40' }]}
+          onPress={goSideEffect}
+          activeOpacity={0.75}
+        >
+          <Ionicons name="medical-outline" size={14} color={colors.error} />
+          <Text style={[styles.quickChipText, { color: colors.error }]}>{t('sideeffect:quick_side_effect')}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.quickChip, { backgroundColor: colors.primaryMuted, borderColor: colors.primary + '40' }]}
+          onPress={goPrepNote}
+          activeOpacity={0.75}
+        >
+          <Ionicons name="create-outline" size={14} color={colors.primary} />
+          <Text style={[styles.quickChipText, { color: colors.primary }]}>{t('common:search_section_prepnote')}</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Tab content */}
       <View style={styles.content}>
         {activeTab === 'schedule' ? (
@@ -75,7 +110,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginHorizontal: sizes.spacing.lg,
     marginTop: sizes.spacing.xs,
-    marginBottom: sizes.spacing.md,
+    marginBottom: sizes.spacing.sm,
     gap: sizes.spacing.sm,
   },
   subTabBtn: {
@@ -87,6 +122,25 @@ const styles = StyleSheet.create({
   },
   subTabText: {
     fontSize: sizes.font.md,
+  },
+  quickRow: {
+    flexDirection: 'row',
+    marginHorizontal: sizes.spacing.lg,
+    marginBottom: sizes.spacing.md,
+    gap: sizes.spacing.sm,
+  },
+  quickChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: sizes.spacing.md,
+    paddingVertical: sizes.spacing.xs + 2,
+    borderRadius: sizes.radius.full,
+    borderWidth: 1,
+  },
+  quickChipText: {
+    fontSize: sizes.font.sm,
+    fontFamily: fontFamily.semibold,
   },
   content: { flex: 1 },
 });
