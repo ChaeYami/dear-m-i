@@ -32,6 +32,11 @@ public class PrescriptionMedicationRepositoryImpl implements PrescriptionMedicat
     }
 
     @Override
+    public List<PrescriptionMedication> findByPrescriptionIdIn(List<UUID> prescriptionIds) {
+        return jpa.findByPrescriptionIdIn(prescriptionIds);
+    }
+
+    @Override
     public void deleteByPrescriptionId(UUID prescriptionId) {
         jpa.deleteByPrescriptionId(prescriptionId);
     }

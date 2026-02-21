@@ -14,6 +14,8 @@ public interface PrescriptionMedicationJpaRepository extends JpaRepository<Presc
 
     List<PrescriptionMedication> findByPrescriptionId(UUID prescriptionId);
 
+    List<PrescriptionMedication> findByPrescriptionIdIn(List<UUID> prescriptionIds);
+
     void deleteByPrescriptionId(UUID prescriptionId);
 
     /** drugName 일치 + drugInfoFetchedAt이 threshold 이후인 가장 최근 레코드 1건 (30일 캐시) */

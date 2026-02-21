@@ -13,6 +13,8 @@ public interface PrescriptionMedicationRepository {
 
     List<PrescriptionMedication> findByPrescriptionId(UUID prescriptionId);
 
+    List<PrescriptionMedication> findByPrescriptionIdIn(List<UUID> prescriptionIds);
+
     void deleteByPrescriptionId(UUID prescriptionId);
 
     /**
