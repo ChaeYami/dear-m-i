@@ -11,6 +11,9 @@ export const authApi = {
   /** 현재 로그인한 사용자 정보 조회 (토큰 유효성 검증에도 사용) */
   getMe: () => axiosInstance.get<ApiResponse<User>>('/api/v1/auth/me'),
 
+  /** 로그아웃 — 서버에서 refresh_token + FCM 토큰 삭제 */
+  logout: () => axiosInstance.post<ApiResponse<void>>('/api/v1/auth/logout'),
+
   /**
    * 회원 탈퇴 (원칙 ⑥) — 서버는 PII 익명화 + soft delete + refresh_tokens 즉시 삭제.
    * 30일 후 hard delete 배치가 모든 데이터 영구 삭제.

@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { SECURE_STORE_KEYS } from '@/constants/cacheKeys';
 import { queryClient } from '@/shared/api/queryClient';
 import { useSubscriptionStore } from '@/features/subscription/store/subscriptionStore';
+import { authApi } from '@/features/auth/api';
 import type { User } from '@/shared/types/domain.types';
 
 /** 인증 상태 */
@@ -62,7 +63,13 @@ export const useAuthStore = create<AuthStore>((set) => ({
   // 로그아웃: 메모리 + SecureStore + 다른 사용자 state(구독/쿼리 캐시) 까지 모두 정리
   //   subscriptionStore 를 reset 안 하면 이전 사용자의 PREMIUM 이 다음 사용자에게 그대로 보인다
   //   React Query 캐시도 클리어 — 이전 사용자의 기록/알림/복약 등 재사용 방지
+  //   서버 logout API 호출 → refresh_token + FCM 토큰 삭제 (실패해도 로컬 정리는 진행)
   logout: async () => {
+    try {
+      await authApi.logout();
+    } catch {
+      // 네트워크 오류 등 — 서버 토큰/FCM은 만료 시 자동 정리됨
+    }
     await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.ACCESS_TOKEN);
     await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.REFRESH_TOKEN);
     set({ accessToken: null, refreshToken: null, user: null, isAuthenticated: false });
