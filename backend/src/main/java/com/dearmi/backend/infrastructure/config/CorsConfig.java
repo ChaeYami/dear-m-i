@@ -36,7 +36,8 @@ public class CorsConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", cfg);
         source.registerCorsConfiguration("/oauth2/**", cfg);
-        source.registerCorsConfiguration("/login/**", cfg);
+        // /login/** 은 OAuth 콜백 (form_post) 경로라 CORS 대상 아님.
+        // Apple 이 appleid.apple.com origin 으로 POST 하면 CORS 필터가 차단하므로 제외.
         return source;
     }
 }
