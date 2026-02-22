@@ -1,6 +1,6 @@
 {
   "name": "dearmi-app",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
@@ -10,7 +10,9 @@
     "bump:patch": "node scripts/bump-version.js patch",
     "bump:minor": "node scripts/bump-version.js minor",
     "bump:major": "node scripts/bump-version.js major",
-    "bump:build": "node scripts/bump-version.js build"
+    "bump:build": "node scripts/bump-version.js build",
+    "bump:build:ios": "node scripts/bump-version.js build:ios",
+    "bump:build:android": "node scripts/bump-version.js build:android"
   },
   "dependencies": {
     "@quidone/react-native-wheel-picker": "^1.6.4",

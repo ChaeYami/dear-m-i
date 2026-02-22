@@ -3,11 +3,13 @@
  * 버전 동기화 스크립트 — app.json / package.json / Info.plist 한 번에 bump.
  *
  * Usage:
- *   node scripts/bump-version.js patch   # 1.0.2 → 1.0.3 + build/versionCode +1
- *   node scripts/bump-version.js minor   # 1.0.2 → 1.1.0 + build/versionCode +1
- *   node scripts/bump-version.js major   # 1.0.2 → 2.0.0 + build/versionCode +1
- *   node scripts/bump-version.js build   # version 유지 + build/versionCode +1
- *   node scripts/bump-version.js 1.2.3   # 지정 버전 + build/versionCode +1
+ *   node scripts/bump-version.js patch          # 1.0.2 → 1.0.3 + build/versionCode +1 (둘 다)
+ *   node scripts/bump-version.js minor          # 1.0.2 → 1.1.0 + build/versionCode +1 (둘 다)
+ *   node scripts/bump-version.js major          # 1.0.2 → 2.0.0 + build/versionCode +1 (둘 다)
+ *   node scripts/bump-version.js build          # version 유지 + build/versionCode +1 (둘 다)
+ *   node scripts/bump-version.js build:ios      # version 유지 + iOS buildNumber 만 +1
+ *   node scripts/bump-version.js build:android  # version 유지 + Android versionCode 만 +1
+ *   node scripts/bump-version.js 1.2.3          # 지정 버전 + build/versionCode +1 (둘 다)
  *
  * 업데이트 대상:
  *   - app.json              : expo.version, expo.ios.buildNumber, expo.android.versionCode
@@ -27,7 +29,7 @@ const SEMVER = /^(\d+)\.(\d+)\.(\d+)$/;
 
 const arg = process.argv[2];
 if (!arg) {
-  console.error('Usage: node scripts/bump-version.js <patch|minor|major|build|x.y.z>');
+  console.error('Usage: node scripts/bump-version.js <patch|minor|major|build|build:ios|build:android|x.y.z>');
   process.exit(1);
 }
 
@@ -39,8 +41,15 @@ const currentBuild = parseInt(appJson.expo.ios?.buildNumber ?? '0', 10);
 const currentVersionCode = appJson.expo.android?.versionCode ?? 0;
 
 let newVersion = currentVersion;
+let bumpIos = true;
+let bumpAndroid = true;
+
 if (arg === 'build') {
-  // keep current version
+  // keep version, bump both
+} else if (arg === 'build:ios') {
+  bumpAndroid = false;
+} else if (arg === 'build:android') {
+  bumpIos = false;
 } else if (['patch', 'minor', 'major'].includes(arg)) {
   const m = currentVersion.match(SEMVER);
   if (!m) {
@@ -56,12 +65,12 @@ if (arg === 'build') {
   newVersion = arg;
 } else {
   console.error(`Invalid argument: ${arg}`);
-  console.error('Expected: patch | minor | major | build | x.y.z');
+  console.error('Expected: patch | minor | major | build | build:ios | build:android | x.y.z');
   process.exit(1);
 }
 
-const newBuild = currentBuild + 1;
-const newVersionCode = currentVersionCode + 1;
+const newBuild = bumpIos ? currentBuild + 1 : currentBuild;
+const newVersionCode = bumpAndroid ? currentVersionCode + 1 : currentVersionCode;
 
 appJson.expo.version = newVersion;
 appJson.expo.ios = appJson.expo.ios ?? {};
@@ -88,8 +97,8 @@ plist = plist
 fs.writeFileSync(INFO_PLIST_PATH, plist);
 
 console.log(`version:       ${currentVersion} -> ${newVersion}`);
-console.log(`iOS build:     ${currentBuild} -> ${newBuild}`);
-console.log(`Android vCode: ${currentVersionCode} -> ${newVersionCode}`);
+console.log(`iOS build:     ${currentBuild} -> ${newBuild}${bumpIos ? '' : ' (유지)'}`);
+console.log(`Android vCode: ${currentVersionCode} -> ${newVersionCode}${bumpAndroid ? '' : ' (유지)'}`);
 console.log('');
 console.log('Updated:');
 console.log('  - app.json');
