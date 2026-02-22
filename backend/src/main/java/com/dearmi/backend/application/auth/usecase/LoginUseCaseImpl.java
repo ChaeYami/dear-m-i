@@ -41,6 +41,23 @@ public class LoginUseCaseImpl implements LoginUseCase {
 
     private User findOrCreateUser(OAuthLoginCommand command) {
         return userRepository.findByOauthProviderAndOauthProviderId(command.provider(), command.providerId())
+                .orElseGet(() -> linkOrRegisterByEmail(command));
+    }
+
+    /**
+     * 같은 이메일의 기존 유저가 있으면 현재 provider 로 연결(update).
+     * 없으면 신규 등록.
+     * Google/Apple 모두 이메일 소유권을 검증한 상태이므로 auto-link 안전.
+     */
+    private User linkOrRegisterByEmail(OAuthLoginCommand command) {
+        if (command.email() == null) {
+            return registerNewUser(command);
+        }
+        return userRepository.findByEmail(command.email())
+                .map(existing -> {
+                    existing.linkOAuthProvider(command.provider(), command.providerId());
+                    return userRepository.save(existing);
+                })
                 .orElseGet(() -> registerNewUser(command));
     }
 

@@ -42,6 +42,15 @@ public class User extends BaseTimeEntity {
         this.fcmToken = fcmToken;
     }
 
+    /**
+     * 같은 이메일의 기존 유저에게 새 OAuth provider 연결.
+     * Google / Apple 모두 이메일 소유권을 검증하므로 auto-link 안전.
+     */
+    public void linkOAuthProvider(String provider, String providerId) {
+        this.oauthProvider = provider;
+        this.oauthProviderId = providerId;
+    }
+
     public void updateName(String name) {
         this.name = name;
     }

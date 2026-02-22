@@ -23,7 +23,7 @@ dearmi-app/android/
 .idea/
 .vscode/
 
-# Secrets (google-services.json, dearmi-app/.env 제외 — 빌드에 필요)
+# Secrets (google-services.json, GoogleService-Info.plist, dearmi-app/.env 제외 — 빌드에 필요)
 backend/.env
 .env.local
 .env.production
@@ -33,5 +33,4 @@ backend/.env
 *.p8
 *.p12
 *.mobileprovision
-GoogleService-Info.plist
 firebase-adminsdk*.json
