@@ -16,8 +16,6 @@
 *.p8
 *.p12
 *.mobileprovision
-google-services.json
-GoogleService-Info.plist
 firebase-adminsdk*.json
 dearmi-app/.env
 # dearmi-app/assets/adi-registration.properties
