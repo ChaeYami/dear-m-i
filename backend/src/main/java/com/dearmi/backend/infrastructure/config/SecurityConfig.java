@@ -2,6 +2,7 @@ package com.dearmi.backend.infrastructure.config;
 
 import com.dearmi.backend.common.exception.ErrorCode;
 import com.dearmi.backend.common.response.ApiResponse;
+import com.dearmi.backend.infrastructure.security.AppleAwareOAuth2AuthorizationRequestResolver;
 import com.dearmi.backend.infrastructure.security.CustomOAuth2UserService;
 import com.dearmi.backend.infrastructure.security.JwtAuthenticationFilter;
 import com.dearmi.backend.infrastructure.security.JwtProvider;
@@ -42,6 +43,7 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final CorsConfigurationSource corsConfigurationSource;
+    private final AppleAwareOAuth2AuthorizationRequestResolver appleAwareResolver;
 
     /**
      * 인증 없이 접근 가능한 공개 엔드포인트
@@ -80,6 +82,10 @@ public class SecurityConfig {
 
                 // OAuth2 소셜 로그인 설정
                 .oauth2Login(oauth2 -> oauth2
+                        // Apple 은 name/email scope 요청 시 response_mode=form_post 요구
+                        .authorizationEndpoint(endpoint -> endpoint
+                                .authorizationRequestResolver(appleAwareResolver)
+                        )
                         .userInfoEndpoint(info -> info
                                 .userService(customOAuth2UserService)   // Google (표준 OAuth2)
                                 // Apple은 OIDC → Spring 기본 OidcUserService가 처리
