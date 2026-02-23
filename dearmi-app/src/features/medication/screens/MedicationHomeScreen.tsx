@@ -127,17 +127,7 @@ export const MedicationHomeScreen: React.FC<MedicationHomeProps> = ({
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showGroupModal, setShowGroupModal] = useState(false);
 
-  // 현재 시각 기준 자동 스크롤 — 오늘 화면에서만 동작
   const scrollViewRef = useRef<ScrollView>(null);
-  const slotYPositions = useRef<Partial<Record<TimeSlotType, number>>>({});
-
-  const getCurrentSlot = (): TimeSlotType => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'MORNING';
-    if (hour < 17) return 'AFTERNOON';
-    if (hour < 21) return 'EVENING';
-    return 'BEDTIME';
-  };
 
   const makeSlotKey = (scheduleId: string, timeSlot: TimeSlotType): `${string}:${TimeSlotType}` =>
     `${scheduleId}:${timeSlot}`;
@@ -301,22 +291,6 @@ export const MedicationHomeScreen: React.FC<MedicationHomeProps> = ({
     return { totalSlots: total, takenSlots: taken };
   }, [data]);
 
-  // 데이터 로드 완료 후 현재 시각 슬롯으로 스크롤 (오늘 + 슬롯 있을 때만)
-  useEffect(() => {
-    if (!isToday || !hasAnySlots || isLoading) return;
-    const target = getCurrentSlot();
-    // 이전 슬롯부터 타겟 슬롯 사이 중 마지막으로 존재하는 슬롯을 찾아 스크롤
-    const slot = TIME_SLOTS.slice(0, TIME_SLOTS.indexOf(target) + 1)
-      .reverse()
-      .find((s) => slotGroups[s].length > 0);
-    if (!slot) return;
-    setTimeout(() => {
-      const y = slotYPositions.current[slot];
-      if (y != null) {
-        scrollViewRef.current?.scrollTo({ y: Math.max(0, y - 12), animated: true });
-      }
-    }, 200);
-  }, [isLoading, hasAnySlots]);
 
   const completionRate = totalSlots > 0 ? takenSlots / totalSlots : 0;
   const [, mo, da] = selectedDate.split('-').map(Number);
@@ -553,12 +527,10 @@ export const MedicationHomeScreen: React.FC<MedicationHomeProps> = ({
         ) : (
           sections.map((section) => {
             const firstItem = section.items[0];
-            const slot = firstItem?.timeSlot ?? 'MORNING';
             return (
               <View
                 key={section.key}
                 style={styles.slotGroup}
-                onLayout={(e) => { slotYPositions.current[slot] = e.nativeEvent.layout.y; }}
               >
                 <View style={styles.slotHeaderRow}>
                   <Text style={[styles.slotHeaderLabel, { color: section.color }]}>
