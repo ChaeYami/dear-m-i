@@ -269,7 +269,13 @@ export const MedicationHomeScreen: React.FC<MedicationHomeProps> = ({
         sectionMap.get(sectionKey)!.items.push(item);
       }
     }
-    return [...sectionMap.entries()].map(([key, val]) => ({ key, ...val }));
+    return [...sectionMap.entries()]
+      .map(([key, val]) => ({ key, ...val }))
+      .sort((a, b) => {
+        const ta = a.notifyTime ? a.notifyTime.slice(0, 5) : (/^\d{2}:\d{2}/.test(a.key) ? a.key.slice(0, 5) : '99:99');
+        const tb = b.notifyTime ? b.notifyTime.slice(0, 5) : (/^\d{2}:\d{2}/.test(b.key) ? b.key.slice(0, 5) : '99:99');
+        return ta.localeCompare(tb);
+      });
   }, [slotGroups]);
 
   // 편집 모드 전체선택용 모든 슬롯 키

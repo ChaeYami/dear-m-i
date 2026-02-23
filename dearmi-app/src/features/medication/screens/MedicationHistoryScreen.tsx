@@ -108,18 +108,57 @@ export const MedicationHistoryScreen: React.FC<{ embedded?: boolean }> = ({ embe
     };
     for (const schedule of data?.schedules ?? []) {
       for (const slot of schedule.slots) {
-        groups[slot.timeSlot].push({
+        groups[slot.timeSlot as TimeSlotType].push({
           scheduleId: schedule.scheduleId,
           drugName: schedule.drugName,
           dosage: schedule.dosage,
           status: slot.status,
           logId: slot.logId,
           notifyTime: slot.notifyTime,
+          groupId: slot.groupId,
+          groupName: slot.groupName,
+          timeSlot: slot.timeSlot as TimeSlotType,
         });
       }
     }
     return groups;
   }, [data]);
+
+  // 그룹/시간 기준 섹션 (HomeScreen과 동일 로직) + notifyTime 기준 오름차순 정렬
+  const sections = useMemo(() => {
+    const sectionMap = new Map<string, { label: string; color: string; items: SlotItem[]; notifyTime?: string; timeSlot: TimeSlotType }>();
+    for (const slot of TIME_SLOTS) {
+      for (const item of slotGroups[slot]) {
+        let sectionKey: string;
+        let label: string;
+        let sectionNotifyTime: string | undefined;
+        const color = item.groupId ? '#6366F1' : SLOT_COLORS[slot];
+
+        if (item.groupId) {
+          sectionKey = item.groupId;
+          label = item.groupName ?? SLOT_LABELS[slot];
+          sectionNotifyTime = item.notifyTime;
+        } else {
+          const timeKey = item.notifyTime ? item.notifyTime.slice(0, 5) : slot;
+          sectionKey = timeKey;
+          label = item.notifyTime ? formatSlotTime(item.notifyTime) : SLOT_LABELS[slot];
+          sectionNotifyTime = undefined;
+        }
+
+        if (!sectionMap.has(sectionKey)) {
+          sectionMap.set(sectionKey, { label, color, items: [], notifyTime: sectionNotifyTime, timeSlot: slot });
+        }
+        sectionMap.get(sectionKey)!.items.push(item);
+      }
+    }
+    return [...sectionMap.entries()]
+      .map(([key, val]) => ({ key, ...val }))
+      .sort((a, b) => {
+        const ta = a.notifyTime ? a.notifyTime.slice(0, 5) : (/^\d{2}:\d{2}/.test(a.key) ? a.key.slice(0, 5) : '99:99');
+        const tb = b.notifyTime ? b.notifyTime.slice(0, 5) : (/^\d{2}:\d{2}/.test(b.key) ? b.key.slice(0, 5) : '99:99');
+        return ta.localeCompare(tb);
+      });
+  }, [slotGroups]);
 
   const { totalSlots, takenSlots } = useMemo(() => {
     let total = 0;
@@ -134,7 +173,7 @@ export const MedicationHistoryScreen: React.FC<{ embedded?: boolean }> = ({ embe
   }, [data]);
 
   const completionRate = totalSlots > 0 ? takenSlots / totalSlots : 0;
-  const hasAnySlots = TIME_SLOTS.some((s) => slotGroups[s].length > 0);
+  const hasAnySlots = sections.length > 0;
 
   // 캘린더 마킹 — 복약 일정 기간 하이라이트 (미래 포함)
   const markedDates = useMemo(() => {
@@ -275,34 +314,30 @@ export const MedicationHistoryScreen: React.FC<{ embedded?: boolean }> = ({ embe
                 <Text style={styles.emptySubText}>{t('settings:medication_check_dates_hint')}</Text>
               </View>
             ) : (
-              TIME_SLOTS.map((slot) => {
-                if (slotGroups[slot].length === 0) return null;
-                const notifyTime = slotGroups[slot][0]?.notifyTime;
-                return (
-                  <View key={slot} style={styles.slotGroup}>
-                    <View style={styles.slotHeaderRow}>
-                      <Text style={[styles.slotHeaderLabel, { color: SLOT_COLORS[slot] }]}>
-                        {SLOT_LABELS[slot]}
-                      </Text>
-                      {notifyTime && (
-                        <Text style={styles.slotHeaderTime}>{formatSlotTime(notifyTime)}</Text>
-                      )}
-                    </View>
-                    <View style={styles.medicationCardWrap}>
-                      <MedicationCard
-                        items={slotGroups[slot]}
-                        pendingScheduleIds={pendingIds}
-                        onDrugPress={(scheduleId, drugName) =>
-                          navigation.navigate('MedicationScheduleDetail', { scheduleId, drugName })
-                        }
-                        onDelete={(scheduleId, drugName) => handleDelete(scheduleId, drugName)}
-                        onTaken={(scheduleId) => handleCheck(scheduleId, 'TAKEN', slot)}
-                        onSkipped={(scheduleId) => handleCheck(scheduleId, 'SKIPPED', slot)}
-                      />
-                    </View>
+              sections.map((section) => (
+                <View key={section.key} style={styles.slotGroup}>
+                  <View style={styles.slotHeaderRow}>
+                    <Text style={[styles.slotHeaderLabel, { color: section.color }]}>
+                      {section.label}
+                    </Text>
+                    {section.notifyTime && (
+                      <Text style={styles.slotHeaderTime}>{formatSlotTime(section.notifyTime)}</Text>
+                    )}
                   </View>
-                );
-              })
+                  <View style={styles.medicationCardWrap}>
+                    <MedicationCard
+                      items={section.items}
+                      pendingScheduleIds={pendingIds}
+                      onDrugPress={(scheduleId, drugName) =>
+                        navigation.navigate('MedicationScheduleDetail', { scheduleId, drugName })
+                      }
+                      onDelete={(scheduleId, drugName) => handleDelete(scheduleId, drugName)}
+                      onTaken={(scheduleId) => handleCheck(scheduleId, 'TAKEN', section.timeSlot)}
+                      onSkipped={(scheduleId) => handleCheck(scheduleId, 'SKIPPED', section.timeSlot)}
+                    />
+                  </View>
+                </View>
+              ))
             )}
           </ScrollView>
         )}
