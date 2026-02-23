@@ -32,6 +32,9 @@
   "insight_low_mood": "Avg {{score}} last week — add to 'Mood'",
   "insight_low_mood_text": "Average emotion score {{score}} last week",
   "insight_side_effects": "{{count}} recent side effects — add to 'Side effects'",
+  "daily_notes_picker_title": "Select from recent notes",
+  "daily_notes_picker_hint": "Selecting a note will auto-fill the relevant section",
+  "daily_notes_selected": "{{count}} selected",
   "preset_picker_title": "Common psych visit questions",
   "preset_picker_done": "Done",
   "preset_questions": [

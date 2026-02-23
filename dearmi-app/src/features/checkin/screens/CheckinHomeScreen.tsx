@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,10 @@ import {
   StyleSheet,
   ScrollView,
   FlatList,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
   Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,29 +22,26 @@ import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { softShadow } from '@/shared/theme/shadows';
 import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
-import { navigationRef } from '@/navigation/navigationRef';
+import { EmotionGraph } from '@/features/checkin/components/EmotionGraph';
+import { DailyCheckinForm } from '@/features/checkin/components/DailyCheckinForm';
+import { useCheckinHistory, useCreateCheckin } from '@/features/checkin/hooks/useCheckin';
+import { useDailyNotes, useCreateDailyNote, useDeleteDailyNote } from '@/features/checkin/hooks/useDailyNote';
+import { useRecentSchedules } from '@/features/record/hooks/useRecord';
 import { useResetStackOnTabFocus } from '@/shared/hooks/useResetStackOnTabFocus';
 import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import { useTabBarScrollHide } from '@/shared/hooks/useTabBarScrollHide';
-import { getEmotionColor, useEmotionLabel } from '@/shared/components/EmotionSlider';
-import { displayTag } from '@/features/checkin/triggerTags';
-import { EmotionGraph } from '@/features/checkin/components/EmotionGraph';
-import { DailyCheckinForm } from '@/features/checkin/components/DailyCheckinForm';
-import { useCheckinHistory } from '@/features/checkin/hooks/useCheckin';
-import { useTodayMedication } from '@/features/medication/hooks/useMedication';
-import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
+import { getEmotionColor } from '@/shared/components/EmotionSlider';
+import { customAlert } from '@/shared/components/CustomAlert';
 import type { CheckinStackParamList } from '@/navigation/CheckinNavigator';
-import type { DailyCheckin } from '@/shared/types/domain.types';
+import type { DailyNoteType, DailyCheckin } from '@/shared/types/domain.types';
+import { navigationRef } from '@/navigation/navigationRef';
 
 type Nav = StackNavigationProp<CheckinStackParamList, 'CheckinHome'>;
 
-/** 로컬 날짜를 YYYY-MM-DD 문자열로 */
 const toLocalDateStr = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-
 const getTodayStr = () => toLocalDateStr(new Date());
 
-// 오늘이 첫번째, 과거로 스크롤 (역순)
 const generateDates = (days: number): string[] => {
   const dates: string[] = [];
   const today = new Date();
@@ -54,18 +55,45 @@ const generateDates = (days: number): string[] => {
 
 const useDayNames = () => {
   const { t } = useTranslation('common');
-  return useMemo(() => [
-    t('weekday_sun'), t('weekday_mon'), t('weekday_tue'), t('weekday_wed'),
-    t('weekday_thu'), t('weekday_fri'), t('weekday_sat'),
-  ], [t]);
+  return useMemo(
+    () => [
+      t('weekday_sun'), t('weekday_mon'), t('weekday_tue'), t('weekday_wed'),
+      t('weekday_thu'), t('weekday_fri'), t('weekday_sat'),
+    ],
+    [t],
+  );
 };
 
-const useFormatDateLabel = () => {
-  const { t } = useTranslation('checkin');
-  return (dateStr: string) => {
-    const [, mo, da] = dateStr.split('-');
-    return t('date_label_month_day', { month: Number(mo), day: Number(da) });
-  };
+// 감정 점수 → 이모지 매핑
+const EMOTION_EMOJIS: Record<number, string> = {
+  1: '😫', 2: '😢', 3: '😔', 4: '😕', 5: '😐',
+  6: '🙂', 7: '😊', 8: '😄', 9: '😁', 10: '🤩',
+};
+
+const NOTE_TYPE_CONFIG: Array<{ type: DailyNoteType; emoji: string; labelKey: string }> = [
+  { type: 'FEELING', emoji: '💬', labelKey: 'note_type_feeling' },
+  { type: 'SYMPTOM', emoji: '🤒', labelKey: 'note_type_symptom' },
+  { type: 'QUESTION', emoji: '❓', labelKey: 'note_type_question' },
+  { type: 'SIDE_EFFECT', emoji: '⚠️', labelKey: 'note_type_side_effect' },
+  { type: 'OTHER', emoji: '📝', labelKey: 'note_type_other' },
+];
+
+const getNoteTypeConfig = (type: DailyNoteType) =>
+  NOTE_TYPE_CONFIG.find((c) => c.type === type) ?? NOTE_TYPE_CONFIG[4];
+
+const formatNoteTime = (createdAt: string) => {
+  const d = new Date(createdAt);
+  const now = new Date();
+  const isToday =
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate();
+  const h = String(d.getHours()).padStart(2, '0');
+  const m = String(d.getMinutes()).padStart(2, '0');
+  if (isToday) return `오늘 ${h}:${m}`;
+  const mo = d.getMonth() + 1;
+  const da = d.getDate();
+  return `${mo}/${da} ${h}:${m}`;
 };
 
 export const CheckinHomeScreen: React.FC = () => {
@@ -74,301 +102,115 @@ export const CheckinHomeScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const { t } = useTranslation('checkin');
   const { t: tCommon } = useTranslation('common');
-  const emotionLabel = useEmotionLabel();
   const DAY_NAMES = useDayNames();
-  const formatDateLabel = useFormatDateLabel();
   const tabBarSafeBottom = useTabBarSafeBottom();
   const scrollHandlers = useTabBarScrollHide();
 
   const todayStr = getTodayStr();
   const dates = useMemo(() => generateDates(30), []);
+
   const [selectedDate, setSelectedDate] = useState(todayStr);
-  const [showForm, setShowForm] = useState(false);
-  const dateListRef = useRef<FlatList>(null);
+  const [showCheckinForm, setShowCheckinForm] = useState(false);
 
-  // 30일 이력 가져오기
-  const startDate = dates[dates.length - 1]; // inverted이므로 마지막이 가장 과거
-  const { data: history, isLoading } = useCheckinHistory(startDate, todayStr);
+  // 스레드 메모 입력 상태
+  const [noteBody, setNoteBody] = useState('');
+  const [noteType, setNoteType] = useState<DailyNoteType>('FEELING');
+  const [showTypePicker, setShowTypePicker] = useState(false);
+  const noteInputRef = useRef<TextInput>(null);
 
-  // 오늘 복약 완료율
-  const { data: todayMed } = useTodayMedication();
-  const medCompleted = useMemo(() => {
-    if (!todayMed?.schedules?.length) return null; // 복약 일정 없으면 표시 안 함
-    const total = todayMed.schedules.reduce((sum, s) => sum + s.slots.length, 0);
-    const taken = todayMed.schedules.reduce(
-      (sum, s) => sum + s.slots.filter((sl) => sl.status === 'TAKEN').length, 0
+  // 30일 체크인 이력
+  const startDate30 = dates[dates.length - 1];
+  const { data: history, isLoading: historyLoading } = useCheckinHistory(startDate30, todayStr);
+
+  // 선택된 날짜의 스레드 메모 (해당 날짜 기준 ±0)
+  const { data: dailyNotes = [], isLoading: notesLoading } = useDailyNotes(selectedDate, selectedDate);
+
+  // 다음 가까운 진료 일정 (배너용)
+  const { data: upcomingSchedules = [] } = useRecentSchedules('FUTURE');
+  const nextSchedule = upcomingSchedules[0] ?? null;
+  const daysUntilNext = useMemo(() => {
+    if (!nextSchedule) return null;
+    const diff = Math.ceil(
+      (new Date(nextSchedule.scheduledAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
     );
-    return total > 0 && taken === total;
-  }, [todayMed]);
+    return diff >= 0 ? diff : null;
+  }, [nextSchedule]);
 
-  // 날짜별 체크인 맵
+  const { mutate: createNote, isPending: isCreatingNote } = useCreateDailyNote();
+  const { mutate: deleteNote } = useDeleteDailyNote();
+  const { mutate: upsertCheckin } = useCreateCheckin();
+
   const checkinMap = useMemo(() => {
     const map = new Map<string, DailyCheckin>();
-    if (history?.content) {
-      history.content.forEach((c) => map.set(c.checkedAt, c));
-    }
+    history?.content?.forEach((c) => map.set(c.checkedAt, c));
     return map;
   }, [history]);
 
   const selectedCheckin = checkinMap.get(selectedDate) ?? null;
   const isToday = selectedDate === todayStr;
 
-  const dynamicStyles = useMemo(() => ({
-    // 오늘(미선택): 테두리 강조
-    dateItemToday: {
-      borderColor: colors.primary,
-      borderWidth: 2,
+  const handleEmotionTap = useCallback(
+    (score: number) => {
+      upsertCheckin({
+        emotionScore: score,
+        checkedAt: selectedDate,
+      });
     },
-    // 체크인 있음(미선택): 배경 tint
-    dateItemHasCheckin: {
-      backgroundColor: colors.primaryMuted,
-      borderColor: colors.primary + '60',
-      borderWidth: 1.5,
-    },
-    // 선택됨: solid primary
-    dateItemSelected: {
-      backgroundColor: colors.primary,
-      borderColor: colors.primary,
-      ...softShadow(colors),
-    },
-  }), [colors]);
+    [upsertCheckin, selectedDate],
+  );
 
-  const styles = useMemo(() => StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    header: {
-      height: sizes.headerHeight,
-      justifyContent: 'center',
-      paddingHorizontal: sizes.spacing.lg,
-    },
-    headerTitle: {
-      fontSize: sizes.font.xl,
-      fontFamily: fontFamily.bold,
-      color: colors.text,
-    },
-    // 날짜 바
-    dateBarWrapper: {
-      flexGrow: 0,
-      flexShrink: 0,
-    },
-    dateBar: {
-      paddingHorizontal: sizes.spacing.md,
-      paddingTop: sizes.spacing.sm,
-      paddingBottom: sizes.spacing.md,
-      gap: sizes.spacing.sm,
-    },
-    dateItem: {
-      width: 48,
-      height: 48,
-      borderRadius: sizes.radius.full,
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderWidth: 1.5,
-      borderColor: 'transparent',
-      backgroundColor: colors.surface,
-    },
-    dateCol: {
-      alignItems: 'center',
-      gap: 4,
-    },
-    dateDayName: {
-      fontSize: 10,
-      fontFamily: fontFamily.medium,
-      color: colors.textSub,
-    },
-    dateSunday: {
-      color: colors.error,
-    },
-    dateDayNum: {
-      fontSize: sizes.font.md,
-      fontFamily: fontFamily.bold,
-      color: colors.text,
-    },
-    dateDayNumSelected: {
-      color: colors.textInverse,
-    },
-    // 내용
-    content: {
-      paddingHorizontal: sizes.spacing.lg,
-      paddingTop: sizes.spacing.md,
-      gap: sizes.spacing.lg,
-      paddingBottom: tabBarSafeBottom + 16,
-    },
-    selectedDateLabel: {
-      fontSize: sizes.font.sm,
-      fontFamily: fontFamily.semibold,
-      color: colors.textSub,
-    },
-    pastDateNotice: {
-      fontSize: sizes.font.xs,
-      fontFamily: fontFamily.regular,
-      marginTop: -sizes.spacing.sm,
-    },
-    // 체크인 카드
-    checkinCard: {
-      backgroundColor: colors.surface,
-      borderRadius: sizes.radius.xxl,
-      padding: 20,
-      gap: sizes.spacing.md,
-      alignItems: 'center',
-    },
-    emptyText: {
-      fontSize: sizes.font.md,
-      fontFamily: fontFamily.semibold,
-      color: colors.textSub,
-      textAlign: 'center',
-    },
-    writeBtnGradient: {
-      width: '100%',
-      height: sizes.buttonHeight.md,
-      borderRadius: sizes.radius.full,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginTop: sizes.spacing.sm,
-    },
-    writeBtnText: {
-      fontSize: sizes.font.md,
-      fontFamily: fontFamily.bold,
-      color: colors.textInverse,
-    },
-    cardTop: {
-      width: '100%',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    scoreRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: sizes.spacing.md,
-    },
-    // Emotion circle — larger with ring
-    emotionCircleOuter: {
-      width: 52,
-      height: 52,
-      borderRadius: 26,
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderWidth: 2.5,
-    },
-    emotionCircleInner: {
-      width: 48,
-      height: 48,
-      borderRadius: 24,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    scoreBadgeText: {
-      fontSize: sizes.font.lg,
-      fontFamily: fontFamily.bold,
-      color: '#FFFFFF',
-    },
-    scoreLabel: {
-      fontSize: sizes.font.lg,
-      fontFamily: fontFamily.bold,
-    },
-    tagRow: {
-      width: '100%',
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: sizes.spacing.xs,
-    },
-    tag: {
-      paddingHorizontal: sizes.spacing.md,
-      paddingVertical: 6,
-      borderRadius: sizes.radius.full,
-      backgroundColor: colors.primaryMuted,
-    },
-    tagText: {
-      fontSize: sizes.font.xs,
-      color: colors.primary,
-      fontFamily: fontFamily.medium,
-    },
-    memoText: {
-      width: '100%',
-      fontSize: sizes.font.md,
-      fontFamily: fontFamily.regular,
-      color: colors.text,
-      lineHeight: 22,
-    },
-    metaRow: {
-      width: '100%',
-      flexDirection: 'row',
-      gap: sizes.spacing.sm,
-    },
-    metaChip: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: sizes.spacing.xs,
-      backgroundColor: colors.background,
-      paddingHorizontal: sizes.spacing.sm,
-      paddingVertical: sizes.spacing.xs,
-      borderRadius: sizes.radius.full,
-    },
-    metaText: {
-      fontSize: sizes.font.xs,
-      color: colors.textSub,
-      fontFamily: fontFamily.medium,
-    },
-    metaChipSuccess: {
-      backgroundColor: colors.successLight,
-    },
-    metaTextSuccess: {
-      color: colors.success,
-    },
-    // 섹션
-    section: {
-      gap: sizes.spacing.sm,
-    },
-    sectionTitle: {
-      fontSize: sizes.font.md,
-      fontFamily: fontFamily.bold,
-      color: colors.text,
-    },
-    // 전체 기록
-    historyLink: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.surface,
-      borderRadius: sizes.radius.xxl,
-      padding: sizes.spacing.md,
-    },
-    historyLinkText: {
-      fontSize: sizes.font.md,
-      fontFamily: fontFamily.semibold,
-      color: colors.primary,
-    },
-  }), [colors, tabBarSafeBottom]);
+  const handleSendNote = useCallback(() => {
+    const body = noteBody.trim();
+    if (!body) return;
+    createNote(
+      { body, noteType, noteDate: selectedDate },
+      {
+        onSuccess: () => setNoteBody(''),
+        onError: () => customAlert('오류', '메모를 저장하지 못했습니다.'),
+      },
+    );
+  }, [noteBody, noteType, selectedDate, createNote]);
 
-  // inverted FlatList — 오늘이 자동으로 왼쪽에 표시됨
+  const handleDeleteNote = useCallback(
+    (id: string) => {
+      customAlert('메모 삭제', '이 메모를 삭제할까요?', [
+        { text: tCommon('cancel'), style: 'cancel' },
+        { text: tCommon('delete'), style: 'destructive', onPress: () => deleteNote(id) },
+      ]);
+    },
+    [deleteNote, tCommon],
+  );
 
-  if (isLoading) return <LoadingSpinner fullscreen />;
+  const styles = useMemo(() => makeStyles(colors, tabBarSafeBottom), [colors, tabBarSafeBottom]);
+
+  const dynamicStyles = useMemo(
+    () => ({
+      dateItemToday: { borderColor: colors.primary, borderWidth: 2 },
+      dateItemHasCheckin: {
+        backgroundColor: colors.primaryMuted,
+        borderColor: colors.primary + '60',
+        borderWidth: 1.5,
+      },
+      dateItemSelected: {
+        backgroundColor: colors.primary,
+        borderColor: colors.primary,
+        ...softShadow(colors),
+      },
+    }),
+    [colors],
+  );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <ScreenHeader
         variant="tab"
         title={t('title')}
         hasNotification
         searchScope="CHECKIN"
-        rightContent={
-          <TouchableOpacity
-            onPress={() => (navigationRef.current as any)?.navigate('QuickLog')}
-            hitSlop={8}
-            style={{
-              width: 32, height: 32, borderRadius: 16,
-              backgroundColor: colors.primaryMuted,
-              alignItems: 'center', justifyContent: 'center',
-            }}
-          >
-            <Ionicons name="add" size={18} color={colors.primary} />
-          </TouchableOpacity>
-        }
       />
 
       {/* 날짜 스크롤 바 */}
       <FlatList
-        ref={dateListRef}
         data={dates}
         horizontal
         inverted
@@ -384,13 +226,9 @@ export const CheckinHomeScreen: React.FC = () => {
           const hasCheckin = checkinMap.has(item);
           const isSunday = d.getDay() === 0;
           const isItemToday = item === todayStr;
-
           return (
             <View style={styles.dateCol}>
-              <Text style={[
-                styles.dateDayName,
-                isSunday && styles.dateSunday,
-              ]}>
+              <Text style={[styles.dateDayName, isSunday && { color: colors.error }]}>
                 {dayName}
               </Text>
               <TouchableOpacity
@@ -403,15 +241,16 @@ export const CheckinHomeScreen: React.FC = () => {
                 onPress={() => setSelectedDate(item)}
                 activeOpacity={0.7}
               >
-                <Text style={[
-                  styles.dateDayNum,
-                  isSelected && styles.dateDayNumSelected,
-                  hasCheckin && !isSelected && { color: colors.primary },
-                ]}>
+                <Text
+                  style={[
+                    styles.dateDayNum,
+                    isSelected && { color: colors.textInverse },
+                    hasCheckin && !isSelected && { color: colors.primary },
+                  ]}
+                >
                   {dayNum}
                 </Text>
               </TouchableOpacity>
-              {/* 체크인 완료 인디케이터 */}
               {hasCheckin ? (
                 <Ionicons
                   name="checkmark-circle"
@@ -427,142 +266,428 @@ export const CheckinHomeScreen: React.FC = () => {
         }}
       />
 
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        {...scrollHandlers}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={0}
       >
-        {/* 선택된 날짜 라벨 */}
-        <Text style={styles.selectedDateLabel}>
-          {isToday ? t('today') : formatDateLabel(selectedDate)}
-        </Text>
-        {/* 과거 날짜 안내 */}
-        {!isToday && (
-          <Text style={[styles.pastDateNotice, { color: colors.textDisabled }]}>
-            {t('past_date_notice')}
-          </Text>
-        )}
-
-        {/* 체크인 카드 */}
-        <AnimatedPressable
-          onPress={() => selectedCheckin ? setShowForm(true) : undefined}
-          disabled={!selectedCheckin}
-          style={[styles.checkinCard, softShadow(colors)]}
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          {...scrollHandlers}
         >
-          {!selectedCheckin ? (
-            <>
-              <Ionicons name="create-outline" size={36} color={colors.textDisabled} />
-              <Text style={styles.emptyText}>{t('empty_short')}</Text>
-              <TouchableOpacity
-                onPress={() => setShowForm(true)}
-                activeOpacity={0.85}
-                style={{ width: '100%' }}
-              >
-                <LinearGradient
-                  colors={[colors.primaryVivid, colors.primaryVividDark]}
-                  style={styles.writeBtnGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <Text style={styles.writeBtnText}>
-                    {isToday ? t('write_today') : t('write_for_date', { label: formatDateLabel(selectedDate) })}
-                  </Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </>
-          ) : (
-            <>
-              <View style={styles.cardTop}>
-                <View style={styles.scoreRow}>
-                  <View
-                    style={[
-                      styles.emotionCircleOuter,
-                      {
-                        borderColor: getEmotionColor(selectedCheckin.emotionScore) + '40',
-                        ...softShadow(colors),
-                      },
-                    ]}
-                  >
-                    <View
-                      style={[styles.emotionCircleInner, { backgroundColor: getEmotionColor(selectedCheckin.emotionScore) }]}
-                    >
-                      <Text style={styles.scoreBadgeText}>{selectedCheckin.emotionScore}</Text>
-                    </View>
-                  </View>
-                  <Text style={[styles.scoreLabel, { color: getEmotionColor(selectedCheckin.emotionScore) }]}>
-                    {emotionLabel(selectedCheckin.emotionScore)}
-                  </Text>
-                </View>
-                <TouchableOpacity onPress={() => setShowForm(true)} hitSlop={12}>
-                  <Ionicons name="create-outline" size={20} color={colors.primary} />
+          {/* ── 오늘의 기분 (이모지 빠른 탭) ── */}
+          <View style={[styles.card, softShadow(colors)]}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>{isToday ? '오늘의 기분' : `${new Date(selectedDate).getMonth() + 1}/${new Date(selectedDate).getDate()} 기분`}</Text>
+              {selectedCheckin && (
+                <TouchableOpacity onPress={() => setShowCheckinForm(true)} hitSlop={8}>
+                  <Ionicons name="create-outline" size={18} color={colors.primary} />
                 </TouchableOpacity>
-              </View>
-
-              {/* 트리거 태그 */}
-              {selectedCheckin.triggerTags && selectedCheckin.triggerTags.length > 0 && (
-                <View style={styles.tagRow}>
-                  {selectedCheckin.triggerTags.map((tag) => (
-                    <View key={tag} style={styles.tag}>
-                      <Text style={styles.tagText}>{displayTag(tag, t)}</Text>
-                    </View>
-                  ))}
-                </View>
               )}
+            </View>
 
-              {/* 메모 */}
-              {selectedCheckin.memo && (
-                <Text style={styles.memoText}>{selectedCheckin.memo}</Text>
-              )}
-
-              {/* 수면 + 복약 */}
-              <View style={styles.metaRow}>
-                {selectedCheckin.sleepHours != null && (
-                  <View style={styles.metaChip}>
-                    <Ionicons name="moon-outline" size={14} color={colors.textSub} />
-                    <Text style={styles.metaText}>{t('sleep_unit', { hours: selectedCheckin.sleepHours })}</Text>
-                  </View>
-                )}
-                {isToday && medCompleted != null && (
-                  <View style={[styles.metaChip, medCompleted && styles.metaChipSuccess]}>
-                    <Ionicons
-                      name={medCompleted ? 'checkmark-circle' : 'medical-outline'}
-                      size={14}
-                      color={medCompleted ? colors.success : colors.textSub}
-                    />
-                    <Text style={[styles.metaText, medCompleted && styles.metaTextSuccess]}>
-                      {medCompleted ? t('med_done') : t('not_took_medication')}
+            {/* 이모지 선택 바 — 항상 표시, 현재 값 하이라이트 */}
+            <View style={styles.emojiRow}>
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((score) => {
+                const isSelected = selectedCheckin?.emotionScore === score;
+                return (
+                  <TouchableOpacity
+                    key={score}
+                    onPress={() => handleEmotionTap(score)}
+                    style={[
+                      styles.emojiBtn,
+                      isSelected && { backgroundColor: getEmotionColor(score) + '30', borderRadius: sizes.radius.full },
+                    ]}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.emojiText, isSelected && styles.emojiSelected]}>
+                      {EMOTION_EMOJIS[score]}
                     </Text>
-                  </View>
-                )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {!selectedCheckin && (
+              <Text style={styles.emojiHint}>탭해서 기분을 기록하세요</Text>
+            )}
+
+            {/* 상세 폼 바로가기 */}
+            {selectedCheckin && (
+              <TouchableOpacity onPress={() => setShowCheckinForm(true)} style={styles.detailBtn}>
+                <Text style={styles.detailBtnText}>수면 · 복약 기록하기</Text>
+                <Ionicons name="chevron-forward" size={14} color={colors.primary} />
+              </TouchableOpacity>
+            )}
+            {!selectedCheckin && isToday && (
+              <TouchableOpacity onPress={() => setShowCheckinForm(true)} style={styles.detailBtn}>
+                <Text style={styles.detailBtnText}>수면 · 복약도 기록하기</Text>
+                <Ionicons name="chevron-forward" size={14} color={colors.primary} />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* ── 다음 진료 배너 ── */}
+          {nextSchedule && daysUntilNext !== null && daysUntilNext <= 7 && (
+            <TouchableOpacity
+              style={[styles.schedBanner, softShadow(colors)]}
+              onPress={() =>
+                (navigationRef.current as any)?.navigate('Main', {
+                  screen: 'Care',
+                  params: { screen: 'PrepNoteForm', params: { scheduleId: String(nextSchedule.id) } },
+                })
+              }
+              activeOpacity={0.85}
+            >
+              <View style={styles.schedBannerLeft}>
+                <Text style={styles.schedBannerEmoji}>🏥</Text>
+                <View>
+                  <Text style={styles.schedBannerTitle}>
+                    {daysUntilNext === 0 ? '오늘 진료' : `진료 ${daysUntilNext}일 전`}
+                  </Text>
+                  <Text style={styles.schedBannerSub} numberOfLines={1}>
+                    {nextSchedule.hospitalName}
+                  </Text>
+                </View>
               </View>
-            </>
+              <View style={styles.schedBannerCta}>
+                <Text style={styles.schedBannerCtaText}>준비 메모</Text>
+                <Ionicons name="chevron-forward" size={14} color={colors.primary} />
+              </View>
+            </TouchableOpacity>
           )}
-        </AnimatedPressable>
 
-        {/* 감정 그래프 */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('emotion_trend')}</Text>
-          <EmotionGraph />
-        </View>
+          {/* ── 스레드 메모 피드 ── */}
+          <View style={styles.threadSection}>
+            <Text style={styles.sectionTitle}>메모</Text>
 
-        {/* 전체 기록 보기 */}
-        <AnimatedPressable
-          onPress={() => navigation.navigate('CheckinHistory')}
-          style={[styles.historyLink, softShadow(colors)]}
-        >
-          <Text style={styles.historyLinkText}>{t('view_all')}</Text>
-          <Ionicons name="chevron-forward" size={16} color={colors.primary} />
-        </AnimatedPressable>
-      </ScrollView>
+            {/* 입력창 */}
+            <View style={[styles.noteInputCard, softShadow(colors)]}>
+              {/* 타입 선택 버튼 */}
+              <TouchableOpacity
+                style={styles.noteTypeBtn}
+                onPress={() => setShowTypePicker(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.noteTypeEmoji}>
+                  {getNoteTypeConfig(noteType).emoji}
+                </Text>
+                <Ionicons name="chevron-down" size={12} color={colors.textSub} />
+              </TouchableOpacity>
 
-      {/* 체크인 폼 모달 */}
-      <Modal visible={showForm} animationType="slide" presentationStyle="pageSheet">
+              <TextInput
+                ref={noteInputRef}
+                style={styles.noteInput}
+                placeholder="지금 느끼는 것, 증상, 궁금한 것…"
+                placeholderTextColor={colors.textDisabled}
+                value={noteBody}
+                onChangeText={setNoteBody}
+                multiline
+                maxLength={300}
+                returnKeyType="default"
+              />
+              <TouchableOpacity
+                style={[styles.sendBtn, !noteBody.trim() && { opacity: 0.4 }]}
+                onPress={handleSendNote}
+                disabled={!noteBody.trim() || isCreatingNote}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="arrow-up-circle" size={28} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
+
+            {/* 노트 목록 */}
+            {notesLoading ? null : dailyNotes.length === 0 ? (
+              <View style={styles.emptyNotes}>
+                <Text style={styles.emptyNotesText}>아직 메모가 없어요</Text>
+              </View>
+            ) : (
+              <View style={styles.noteList}>
+                {dailyNotes.map((note) => {
+                  const cfg = getNoteTypeConfig(note.noteType);
+                  return (
+                    <View key={note.id} style={[styles.noteCard, softShadow(colors)]}>
+                      <View style={styles.noteCardHeader}>
+                        <View style={styles.noteTypeBadge}>
+                          <Text style={styles.noteTypeBadgeEmoji}>{cfg.emoji}</Text>
+                          <Text style={styles.noteTypeBadgeLabel}>
+                            {t(cfg.labelKey as any, { defaultValue: cfg.type })}
+                          </Text>
+                        </View>
+                        <Text style={styles.noteTime}>{formatNoteTime(note.createdAt)}</Text>
+                        <TouchableOpacity
+                          onPress={() => handleDeleteNote(note.id)}
+                          hitSlop={8}
+                          style={{ marginLeft: 8 }}
+                        >
+                          <Ionicons name="trash-outline" size={15} color={colors.textDisabled} />
+                        </TouchableOpacity>
+                      </View>
+                      <Text style={styles.noteBody}>{note.body}</Text>
+                      {note.usedInPrepNoteId && (
+                        <Text style={styles.noteUsed}>✓ 진료 준비 메모에 사용됨</Text>
+                      )}
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+          </View>
+
+          {/* ── 감정 그래프 ── */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{t('emotion_trend')}</Text>
+            <EmotionGraph />
+          </View>
+
+          {/* 전체 기록 */}
+          <AnimatedPressable
+            onPress={() => navigation.navigate('CheckinHistory')}
+            style={[styles.historyLink, softShadow(colors)]}
+          >
+            <Text style={styles.historyLinkText}>{t('view_all')}</Text>
+            <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+          </AnimatedPressable>
+        </ScrollView>
+      </KeyboardAvoidingView>
+
+      {/* 체크인 상세 폼 모달 */}
+      <Modal visible={showCheckinForm} animationType="slide" presentationStyle="pageSheet">
         <DailyCheckinForm
           existingCheckin={selectedCheckin}
           targetDate={selectedDate}
-          onClose={() => setShowForm(false)}
+          onClose={() => setShowCheckinForm(false)}
         />
+      </Modal>
+
+      {/* 노트 타입 선택 시트 */}
+      <Modal visible={showTypePicker} transparent animationType="slide" onRequestClose={() => setShowTypePicker(false)}>
+        <Pressable style={styles.pickerBackdrop} onPress={() => setShowTypePicker(false)}>
+          <View style={[styles.pickerSheet, { backgroundColor: colors.surface }]}>
+            <Text style={styles.pickerTitle}>메모 종류</Text>
+            {NOTE_TYPE_CONFIG.map((cfg) => (
+              <TouchableOpacity
+                key={cfg.type}
+                style={[
+                  styles.pickerRow,
+                  noteType === cfg.type && { backgroundColor: colors.primaryMuted },
+                ]}
+                onPress={() => {
+                  setNoteType(cfg.type);
+                  setShowTypePicker(false);
+                }}
+              >
+                <Text style={styles.pickerEmoji}>{cfg.emoji}</Text>
+                <Text style={[styles.pickerLabel, { color: colors.text }]}>
+                  {t(cfg.labelKey as any, { defaultValue: cfg.type })}
+                </Text>
+                {noteType === cfg.type && (
+                  <Ionicons name="checkmark" size={18} color={colors.primary} />
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Pressable>
       </Modal>
     </SafeAreaView>
   );
 };
+
+const makeStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBottom: number) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    dateBarWrapper: { flexGrow: 0, flexShrink: 0 },
+    dateBar: {
+      paddingHorizontal: sizes.spacing.md,
+      paddingTop: sizes.spacing.sm,
+      paddingBottom: sizes.spacing.md,
+      gap: sizes.spacing.sm,
+    },
+    dateCol: { alignItems: 'center', gap: 4 },
+    dateDayName: { fontSize: 10, fontFamily: fontFamily.medium, color: colors.textSub },
+    dateItem: {
+      width: 48, height: 48, borderRadius: sizes.radius.full,
+      alignItems: 'center', justifyContent: 'center',
+      borderWidth: 1.5, borderColor: 'transparent',
+      backgroundColor: colors.surface,
+    },
+    dateDayNum: { fontSize: sizes.font.md, fontFamily: fontFamily.bold, color: colors.text },
+    content: {
+      paddingHorizontal: sizes.spacing.lg,
+      paddingTop: sizes.spacing.md,
+      gap: sizes.spacing.lg,
+      paddingBottom: tabBarSafeBottom + 16,
+    },
+    // 기분 카드
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: sizes.radius.xxl,
+      padding: 20,
+      gap: sizes.spacing.sm,
+    },
+    cardHeader: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    },
+    cardTitle: {
+      fontSize: sizes.font.md, fontFamily: fontFamily.bold, color: colors.text,
+    },
+    emojiRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: 4,
+    },
+    emojiBtn: {
+      padding: 4,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    emojiText: { fontSize: 22 },
+    emojiSelected: { transform: [{ scale: 1.3 }] },
+    emojiHint: {
+      fontSize: sizes.font.xs,
+      color: colors.textDisabled,
+      textAlign: 'center',
+      fontFamily: fontFamily.regular,
+    },
+    detailBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingTop: 4,
+      gap: 4,
+    },
+    detailBtnText: {
+      fontSize: sizes.font.xs,
+      color: colors.primary,
+      fontFamily: fontFamily.medium,
+    },
+    // 배너
+    schedBanner: {
+      backgroundColor: colors.surface,
+      borderRadius: sizes.radius.xl,
+      paddingHorizontal: sizes.spacing.md,
+      paddingVertical: sizes.spacing.sm + 2,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    schedBannerLeft: { flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.sm },
+    schedBannerEmoji: { fontSize: 22 },
+    schedBannerTitle: {
+      fontSize: sizes.font.sm, fontFamily: fontFamily.bold, color: colors.text,
+    },
+    schedBannerSub: {
+      fontSize: sizes.font.xs, color: colors.textSub, fontFamily: fontFamily.regular,
+    },
+    schedBannerCta: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+    schedBannerCtaText: {
+      fontSize: sizes.font.sm, color: colors.primary, fontFamily: fontFamily.semibold,
+    },
+    // 스레드 섹션
+    threadSection: { gap: sizes.spacing.md },
+    sectionTitle: {
+      fontSize: sizes.font.md, fontFamily: fontFamily.bold, color: colors.text,
+    },
+    noteInputCard: {
+      backgroundColor: colors.surface,
+      borderRadius: sizes.radius.xl,
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      paddingHorizontal: sizes.spacing.sm,
+      paddingVertical: sizes.spacing.sm,
+      gap: sizes.spacing.xs,
+    },
+    noteTypeBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
+      paddingHorizontal: sizes.spacing.xs,
+      paddingVertical: 6,
+      borderRadius: sizes.radius.md,
+      backgroundColor: colors.background,
+    },
+    noteTypeEmoji: { fontSize: 18 },
+    noteInput: {
+      flex: 1,
+      fontSize: sizes.font.md,
+      color: colors.text,
+      maxHeight: 100,
+      paddingVertical: 6,
+      lineHeight: 20,
+    },
+    sendBtn: { paddingBottom: 2 },
+    emptyNotes: { alignItems: 'center', paddingVertical: sizes.spacing.lg },
+    emptyNotesText: {
+      fontSize: sizes.font.sm, color: colors.textDisabled, fontFamily: fontFamily.regular,
+    },
+    noteList: { gap: sizes.spacing.sm },
+    noteCard: {
+      backgroundColor: colors.surface,
+      borderRadius: sizes.radius.xl,
+      padding: sizes.spacing.md,
+      gap: sizes.spacing.xs,
+    },
+    noteCardHeader: {
+      flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.xs,
+    },
+    noteTypeBadge: {
+      flexDirection: 'row', alignItems: 'center', gap: 4,
+      backgroundColor: colors.background,
+      paddingHorizontal: 8, paddingVertical: 3,
+      borderRadius: sizes.radius.full,
+    },
+    noteTypeBadgeEmoji: { fontSize: 13 },
+    noteTypeBadgeLabel: {
+      fontSize: sizes.font.xs, color: colors.textSub, fontFamily: fontFamily.medium,
+    },
+    noteTime: {
+      flex: 1, fontSize: sizes.font.xs, color: colors.textDisabled,
+      textAlign: 'right', fontFamily: fontFamily.regular,
+    },
+    noteBody: {
+      fontSize: sizes.font.md, color: colors.text, lineHeight: 22,
+      fontFamily: fontFamily.regular,
+    },
+    noteUsed: {
+      fontSize: sizes.font.xs, color: colors.primary, fontFamily: fontFamily.medium,
+    },
+    // 그래프/기록
+    section: { gap: sizes.spacing.sm },
+    historyLink: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surface,
+      borderRadius: sizes.radius.xxl,
+      padding: sizes.spacing.md,
+    },
+    historyLinkText: {
+      fontSize: sizes.font.md, fontFamily: fontFamily.semibold, color: colors.primary,
+    },
+    // 타입 선택 시트
+    pickerBackdrop: {
+      flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end',
+    },
+    pickerSheet: {
+      borderTopLeftRadius: sizes.radius.xxl,
+      borderTopRightRadius: sizes.radius.xxl,
+      paddingHorizontal: sizes.spacing.lg,
+      paddingTop: sizes.spacing.md,
+      paddingBottom: sizes.spacing.xl,
+      gap: sizes.spacing.xs,
+    },
+    pickerTitle: {
+      fontSize: sizes.font.md, fontFamily: fontFamily.bold, color: colors.text,
+      paddingBottom: sizes.spacing.sm,
+    },
+    pickerRow: {
+      flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.sm,
+      paddingVertical: sizes.spacing.sm,
+      paddingHorizontal: sizes.spacing.sm,
+      borderRadius: sizes.radius.md,
+    },
+    pickerEmoji: { fontSize: 20, width: 28, textAlign: 'center' },
+    pickerLabel: { flex: 1, fontSize: sizes.font.md, fontFamily: fontFamily.regular },
+  });

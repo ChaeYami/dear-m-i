@@ -23,10 +23,11 @@ import { softShadow } from '@/shared/theme/shadows';
 import { useCreatePrepNote, useUpdatePrepNote, usePrepNotes } from '@/features/prepnote/hooks/usePrepNote';
 import { useRecentSchedules } from '@/features/record/hooks/useRecord';
 import { useCheckinSummary, useCheckinHistory } from '@/features/checkin/hooks/useCheckin';
+import { useDailyNotes } from '@/features/checkin/hooks/useDailyNote';
 import { useSideEffectsSince } from '@/features/sideeffect/hooks/useSideEffect';
 import { useUnsavedChangesWarning } from '@/shared/hooks/useUnsavedChangesWarning';
 import type { CareStackParamList as ScheduleStackParamList } from '@/navigation/CareNavigator';
-import type { PrepNoteSections } from '@/shared/types/domain.types';
+import type { PrepNoteSections, DailyNote, DailyNoteType } from '@/shared/types/domain.types';
 
 type Nav = StackNavigationProp<ScheduleStackParamList, 'PrepNoteForm'>;
 type Route = RouteProp<ScheduleStackParamList, 'PrepNoteForm'>;
@@ -40,6 +41,24 @@ const sevenDaysAgoIso = () => {
   const d = new Date();
   d.setDate(d.getDate() - 7);
   return d.toISOString();
+};
+
+const toDateStr = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+/** noteType → PrepNoteSections 키 매핑 */
+const NOTE_TYPE_TO_SECTION: Partial<Record<DailyNoteType, keyof PrepNoteSections>> = {
+  FEELING: 'moodChanges',
+  SYMPTOM: 'newSymptoms',
+  SIDE_EFFECT: 'sideEffects',
+};
+
+const NOTE_TYPE_EMOJI: Record<DailyNoteType, string> = {
+  FEELING: '💬',
+  SYMPTOM: '🤒',
+  QUESTION: '❓',
+  SIDE_EFFECT: '⚠️',
+  OTHER: '📝',
 };
 
 const emptySections = (): PrepNoteSections => ({
@@ -74,6 +93,15 @@ export const PrepNoteFormScreen: React.FC = () => {
   const { data: checkinSummary } = useCheckinSummary();
   const { data: recentSideEffects = [] } = useSideEffectsSince(sevenDaysAgoIso());
 
+  // 최근 30일 스레드 메모 (메모 선택용)
+  const thirtyDaysAgoStr = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return toDateStr(d);
+  }, []);
+  const todayStr = useMemo(() => toDateStr(new Date()), []);
+  const { data: recentDailyNotes = [] } = useDailyNotes(thirtyDaysAgoStr, todayStr);
+
   // 미니 감정 차트용 — 최근 14일 체크인
   const chartRange = useMemo(() => {
     const end = new Date();
@@ -90,6 +118,10 @@ export const PrepNoteFormScreen: React.FC = () => {
   const [questionDraft, setQuestionDraft] = useState('');
   const [presetPickerOpen, setPresetPickerOpen] = useState(false);
   const [presetSelected, setPresetSelected] = useState<Set<string>>(new Set());
+
+  // 스레드 메모 선택 상태
+  const [selectedNoteIds, setSelectedNoteIds] = useState<Set<string>>(new Set());
+  const [showNoteSelector, setShowNoteSelector] = useState(false);
 
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | undefined>(initialScheduleId);
   const [showSchedulePicker, setShowSchedulePicker] = useState(false);
@@ -112,6 +144,9 @@ export const PrepNoteFormScreen: React.FC = () => {
       if (s.selfHarmThoughts && s.selfHarmThoughts.trim()) setShowSelfHarm(true);
     }
     setSelectedScheduleId(existingNote.scheduleId ?? undefined);
+    if (existingNote.linkedNoteIds?.length) {
+      setSelectedNoteIds(new Set(existingNote.linkedNoteIds));
+    }
     setHydrated(true);
   }, [isEdit, existingNote, hydrated]);
 
@@ -148,6 +183,36 @@ export const PrepNoteFormScreen: React.FC = () => {
     setPresetPickerOpen(false);
   };
 
+  const toggleNoteSelection = useCallback(
+    (note: DailyNote) => {
+      setSelectedNoteIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(note.id)) {
+          // 선택 해제 — 섹션에서도 제거하지는 않음 (사용자가 직접 편집했을 수 있어서)
+          next.delete(note.id);
+        } else {
+          next.add(note.id);
+          // 섹션 자동입력
+          const sectionKey = NOTE_TYPE_TO_SECTION[note.noteType];
+          if (sectionKey === 'moodChanges' || sectionKey === 'newSymptoms' || sectionKey === 'sideEffects') {
+            setSections((s) => {
+              const current = (s[sectionKey] as string) ?? '';
+              const appended = current.trim() ? `${current.trim()}\n· ${note.body}` : `· ${note.body}`;
+              return { ...s, [sectionKey]: appended };
+            });
+          } else if (note.noteType === 'QUESTION') {
+            setSections((s) => ({
+              ...s,
+              questions: [...(s.questions ?? []), note.body],
+            }));
+          }
+        }
+        return next;
+      });
+    },
+    [],
+  );
+
   const isDirty =
     hydrated || !isEdit
       ? content.trim() !== (existingNote?.content ?? '') ||
@@ -176,14 +241,16 @@ export const PrepNoteFormScreen: React.FC = () => {
       return;
     }
 
+    const linkedNoteIds = Array.from(selectedNoteIds);
+
     if (isEdit && noteId) {
       update(
-        { id: noteId, data: { content: content.trim(), sections: cleanedSections } },
+        { id: noteId, data: { content: content.trim(), sections: cleanedSections, linkedNoteIds } },
         { onSuccess: () => markSavedAndExit() },
       );
     } else {
       create(
-        { content: content.trim(), sections: cleanedSections, scheduleId: selectedScheduleId },
+        { content: content.trim(), sections: cleanedSections, scheduleId: selectedScheduleId, linkedNoteIds },
         { onSuccess: () => markSavedAndExit() },
       );
     }
@@ -267,6 +334,57 @@ export const PrepNoteFormScreen: React.FC = () => {
                     <Text style={styles.dropdownItemDate}>{formatDate(s.scheduledAt)}</Text>
                   </TouchableOpacity>
                 ))}
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* 최근 스레드 메모에서 선택 */}
+        {recentDailyNotes.length > 0 && (
+          <View style={styles.field}>
+            <TouchableOpacity
+              style={styles.noteSelectorHeader}
+              onPress={() => setShowNoteSelector((v) => !v)}
+              activeOpacity={0.8}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={styles.label}>{t('prepnote:daily_notes_picker_title', { defaultValue: '최근 메모에서 선택' })}</Text>
+                <Text style={styles.noteSelectorSub}>
+                  {selectedNoteIds.size > 0
+                    ? t('prepnote:daily_notes_selected', { count: selectedNoteIds.size, defaultValue: `${selectedNoteIds.size}개 선택됨` })
+                    : t('prepnote:daily_notes_picker_hint', { defaultValue: '하루 메모를 선택하면 해당 섹션에 자동 입력됩니다' })}
+                </Text>
+              </View>
+              <Ionicons name={showNoteSelector ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textSub} />
+            </TouchableOpacity>
+
+            {showNoteSelector && (
+              <View style={styles.notePickerList}>
+                {recentDailyNotes.map((note) => {
+                  const isSelected = selectedNoteIds.has(note.id);
+                  const emoji = NOTE_TYPE_EMOJI[note.noteType];
+                  const d = new Date(note.noteDate);
+                  const dateLabel = `${d.getMonth() + 1}/${d.getDate()}`;
+                  return (
+                    <TouchableOpacity
+                      key={note.id}
+                      style={[styles.notePickerRow, isSelected && styles.notePickerRowSelected]}
+                      onPress={() => toggleNoteSelection(note)}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons
+                        name={isSelected ? 'checkbox' : 'square-outline'}
+                        size={20}
+                        color={isSelected ? colors.primary : colors.textSub}
+                      />
+                      <Text style={styles.notePickerEmoji}>{emoji}</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.notePickerBody} numberOfLines={2}>{note.body}</Text>
+                      </View>
+                      <Text style={styles.notePickerDate}>{dateLabel}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             )}
           </View>
@@ -813,4 +931,51 @@ const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
       alignItems: 'center',
     },
     modalDoneText: { color: colors.textInverse, fontSize: sizes.font.md, fontFamily: fontFamily.bold },
+    // 스레드 메모 선택 피커
+    noteSelectorHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.divider,
+      borderRadius: sizes.radius.md,
+      paddingHorizontal: sizes.spacing.md,
+      paddingVertical: sizes.spacing.sm,
+      gap: sizes.spacing.sm,
+    },
+    noteSelectorSub: {
+      fontSize: sizes.font.xs,
+      color: colors.textDisabled,
+      marginTop: 2,
+    },
+    notePickerList: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.divider,
+      borderRadius: sizes.radius.md,
+      overflow: 'hidden',
+    },
+    notePickerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: sizes.spacing.md,
+      paddingVertical: sizes.spacing.sm + 2,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.divider,
+      gap: sizes.spacing.xs,
+    },
+    notePickerRowSelected: {
+      backgroundColor: colors.primaryMuted,
+    },
+    notePickerEmoji: { fontSize: 16, width: 22, textAlign: 'center' },
+    notePickerBody: {
+      fontSize: sizes.font.sm,
+      color: colors.text,
+      lineHeight: 20,
+    },
+    notePickerDate: {
+      fontSize: sizes.font.xs,
+      color: colors.textDisabled,
+      marginLeft: sizes.spacing.xs,
+    },
   });

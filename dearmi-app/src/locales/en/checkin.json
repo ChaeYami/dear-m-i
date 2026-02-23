@@ -52,5 +52,10 @@
   "custom_input": "Custom",
   "past_date_notice": "You can view or add a record for this past date",
   "write_for_date": "Record for {{label}}",
-  "date_label_month_day": "{{month}}/{{day}}"
+  "date_label_month_day": "{{month}}/{{day}}",
+  "note_type_feeling": "Feeling",
+  "note_type_symptom": "Symptom",
+  "note_type_question": "Question",
+  "note_type_side_effect": "Side Effect",
+  "note_type_other": "Note"
 }

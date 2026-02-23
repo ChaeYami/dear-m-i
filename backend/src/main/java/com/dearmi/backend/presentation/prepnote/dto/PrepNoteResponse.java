@@ -4,6 +4,7 @@ import com.dearmi.backend.application.prepnote.dto.PrepNoteResult;
 import com.dearmi.backend.domain.prepnote.PrepNoteSections;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public record PrepNoteResponse(
@@ -11,6 +12,7 @@ public record PrepNoteResponse(
         UUID scheduleId,
         String content,
         PrepNoteSections sections,
+        List<UUID> linkedNoteIds,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
@@ -20,6 +22,7 @@ public record PrepNoteResponse(
                 result.scheduleId(),
                 result.content(),
                 result.sections(),
+                result.linkedNoteIds(),
                 result.createdAt(),
                 result.updatedAt()
         );

@@ -188,22 +188,40 @@ export const ScheduleDetailScreen: React.FC = () => {
             <View style={styles.prepNoteHeader}>
               <Text style={[styles.prepNoteSectionTitle, { color: colors.textSub, fontFamily: fontFamily.bold }]}>{t('schedule:prep_note_title')}</Text>
             </View>
-            {prepNotes.map((note) => (
-              <AnimatedPressable
-                key={note.id}
-                style={[styles.prepNoteCard, { backgroundColor: colors.primaryMuted + '40', borderLeftColor: colors.primary }]}
-                onPress={() =>
-                  navigation.navigate('PrepNoteForm', {
-                    noteId: note.id,
-                    scheduleId: String(scheduleId),
-                  })
-                }
-              >
-                <Text style={[styles.prepNoteContent, { color: colors.text, fontFamily: fontFamily.medium }]} numberOfLines={3}>
-                  {note.content}
-                </Text>
-              </AnimatedPressable>
-            ))}
+            {prepNotes.map((note) => {
+              // content가 없으면 첫 번째 섹션 텍스트를 미리보기로
+              const preview = note.content?.trim() ||
+                note.sections?.moodChanges?.trim() ||
+                note.sections?.newSymptoms?.trim() ||
+                note.sections?.sideEffects?.trim() ||
+                (note.sections?.questions?.[0] ? `Q. ${note.sections.questions[0]}` : '') ||
+                '';
+              const linkedCount = note.linkedNoteIds?.length ?? 0;
+              return (
+                <AnimatedPressable
+                  key={note.id}
+                  style={[styles.prepNoteCard, { backgroundColor: colors.primaryMuted + '40', borderLeftColor: colors.primary }]}
+                  onPress={() =>
+                    navigation.navigate('PrepNoteForm', {
+                      noteId: note.id,
+                      scheduleId: String(scheduleId),
+                    })
+                  }
+                >
+                  <Text style={[styles.prepNoteContent, { color: colors.text, fontFamily: fontFamily.medium }]} numberOfLines={3}>
+                    {preview || t('schedule:prep_note_empty_preview', { defaultValue: '(내용 없음)' })}
+                  </Text>
+                  {linkedCount > 0 && (
+                    <View style={[styles.linkedBadge, { backgroundColor: colors.primaryMuted }]}>
+                      <Ionicons name="chatbubble-outline" size={11} color={colors.primary} />
+                      <Text style={[styles.linkedBadgeText, { color: colors.primary }]}>
+                        {t('schedule:daily_note_linked', { count: linkedCount, defaultValue: `하루 메모 ${linkedCount}개` })}
+                      </Text>
+                    </View>
+                  )}
+                </AnimatedPressable>
+              );
+            })}
           </View>
         )}
 
@@ -296,6 +314,20 @@ const styles = StyleSheet.create({
   prepNoteContent: {
     fontSize: sizes.font.md,
     lineHeight: 22,
+  },
+  linkedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: sizes.radius.full,
+    marginTop: sizes.spacing.xs,
+  },
+  linkedBadgeText: {
+    fontSize: sizes.font.xs,
+    fontFamily: fontFamily.medium,
   },
   linkButton: {
     flexDirection: 'row',

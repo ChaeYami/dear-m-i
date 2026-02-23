@@ -336,6 +336,7 @@ export interface PrepNote {
   scheduleId?: string | null; // UUID (null = 미연결)
   content: string;
   sections?: PrepNoteSections;
+  linkedNoteIds?: string[]; // 선택된 DailyNote ID 목록
   createdAt: string;
   updatedAt: string;
 }
@@ -344,11 +345,33 @@ export interface CreatePrepNoteRequest {
   scheduleId?: string; // UUID
   content?: string;
   sections?: PrepNoteSections;
+  linkedNoteIds?: string[];
 }
 
 export interface UpdatePrepNoteRequest {
   content?: string;
   sections?: PrepNoteSections;
+  linkedNoteIds?: string[];
+}
+
+// ─── 하루 스레드 메모 ─────────────────────────────────────────────────────────
+
+export type DailyNoteType = 'FEELING' | 'SYMPTOM' | 'QUESTION' | 'SIDE_EFFECT' | 'OTHER';
+
+export interface DailyNote {
+  id: string; // UUID
+  body: string;
+  noteType: DailyNoteType;
+  noteDate: string; // YYYY-MM-DD
+  usedInPrepNoteId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateDailyNoteRequest {
+  body: string;
+  noteType?: DailyNoteType;
+  noteDate?: string; // YYYY-MM-DD — 생략 시 오늘
 }
 
 // ─── 부작용 로그 ───────────────────────────────────────────────────────────────

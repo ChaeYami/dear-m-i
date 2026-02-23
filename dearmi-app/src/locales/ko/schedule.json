@@ -67,5 +67,7 @@
   "event_timeline_title": "진료 타임라인",
   "timeline_prep": "진료 준비",
   "timeline_visit": "진료 방문",
-  "timeline_record": "진료 기록"
+  "timeline_record": "진료 기록",
+  "prep_note_empty_preview": "(내용 없음)",
+  "daily_note_linked": "하루 메모 {{count}}개"
 }

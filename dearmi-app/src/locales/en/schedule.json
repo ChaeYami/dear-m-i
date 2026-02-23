@@ -67,5 +67,7 @@
   "event_timeline_title": "Visit Timeline",
   "timeline_prep": "Prep",
   "timeline_visit": "Visit",
-  "timeline_record": "Record"
+  "timeline_record": "Record",
+  "prep_note_empty_preview": "(No content)",
+  "daily_note_linked": "{{count}} daily notes"
 }

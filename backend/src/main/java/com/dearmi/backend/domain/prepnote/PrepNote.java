@@ -6,6 +6,8 @@ import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -37,12 +39,26 @@ public class PrepNote extends BaseTimeEntity {
     @Builder.Default
     private PrepNoteSections sections = new PrepNoteSections();
 
+    /** PrepNote 작성 시 선택된 DailyNote ID 목록 */
+    @ElementCollection
+    @CollectionTable(
+            name = "prep_note_linked_notes",
+            joinColumns = @JoinColumn(name = "prep_note_id")
+    )
+    @Column(name = "daily_note_id", columnDefinition = "uuid")
+    @Builder.Default
+    private List<UUID> linkedNoteIds = new ArrayList<>();
+
     public void detachSchedule() {
         this.scheduleId = null;
     }
 
-    public void update(String content, PrepNoteSections sections) {
+    public void update(String content, PrepNoteSections sections, List<UUID> linkedNoteIds) {
         this.content = content;
         if (sections != null) this.sections = sections;
+        if (linkedNoteIds != null) {
+            this.linkedNoteIds.clear();
+            this.linkedNoteIds.addAll(linkedNoteIds);
+        }
     }
 }

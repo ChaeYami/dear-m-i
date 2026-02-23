@@ -54,7 +54,7 @@ public class PrepNoteController {
 
         PrepNoteResponse response = PrepNoteResponse.from(
                 createPrepNoteUseCase.create(
-                        new CreatePrepNoteCommand(userId, request.scheduleId(), request.content(), request.sections())));
+                        new CreatePrepNoteCommand(userId, request.scheduleId(), request.content(), request.sections(), request.linkedNoteIds())));
 
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
@@ -71,7 +71,7 @@ public class PrepNoteController {
 
         PrepNoteResponse response = PrepNoteResponse.from(
                 updatePrepNoteUseCase.update(
-                        new UpdatePrepNoteCommand(userId, id, request.content(), request.sections())));
+                        new UpdatePrepNoteCommand(userId, id, request.content(), request.sections(), request.linkedNoteIds())));
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }

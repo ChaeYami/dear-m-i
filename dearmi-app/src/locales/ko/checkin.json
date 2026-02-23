@@ -52,5 +52,10 @@
   "custom_input": "직접 입력",
   "past_date_notice": "지난 날짜의 기록을 조회하거나 추가할 수 있어요",
   "write_for_date": "{{label}} 기록하기",
-  "date_label_month_day": "{{month}}월 {{day}}일"
+  "date_label_month_day": "{{month}}월 {{day}}일",
+  "note_type_feeling": "기분",
+  "note_type_symptom": "증상",
+  "note_type_question": "질문",
+  "note_type_side_effect": "부작용",
+  "note_type_other": "메모"
 }

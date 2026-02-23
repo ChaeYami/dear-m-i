@@ -32,6 +32,9 @@
   "insight_low_mood": "지난주 평균 {{score}}점 — '기분 변화'에 추가",
   "insight_low_mood_text": "지난주 평균 감정점수 {{score}}점",
   "insight_side_effects": "최근 부작용 {{count}}건 — '약 부작용'에 추가",
+  "daily_notes_picker_title": "최근 메모에서 선택",
+  "daily_notes_picker_hint": "하루 메모를 선택하면 해당 섹션에 자동 입력됩니다",
+  "daily_notes_selected": "{{count}}개 선택됨",
   "preset_picker_title": "정신과 진료에 자주 묻는 질문",
   "preset_picker_done": "선택 완료",
   "preset_questions": [

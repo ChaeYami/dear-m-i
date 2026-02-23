@@ -86,4 +86,8 @@ export const QUERY_KEYS = {
   // 부작용 로그
   sideEffects: () => ['sideEffects'] as const,
   sideEffectsSince: (sinceIso: string) => ['sideEffects', 'since', sinceIso] as const,
+
+  // 하루 스레드 메모
+  dailyNotes: (startDate?: string, endDate?: string) =>
+    ['dailyNotes', startDate ?? null, endDate ?? null] as const,
 } as const;
