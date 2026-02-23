@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -273,6 +275,10 @@ export const PrepNoteFormScreen: React.FC = () => {
         saveDisabled={isPending}
       />
 
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {/* 일정 연결 */}
         {!isEdit && (
@@ -614,6 +620,7 @@ export const PrepNoteFormScreen: React.FC = () => {
           )}
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* 프리셋 picker 모달 */}
       <Modal visible={presetPickerOpen} animationType="slide" transparent onRequestClose={() => setPresetPickerOpen(false)}>

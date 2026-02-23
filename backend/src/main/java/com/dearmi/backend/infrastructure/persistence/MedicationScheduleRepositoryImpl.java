@@ -50,4 +50,14 @@ public class MedicationScheduleRepositoryImpl implements MedicationScheduleRepos
     public List<MedicationSchedule> findDueForMinute(LocalDate date, java.time.LocalTime minute) {
         return jpa.findDueForMinute(date, minute);
     }
+
+    @Override
+    public List<MedicationSchedule> findAllBySlotGroupId(UUID groupId, com.dearmi.backend.domain.medication.TimeSlot slot) {
+        return switch (slot) {
+            case MORNING   -> jpa.findAllByMorningGroupIdAndDeletedAtIsNull(groupId);
+            case AFTERNOON -> jpa.findAllByAfternoonGroupIdAndDeletedAtIsNull(groupId);
+            case EVENING   -> jpa.findAllByEveningGroupIdAndDeletedAtIsNull(groupId);
+            case BEDTIME   -> jpa.findAllByBedtimeGroupIdAndDeletedAtIsNull(groupId);
+        };
+    }
 }

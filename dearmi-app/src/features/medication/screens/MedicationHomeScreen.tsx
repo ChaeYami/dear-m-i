@@ -70,7 +70,18 @@ const getNextDay = (dateStr: string): string => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
+interface MedicationHomeProps {
+  embedded?: boolean;
+  /** embedded 모드에서 부모가 편집 상태를 제어할 때 사용 */
+  editMode?: boolean;
+  onEditModeChange?: (v: boolean) => void;
+}
+
+export const MedicationHomeScreen: React.FC<MedicationHomeProps> = ({
+  embedded = false,
+  editMode,
+  onEditModeChange,
+}) => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
@@ -104,7 +115,12 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
   const { mutate: deleteMedicationSchedule } = useDeleteMedicationSchedule();
 
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [localEditMode, setLocalEditMode] = useState(false);
+  const isEditMode = embedded ? (editMode ?? false) : localEditMode;
+  const setIsEditMode = (v: boolean) => {
+    if (embedded && onEditModeChange) onEditModeChange(v);
+    else setLocalEditMode(v);
+  };
   // 선택 단위: "scheduleId:timeSlot"
   type SlotKey = `${string}:${TimeSlotType}`;
   const [selectedSlotKeys, setSelectedSlotKeys] = useState<Set<SlotKey>>(new Set());
@@ -223,16 +239,32 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
     return groups;
   }, [data]);
 
-  // 그룹 기반 섹션 계산: groupId 있으면 그룹으로 합침, 없으면 timeSlot별 개별 섹션
+  // 그룹 기반 섹션 계산
+  // - groupId 있으면 그룹명 + 시간 표시
+  // - groupId 없으면 실제 notifyTime(HH:mm)을 키/라벨로 사용 (슬롯 타입 라벨 숨김)
   const sections = useMemo(() => {
     const sectionMap = new Map<string, { label: string; color: string; items: SlotItem[]; notifyTime?: string }>();
     for (const slot of TIME_SLOTS) {
       for (const item of slotGroups[slot]) {
-        const sectionKey = item.groupId ?? `${slot}::${item.scheduleId}`;
-        const label = item.groupName ?? SLOT_LABELS[slot];
+        let sectionKey: string;
+        let label: string;
+        let sectionNotifyTime: string | undefined;
         const color = item.groupId ? '#6366F1' : SLOT_COLORS[slot];
+
+        if (item.groupId) {
+          sectionKey = item.groupId;
+          label = item.groupName ?? SLOT_LABELS[slot];
+          sectionNotifyTime = item.notifyTime; // 그룹은 시간 별도 표시
+        } else {
+          // 시간 기준 섹션: 실제 notify 시간으로 묶음, 라벨 = "HH:mm"
+          const timeKey = item.notifyTime ? item.notifyTime.slice(0, 5) : slot;
+          sectionKey = timeKey;
+          label = item.notifyTime ? formatSlotTime(item.notifyTime) : SLOT_LABELS[slot];
+          sectionNotifyTime = undefined; // 라벨이 곧 시간이므로 별도 표시 불필요
+        }
+
         if (!sectionMap.has(sectionKey)) {
-          sectionMap.set(sectionKey, { label, color, items: [], notifyTime: item.notifyTime });
+          sectionMap.set(sectionKey, { label, color, items: [], notifyTime: sectionNotifyTime });
         }
         sectionMap.get(sectionKey)!.items.push(item);
       }
@@ -324,6 +356,22 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
           variant={isToday ? 'tab' : 'back'}
           title={isToday ? t('settings:medication_management_tab') : t('settings:medication_history_tab')}
           {...(isToday ? { hasNotification: true } : {})}
+          rightContent={isToday && hasAnySlots ? (
+            <TouchableOpacity
+              onPress={() => {
+                if (isEditMode) { setIsEditMode(false); setSelectedSlotKeys(new Set()); }
+                else { setIsEditMode(true); }
+              }}
+              hitSlop={8}
+              style={[styles.headerEditBtn, isEditMode && { backgroundColor: colors.primaryMuted }]}
+            >
+              <Ionicons
+                name={isEditMode ? 'close' : 'create-outline'}
+                size={18}
+                color={isEditMode ? colors.primary : colors.text}
+              />
+            </TouchableOpacity>
+          ) : undefined}
         />
       )}
 
@@ -446,25 +494,6 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
             <Text style={styles.summaryDate}>{dateLabel}</Text>
             <View style={styles.summaryRateRow}>
               <Text style={styles.summaryRate}>{takenSlots} / {totalSlots}</Text>
-              {isToday && hasAnySlots && (
-                <TouchableOpacity
-                  onPress={() => {
-                    if (isEditMode) { setIsEditMode(false); setSelectedSlotKeys(new Set()); }
-                    else { setIsEditMode(true); }
-                  }}
-                  hitSlop={16}
-                  style={styles.editModeBtn}
-                >
-                  <Ionicons
-                    name={isEditMode ? 'checkmark-circle' : 'create-outline'}
-                    size={18}
-                    color={isEditMode ? colors.primary : colors.textSub}
-                  />
-                  <Text style={[styles.editModeBtnText, { color: isEditMode ? colors.primary : colors.textSub }]}>
-                    {isEditMode ? t('common:done') : t('common:edit')}
-                  </Text>
-                </TouchableOpacity>
-              )}
             </View>
           </View>
           <View style={styles.progressBg}>
@@ -579,6 +608,7 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
       <MedicationGroupModal
         visible={showGroupModal}
         selectedSlotKeys={selectedSlotKeys}
+        allSlotItems={TIME_SLOTS.flatMap((s) => slotGroups[s])}
         onSuccess={() => {
           setShowGroupModal(false);
           setSelectedSlotKeys(new Set());
@@ -622,16 +652,15 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBott
       alignItems: 'center',
       gap: 10,
     },
-    editModeBtn: {
-      flexDirection: 'row' as const,
+    headerEditBtn: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      backgroundColor: colors.surface,
       alignItems: 'center' as const,
-      gap: 4,
-      padding: sizes.spacing.xs,
-      marginLeft: 2,
-    },
-    editModeBtnText: {
-      fontSize: sizes.font.sm,
-      fontFamily: fontFamily.semibold,
+      justifyContent: 'center' as const,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
     },
     summaryDate: {
       fontSize: sizes.font.md,

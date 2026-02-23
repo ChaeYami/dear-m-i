@@ -26,4 +26,7 @@ public interface MedicationScheduleRepository {
      * NotificationScheduler 매분 풀스캔 → due-only 쿼리로 전환.
      */
     List<MedicationSchedule> findDueForMinute(LocalDate date, java.time.LocalTime minute);
+
+    /** 특정 슬롯에서 해당 그룹에 속한 모든 활성 일정 */
+    List<MedicationSchedule> findAllBySlotGroupId(UUID groupId, TimeSlot slot);
 }

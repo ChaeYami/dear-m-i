@@ -6,6 +6,8 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -147,6 +149,10 @@ export const ScheduleFormScreen: React.FC = () => {
         saveDisabled={isPending}
       />
 
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {/* 병원 정보 섹션 */}
         <GlassCard intensity={40} style={styles.sectionCard}>
@@ -271,6 +277,7 @@ export const ScheduleFormScreen: React.FC = () => {
           </View>
         </GlassCard>
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };

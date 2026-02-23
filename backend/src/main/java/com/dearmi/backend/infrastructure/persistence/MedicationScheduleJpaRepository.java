@@ -16,6 +16,11 @@ public interface MedicationScheduleJpaRepository extends JpaRepository<Medicatio
 
     List<MedicationSchedule> findByUserIdAndDeletedAtIsNull(UUID userId);
 
+    List<MedicationSchedule> findAllByMorningGroupIdAndDeletedAtIsNull(UUID morningGroupId);
+    List<MedicationSchedule> findAllByAfternoonGroupIdAndDeletedAtIsNull(UUID afternoonGroupId);
+    List<MedicationSchedule> findAllByEveningGroupIdAndDeletedAtIsNull(UUID eveningGroupId);
+    List<MedicationSchedule> findAllByBedtimeGroupIdAndDeletedAtIsNull(UUID bedtimeGroupId);
+
     @Query("SELECT s FROM MedicationSchedule s WHERE s.deletedAt IS NULL " +
            "AND s.userId = :userId " +
            "AND (s.startDate IS NULL OR s.startDate <= :date) " +

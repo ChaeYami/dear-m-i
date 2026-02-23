@@ -185,31 +185,35 @@ export const RootNavigator: React.FC = () => {
     data: Record<string, unknown>,
     status: 'TAKEN' | 'SKIPPED',
   ) => {
-    const scheduleId = typeof data?.scheduleId === 'string' ? data.scheduleId : undefined;
+    const type = data?.type as string | undefined;
     const timeSlot = data?.timeSlot as 'MORNING' | 'AFTERNOON' | 'EVENING' | 'BEDTIME' | undefined;
     const logDate = typeof data?.logDate === 'string' ? data.logDate : undefined;
 
-    if (!scheduleId || !timeSlot || !logDate) return;
+    if (!timeSlot || !logDate) return;
 
     try {
-      await medicationApi.check(scheduleId, { logDate, timeSlot, status });
-      // 앱이 열려있을 경우 복약 목록 캐시를 무효화해 즉시 반영
+      if (type === 'MEDICATION_GROUP') {
+        // 그룹 알림: 그룹 내 모든 약 일괄 체크
+        const groupId = typeof data?.groupId === 'string' ? data.groupId : undefined;
+        if (!groupId) return;
+        await medicationApi.bulkCheckGroup(groupId, timeSlot, logDate, status);
+      } else {
+        // 개별 알림: 단일 스케줄 체크
+        const scheduleId = typeof data?.scheduleId === 'string' ? data.scheduleId : undefined;
+        if (!scheduleId) return;
+        await medicationApi.check(scheduleId, { logDate, timeSlot, status });
+      }
       queryClient.invalidateQueries({ queryKey: ['todayMedication'] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.medicationLogs() });
       haptics.success();
     } catch (e) {
       console.warn('[medication action] check API failed', e);
       haptics.error();
-      // 앱이 포그라운드일 때만 알림 — 백그라운드 호출 시 alert 무시됨
       if (navigationRef.isReady()) {
-        customAlert(
-          t('common:save_failed'),
-          t('common:try_again_later'),
-        );
+        customAlert(t('common:save_failed'), t('common:try_again_later'));
       }
     }
 
-    // 앱이 포그라운드인 경우에만 의미있는 네비게이션 — 백그라운드 호출 시엔 무시됨
     if (navigationRef.isReady()) {
       (navigationRef.current as any)?.navigate('Main', { screen: 'Medication' });
     }

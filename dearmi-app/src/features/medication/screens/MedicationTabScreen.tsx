@@ -21,6 +21,7 @@ export const MedicationTabScreen: React.FC = () => {
   const { t } = useTranslation(['common', 'prescription']);
   const navigation = useNavigation<Nav>();
   const [activeTab, setActiveTab] = useState<MedSubTab>('home');
+  const [isEditMode, setIsEditMode] = useState(false);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -29,14 +30,32 @@ export const MedicationTabScreen: React.FC = () => {
         title={t('tab_medication')}
         hasNotification
         rightContent={
-          <TouchableOpacity
-            onPress={() => navigation.navigate('PrescriptionList')}
-            hitSlop={8}
-            style={[styles.prescriptionBtn, { backgroundColor: colors.accentMuted, borderColor: colors.accent + '33' }]}
-          >
-            <Ionicons name="receipt-outline" size={16} color={colors.accent} />
-            <Text style={[styles.prescriptionBtnText, { color: colors.accent }]}>{t('prescription:title')}</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {activeTab === 'home' && (
+              <TouchableOpacity
+                onPress={() => setIsEditMode(v => !v)}
+                hitSlop={8}
+                style={[
+                  styles.iconBtn,
+                  { backgroundColor: isEditMode ? colors.primaryMuted : colors.surface, borderColor: isEditMode ? colors.primary : colors.cardBorder },
+                ]}
+              >
+                <Ionicons
+                  name={isEditMode ? 'close' : 'create-outline'}
+                  size={18}
+                  color={isEditMode ? colors.primary : colors.text}
+                />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              onPress={() => navigation.navigate('PrescriptionList')}
+              hitSlop={8}
+              style={[styles.prescriptionBtn, { backgroundColor: colors.accentMuted, borderColor: colors.accent + '33' }]}
+            >
+              <Ionicons name="receipt-outline" size={16} color={colors.accent} />
+              <Text style={[styles.prescriptionBtnText, { color: colors.accent }]}>{t('prescription:title')}</Text>
+            </TouchableOpacity>
+          </View>
         }
       />
 
@@ -54,7 +73,7 @@ export const MedicationTabScreen: React.FC = () => {
                   ? { backgroundColor: colors.primaryMuted, borderColor: colors.primary }
                   : { backgroundColor: colors.surface, borderColor: colors.divider },
               ]}
-              onPress={() => setActiveTab(tab)}
+              onPress={() => { setActiveTab(tab); if (tab !== 'home') setIsEditMode(false); }}
               activeOpacity={0.75}
             >
               <Text
@@ -75,7 +94,7 @@ export const MedicationTabScreen: React.FC = () => {
       {/* Tab content */}
       <View style={styles.content}>
         {activeTab === 'home' ? (
-          <MedicationHomeScreen embedded />
+          <MedicationHomeScreen embedded editMode={isEditMode} onEditModeChange={setIsEditMode} />
         ) : (
           <MedicationHistoryScreen embedded />
         )}
@@ -104,6 +123,14 @@ const styles = StyleSheet.create({
     fontSize: sizes.font.md,
   },
   content: { flex: 1 },
+  iconBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    borderWidth: 1,
+  },
   prescriptionBtn: {
     flexDirection: 'row',
     alignItems: 'center',

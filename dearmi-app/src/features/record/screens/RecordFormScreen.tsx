@@ -9,6 +9,7 @@ import {
   Image,
   ActivityIndicator,
   Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -249,6 +250,10 @@ export const RecordFormScreen: React.FC = () => {
         saveDisabled={isPending || (!!contentLimit && content.length > contentLimit)}
       />
 
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {checkinSummary && checkinSummary.totalCheckins > 0 && (
           <View style={styles.summarySection}>
@@ -595,6 +600,7 @@ export const RecordFormScreen: React.FC = () => {
           </View>
         )}
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };

@@ -133,6 +133,24 @@ public class MedicationSchedule extends BaseTimeEntity {
         };
     }
 
+    public LocalTime getSlotTime(TimeSlot slot) {
+        return switch (slot) {
+            case MORNING   -> morningTime;
+            case AFTERNOON -> afternoonTime;
+            case EVENING   -> eveningTime;
+            case BEDTIME   -> bedtimeTime;
+        };
+    }
+
+    public void updateSlotTime(TimeSlot slot, LocalTime time) {
+        switch (slot) {
+            case MORNING   -> this.morningTime   = time;
+            case AFTERNOON -> this.afternoonTime = time;
+            case EVENING   -> this.eveningTime   = time;
+            case BEDTIME   -> this.bedtimeTime   = time;
+        }
+    }
+
     public void updateDrugInfo(String drugEffect, String drugUsage, String drugCaution, String drugCategory, String manufacturer, String itemSeq) {
         this.drugEffect = drugEffect;
         this.drugUsage = drugUsage;

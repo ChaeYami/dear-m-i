@@ -73,6 +73,14 @@ export const medicationApi = {
   deleteGroup: (groupId: string) =>
     axiosInstance.delete<ApiResponse<void>>(`/api/v1/medication-slot-groups/${groupId}`),
 
+  /** POST /api/v1/medication-slot-groups/{id}/logs — 그룹 전체 일괄 복약 체크 */
+  bulkCheckGroup: (groupId: string, timeSlot: string, logDate: string, status: 'TAKEN' | 'SKIPPED') =>
+    axiosInstance.post<ApiResponse<void>>(`/api/v1/medication-slot-groups/${groupId}/logs`, {
+      timeSlot,
+      logDate,
+      status,
+    }),
+
   /** PUT /api/v1/medication-schedules/{id}/group — 슬롯들에 그룹 연결 */
   assignGroup: (scheduleId: string, timeSlots: string[], groupId: string | null) =>
     axiosInstance.put<ApiResponse<void>>(

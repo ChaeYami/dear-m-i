@@ -17,10 +17,12 @@ import {
   useAssignMedicationSlotGroup,
 } from '@/features/medication/hooks/useMedication';
 import type { TimeSlotType } from '@/shared/types/domain.types';
+import type { SlotItem } from './MedicationCard';
 
 interface Props {
   visible: boolean;
   selectedSlotKeys: Set<string>; // "scheduleId:timeSlot"
+  allSlotItems: SlotItem[];
   onSuccess: () => void;
   onClose: () => void;
 }
@@ -30,6 +32,7 @@ const SUGGESTIONS = ['아침', '점심', '저녁', '취침전'];
 export const MedicationGroupModal: React.FC<Props> = ({
   visible,
   selectedSlotKeys,
+  allSlotItems,
   onSuccess,
   onClose,
 }) => {
@@ -37,19 +40,36 @@ export const MedicationGroupModal: React.FC<Props> = ({
   const { t } = useTranslation(['settings', 'common']);
   const [groupName, setGroupName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [timeError, setTimeError] = useState(false);
   const inputRef = useRef<TextInput>(null);
+
+  // 선택된 슬롯들의 notifyTime이 모두 같은지 검증
+  const validateSameTime = (): boolean => {
+    const selectedItems = allSlotItems.filter((item) =>
+      selectedSlotKeys.has(`${item.scheduleId}:${item.timeSlot}`)
+    );
+    const times = new Set(selectedItems.map((i) => i.notifyTime ?? ''));
+    return times.size <= 1;
+  };
 
   const { mutateAsync: createGroup } = useCreateMedicationSlotGroup();
   const { mutateAsync: assignGroup } = useAssignMedicationSlotGroup();
 
   const handleClose = () => {
     setGroupName('');
+    setTimeError(false);
     onClose();
   };
 
   const handleConfirm = async () => {
     const name = groupName.trim();
     if (!name || isSubmitting) return;
+
+    if (!validateSameTime()) {
+      setTimeError(true);
+      return;
+    }
+    setTimeError(false);
 
     // Parse selectedSlotKeys into { scheduleId → timeSlots[] }
     const scheduleMap = new Map<string, string[]>();
@@ -129,6 +149,13 @@ export const MedicationGroupModal: React.FC<Props> = ({
             returnKeyType="done"
             onSubmitEditing={handleConfirm}
           />
+
+          {/* 같은 시간 오류 메시지 */}
+          {timeError && (
+            <Text style={[styles.errorText, { color: colors.error }]}>
+              같은 복약 시간으로 설정된 약끼리만 묶을 수 있어요
+            </Text>
+          )}
 
           {/* 버튼 행 */}
           <View style={styles.btnRow}>
@@ -233,5 +260,10 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
     btnText: {
       fontSize: sizes.font.md,
       fontFamily: fontFamily.semibold,
+    },
+    errorText: {
+      fontSize: sizes.font.sm,
+      fontFamily: fontFamily.medium,
+      textAlign: 'center' as const,
     },
   });

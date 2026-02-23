@@ -345,6 +345,26 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
           )}
         </View>
 
+        {/* 진료 준비 기록 바로가기 */}
+        <TouchableOpacity
+          style={[styles.prepNoteCard, { backgroundColor: colors.surface }]}
+          onPress={() => navigation.navigate('PrepNoteList')}
+          activeOpacity={0.8}
+        >
+          <View style={[styles.prepNoteIconWrap, { backgroundColor: colors.secondaryLight + '25' }]}>
+            <Ionicons name="document-text-outline" size={20} color={colors.secondary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.prepNoteTitle, { color: colors.text }]}>
+              {t('schedule:prep_note_shortcut_title', { defaultValue: '진료 준비 기록' })}
+            </Text>
+            <Text style={[styles.prepNoteDesc, { color: colors.textDisabled }]}>
+              {t('schedule:prep_note_shortcut_desc', { defaultValue: '진료 전 메모와 질문을 정리해 두세요' })}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={colors.textDisabled} />
+        </TouchableOpacity>
+
       </ScrollView>
 
       <AnimatedPressable
@@ -729,6 +749,31 @@ const styles = StyleSheet.create({
   },
   emptySubText: {
     fontSize: sizes.font.sm,
+  },
+  prepNoteCard: {
+    marginHorizontal: sizes.spacing.lg,
+    marginTop: sizes.spacing.md,
+    borderRadius: sizes.radius.xl,
+    paddingHorizontal: sizes.spacing.md,
+    paddingVertical: sizes.spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sizes.spacing.sm,
+  },
+  prepNoteIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: sizes.radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  prepNoteTitle: {
+    fontSize: sizes.font.sm,
+    fontFamily: fontFamily.semibold,
+  },
+  prepNoteDesc: {
+    fontSize: sizes.font.xs,
+    marginTop: 2,
   },
   fab: {
     position: 'absolute',
