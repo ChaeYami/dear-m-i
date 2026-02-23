@@ -64,18 +64,13 @@ const useDayNames = () => {
   );
 };
 
-// 감정 점수 → 이모지 매핑
-const EMOTION_EMOJIS: Record<number, string> = {
-  1: '😫', 2: '😢', 3: '😔', 4: '😕', 5: '😐',
-  6: '🙂', 7: '😊', 8: '😄', 9: '😁', 10: '🤩',
-};
-
-const NOTE_TYPE_CONFIG: Array<{ type: DailyNoteType; emoji: string; labelKey: string }> = [
-  { type: 'FEELING', emoji: '💬', labelKey: 'note_type_feeling' },
-  { type: 'SYMPTOM', emoji: '🤒', labelKey: 'note_type_symptom' },
-  { type: 'QUESTION', emoji: '❓', labelKey: 'note_type_question' },
-  { type: 'SIDE_EFFECT', emoji: '⚠️', labelKey: 'note_type_side_effect' },
-  { type: 'OTHER', emoji: '📝', labelKey: 'note_type_other' },
+// 감정 점수 → 색상 레이블 (이모지 대신 숫자 점수 표시)
+const NOTE_TYPE_CONFIG: Array<{ type: DailyNoteType; icon: keyof typeof Ionicons.glyphMap; labelKey: string }> = [
+  { type: 'FEELING', icon: 'heart-outline', labelKey: 'note_type_feeling' },
+  { type: 'SYMPTOM', icon: 'medical-outline', labelKey: 'note_type_symptom' },
+  { type: 'QUESTION', icon: 'help-circle-outline', labelKey: 'note_type_question' },
+  { type: 'SIDE_EFFECT', icon: 'warning-outline', labelKey: 'note_type_side_effect' },
+  { type: 'OTHER', icon: 'create-outline', labelKey: 'note_type_other' },
 ];
 
 const getNoteTypeConfig = (type: DailyNoteType) =>
@@ -288,23 +283,30 @@ export const CheckinHomeScreen: React.FC = () => {
               )}
             </View>
 
-            {/* 이모지 선택 바 — 항상 표시, 현재 값 하이라이트 */}
+            {/* 감정 점수 선택 바 — 항상 표시, 현재 값 하이라이트 */}
             <View style={styles.emojiRow}>
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((score) => {
                 const isSelected = selectedCheckin?.emotionScore === score;
+                const color = getEmotionColor(score);
                 return (
                   <TouchableOpacity
                     key={score}
                     onPress={() => handleEmotionTap(score)}
                     style={[
                       styles.emojiBtn,
-                      isSelected && { backgroundColor: getEmotionColor(score) + '30', borderRadius: sizes.radius.full },
+                      isSelected && { backgroundColor: color + '30', borderRadius: sizes.radius.full },
                     ]}
                     activeOpacity={0.7}
                   >
-                    <Text style={[styles.emojiText, isSelected && styles.emojiSelected]}>
-                      {EMOTION_EMOJIS[score]}
-                    </Text>
+                    <View style={[
+                      styles.scoreCircle,
+                      { borderColor: isSelected ? color : colors.divider },
+                      isSelected && { backgroundColor: color },
+                    ]}>
+                      <Text style={[styles.scoreText, { color: isSelected ? '#fff' : colors.textSub }]}>
+                        {score}
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 );
               })}
@@ -342,7 +344,7 @@ export const CheckinHomeScreen: React.FC = () => {
               activeOpacity={0.85}
             >
               <View style={styles.schedBannerLeft}>
-                <Text style={styles.schedBannerEmoji}>🏥</Text>
+                <Ionicons name="medical" size={22} color={colors.primary} />
                 <View>
                   <Text style={styles.schedBannerTitle}>
                     {daysUntilNext === 0 ? '오늘 진료' : `진료 ${daysUntilNext}일 전`}
@@ -371,9 +373,7 @@ export const CheckinHomeScreen: React.FC = () => {
                 onPress={() => setShowTypePicker(true)}
                 activeOpacity={0.7}
               >
-                <Text style={styles.noteTypeEmoji}>
-                  {getNoteTypeConfig(noteType).emoji}
-                </Text>
+                <Ionicons name={getNoteTypeConfig(noteType).icon} size={16} color={colors.primary} />
                 <Ionicons name="chevron-down" size={12} color={colors.textSub} />
               </TouchableOpacity>
 
@@ -411,7 +411,7 @@ export const CheckinHomeScreen: React.FC = () => {
                     <View key={note.id} style={[styles.noteCard, softShadow(colors)]}>
                       <View style={styles.noteCardHeader}>
                         <View style={styles.noteTypeBadge}>
-                          <Text style={styles.noteTypeBadgeEmoji}>{cfg.emoji}</Text>
+                          <Ionicons name={cfg.icon} size={12} color={colors.primary} />
                           <Text style={styles.noteTypeBadgeLabel}>
                             {t(cfg.labelKey as any, { defaultValue: cfg.type })}
                           </Text>
@@ -427,7 +427,7 @@ export const CheckinHomeScreen: React.FC = () => {
                       </View>
                       <Text style={styles.noteBody}>{note.body}</Text>
                       {note.usedInPrepNoteId && (
-                        <Text style={styles.noteUsed}>✓ 진료 준비 메모에 사용됨</Text>
+                        <Text style={styles.noteUsed}>진료 준비 메모에 사용됨</Text>
                       )}
                     </View>
                   );
@@ -479,7 +479,7 @@ export const CheckinHomeScreen: React.FC = () => {
                   setShowTypePicker(false);
                 }}
               >
-                <Text style={styles.pickerEmoji}>{cfg.emoji}</Text>
+                <Ionicons name={cfg.icon} size={20} color={noteType === cfg.type ? colors.primary : colors.textSub} style={styles.pickerIcon} />
                 <Text style={[styles.pickerLabel, { color: colors.text }]}>
                   {t(cfg.labelKey as any, { defaultValue: cfg.type })}
                 </Text>
@@ -539,12 +539,22 @@ const makeStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBot
       paddingVertical: 4,
     },
     emojiBtn: {
-      padding: 4,
+      padding: 2,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    emojiText: { fontSize: 22 },
-    emojiSelected: { transform: [{ scale: 1.3 }] },
+    scoreCircle: {
+      width: 28,
+      height: 28,
+      borderRadius: sizes.radius.full,
+      borderWidth: 1.5,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    scoreText: {
+      fontSize: 11,
+      fontFamily: fontFamily.bold,
+    },
     emojiHint: {
       fontSize: sizes.font.xs,
       color: colors.textDisabled,
@@ -574,7 +584,6 @@ const makeStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBot
       justifyContent: 'space-between',
     },
     schedBannerLeft: { flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.sm },
-    schedBannerEmoji: { fontSize: 22 },
     schedBannerTitle: {
       fontSize: sizes.font.sm, fontFamily: fontFamily.bold, color: colors.text,
     },
@@ -608,7 +617,6 @@ const makeStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBot
       borderRadius: sizes.radius.md,
       backgroundColor: colors.background,
     },
-    noteTypeEmoji: { fontSize: 18 },
     noteInput: {
       flex: 1,
       fontSize: sizes.font.md,
@@ -638,7 +646,6 @@ const makeStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBot
       paddingHorizontal: 8, paddingVertical: 3,
       borderRadius: sizes.radius.full,
     },
-    noteTypeBadgeEmoji: { fontSize: 13 },
     noteTypeBadgeLabel: {
       fontSize: sizes.font.xs, color: colors.textSub, fontFamily: fontFamily.medium,
     },
@@ -688,6 +695,6 @@ const makeStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBot
       paddingHorizontal: sizes.spacing.sm,
       borderRadius: sizes.radius.md,
     },
-    pickerEmoji: { fontSize: 20, width: 28, textAlign: 'center' },
+    pickerIcon: { width: 28, textAlign: 'center' },
     pickerLabel: { flex: 1, fontSize: sizes.font.md, fontFamily: fontFamily.regular },
   });

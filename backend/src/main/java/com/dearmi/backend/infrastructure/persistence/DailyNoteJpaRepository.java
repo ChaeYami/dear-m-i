@@ -19,8 +19,8 @@ public interface DailyNoteJpaRepository extends JpaRepository<DailyNote, UUID> {
         SELECT n FROM DailyNote n
         WHERE n.userId = :userId
           AND n.deletedAt IS NULL
-          AND (:startDate IS NULL OR n.noteDate >= :startDate)
-          AND (:endDate IS NULL OR n.noteDate <= :endDate)
+          AND n.noteDate >= :startDate
+          AND n.noteDate <= :endDate
           AND (:noteType IS NULL OR n.noteType = :noteType)
         ORDER BY n.noteDate DESC, n.createdAt DESC
         """)

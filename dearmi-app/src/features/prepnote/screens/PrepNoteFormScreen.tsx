@@ -53,12 +53,12 @@ const NOTE_TYPE_TO_SECTION: Partial<Record<DailyNoteType, keyof PrepNoteSections
   SIDE_EFFECT: 'sideEffects',
 };
 
-const NOTE_TYPE_EMOJI: Record<DailyNoteType, string> = {
-  FEELING: '💬',
-  SYMPTOM: '🤒',
-  QUESTION: '❓',
-  SIDE_EFFECT: '⚠️',
-  OTHER: '📝',
+const NOTE_TYPE_ICON: Record<DailyNoteType, keyof typeof Ionicons.glyphMap> = {
+  FEELING: 'heart-outline',
+  SYMPTOM: 'medical-outline',
+  QUESTION: 'help-circle-outline',
+  SIDE_EFFECT: 'warning-outline',
+  OTHER: 'create-outline',
 };
 
 const emptySections = (): PrepNoteSections => ({
@@ -362,7 +362,6 @@ export const PrepNoteFormScreen: React.FC = () => {
               <View style={styles.notePickerList}>
                 {recentDailyNotes.map((note) => {
                   const isSelected = selectedNoteIds.has(note.id);
-                  const emoji = NOTE_TYPE_EMOJI[note.noteType];
                   const d = new Date(note.noteDate);
                   const dateLabel = `${d.getMonth() + 1}/${d.getDate()}`;
                   return (
@@ -377,7 +376,7 @@ export const PrepNoteFormScreen: React.FC = () => {
                         size={20}
                         color={isSelected ? colors.primary : colors.textSub}
                       />
-                      <Text style={styles.notePickerEmoji}>{emoji}</Text>
+                      <Ionicons name={NOTE_TYPE_ICON[note.noteType]} size={15} color={colors.textSub} style={{ width: 22 }} />
                       <View style={{ flex: 1 }}>
                         <Text style={styles.notePickerBody} numberOfLines={2}>{note.body}</Text>
                       </View>
@@ -967,7 +966,6 @@ const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
     notePickerRowSelected: {
       backgroundColor: colors.primaryMuted,
     },
-    notePickerEmoji: { fontSize: 16, width: 22, textAlign: 'center' },
     notePickerBody: {
       fontSize: sizes.font.sm,
       color: colors.text,

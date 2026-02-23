@@ -29,7 +29,11 @@ public class DailyNoteRepositoryImpl implements DailyNoteRepository {
 
     @Override
     public List<DailyNote> findByUserId(UUID userId, LocalDate startDate, LocalDate endDate, NoteType noteType) {
-        return jpa.findByUserIdFiltered(userId, startDate, endDate, noteType);
+        // PostgreSQL cannot infer type of bare null params in JPQL IS NULL checks,
+        // so we substitute sentinel values instead of passing null.
+        LocalDate effectiveStart = startDate != null ? startDate : LocalDate.of(2000, 1, 1);
+        LocalDate effectiveEnd = endDate != null ? endDate : LocalDate.now();
+        return jpa.findByUserIdFiltered(userId, effectiveStart, effectiveEnd, noteType);
     }
 
     @Override
