@@ -170,22 +170,6 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
         contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarSafeBottom + 80 }]}
         {...scrollHandlers}
       >
-        {/* 준비 메모 진입 카드 */}
-        <TouchableOpacity
-          style={[styles.featureCard, { backgroundColor: colors.surface }, softShadow(colors)]}
-          onPress={() => navigation.navigate('PrepNoteList')}
-          activeOpacity={0.75}
-        >
-          <View style={[styles.featureIconWrap, { backgroundColor: colors.accentMuted }]}>
-            <Ionicons name="create-outline" size={22} color={colors.accent} />
-          </View>
-          <View style={styles.featureCardBody}>
-            <Text style={[styles.featureCardTitle, { color: colors.text }]}>{t('schedule:prep_section_title')}</Text>
-            <Text style={[styles.featureCardSub, { color: colors.textSub }]}>{t('schedule:prep_section_subtitle')}</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={colors.textDisabled} />
-        </TouchableOpacity>
-
         {/* 통합 카드 */}
         <View style={[styles.unifiedCard, { backgroundColor: colors.surface }, softShadow(colors)]}>
           {/* 필터 */}
@@ -365,7 +349,7 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
 
       <AnimatedPressable
         onPress={() => navigation.navigate('ScheduleForm', { defaultDate: selectedDate })}
-        style={[styles.fab, { bottom: tabBarSafeBottom + sizes.spacing.md }, floatingShadow(colors)]}
+        style={[styles.fab, { bottom: tabBarSafeBottom }, floatingShadow(colors)]}
         scaleValue={0.92}
       >
         <LinearGradient
@@ -602,34 +586,6 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContent: {
     paddingTop: sizes.spacing.xs,
-  },
-  featureCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: sizes.spacing.lg,
-    marginBottom: sizes.spacing.sm,
-    padding: sizes.spacing.md,
-    borderRadius: sizes.radius.xxl,
-    gap: sizes.spacing.md,
-  },
-  featureIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: sizes.radius.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  featureCardBody: {
-    flex: 1,
-    gap: 2,
-  },
-  featureCardTitle: {
-    fontSize: sizes.font.md,
-    fontFamily: fontFamily.semibold,
-  },
-  featureCardSub: {
-    fontSize: sizes.font.sm,
-    fontFamily: fontFamily.regular,
   },
   unifiedCard: {
     marginHorizontal: sizes.spacing.lg,

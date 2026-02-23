@@ -311,7 +311,7 @@ export const RecordTab: React.FC<{ embedded?: boolean }> = ({ embedded = false }
 
       <AnimatedPressable
         onPress={() => navigation.navigate('RecordForm', undefined)}
-        style={[styles.fab, { bottom: tabBarSafeBottom + sizes.spacing.md }]}
+        style={[styles.fab, { bottom: tabBarSafeBottom }]}
         accessibilityRole="button"
         accessibilityLabel={t('record:empty_write')}
       >

@@ -13,26 +13,29 @@ export interface SlotItem {
   status: MedicationLogStatus | null;
   logId: string | null;
   notifyTime?: string;
+  groupId?: string | null;
+  groupName?: string | null;
+  timeSlot: TimeSlotType;
 }
 
 interface Props {
   items: SlotItem[];
   pendingScheduleIds: Set<string>;
   isEditMode?: boolean;
-  selectedIds?: Set<string>;
+  selectedSlotKeys?: Set<string>;
   checkDisabled?: boolean;
-  onToggleSelect?: (scheduleId: string) => void;
+  onToggleSelect?: (scheduleId: string, timeSlot: TimeSlotType) => void;
   onDrugPress: (scheduleId: string, drugName: string) => void;
   onDelete: (scheduleId: string, drugName: string) => void;
-  onTaken: (scheduleId: string) => void;
-  onSkipped: (scheduleId: string) => void;
+  onTaken: (scheduleId: string, currentStatus: MedicationLogStatus | null) => void;
+  onSkipped: (scheduleId: string, currentStatus: MedicationLogStatus | null) => void;
 }
 
 export const MedicationCard: React.FC<Props> = ({
   items,
   pendingScheduleIds,
   isEditMode,
-  selectedIds,
+  selectedSlotKeys,
   checkDisabled,
   onToggleSelect,
   onDrugPress,
@@ -49,13 +52,13 @@ export const MedicationCard: React.FC<Props> = ({
           {isEditMode && (
             <TouchableOpacity
               style={styles.checkbox}
-              onPress={() => onToggleSelect?.(item.scheduleId)}
+              onPress={() => onToggleSelect?.(item.scheduleId, item.timeSlot)}
               hitSlop={8}
             >
               <Ionicons
-                name={selectedIds?.has(item.scheduleId) ? 'checkbox' : 'square-outline'}
+                name={selectedSlotKeys?.has(`${item.scheduleId}:${item.timeSlot}`) ? 'checkbox' : 'square-outline'}
                 size={22}
-                color={selectedIds?.has(item.scheduleId) ? colors.primary : colors.textDisabled}
+                color={selectedSlotKeys?.has(`${item.scheduleId}:${item.timeSlot}`) ? colors.primary : colors.textDisabled}
               />
             </TouchableOpacity>
           )}
@@ -66,10 +69,10 @@ export const MedicationCard: React.FC<Props> = ({
               status={item.status}
               isPending={pendingScheduleIds.has(item.scheduleId)}
               checkDisabled={checkDisabled}
-              onDrugPress={() => isEditMode ? onToggleSelect?.(item.scheduleId) : onDrugPress(item.scheduleId, item.drugName)}
+              onDrugPress={() => isEditMode ? onToggleSelect?.(item.scheduleId, item.timeSlot) : onDrugPress(item.scheduleId, item.drugName)}
               onDelete={() => onDelete(item.scheduleId, item.drugName)}
-              onTaken={() => onTaken(item.scheduleId)}
-              onSkipped={() => onSkipped(item.scheduleId)}
+              onTaken={() => onTaken(item.scheduleId, item.status)}
+              onSkipped={() => onSkipped(item.scheduleId, item.status)}
             />
           </View>
         </View>

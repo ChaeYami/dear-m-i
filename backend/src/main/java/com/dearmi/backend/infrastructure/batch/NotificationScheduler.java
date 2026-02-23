@@ -7,6 +7,8 @@ import com.dearmi.backend.domain.hospital.HospitalScheduleRepository;
 import com.dearmi.backend.domain.medication.MedicationSchedule;
 import com.dearmi.backend.domain.medication.MedicationScheduleRepository;
 import com.dearmi.backend.domain.medication.MedicationLogRepository;
+import com.dearmi.backend.domain.medication.MedicationSlotGroup;
+import com.dearmi.backend.domain.medication.MedicationSlotGroupRepository;
 import com.dearmi.backend.domain.medication.TimeSlot;
 import com.dearmi.backend.domain.notification.NotificationSetting;
 import com.dearmi.backend.domain.notification.NotificationSettingRepository;
@@ -27,10 +29,14 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * 병원 일정 D-1/D-0 + 체크인 리마인더 + 복약 알림 스케줄러.
@@ -48,6 +54,7 @@ public class NotificationScheduler {
     private final NotificationSettingRepository notificationSettingRepository;
     private final MedicationScheduleRepository medicationScheduleRepository;
     private final MedicationLogRepository medicationLogRepository;
+    private final MedicationSlotGroupRepository slotGroupRepository;
     private final DailyCheckinRepository dailyCheckinRepository;
     private final PrepNoteRepository prepNoteRepository;
     private final UserRepository userRepository;
@@ -219,6 +226,10 @@ public class NotificationScheduler {
         List<MedicationSchedule> schedules = medicationScheduleRepository.findDueForMinute(today, now);
         if (schedules.isEmpty()) return;
 
+        // 그룹 번들: key=(userId, groupId, slot) → 약품 목록
+        record GroupKey(UUID userId, UUID groupId, TimeSlot slot) {}
+        Map<GroupKey, List<MedicationSchedule>> bundled = new LinkedHashMap<>();
+
         for (MedicationSchedule schedule : schedules) {
             Optional<NotificationSetting> settingOpt =
                     notificationSettingRepository.findByUserId(schedule.getUserId());
@@ -228,25 +239,83 @@ public class NotificationScheduler {
             if (userOpt.isEmpty()) continue;
             User user = userOpt.get();
 
-            sendMedSlot(schedule, TimeSlot.MORNING,   schedule.getMorning(),   schedule.getMorningTime(),   now, today, user);
-            sendMedSlot(schedule, TimeSlot.AFTERNOON, schedule.getAfternoon(), schedule.getAfternoonTime(), now, today, user);
-            sendMedSlot(schedule, TimeSlot.EVENING,   schedule.getEvening(),   schedule.getEveningTime(),   now, today, user);
-            sendMedSlot(schedule, TimeSlot.BEDTIME,   schedule.getBedtime(),   schedule.getBedtimeTime(),   now, today, user);
+            for (TimeSlot slot : TimeSlot.values()) {
+                if (!isSlotEnabled(schedule, slot)) continue;
+                LocalTime slotTime = getSlotTime(schedule, slot);
+                if (slotTime == null || !slotTime.truncatedTo(ChronoUnit.MINUTES).equals(now)) continue;
+                if (medicationLogRepository.existsByMedicationScheduleIdAndLogDateAndTimeSlot(
+                        schedule.getId(), today, slot.name())) continue;
+
+                UUID groupId = schedule.getGroupId(slot);
+                if (groupId != null) {
+                    bundled.computeIfAbsent(new GroupKey(schedule.getUserId(), groupId, slot),
+                            k -> new ArrayList<>()).add(schedule);
+                } else {
+                    sendIndividualMedNotification(schedule, slot, today, user);
+                }
+            }
+        }
+
+        // 그룹 번들 알림 발송
+        for (Map.Entry<GroupKey, List<MedicationSchedule>> entry : bundled.entrySet()) {
+            GroupKey key = entry.getKey();
+            Optional<User> userOpt = userRepository.findByIdAndDeletedAtIsNull(key.userId());
+            if (userOpt.isEmpty()) continue;
+            User user = userOpt.get();
+
+            String groupName = slotGroupRepository
+                    .findByIdAndUserIdAndDeletedAtIsNull(key.groupId(), key.userId())
+                    .map(MedicationSlotGroup::getGroupName)
+                    .orElse(key.slot().name());
+            List<String> drugNames = entry.getValue().stream()
+                    .map(MedicationSchedule::getDrugName)
+                    .collect(Collectors.toList());
+            String drugList = String.join(", ", drugNames);
+
+            log.debug("그룹 복약 알림 발송: userId={}, group={}, drugs={}", key.userId(), groupName, drugList);
+            Locale locale = toLocale(user.getPreferredLocale());
+            notificationSender.sendAndLog(
+                    user.getId(),
+                    NotificationType.MEDICATION,
+                    "notification.medication.group.reminder.title",
+                    List.of(groupName),
+                    "notification.medication.group.reminder.body",
+                    List.of(drugList),
+                    null,
+                    key.slot().name(),
+                    user.getFcmToken(),
+                    locale,
+                    Map.of(
+                            "groupId",  key.groupId().toString(),
+                            "timeSlot", key.slot().name(),
+                            "logDate",  today.toString(),
+                            "type",     "MEDICATION_GROUP"
+                    )
+            );
         }
     }
 
-    private void sendMedSlot(MedicationSchedule schedule, TimeSlot slot,
-                              Boolean enabled, LocalTime slotTime,
-                              LocalTime now, LocalDate today, User user) {
-        if (!Boolean.TRUE.equals(enabled)) return;
-        if (slotTime == null) return;
-        if (!slotTime.truncatedTo(ChronoUnit.MINUTES).equals(now)) return;
+    private boolean isSlotEnabled(MedicationSchedule s, TimeSlot slot) {
+        return Boolean.TRUE.equals(switch (slot) {
+            case MORNING   -> s.getMorning();
+            case AFTERNOON -> s.getAfternoon();
+            case EVENING   -> s.getEvening();
+            case BEDTIME   -> s.getBedtime();
+        });
+    }
 
-        if (medicationLogRepository.existsByMedicationScheduleIdAndLogDateAndTimeSlot(
-                schedule.getId(), today, slot.name())) return;
+    private LocalTime getSlotTime(MedicationSchedule s, TimeSlot slot) {
+        return switch (slot) {
+            case MORNING   -> s.getMorningTime();
+            case AFTERNOON -> s.getAfternoonTime();
+            case EVENING   -> s.getEveningTime();
+            case BEDTIME   -> s.getBedtimeTime();
+        };
+    }
 
+    private void sendIndividualMedNotification(MedicationSchedule schedule, TimeSlot slot,
+                                                LocalDate today, User user) {
         log.debug("복약 알림 발송: userId={}, drug={}, slot={}", schedule.getUserId(), schedule.getDrugName(), slot);
-
         Locale locale = toLocale(user.getPreferredLocale());
         notificationSender.sendAndLog(
                 user.getId(),

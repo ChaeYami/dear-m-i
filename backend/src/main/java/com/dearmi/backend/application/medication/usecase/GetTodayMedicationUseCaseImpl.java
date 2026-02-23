@@ -7,6 +7,8 @@ import com.dearmi.backend.domain.medication.MedicationLog;
 import com.dearmi.backend.domain.medication.MedicationLogRepository;
 import com.dearmi.backend.domain.medication.MedicationSchedule;
 import com.dearmi.backend.domain.medication.MedicationScheduleRepository;
+import com.dearmi.backend.domain.medication.MedicationSlotGroup;
+import com.dearmi.backend.domain.medication.MedicationSlotGroupRepository;
 import com.dearmi.backend.domain.medication.TimeSlot;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,6 +34,7 @@ public class GetTodayMedicationUseCaseImpl implements GetTodayMedicationUseCase 
 
     private final MedicationScheduleRepository medicationScheduleRepository;
     private final MedicationLogRepository medicationLogRepository;
+    private final MedicationSlotGroupRepository slotGroupRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -59,16 +62,16 @@ public class GetTodayMedicationUseCaseImpl implements GetTodayMedicationUseCase 
 
         List<SlotLog> slots = new ArrayList<>();
         if (Boolean.TRUE.equals(s.getMorning())) {
-            slots.add(buildSlotLog(TimeSlot.MORNING, s.getMorningTime(), logBySlot));
+            slots.add(buildSlotLog(TimeSlot.MORNING, s.getMorningTime(), logBySlot, s));
         }
         if (Boolean.TRUE.equals(s.getAfternoon())) {
-            slots.add(buildSlotLog(TimeSlot.AFTERNOON, s.getAfternoonTime(), logBySlot));
+            slots.add(buildSlotLog(TimeSlot.AFTERNOON, s.getAfternoonTime(), logBySlot, s));
         }
         if (Boolean.TRUE.equals(s.getEvening())) {
-            slots.add(buildSlotLog(TimeSlot.EVENING, s.getEveningTime(), logBySlot));
+            slots.add(buildSlotLog(TimeSlot.EVENING, s.getEveningTime(), logBySlot, s));
         }
         if (Boolean.TRUE.equals(s.getBedtime())) {
-            slots.add(buildSlotLog(TimeSlot.BEDTIME, s.getBedtimeTime(), logBySlot));
+            slots.add(buildSlotLog(TimeSlot.BEDTIME, s.getBedtimeTime(), logBySlot, s));
         }
 
         return new ScheduleWithLogs(
@@ -82,13 +85,23 @@ public class GetTodayMedicationUseCaseImpl implements GetTodayMedicationUseCase 
         );
     }
 
-    private SlotLog buildSlotLog(TimeSlot slot, LocalTime notifyTime, Map<String, MedicationLog> logBySlot) {
+    private SlotLog buildSlotLog(TimeSlot slot, LocalTime notifyTime,
+                                  Map<String, MedicationLog> logBySlot,
+                                  MedicationSchedule schedule) {
         MedicationLog log = logBySlot.get(slot.name());
+        UUID groupId = schedule.getGroupId(slot);
+        String groupName = groupId != null
+                ? slotGroupRepository.findByIdAndUserIdAndDeletedAtIsNull(groupId, schedule.getUserId())
+                        .map(MedicationSlotGroup::getGroupName)
+                        .orElse(null)
+                : null;
         return new SlotLog(
                 slot.name(),
                 notifyTime,
                 log != null ? log.getStatus() : null,
-                log != null ? log.getId() : null
+                log != null ? log.getId() : null,
+                groupId,
+                groupName
         );
     }
 }

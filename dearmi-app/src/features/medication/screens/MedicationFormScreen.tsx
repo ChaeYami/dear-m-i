@@ -6,7 +6,6 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,7 +19,6 @@ import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { softShadow } from '@/shared/theme/shadows';
-import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
 import { useCreateMedicationSchedule, useUpdateMedicationSchedule, useAllMedicationSchedules } from '@/features/medication/hooks/useMedication';
 import { useMedicationDetail } from '@/features/prescription/hooks/usePrescription';
 import { useUnsavedChangesWarning } from '@/shared/hooks/useUnsavedChangesWarning';
@@ -31,15 +29,9 @@ import type { TimeSlotType } from '@/shared/types/domain.types';
 type Nav = StackNavigationProp<MedicationStackParamList, 'MedicationForm'>;
 type Route = RouteProp<MedicationStackParamList, 'MedicationForm'>;
 
-const useTimeSlots = (): Array<{ key: TimeSlotType; label: string; defaultTime: string }> => {
-  const { t } = useTranslation('common');
-  return [
-    { key: 'MORNING', label: t('time_morning'), defaultTime: '08:00' },
-    { key: 'AFTERNOON', label: t('time_afternoon'), defaultTime: '12:00' },
-    { key: 'EVENING', label: t('time_evening'), defaultTime: '18:00' },
-    { key: 'BEDTIME', label: t('time_bedtime'), defaultTime: '22:00' },
-  ];
-};
+// 내부 슬롯 순서 — UI 표시 순서이자 백엔드 매핑 순서
+const SLOT_KEYS: TimeSlotType[] = ['MORNING', 'AFTERNOON', 'EVENING', 'BEDTIME'];
+const SLOT_DEFAULTS = ['08:00', '12:00', '18:00', '22:00'];
 
 const toLocalDateStr = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -53,11 +45,20 @@ const addDays = (d: Date, n: number) => {
   return result;
 };
 
+const makeDate = (timeStr: string) => {
+  const [h, m] = timeStr.split(':').map(Number);
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return d;
+};
+
+const formatTimeDisplay = (d: Date) =>
+  `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+
 export const MedicationFormScreen: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
-  const { t, i18n } = useTranslation(['settings', 'common']);
-  const TIME_SLOTS = useTimeSlots();
+  const { t } = useTranslation(['settings', 'common']);
   const params = useRoute<Route>().params ?? {};
   const {
     scheduleId: editScheduleId,
@@ -73,16 +74,11 @@ export const MedicationFormScreen: React.FC = () => {
 
   const isEdit = Boolean(editScheduleId);
 
-  // API pre-fill — prescriptionMedicationId 있을 때만 (직접 파라미터 없을 때)
   const { data: prefill } = useMedicationDetail(
     prescriptionMedicationId && !drugNameParam ? prescriptionMedicationId : ''
   );
-
-  // 편집 모드: 기존 일정 가져오기
   const { data: allSchedules = [] } = useAllMedicationSchedules(isEdit);
-  const existingSchedule = isEdit
-    ? allSchedules.find((s) => s.id === editScheduleId)
-    : undefined;
+  const existingSchedule = isEdit ? allSchedules.find((s) => s.id === editScheduleId) : undefined;
 
   const { mutate: create, isPending } = useCreateMedicationSchedule();
   const { mutate: update, isPending: isUpdating } = useUpdateMedicationSchedule();
@@ -95,23 +91,16 @@ export const MedicationFormScreen: React.FC = () => {
     totalDaysParam !== undefined ? String(totalDaysParam) : ''
   );
 
-  const [activeSlots, setActiveSlots] = useState<Record<TimeSlotType, boolean>>({
-    MORNING: true, AFTERNOON: false, EVENING: false, BEDTIME: false,
+  // 활성화된 슬롯 인덱스 배열 (최대 4개, SLOT_KEYS 순서로 매핑)
+  // 예: [0, 2] → MORNING(08:00) + EVENING(18:00) 활성
+  const [activeSlotIndices, setActiveSlotIndices] = useState<number[]>([0]);
+  const [slotTimes, setSlotTimes] = useState<Record<number, Date>>({
+    0: makeDate(SLOT_DEFAULTS[0]),
+    1: makeDate(SLOT_DEFAULTS[1]),
+    2: makeDate(SLOT_DEFAULTS[2]),
+    3: makeDate(SLOT_DEFAULTS[3]),
   });
-
-  const makeDefaultDate = (timeStr: string) => {
-    const [h, m] = timeStr.split(':').map(Number);
-    const d = new Date();
-    d.setHours(h, m, 0, 0);
-    return d;
-  };
-  const [slotTimes, setSlotTimes] = useState<Record<TimeSlotType, Date>>({
-    MORNING: makeDefaultDate('08:00'),
-    AFTERNOON: makeDefaultDate('12:00'),
-    EVENING: makeDefaultDate('18:00'),
-    BEDTIME: makeDefaultDate('22:00'),
-  });
-  const [showTimePicker, setShowTimePicker] = useState<TimeSlotType | null>(null);
+  const [showTimePicker, setShowTimePicker] = useState<number | null>(null);
 
   const [startDate, setStartDate] = useState(() => {
     if (startDateParam) return new Date(startDateParam + 'T00:00:00');
@@ -119,7 +108,7 @@ export const MedicationFormScreen: React.FC = () => {
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  // API pre-fill 적용 (직접 파라미터 없을 때만)
+  // API pre-fill
   useEffect(() => {
     if (prefill && !drugNameParam) {
       if (prefill.medicationName) setDrugName(prefill.medicationName);
@@ -129,7 +118,7 @@ export const MedicationFormScreen: React.FC = () => {
     }
   }, [prefill]);
 
-  // 편집 모드: 기존 데이터로 폼 초기화
+  // 편집 모드 hydration
   const [editHydrated, setEditHydrated] = useState(false);
   useEffect(() => {
     if (!isEdit || !existingSchedule || editHydrated) return;
@@ -144,24 +133,25 @@ export const MedicationFormScreen: React.FC = () => {
       const diff = Math.round((end.getTime() - start.getTime()) / 86400000) + 1;
       setDurationDays(String(diff));
     }
-    setActiveSlots({
-      MORNING: existingSchedule.morning,
-      AFTERNOON: existingSchedule.afternoon,
-      EVENING: existingSchedule.evening,
-      BEDTIME: existingSchedule.bedtime,
-    });
+    // 기존 슬롯 매핑 복원
     const parseTime = (t?: string) => {
       if (!t) return null;
       const [h, m] = t.split(':').map(Number);
       const d = new Date(); d.setHours(h, m, 0, 0);
       return d;
     };
-    setSlotTimes((prev) => ({
-      MORNING: parseTime(existingSchedule.morningTime) ?? prev.MORNING,
-      AFTERNOON: parseTime(existingSchedule.afternoonTime) ?? prev.AFTERNOON,
-      EVENING: parseTime(existingSchedule.eveningTime) ?? prev.EVENING,
-      BEDTIME: parseTime(existingSchedule.bedtimeTime) ?? prev.BEDTIME,
-    }));
+    const slotFlags = [existingSchedule.morning, existingSchedule.afternoon, existingSchedule.evening, existingSchedule.bedtime];
+    const slotTimeSources = [existingSchedule.morningTime, existingSchedule.afternoonTime, existingSchedule.eveningTime, existingSchedule.bedtimeTime];
+    const indices = slotFlags.map((active, i) => active ? i : -1).filter((i) => i >= 0);
+    setActiveSlotIndices(indices.length > 0 ? indices : [0]);
+    setSlotTimes((prev) => {
+      const next = { ...prev };
+      slotTimeSources.forEach((t, i) => {
+        const parsed = parseTime(t);
+        if (parsed) next[i] = parsed;
+      });
+      return next;
+    });
     setEditHydrated(true);
   }, [isEdit, existingSchedule, editHydrated]);
 
@@ -170,27 +160,34 @@ export const MedicationFormScreen: React.FC = () => {
       ? addDays(startDate, Number(durationDays) - 1)
       : null;
 
-  const toggleSlot = (slot: TimeSlotType) =>
-    setActiveSlots((prev) => ({ ...prev, [slot]: !prev[slot] }));
+  const addSlot = () => {
+    if (activeSlotIndices.length >= 4) return;
+    const available = [0, 1, 2, 3].find((i) => !activeSlotIndices.includes(i));
+    if (available === undefined) return;
+    setActiveSlotIndices((prev) => [...prev, available].sort((a, b) => a - b));
+  };
+
+  const removeSlot = (index: number) => {
+    if (activeSlotIndices.length <= 1) return; // 최소 1개
+    setActiveSlotIndices((prev) => prev.filter((i) => i !== index));
+  };
 
   const buildPayload = () => ({
-    prescriptionMedicationId: prescriptionMedicationId
-      ? String(prescriptionMedicationId)
-      : undefined,
+    prescriptionMedicationId: prescriptionMedicationId ? String(prescriptionMedicationId) : undefined,
     drugName: drugName.trim(),
     dosage: dosage.trim() || undefined,
     singleDose: singleDose.trim() || undefined,
     drugCategory: drugCategory.trim() || undefined,
     startDate: toLocalDateStr(startDate),
     endDate: endDate ? toLocalDateStr(endDate) : undefined,
-    morning: activeSlots.MORNING,
-    afternoon: activeSlots.AFTERNOON,
-    evening: activeSlots.EVENING,
-    bedtime: activeSlots.BEDTIME,
-    morningTime: activeSlots.MORNING ? toTimeStr(slotTimes.MORNING) : undefined,
-    afternoonTime: activeSlots.AFTERNOON ? toTimeStr(slotTimes.AFTERNOON) : undefined,
-    eveningTime: activeSlots.EVENING ? toTimeStr(slotTimes.EVENING) : undefined,
-    bedtimeTime: activeSlots.BEDTIME ? toTimeStr(slotTimes.BEDTIME) : undefined,
+    morning: activeSlotIndices.includes(0),
+    afternoon: activeSlotIndices.includes(1),
+    evening: activeSlotIndices.includes(2),
+    bedtime: activeSlotIndices.includes(3),
+    morningTime: activeSlotIndices.includes(0) ? toTimeStr(slotTimes[0]) : undefined,
+    afternoonTime: activeSlotIndices.includes(1) ? toTimeStr(slotTimes[1]) : undefined,
+    eveningTime: activeSlotIndices.includes(2) ? toTimeStr(slotTimes[2]) : undefined,
+    bedtimeTime: activeSlotIndices.includes(3) ? toTimeStr(slotTimes[3]) : undefined,
   });
 
   const validate = (): boolean => {
@@ -198,7 +195,7 @@ export const MedicationFormScreen: React.FC = () => {
       customAlert(t('common:required_input'), t('settings:medication_required_drug_name'));
       return false;
     }
-    if (!Object.values(activeSlots).some(Boolean)) {
+    if (activeSlotIndices.length === 0) {
       customAlert(t('settings:medication_required_time_title'), t('settings:medication_required_time_message'));
       return false;
     }
@@ -209,7 +206,6 @@ export const MedicationFormScreen: React.FC = () => {
     return true;
   };
 
-  // 변경사항 추적 → 이탈 경고 (drugName/dosage/durationDays 입력 시)
   const isDirty =
     drugName.trim() !== (drugNameParam ?? '') ||
     dosage.trim() !== (dosageParam ?? '') ||
@@ -227,7 +223,6 @@ export const MedicationFormScreen: React.FC = () => {
     }
   };
 
-  /** OCR 흐름: 마지막 약 저장 후 처방전 목록으로 (스택 리셋으로 OcrResult 제거) */
   const handleSaveAndFinish = () => {
     if (!validate()) return;
     create(buildPayload(), {
@@ -238,11 +233,9 @@ export const MedicationFormScreen: React.FC = () => {
     });
   };
 
-  /** OCR 흐름: 저장 후 다음 약품으로 이동 */
   const handleSaveAndNext = () => {
     if (!validate()) return;
     if (!remainingMeds || remainingMeds.length === 0) return;
-
     create(buildPayload(), {
       onSuccess: () => {
         const [next, ...rest] = remainingMeds;
@@ -266,9 +259,6 @@ export const MedicationFormScreen: React.FC = () => {
       day: d.getDate(),
     });
 
-  const formatTimeDisplay = (d: Date) =>
-    `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-
   const nextMed = remainingMeds?.[0];
   const showNextButton = isFromOcr && nextMed;
   const showFinishButton = isFromOcr && !nextMed;
@@ -283,10 +273,9 @@ export const MedicationFormScreen: React.FC = () => {
         title={isFromOcr ? t('settings:medication_form_ocr_title') : isEdit ? t('settings:medication_form_edit_title') : t('settings:medication_form_title')}
         onCancel={() => navigation.goBack()}
         onSave={handleSave}
-        saveDisabled={isPending}
+        saveDisabled={isPending || isUpdating}
       />
 
-      {/* OCR 진행 배너 */}
       {isFromOcr && (
         <View style={styles.ocrBanner}>
           <Text style={styles.ocrBannerText}>
@@ -310,7 +299,6 @@ export const MedicationFormScreen: React.FC = () => {
         ]}
         keyboardShouldPersistTaps="always"
       >
-        {/* 처방전 등록 배너 — 신규 등록 모드에서만 */}
         {!isFromOcr && !isEdit && (
           <TouchableOpacity
             style={[styles.prescriptionBanner, { backgroundColor: colors.primaryMuted, borderColor: colors.primary + '30' }]}
@@ -378,56 +366,52 @@ export const MedicationFormScreen: React.FC = () => {
           />
         </View>
 
-        {/* 복약 시간대 */}
+        {/* 복약 시간 — 순수 시간 picker, 라벨 없음 */}
         <View style={styles.fieldCard}>
           <Text style={styles.label}>{t('settings:medication_time_slot')}</Text>
-          {TIME_SLOTS.map((s) => (
-            <View key={s.key} style={styles.slotRow}>
-              <View style={styles.slotLeft}>
-                <Switch
-                  value={activeSlots[s.key]}
-                  onValueChange={() => toggleSlot(s.key)}
-                  trackColor={{ false: colors.divider, true: colors.primaryLight }}
-                  thumbColor={activeSlots[s.key] ? colors.primary : colors.textDisabled}
-                />
-                <AnimatedPressable
-                  onPress={() => toggleSlot(s.key)}
-                  style={[
-                    styles.slotPill,
-                    activeSlots[s.key] && styles.slotPillActive,
-                  ]}
-                >
-                  <Text style={[
-                    styles.slotLabel,
-                    activeSlots[s.key] && styles.slotLabelActive,
-                  ]}>{s.label}</Text>
-                </AnimatedPressable>
-              </View>
-              {activeSlots[s.key] && (
+
+          {activeSlotIndices.map((slotIdx) => (
+            <View key={slotIdx} style={styles.timeRow}>
+              <Ionicons name="time-outline" size={18} color={colors.primary} />
+              <TouchableOpacity
+                style={styles.timePill}
+                onPress={() => setShowTimePicker(slotIdx)}
+              >
+                <Text style={styles.timePillText}>{formatTimeDisplay(slotTimes[slotIdx])}</Text>
+              </TouchableOpacity>
+              {activeSlotIndices.length > 1 && (
                 <TouchableOpacity
-                  style={styles.timePill}
-                  onPress={() => setShowTimePicker(s.key)}
+                  onPress={() => removeSlot(slotIdx)}
+                  hitSlop={8}
+                  style={styles.removeBtn}
                 >
-                  <Text style={styles.timePillText}>{formatTimeDisplay(slotTimes[s.key])}</Text>
+                  <Ionicons name="close-circle" size={20} color={colors.textDisabled} />
                 </TouchableOpacity>
               )}
             </View>
           ))}
+
+          {activeSlotIndices.length < 4 && (
+            <TouchableOpacity style={styles.addTimeBtn} onPress={addSlot}>
+              <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
+              <Text style={styles.addTimeBtnText}>{t('settings:medication_add_time')}</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* 시간 선택 모달 */}
-        {showTimePicker && (
+        {showTimePicker !== null && (
           <TimePickerModal
             visible
             initialHour={slotTimes[showTimePicker].getHours()}
             initialMinute={slotTimes[showTimePicker].getMinutes()}
             onConfirm={(h, m) => {
-              const slot = showTimePicker;
+              const idx = showTimePicker;
               setShowTimePicker(null);
               setSlotTimes((prev) => {
-                const d = new Date(prev[slot]);
+                const d = new Date(prev[idx]);
                 d.setHours(h, m, 0, 0);
-                return { ...prev, [slot]: d };
+                return { ...prev, [idx]: d };
               });
             }}
             onClose={() => setShowTimePicker(null)}
@@ -467,28 +451,22 @@ export const MedicationFormScreen: React.FC = () => {
           )}
         </View>
 
-        {/* 저장 버튼 — OCR 흐름이 아닐 때만 스크롤 내 표시 */}
-        {/*
-         * ScrollView + keyboardShouldPersistTaps="handled" 조합에서 AnimatedPressable 이
-         * 키보드 해제 우선순위에 밀려 첫 탭이 먹히는 버그가 있어 TouchableOpacity 사용.
-         */}
         {!isFromOcr && (
-          <TouchableOpacity onPress={handleSave} disabled={isPending} activeOpacity={0.85}>
+          <TouchableOpacity onPress={handleSave} disabled={isPending || isUpdating} activeOpacity={0.85}>
             <LinearGradient
               colors={[colors.primaryVivid, colors.primaryVividDark]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={[styles.saveBtn, isPending && styles.saveBtnDisabled]}
+              style={[styles.saveBtn, (isPending || isUpdating) && styles.saveBtnDisabled]}
             >
               <Text style={styles.saveBtnText}>
-                {isPending ? t('common:saving') : t('common:save')}
+                {isPending || isUpdating ? t('common:saving') : t('common:save')}
               </Text>
             </LinearGradient>
           </TouchableOpacity>
         )}
       </ScrollView>
 
-      {/* OCR 흐름: 다음 약품 버튼 */}
       {showNextButton && (
         <View style={styles.nextBtnWrap}>
           <TouchableOpacity onPress={handleSaveAndNext} disabled={isPending} activeOpacity={0.85}>
@@ -506,7 +484,6 @@ export const MedicationFormScreen: React.FC = () => {
         </View>
       )}
 
-      {/* OCR 흐름: 마지막 약 저장 버튼 */}
       {showFinishButton && (
         <View style={styles.nextBtnWrap}>
           <TouchableOpacity onPress={handleSaveAndFinish} disabled={isPending} activeOpacity={0.85}>
@@ -570,42 +547,42 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
       fontSize: sizes.font.md,
       color: colors.text,
     },
-    slotRow: {
+    // ── 시간 슬롯 ──
+    timeRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'space-between',
+      gap: sizes.spacing.sm,
       paddingVertical: sizes.spacing.xs,
     },
-    slotLeft: { flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.sm },
-    slotPill: {
-      paddingHorizontal: sizes.spacing.md,
-      paddingVertical: 4,
-      borderRadius: sizes.radius.full,
-      backgroundColor: 'transparent',
-    },
-    slotPillActive: {
+    timePill: {
+      flex: 1,
+      height: sizes.buttonHeight.md,
       backgroundColor: colors.primaryMuted,
+      borderRadius: sizes.radius.lg,
+      justifyContent: 'center',
+      paddingHorizontal: sizes.spacing.md,
     },
-    slotLabel: {
+    timePillText: {
       fontSize: sizes.font.md,
-      color: colors.textSub,
-      fontFamily: fontFamily.medium,
-    },
-    slotLabelActive: {
       color: colors.primary,
       fontFamily: fontFamily.semibold,
     },
-    timePill: {
-      paddingHorizontal: sizes.spacing.md,
-      paddingVertical: 6,
-      backgroundColor: colors.primaryMuted,
-      borderRadius: sizes.radius.full,
+    removeBtn: {
+      padding: sizes.spacing.xs,
     },
-    timePillText: {
+    addTimeBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: sizes.spacing.xs,
+      paddingVertical: sizes.spacing.sm,
+      alignSelf: 'flex-start',
+    },
+    addTimeBtnText: {
       fontSize: sizes.font.sm,
       color: colors.primary,
       fontFamily: fontFamily.medium,
     },
+    // ── 날짜 ──
     dateBtn: {
       height: sizes.buttonHeight.md,
       backgroundColor: colors.background,
@@ -616,18 +593,12 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
       justifyContent: 'center',
     },
     dateBtnText: { fontSize: sizes.font.md, color: colors.text },
-    doneBtn: { alignItems: 'flex-end', paddingVertical: sizes.spacing.xs },
-    doneBtnText: {
-      fontSize: sizes.font.md,
-      color: colors.primary,
-      fontFamily: fontFamily.semibold,
-    },
     endDateHint: {
       fontSize: sizes.font.xs,
       color: colors.textSub,
       marginTop: 2,
     },
-    // 저장 버튼
+    // ── 저장 버튼 ──
     saveBtn: {
       height: sizes.buttonHeight.lg,
       borderRadius: sizes.radius.full,
@@ -640,7 +611,7 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
       fontFamily: fontFamily.bold,
       color: colors.textInverse,
     },
-    // 다음 약품 버튼
+    // ── OCR 다음 버튼 ──
     nextBtnWrap: {
       position: 'absolute',
       bottom: 0,
@@ -665,7 +636,7 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
       fontFamily: fontFamily.bold,
       color: colors.textInverse,
     },
-    // 처방전 등록 배너
+    // ── 처방전 배너 ──
     prescriptionBanner: {
       flexDirection: 'row',
       alignItems: 'center',

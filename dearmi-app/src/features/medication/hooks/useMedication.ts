@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/constants/cacheKeys';
 import { medicationApi } from '@/features/medication/api/medicationApi';
 import { haptics } from '@/shared/utils/haptics';
-import type { CreateMedicationScheduleRequest, UpdateMedicationScheduleRequest, CheckMedicationRequest } from '@/shared/types/domain.types';
+import type { CreateMedicationScheduleRequest, UpdateMedicationScheduleRequest, CheckMedicationRequest, TimeSlotType } from '@/shared/types/domain.types';
 
 /** 특정 날짜(기본=오늘) 복약 현황 */
 export const useTodayMedication = (date?: string) =>
@@ -77,6 +77,66 @@ export const useCheckMedication = () => {
       haptics.success();
     },
     onError: () => haptics.error(),
+  });
+};
+
+/** 복약 체크 취소 (상태 초기화) */
+export const useUncheckMedication = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ scheduleId, date, timeSlot }: { scheduleId: string; date: string; timeSlot: TimeSlotType }) =>
+      medicationApi.uncheck(scheduleId, date, timeSlot),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todayMedication'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.medicationLogs() });
+      haptics.success();
+    },
+    onError: () => haptics.error(),
+  });
+};
+
+/** 사용자 슬롯 그룹 목록 */
+export const useMedicationSlotGroups = () =>
+  useQuery({
+    queryKey: QUERY_KEYS.medicationSlotGroups(),
+    queryFn: async () => {
+      const { data } = await medicationApi.listGroups();
+      return data.data ?? [];
+    },
+  });
+
+/** 슬롯 그룹 생성 */
+export const useCreateMedicationSlotGroup = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (groupName: string) => medicationApi.createGroup(groupName),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.medicationSlotGroups() });
+    },
+  });
+};
+
+/** 슬롯 그룹 삭제 */
+export const useDeleteMedicationSlotGroup = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (groupId: string) => medicationApi.deleteGroup(groupId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.medicationSlotGroups() });
+      queryClient.invalidateQueries({ queryKey: ['todayMedication'] });
+    },
+  });
+};
+
+/** 스케줄 슬롯에 그룹 연결 */
+export const useAssignMedicationSlotGroup = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ scheduleId, timeSlots, groupId }: { scheduleId: string; timeSlots: string[]; groupId: string | null }) =>
+      medicationApi.assignGroup(scheduleId, timeSlots, groupId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todayMedication'] });
+    },
   });
 };
 

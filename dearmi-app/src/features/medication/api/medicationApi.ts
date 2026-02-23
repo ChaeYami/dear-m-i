@@ -3,6 +3,7 @@ import type { ApiResponse } from '@/shared/types/api.types';
 import type {
   TodayMedication,
   MedicationSchedule,
+  MedicationSlotGroup,
   CreateMedicationScheduleRequest,
   UpdateMedicationScheduleRequest,
   CheckMedicationRequest,
@@ -52,4 +53,30 @@ export const medicationApi = {
     axiosInstance.get<ApiResponse<MedicationStats>>('/api/v1/medication-schedules/stats', {
       params: { startDate, endDate },
     }),
+
+  /** DELETE /api/v1/medication-schedules/{id}/logs — 복약 체크 취소 (상태 초기화) */
+  uncheck: (scheduleId: string, date: string, timeSlot: string) =>
+    axiosInstance.delete<ApiResponse<void>>(
+      `/api/v1/medication-schedules/${scheduleId}/logs`,
+      { params: { date, timeSlot } }
+    ),
+
+  /** GET /api/v1/medication-slot-groups — 사용자 그룹 목록 */
+  listGroups: () =>
+    axiosInstance.get<ApiResponse<MedicationSlotGroup[]>>('/api/v1/medication-slot-groups'),
+
+  /** POST /api/v1/medication-slot-groups — 그룹 생성 */
+  createGroup: (groupName: string) =>
+    axiosInstance.post<ApiResponse<MedicationSlotGroup>>('/api/v1/medication-slot-groups', { groupName }),
+
+  /** DELETE /api/v1/medication-slot-groups/{id} — 그룹 삭제 */
+  deleteGroup: (groupId: string) =>
+    axiosInstance.delete<ApiResponse<void>>(`/api/v1/medication-slot-groups/${groupId}`),
+
+  /** PUT /api/v1/medication-schedules/{id}/group — 슬롯들에 그룹 연결 */
+  assignGroup: (scheduleId: string, timeSlots: string[], groupId: string | null) =>
+    axiosInstance.put<ApiResponse<void>>(
+      `/api/v1/medication-schedules/${scheduleId}/group`,
+      { timeSlots, groupId }
+    ),
 };

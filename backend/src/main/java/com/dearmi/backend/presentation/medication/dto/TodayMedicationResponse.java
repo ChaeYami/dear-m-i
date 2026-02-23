@@ -25,7 +25,9 @@ public record TodayMedicationResponse(List<ScheduleDto> schedules) {
             String timeSlot,
             LocalTime notifyTime,
             String status,
-            UUID logId
+            UUID logId,
+            UUID groupId,
+            String groupName
     ) {}
 
     public static TodayMedicationResponse from(TodayMedicationResult result) {
@@ -34,7 +36,9 @@ public record TodayMedicationResponse(List<ScheduleDto> schedules) {
                         s.scheduleId(), s.drugName(), s.dosage(),
                         s.timesPerDay(), s.startDate(), s.endDate(),
                         s.slots().stream()
-                                .map(sl -> new SlotDto(sl.timeSlot(), sl.notifyTime(), sl.status(), sl.logId()))
+                                .map(sl -> new SlotDto(
+                                        sl.timeSlot(), sl.notifyTime(), sl.status(), sl.logId(),
+                                        sl.groupId(), sl.groupName()))
                                 .toList()
                 ))
                 .toList();

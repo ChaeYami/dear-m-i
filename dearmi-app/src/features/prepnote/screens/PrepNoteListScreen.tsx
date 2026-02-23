@@ -173,7 +173,7 @@ export const PrepNoteListScreen: React.FC = () => {
     },
     fab: {
       position: 'absolute',
-      bottom: tabBarSafeBottom + sizes.spacing.md,
+      bottom: tabBarSafeBottom,
       right: sizes.spacing.xl,
       width: 56,
       height: 56,

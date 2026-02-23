@@ -22,6 +22,8 @@ public record TodayMedicationResult(List<ScheduleWithLogs> schedules) {
             String timeSlot,          // MORNING, AFTERNOON, EVENING, BEDTIME
             LocalTime notifyTime,     // 해당 시간대 알림 시각
             String status,            // TAKEN, SKIPPED, MISSED — null이면 아직 기록 없음
-            UUID logId
+            UUID logId,
+            UUID groupId,             // 슬롯 그룹 ID (null이면 그룹 없음)
+            String groupName          // 슬롯 그룹 이름 (null이면 그룹 없음)
     ) {}
 }

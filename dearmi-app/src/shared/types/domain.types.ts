@@ -216,12 +216,20 @@ export interface CheckinSummary {
 export type TimeSlotType = 'MORNING' | 'AFTERNOON' | 'EVENING' | 'BEDTIME';
 export type MedicationLogStatus = 'TAKEN' | 'SKIPPED' | 'MISSED';
 
+/** 복약 슬롯 그룹 */
+export interface MedicationSlotGroup {
+  id: string;
+  groupName: string;
+}
+
 /** 오늘 복약 현황 — 시간대별 상태 */
 export interface MedicationSlot {
   timeSlot: TimeSlotType;
   notifyTime?: string; // "HH:mm:ss" | null
   status: MedicationLogStatus | null;
   logId: string | null;
+  groupId?: string | null;
+  groupName?: string | null;
 }
 
 /** 오늘 복약 일정 항목 (일정 + 슬롯 목록) */

@@ -338,7 +338,7 @@ export const CheckinHomeScreen: React.FC = () => {
               onPress={() =>
                 (navigationRef.current as any)?.navigate('Main', {
                   screen: 'Care',
-                  params: { screen: 'PrepNoteForm', params: { scheduleId: String(nextSchedule.id) } },
+                  params: { screen: 'ScheduleDetail', params: { scheduleId: String(nextSchedule.id) } },
                 })
               }
               activeOpacity={0.85}

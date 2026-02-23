@@ -102,6 +102,37 @@ public class MedicationSchedule extends BaseTimeEntity {
     @Column(name = "bedtime_time")
     private LocalTime bedtimeTime;
 
+    // 슬롯 그룹 연결 (nullable — 그룹 없으면 null)
+    @Column(name = "morning_group_id", columnDefinition = "uuid")
+    private UUID morningGroupId;
+
+    @Column(name = "afternoon_group_id", columnDefinition = "uuid")
+    private UUID afternoonGroupId;
+
+    @Column(name = "evening_group_id", columnDefinition = "uuid")
+    private UUID eveningGroupId;
+
+    @Column(name = "bedtime_group_id", columnDefinition = "uuid")
+    private UUID bedtimeGroupId;
+
+    public void assignGroup(TimeSlot slot, UUID groupId) {
+        switch (slot) {
+            case MORNING   -> this.morningGroupId   = groupId;
+            case AFTERNOON -> this.afternoonGroupId = groupId;
+            case EVENING   -> this.eveningGroupId   = groupId;
+            case BEDTIME   -> this.bedtimeGroupId   = groupId;
+        }
+    }
+
+    public UUID getGroupId(TimeSlot slot) {
+        return switch (slot) {
+            case MORNING   -> morningGroupId;
+            case AFTERNOON -> afternoonGroupId;
+            case EVENING   -> eveningGroupId;
+            case BEDTIME   -> bedtimeGroupId;
+        };
+    }
+
     public void updateDrugInfo(String drugEffect, String drugUsage, String drugCaution, String drugCategory, String manufacturer, String itemSeq) {
         this.drugEffect = drugEffect;
         this.drugUsage = drugUsage;

@@ -32,4 +32,6 @@ public interface MedicationLogRepository {
     List<MedicationLog> findByMedicationScheduleId(UUID medicationScheduleId);
 
     boolean existsByMedicationScheduleIdAndLogDateAndTimeSlot(UUID medicationScheduleId, LocalDate logDate, String timeSlot);
+
+    void delete(MedicationLog log);
 }

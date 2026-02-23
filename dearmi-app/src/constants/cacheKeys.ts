@@ -78,6 +78,7 @@ export const QUERY_KEYS = {
     ['medicationLogs', startDate, endDate] as const,
   medicationStats: (startDate?: string, endDate?: string) =>
     ['medicationStats', startDate, endDate] as const,
+  medicationSlotGroups: () => ['medicationSlotGroups'] as const,
 
   // 알림 히스토리
   notificationHistory: () => ['notificationHistory'] as const,

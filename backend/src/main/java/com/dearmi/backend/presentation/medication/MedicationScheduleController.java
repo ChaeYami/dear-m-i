@@ -23,12 +23,14 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MedicationScheduleController {
 
+    private final AssignSlotGroupUseCase assignSlotGroupUseCase;
     private final GetTodayMedicationUseCase getTodayMedicationUseCase;
     private final ListMedicationSchedulesUseCase listMedicationSchedulesUseCase;
     private final CreateMedicationScheduleUseCase createMedicationScheduleUseCase;
     private final UpdateMedicationScheduleUseCase updateMedicationScheduleUseCase;
     private final DeleteMedicationScheduleUseCase deleteMedicationScheduleUseCase;
     private final CheckMedicationUseCase checkMedicationUseCase;
+    private final UncheckMedicationUseCase uncheckMedicationUseCase;
     private final GetMedicationHistoryUseCase getMedicationHistoryUseCase;
     private final GetMedicationStatsUseCase getMedicationStatsUseCase;
     private final GetMedicationScheduleDrugInfoUseCase getMedicationScheduleDrugInfoUseCase;
@@ -145,6 +147,31 @@ public class MedicationScheduleController {
         return ApiResponse.success(
                 MedicationLogResponse.from(checkMedicationUseCase.check(command))
         );
+    }
+
+    /** PUT /api/v1/medication-schedules/{id}/group — 슬롯들에 그룹 연결 (groupId=null이면 해제) */
+    @PutMapping("/{id}/group")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void assignGroup(
+            @AuthenticatedUserId UUID userId,
+            @PathVariable UUID id,
+            @Valid @RequestBody AssignGroupRequest request
+    ) {
+        assignSlotGroupUseCase.assign(userId, id, request.timeSlots(), request.groupId());
+    }
+
+    record AssignGroupRequest(@jakarta.validation.constraints.NotEmpty java.util.List<String> timeSlots, UUID groupId) {}
+
+    /** DELETE /api/v1/medication-schedules/{id}/logs?date=&timeSlot= — 복약 체크 취소 (상태 초기화) */
+    @DeleteMapping("/{id}/logs")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void uncheck(
+            @AuthenticatedUserId UUID userId,
+            @PathVariable UUID id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam String timeSlot
+    ) {
+        uncheckMedicationUseCase.uncheck(userId, id, date, timeSlot);
     }
 
     /** GET /api/v1/medication-schedules/logs?startDate=&endDate= — 복약 이력 (무료 30일 강제) */

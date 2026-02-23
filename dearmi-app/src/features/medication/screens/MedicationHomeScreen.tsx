@@ -25,6 +25,7 @@ import { softShadow, floatingShadow } from '@/shared/theme/shadows';
 import {
   useTodayMedication,
   useCheckMedication,
+  useUncheckMedication,
   useDeleteMedicationSchedule,
 } from '@/features/medication/hooks/useMedication';
 import {
@@ -40,8 +41,9 @@ import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import { useTabBarScrollHide } from '@/shared/hooks/useTabBarScrollHide';
 import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
-import type { TimeSlotType } from '@/shared/types/domain.types';
+import type { TimeSlotType, MedicationLogStatus } from '@/shared/types/domain.types';
 import { DatePickerModal } from '@/features/schedule/components/DatePickerModal';
+import { MedicationGroupModal } from '@/features/medication/components/MedicationGroupModal';
 
 type Nav = CompositeNavigationProp<
   StackNavigationProp<MedicationStackParamList, 'MedicationHome'>,
@@ -97,13 +99,17 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
   }, []);
 
   const { data, isLoading } = useTodayMedication(isToday ? undefined : selectedDate);
-  const { mutate: checkMedication, isPending: isChecking } = useCheckMedication();
+  const { mutate: checkMedication } = useCheckMedication();
+  const { mutate: uncheckMedication } = useUncheckMedication();
   const { mutate: deleteMedicationSchedule } = useDeleteMedicationSchedule();
 
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // 선택 단위: "scheduleId:timeSlot"
+  type SlotKey = `${string}:${TimeSlotType}`;
+  const [selectedSlotKeys, setSelectedSlotKeys] = useState<Set<SlotKey>>(new Set());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showGroupModal, setShowGroupModal] = useState(false);
 
   // 현재 시각 기준 자동 스크롤 — 오늘 화면에서만 동작
   const scrollViewRef = useRef<ScrollView>(null);
@@ -117,24 +123,30 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
     return 'BEDTIME';
   };
 
-  const toggleSelect = (scheduleId: string) => {
-    setSelectedIds((prev) => {
+  const makeSlotKey = (scheduleId: string, timeSlot: TimeSlotType): `${string}:${TimeSlotType}` =>
+    `${scheduleId}:${timeSlot}`;
+
+  const toggleSelect = (scheduleId: string, timeSlot: TimeSlotType) => {
+    const key = makeSlotKey(scheduleId, timeSlot);
+    setSelectedSlotKeys((prev) => {
       const next = new Set(prev);
-      next.has(scheduleId) ? next.delete(scheduleId) : next.add(scheduleId);
+      next.has(key) ? next.delete(key) : next.add(key);
       return next;
     });
   };
 
   const handleDeleteSelected = () => {
-    if (selectedIds.size === 0) return;
-    customAlert(t('settings:medication_delete_title'), t('settings:medication_delete_confirm_count', { count: selectedIds.size }), [
+    if (selectedSlotKeys.size === 0) return;
+    // 고유 scheduleId 추출
+    const scheduleIds = [...new Set([...selectedSlotKeys].map((k) => k.split(':')[0]))];
+    customAlert(t('settings:medication_delete_title'), t('settings:medication_delete_confirm_count', { count: scheduleIds.length }), [
       { text: t('common:cancel'), style: 'cancel' },
       {
         text: t('common:delete'),
         style: 'destructive',
         onPress: () => {
-          selectedIds.forEach((id) => deleteMedicationSchedule(id));
-          setSelectedIds(new Set());
+          scheduleIds.forEach((id) => deleteMedicationSchedule(id));
+          setSelectedSlotKeys(new Set());
           setIsEditMode(false);
         },
       },
@@ -168,42 +180,75 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
     ]);
   };
 
-  const handleCheck = (scheduleId: string, status: 'TAKEN' | 'SKIPPED', timeSlot: TimeSlotType, logDate?: string) => {
+  const handleCheck = (
+    scheduleId: string,
+    requestedStatus: 'TAKEN' | 'SKIPPED',
+    timeSlot: TimeSlotType,
+    currentStatus: MedicationLogStatus | null,
+    logDate?: string,
+  ) => {
+    const date = logDate ?? selectedDate;
     setPendingIds((prev) => new Set(prev).add(scheduleId));
-    checkMedication(
-      { scheduleId, req: { logDate: logDate ?? selectedDate, timeSlot, status } },
-      { onSettled: () => setPendingIds((prev) => { const next = new Set(prev); next.delete(scheduleId); return next; }) }
-    );
+    const onSettled = () =>
+      setPendingIds((prev) => { const next = new Set(prev); next.delete(scheduleId); return next; });
+
+    if (currentStatus === requestedStatus) {
+      // 같은 버튼 재클릭 → 상태 초기화
+      uncheckMedication({ scheduleId, date, timeSlot }, { onSettled });
+    } else {
+      checkMedication({ scheduleId, req: { logDate: date, timeSlot, status: requestedStatus } }, { onSettled });
+    }
   };
 
-  // 시간대별 SlotItem 그룹 생성
+  // 시간대별 SlotItem 빌드 (groupId/groupName/timeSlot 포함)
   const slotGroups = useMemo<Record<TimeSlotType, SlotItem[]>>(() => {
     const groups: Record<TimeSlotType, SlotItem[]> = {
       MORNING: [], AFTERNOON: [], EVENING: [], BEDTIME: [],
     };
     for (const schedule of data?.schedules ?? []) {
       for (const slot of schedule.slots) {
-        groups[slot.timeSlot].push({
+        groups[slot.timeSlot as TimeSlotType].push({
           scheduleId: schedule.scheduleId,
           drugName: schedule.drugName,
           dosage: schedule.dosage,
           status: slot.status,
           logId: slot.logId,
           notifyTime: slot.notifyTime,
+          groupId: slot.groupId,
+          groupName: slot.groupName,
+          timeSlot: slot.timeSlot as TimeSlotType,
         });
       }
     }
     return groups;
   }, [data]);
 
-  const allScheduleIds = useMemo(() => {
-    const ids: string[] = [];
+  // 그룹 기반 섹션 계산: groupId 있으면 그룹으로 합침, 없으면 timeSlot별 개별 섹션
+  const sections = useMemo(() => {
+    const sectionMap = new Map<string, { label: string; color: string; items: SlotItem[]; notifyTime?: string }>();
     for (const slot of TIME_SLOTS) {
       for (const item of slotGroups[slot]) {
-        if (!ids.includes(item.scheduleId)) ids.push(item.scheduleId);
+        const sectionKey = item.groupId ?? `${slot}::${item.scheduleId}`;
+        const label = item.groupName ?? SLOT_LABELS[slot];
+        const color = item.groupId ? '#6366F1' : SLOT_COLORS[slot];
+        if (!sectionMap.has(sectionKey)) {
+          sectionMap.set(sectionKey, { label, color, items: [], notifyTime: item.notifyTime });
+        }
+        sectionMap.get(sectionKey)!.items.push(item);
       }
     }
-    return ids;
+    return [...sectionMap.entries()].map(([key, val]) => ({ key, ...val }));
+  }, [slotGroups]);
+
+  // 편집 모드 전체선택용 모든 슬롯 키
+  const allSlotKeys = useMemo(() => {
+    const keys: `${string}:${TimeSlotType}`[] = [];
+    for (const slot of TIME_SLOTS) {
+      for (const item of slotGroups[slot]) {
+        keys.push(`${item.scheduleId}:${slot}`);
+      }
+    }
+    return keys;
   }, [slotGroups]);
 
   const { totalSlots, takenSlots } = useMemo(() => {
@@ -268,7 +313,7 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
 
   if (isLoading) return <LoadingSpinner fullscreen />;
 
-  const hasAnySlots = TIME_SLOTS.some((s) => slotGroups[s].length > 0);
+  const hasAnySlots = sections.length > 0;
 
   const styles = getStyles(colors, tabBarSafeBottom);
 
@@ -340,30 +385,42 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
           <TouchableOpacity
             style={styles.selectAllBtn}
             onPress={() => {
-              if (selectedIds.size === allScheduleIds.length) {
-                setSelectedIds(new Set());
+              if (selectedSlotKeys.size === allSlotKeys.length) {
+                setSelectedSlotKeys(new Set());
               } else {
-                setSelectedIds(new Set(allScheduleIds));
+                setSelectedSlotKeys(new Set(allSlotKeys));
               }
             }}
           >
             <Ionicons
-              name={selectedIds.size === allScheduleIds.length ? 'checkbox' : 'square-outline'}
+              name={selectedSlotKeys.size === allSlotKeys.length && allSlotKeys.length > 0 ? 'checkbox' : 'square-outline'}
               size={20}
               color={colors.primary}
             />
             <Text style={styles.selectAllText}>{t('common:select_all')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.deleteSelectedBtn, selectedIds.size === 0 && styles.deleteSelectedBtnDisabled]}
-            onPress={handleDeleteSelected}
-            disabled={selectedIds.size === 0}
-          >
-            <Ionicons name="trash-outline" size={16} color={selectedIds.size > 0 ? colors.error : colors.textDisabled} />
-            <Text style={[styles.deleteSelectedText, selectedIds.size === 0 && styles.deleteSelectedTextDisabled]}>
-              {t('settings:medication_delete_with_count', { count: selectedIds.size })}
-            </Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <TouchableOpacity
+              style={[styles.groupBtn, selectedSlotKeys.size === 0 && styles.deleteSelectedBtnDisabled]}
+              onPress={() => selectedSlotKeys.size > 0 && setShowGroupModal(true)}
+              disabled={selectedSlotKeys.size === 0}
+            >
+              <Ionicons name="layers-outline" size={16} color={selectedSlotKeys.size > 0 ? colors.primary : colors.textDisabled} />
+              <Text style={[styles.groupBtnText, selectedSlotKeys.size === 0 && styles.deleteSelectedTextDisabled]}>
+                {t('settings:medication_group_action')}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.deleteSelectedBtn, selectedSlotKeys.size === 0 && styles.deleteSelectedBtnDisabled]}
+              onPress={handleDeleteSelected}
+              disabled={selectedSlotKeys.size === 0}
+            >
+              <Ionicons name="trash-outline" size={16} color={selectedSlotKeys.size > 0 ? colors.error : colors.textDisabled} />
+              <Text style={[styles.deleteSelectedText, selectedSlotKeys.size === 0 && styles.deleteSelectedTextDisabled]}>
+                {t('settings:medication_delete_with_count', { count: selectedSlotKeys.size })}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
@@ -392,7 +449,7 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
               {isToday && hasAnySlots && (
                 <TouchableOpacity
                   onPress={() => {
-                    if (isEditMode) { setIsEditMode(false); setSelectedIds(new Set()); }
+                    if (isEditMode) { setIsEditMode(false); setSelectedSlotKeys(new Set()); }
                     else { setIsEditMode(true); }
                   }}
                   hitSlop={16}
@@ -459,38 +516,38 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
             )}
           </View>
         ) : (
-          TIME_SLOTS.map((slot) => {
-            if (slotGroups[slot].length === 0) return null;
-            const notifyTime = slotGroups[slot][0]?.notifyTime;
+          sections.map((section) => {
+            const firstItem = section.items[0];
+            const slot = firstItem?.timeSlot ?? 'MORNING';
             return (
               <View
-                key={slot}
+                key={section.key}
                 style={styles.slotGroup}
                 onLayout={(e) => { slotYPositions.current[slot] = e.nativeEvent.layout.y; }}
               >
                 <View style={styles.slotHeaderRow}>
-                  <Text style={[styles.slotHeaderLabel, { color: SLOT_COLORS[slot] }]}>
-                    {SLOT_LABELS[slot]}
+                  <Text style={[styles.slotHeaderLabel, { color: section.color }]}>
+                    {section.label}
                   </Text>
-                  {notifyTime && (
+                  {section.notifyTime && (
                     <Text style={[styles.slotHeaderTime, { color: colors.textSub }]}>
-                      {formatSlotTime(notifyTime)}
+                      {formatSlotTime(section.notifyTime)}
                     </Text>
                   )}
                 </View>
 
                 <View style={styles.medicationCardWrap}>
                   <MedicationCard
-                    items={slotGroups[slot]}
+                    items={section.items}
                     pendingScheduleIds={pendingIds}
                     isEditMode={isEditMode}
-                    selectedIds={selectedIds}
+                    selectedSlotKeys={selectedSlotKeys}
                     checkDisabled={isFutureDate}
-                    onToggleSelect={toggleSelect}
+                    onToggleSelect={(scheduleId, timeSlot) => toggleSelect(scheduleId, timeSlot)}
                     onDrugPress={(scheduleId, drugName) => showItemActions(scheduleId, drugName)}
                     onDelete={(scheduleId, drugName) => handleDelete(scheduleId, drugName)}
-                    onTaken={(scheduleId) => handleCheck(scheduleId, 'TAKEN', slot)}
-                    onSkipped={(scheduleId) => handleCheck(scheduleId, 'SKIPPED', slot)}
+                    onTaken={(scheduleId, currentStatus) => handleCheck(scheduleId, 'TAKEN', firstItem.timeSlot, currentStatus)}
+                    onSkipped={(scheduleId, currentStatus) => handleCheck(scheduleId, 'SKIPPED', firstItem.timeSlot, currentStatus)}
                   />
                 </View>
               </View>
@@ -519,6 +576,16 @@ export const MedicationHomeScreen: React.FC<{ embedded?: boolean }> = ({ embedde
         </TouchableOpacity>
       )}
 
+      <MedicationGroupModal
+        visible={showGroupModal}
+        selectedSlotKeys={selectedSlotKeys}
+        onSuccess={() => {
+          setShowGroupModal(false);
+          setSelectedSlotKeys(new Set());
+          setIsEditMode(false);
+        }}
+        onClose={() => setShowGroupModal(false)}
+      />
     </SafeAreaView>
   );
 };
@@ -684,6 +751,20 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBott
       color: colors.text,
       fontFamily: fontFamily.medium,
     },
+    groupBtn: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      gap: sizes.spacing.xs,
+      paddingHorizontal: sizes.spacing.md,
+      paddingVertical: sizes.spacing.sm,
+      borderRadius: sizes.radius.full,
+      backgroundColor: colors.primaryMuted,
+    },
+    groupBtnText: {
+      fontSize: sizes.font.sm,
+      color: colors.primary,
+      fontFamily: fontFamily.semibold,
+    },
     deleteSelectedBtn: {
       flexDirection: 'row' as const,
       alignItems: 'center' as const,
@@ -757,7 +838,7 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors'], tabBarSafeBott
     // ── FAB ──
     fab: {
       position: 'absolute',
-      bottom: tabBarSafeBottom + sizes.spacing.md,
+      bottom: tabBarSafeBottom,
       right: sizes.spacing.xl,
       width: 60,
       height: 60,

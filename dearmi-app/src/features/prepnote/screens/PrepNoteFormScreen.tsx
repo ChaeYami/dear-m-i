@@ -7,10 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
-  Switch,
-  Dimensions,
 } from 'react-native';
-import { LineChart } from 'react-native-chart-kit';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -22,9 +19,8 @@ import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { softShadow } from '@/shared/theme/shadows';
 import { useCreatePrepNote, useUpdatePrepNote, usePrepNotes } from '@/features/prepnote/hooks/usePrepNote';
 import { useRecentSchedules } from '@/features/record/hooks/useRecord';
-import { useCheckinSummary, useCheckinHistory } from '@/features/checkin/hooks/useCheckin';
+import { useCheckinSummary } from '@/features/checkin/hooks/useCheckin';
 import { useDailyNotes } from '@/features/checkin/hooks/useDailyNote';
-import { useSideEffectsSince } from '@/features/sideeffect/hooks/useSideEffect';
 import { useUnsavedChangesWarning } from '@/shared/hooks/useUnsavedChangesWarning';
 import type { CareStackParamList as ScheduleStackParamList } from '@/navigation/CareNavigator';
 import type { PrepNoteSections, DailyNote, DailyNoteType } from '@/shared/types/domain.types';
@@ -35,12 +31,6 @@ type Route = RouteProp<ScheduleStackParamList, 'PrepNoteForm'>;
 const formatDate = (iso: string) => {
   const d = new Date(iso);
   return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-};
-
-const sevenDaysAgoIso = () => {
-  const d = new Date();
-  d.setDate(d.getDate() - 7);
-  return d.toISOString();
 };
 
 const toDateStr = (d: Date) =>
@@ -91,7 +81,6 @@ export const PrepNoteFormScreen: React.FC = () => {
 
   // 자동 주입용 데이터
   const { data: checkinSummary } = useCheckinSummary();
-  const { data: recentSideEffects = [] } = useSideEffectsSince(sevenDaysAgoIso());
 
   // 최근 30일 스레드 메모 (메모 선택용)
   const thirtyDaysAgoStr = useMemo(() => {
@@ -102,19 +91,9 @@ export const PrepNoteFormScreen: React.FC = () => {
   const todayStr = useMemo(() => toDateStr(new Date()), []);
   const { data: recentDailyNotes = [] } = useDailyNotes(thirtyDaysAgoStr, todayStr);
 
-  // 미니 감정 차트용 — 최근 14일 체크인
-  const chartRange = useMemo(() => {
-    const end = new Date();
-    const start = new Date();
-    start.setDate(end.getDate() - 13);
-    const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    return { startDate: fmt(start), endDate: fmt(end) };
-  }, []);
-  const { data: chartHistory } = useCheckinHistory(chartRange.startDate, chartRange.endDate);
-
   const [content, setContent] = useState('');
   const [sections, setSections] = useState<PrepNoteSections>(emptySections());
-  const [showSelfHarm, setShowSelfHarm] = useState(false);
+  const [showFreeMemo, setShowFreeMemo] = useState(false);
   const [questionDraft, setQuestionDraft] = useState('');
   const [presetPickerOpen, setPresetPickerOpen] = useState(false);
   const [presetSelected, setPresetSelected] = useState<Set<string>>(new Set());
@@ -122,6 +101,16 @@ export const PrepNoteFormScreen: React.FC = () => {
   // 스레드 메모 선택 상태
   const [selectedNoteIds, setSelectedNoteIds] = useState<Set<string>>(new Set());
   const [showNoteSelector, setShowNoteSelector] = useState(false);
+
+  // 섹션 펼침 상태 (내용 있으면 기본 펼침)
+  const [expandedSections, setExpandedSections] = useState<Set<keyof PrepNoteSections>>(new Set());
+  const toggleSection = useCallback((key: keyof PrepNoteSections) => {
+    setExpandedSections((prev) => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  }, []);
 
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | undefined>(initialScheduleId);
   const [showSchedulePicker, setShowSchedulePicker] = useState(false);
@@ -141,12 +130,21 @@ export const PrepNoteFormScreen: React.FC = () => {
         questions: s.questions ?? [],
         selfHarmThoughts: s.selfHarmThoughts ?? '',
       });
-      if (s.selfHarmThoughts && s.selfHarmThoughts.trim()) setShowSelfHarm(true);
+      if (existingNote.content?.trim()) setShowFreeMemo(true);
     }
     setSelectedScheduleId(existingNote.scheduleId ?? undefined);
     if (existingNote.linkedNoteIds?.length) {
       setSelectedNoteIds(new Set(existingNote.linkedNoteIds));
     }
+    // 내용 있는 섹션 자동 펼침
+    const auto = new Set<keyof PrepNoteSections>();
+    if (s?.moodChanges?.trim()) auto.add('moodChanges');
+    if (s?.sideEffects?.trim()) auto.add('sideEffects');
+    if (s?.sleepAppetite?.trim()) auto.add('sleepAppetite');
+    if (s?.newSymptoms?.trim()) auto.add('newSymptoms');
+    if ((s?.questions ?? []).length > 0) auto.add('questions');
+    if (s?.selfHarmThoughts?.trim()) auto.add('selfHarmThoughts');
+    if (auto.size > 0) setExpandedSections(auto);
     setHydrated(true);
   }, [isEdit, existingNote, hydrated]);
 
@@ -233,7 +231,7 @@ export const PrepNoteFormScreen: React.FC = () => {
   const handleSave = () => {
     const cleanedSections: PrepNoteSections = {
       ...sections,
-      selfHarmThoughts: showSelfHarm ? (sections.selfHarmThoughts ?? '') : '',
+      selfHarmThoughts: expandedSections.has('selfHarmThoughts') ? (sections.selfHarmThoughts ?? '') : '',
     };
 
     if (!content.trim() && !hasAnySectionContent(cleanedSections)) {
@@ -426,153 +424,157 @@ export const PrepNoteFormScreen: React.FC = () => {
           )}
         </View>
 
-        {/* 미니 감정 차트 — 최근 14일 */}
-        <MiniEmotionChart
-          history={chartHistory?.content ?? []}
-          colors={colors}
-          styles={styles}
-          t={t}
-        />
-
         {/* 자동 인사이트 추천 카드 */}
         <InsightCard
           summary={checkinSummary ?? null}
-          recentSideEffectsCount={recentSideEffects.length}
-          recentSideEffectsSymptoms={recentSideEffects.slice(0, 3).map((s) => s.symptom)}
           appendSection={(key, value) => {
             const current = sections[key] ?? '';
             const next = (typeof current === 'string'
               ? (current.trim() ? current.trim() + '\n· ' + value : '· ' + value)
               : current);
             updateSection(key, next as any);
+            setExpandedSections((prev) => new Set([...prev, key as keyof PrepNoteSections]));
           }}
-          appendQuestion={(q) => addQuestion(q)}
+          appendQuestion={(q) => {
+            addQuestion(q);
+            setExpandedSections((prev) => new Set([...prev, 'questions' as keyof PrepNoteSections]));
+          }}
           colors={colors}
           styles={styles}
           t={t}
         />
 
-        {/* 최근 부작용 */}
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>{t('prepnote:side_effects_recent_title')}</Text>
-          {recentSideEffects.length === 0 ? (
-            <Text style={styles.summaryEmpty}>{t('prepnote:side_effects_recent_empty')}</Text>
-          ) : (
-            <View style={{ gap: 4 }}>
-              {recentSideEffects.slice(0, 3).map((s) => (
-                <Text key={s.id} style={styles.summaryEmpty}>
-                  · {s.symptom}{s.severity ? ` (${s.severity}/5)` : ''}
-                </Text>
-              ))}
-              {recentSideEffects.length > 3 && (
-                <Text style={[styles.summaryEmpty, { color: colors.primary }]}>
-                  {t('prepnote:side_effects_recent_more', { count: recentSideEffects.length - 3 })}
-                </Text>
-              )}
-            </View>
-          )}
-        </View>
-
-        {/* 섹션들 */}
-        <SectionField
+        {/* 섹션들 — collapsible */}
+        <CollapsibleSection
+          sectionKey="moodChanges"
           label={t('prepnote:section_mood_changes')}
           placeholder={t('prepnote:section_mood_changes_placeholder')}
           value={sections.moodChanges ?? ''}
           onChange={(v) => updateSection('moodChanges', v)}
+          expanded={expandedSections.has('moodChanges')}
+          onToggle={() => toggleSection('moodChanges')}
           styles={styles}
           colors={colors}
         />
-        <SectionField
+        <CollapsibleSection
+          sectionKey="sideEffects"
           label={t('prepnote:section_side_effects')}
           placeholder={t('prepnote:section_side_effects_placeholder')}
           value={sections.sideEffects ?? ''}
           onChange={(v) => updateSection('sideEffects', v)}
+          expanded={expandedSections.has('sideEffects')}
+          onToggle={() => toggleSection('sideEffects')}
           styles={styles}
           colors={colors}
         />
-        <SectionField
+        <CollapsibleSection
+          sectionKey="sleepAppetite"
           label={t('prepnote:section_sleep_appetite')}
           placeholder={t('prepnote:section_sleep_appetite_placeholder')}
           value={sections.sleepAppetite ?? ''}
           onChange={(v) => updateSection('sleepAppetite', v)}
+          expanded={expandedSections.has('sleepAppetite')}
+          onToggle={() => toggleSection('sleepAppetite')}
           styles={styles}
           colors={colors}
         />
-        <SectionField
+        <CollapsibleSection
+          sectionKey="newSymptoms"
           label={t('prepnote:section_new_symptoms')}
           placeholder={t('prepnote:section_new_symptoms_placeholder')}
           value={sections.newSymptoms ?? ''}
           onChange={(v) => updateSection('newSymptoms', v)}
+          expanded={expandedSections.has('newSymptoms')}
+          onToggle={() => toggleSection('newSymptoms')}
           styles={styles}
           colors={colors}
         />
 
-        {/* 질문 */}
+        {/* 질문 — collapsible */}
         <View style={styles.field}>
-          <View style={styles.questionsHeader}>
+          <TouchableOpacity
+            style={styles.sectionHeader}
+            onPress={() => toggleSection('questions')}
+            activeOpacity={0.7}
+          >
             <Text style={styles.label}>{t('prepnote:section_questions')}</Text>
-            <TouchableOpacity onPress={() => setPresetPickerOpen(true)} hitSlop={8}>
-              <Text style={styles.linkBtn}>+ {t('prepnote:section_questions_pick_preset')}</Text>
-            </TouchableOpacity>
-          </View>
-
-          {(sections.questions ?? []).length === 0 ? (
-            <Text style={[styles.summaryEmpty, { paddingHorizontal: 4 }]}>
-              {t('prepnote:section_questions_empty')}
-            </Text>
-          ) : (
-            <View style={{ gap: sizes.spacing.xs }}>
-              {(sections.questions ?? []).map((q, i) => (
-                <View key={i} style={styles.questionRow}>
-                  <Text style={styles.questionText}>· {q}</Text>
-                  <TouchableOpacity onPress={() => removeQuestion(i)} hitSlop={8}>
-                    <Ionicons name="close-circle" size={18} color={colors.textDisabled} />
-                  </TouchableOpacity>
-                </View>
-              ))}
+            <View style={styles.sectionHeaderRight}>
+              {(sections.questions ?? []).length > 0 && (
+                <Text style={styles.sectionCount}>{(sections.questions ?? []).length}</Text>
+              )}
+              <Ionicons
+                name={expandedSections.has('questions') ? 'chevron-up' : 'chevron-down'}
+                size={16}
+                color={colors.textSub}
+              />
             </View>
+          </TouchableOpacity>
+          {expandedSections.has('questions') && (
+            <>
+              <TouchableOpacity onPress={() => setPresetPickerOpen(true)} hitSlop={8} style={{ alignSelf: 'flex-end' }}>
+                <Text style={styles.linkBtn}>+ {t('prepnote:section_questions_pick_preset')}</Text>
+              </TouchableOpacity>
+              {(sections.questions ?? []).length === 0 ? (
+                <Text style={[styles.summaryEmpty, { paddingHorizontal: 4 }]}>
+                  {t('prepnote:section_questions_empty')}
+                </Text>
+              ) : (
+                <View style={{ gap: sizes.spacing.xs }}>
+                  {(sections.questions ?? []).map((q, i) => (
+                    <View key={i} style={styles.questionRow}>
+                      <Text style={styles.questionText}>· {q}</Text>
+                      <TouchableOpacity onPress={() => removeQuestion(i)} hitSlop={8}>
+                        <Ionicons name="close-circle" size={18} color={colors.textDisabled} />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              )}
+              <View style={styles.questionInputRow}>
+                <TextInput
+                  style={styles.questionInput}
+                  placeholder={t('prepnote:section_questions_add')}
+                  placeholderTextColor={colors.textDisabled}
+                  value={questionDraft}
+                  onChangeText={setQuestionDraft}
+                  onSubmitEditing={() => {
+                    addQuestion(questionDraft);
+                    setQuestionDraft('');
+                  }}
+                  returnKeyType="done"
+                />
+                <TouchableOpacity
+                  style={styles.questionAddBtn}
+                  onPress={() => {
+                    addQuestion(questionDraft);
+                    setQuestionDraft('');
+                  }}
+                >
+                  <Ionicons name="add" size={20} color={colors.primary} />
+                </TouchableOpacity>
+              </View>
+            </>
           )}
-
-          <View style={styles.questionInputRow}>
-            <TextInput
-              style={styles.questionInput}
-              placeholder={t('prepnote:section_questions_add')}
-              placeholderTextColor={colors.textDisabled}
-              value={questionDraft}
-              onChangeText={setQuestionDraft}
-              onSubmitEditing={() => {
-                addQuestion(questionDraft);
-                setQuestionDraft('');
-              }}
-              returnKeyType="done"
-            />
-            <TouchableOpacity
-              style={styles.questionAddBtn}
-              onPress={() => {
-                addQuestion(questionDraft);
-                setQuestionDraft('');
-              }}
-            >
-              <Ionicons name="add" size={20} color={colors.primary} />
-            </TouchableOpacity>
-          </View>
         </View>
 
-        {/* 자해/자살 사고 — 별도 토글 */}
+        {/* 자해/자살 사고 — 접이식 */}
         <View style={styles.selfHarmCard}>
-          <View style={styles.selfHarmHeader}>
+          <TouchableOpacity
+            style={styles.selfHarmHeader}
+            onPress={() => toggleSection('selfHarmThoughts')}
+            activeOpacity={0.7}
+          >
             <View style={{ flex: 1 }}>
               <Text style={styles.label}>{t('prepnote:section_self_harm')}</Text>
               <Text style={styles.selfHarmCaution}>{t('prepnote:section_self_harm_caution')}</Text>
             </View>
-            <Switch
-              value={showSelfHarm}
-              onValueChange={setShowSelfHarm}
-              trackColor={{ false: colors.divider, true: colors.primaryLight }}
-              thumbColor={showSelfHarm ? colors.primary : colors.textDisabled}
+            <Ionicons
+              name={expandedSections.has('selfHarmThoughts') ? 'chevron-up' : 'chevron-down'}
+              size={16}
+              color={colors.textSub}
             />
-          </View>
-          {showSelfHarm && (
+          </TouchableOpacity>
+          {expandedSections.has('selfHarmThoughts') && (
             <TextInput
               style={styles.textArea}
               placeholder={t('prepnote:section_self_harm_placeholder')}
@@ -585,18 +587,31 @@ export const PrepNoteFormScreen: React.FC = () => {
           )}
         </View>
 
-        {/* 자유 메모 (legacy content) */}
+        {/* 자유 메모 — collapsible */}
         <View style={styles.field}>
-          <Text style={styles.label}>{t('prepnote:section_free_memo')}</Text>
-          <TextInput
-            style={styles.textArea}
-            placeholder={t('prepnote:section_free_memo_placeholder')}
-            placeholderTextColor={colors.textDisabled}
-            value={content}
-            onChangeText={setContent}
-            multiline
-            textAlignVertical="top"
-          />
+          <TouchableOpacity
+            style={styles.sectionHeader}
+            onPress={() => setShowFreeMemo((v) => !v)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.label}>{t('prepnote:section_free_memo')}</Text>
+            <Ionicons
+              name={showFreeMemo ? 'chevron-up' : 'chevron-down'}
+              size={16}
+              color={colors.textSub}
+            />
+          </TouchableOpacity>
+          {showFreeMemo && (
+            <TextInput
+              style={styles.textArea}
+              placeholder={t('prepnote:section_free_memo_placeholder')}
+              placeholderTextColor={colors.textDisabled}
+              value={content}
+              onChangeText={setContent}
+              multiline
+              textAlignVertical="top"
+            />
+          )}
         </View>
       </ScrollView>
 
@@ -641,6 +656,18 @@ export const PrepNoteFormScreen: React.FC = () => {
   );
 };
 
+interface CollapsibleSectionProps {
+  sectionKey: keyof PrepNoteSections;
+  label: string;
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+  expanded: boolean;
+  onToggle: () => void;
+  styles: ReturnType<typeof makeStyles>;
+  colors: ReturnType<typeof useTheme>['colors'];
+}
+
 interface SectionFieldProps {
   label: string;
   placeholder: string;
@@ -650,61 +677,8 @@ interface SectionFieldProps {
   colors: ReturnType<typeof useTheme>['colors'];
 }
 
-interface MiniChartProps {
-  history: Array<{ checkedAt: string; emotionScore: number }>;
-  colors: ReturnType<typeof useTheme>['colors'];
-  styles: ReturnType<typeof makeStyles>;
-  t: ReturnType<typeof useTranslation>['t'];
-}
-
-const MiniEmotionChart: React.FC<MiniChartProps> = ({ history, colors, styles, t }) => {
-  const sorted = useMemo(
-    () => [...history].sort((a, b) => a.checkedAt.localeCompare(b.checkedAt)),
-    [history],
-  );
-  if (sorted.length < 2) return null;
-
-  const labels = sorted.map((c, i) => {
-    if (i === 0 || i === sorted.length - 1 || i === Math.floor(sorted.length / 2)) {
-      const [, mo, da] = c.checkedAt.split('-');
-      return `${Number(mo)}/${Number(da)}`;
-    }
-    return '';
-  });
-  const scores = sorted.map((c) => c.emotionScore);
-  const screenWidth = Dimensions.get('window').width - sizes.spacing.lg * 2 - sizes.spacing.md * 2;
-
-  return (
-    <View style={styles.summaryCard}>
-      <Text style={styles.summaryTitle}>{t('checkin:emotion_trend')}</Text>
-      <LineChart
-        data={{ labels, datasets: [{ data: scores }] }}
-        width={screenWidth}
-        height={140}
-        yAxisInterval={1}
-        segments={3}
-        fromZero={false}
-        chartConfig={{
-          backgroundGradientFrom: colors.surface,
-          backgroundGradientTo: colors.surface,
-          decimalPlaces: 0,
-          color: (opacity = 1) => `${colors.primary}${Math.round(opacity * 255).toString(16).padStart(2, '0')}`,
-          labelColor: () => colors.textSub,
-          propsForDots: { r: '3' },
-          propsForBackgroundLines: { stroke: colors.divider, strokeDasharray: '' },
-        }}
-        bezier
-        withVerticalLines={false}
-        style={{ marginLeft: -sizes.spacing.sm }}
-      />
-    </View>
-  );
-};
-
 interface InsightCardProps {
   summary: { averageEmotionScore: number | null; topTriggerTags: string[]; totalCheckins: number } | null;
-  recentSideEffectsCount: number;
-  recentSideEffectsSymptoms: string[];
   appendSection: (key: keyof PrepNoteSections, value: string) => void;
   appendQuestion: (q: string) => void;
   colors: ReturnType<typeof useTheme>['colors'];
@@ -713,8 +687,7 @@ interface InsightCardProps {
 }
 
 const InsightCard: React.FC<InsightCardProps> = ({
-  summary, recentSideEffectsCount, recentSideEffectsSymptoms,
-  appendSection, appendQuestion, colors, styles, t,
+  summary, appendSection, appendQuestion, colors, styles, t,
 }) => {
   const insights: Array<{ label: string; onApply: () => void }> = [];
 
@@ -741,16 +714,6 @@ const InsightCard: React.FC<InsightCardProps> = ({
     }
   }
 
-  if (recentSideEffectsCount > 0) {
-    insights.push({
-      label: t('prepnote:insight_side_effects', {
-        count: recentSideEffectsCount,
-        defaultValue: `최근 부작용 ${recentSideEffectsCount}건 — '약 부작용'에 추가`,
-      }),
-      onApply: () => recentSideEffectsSymptoms.forEach((s) => appendSection('sideEffects', s)),
-    });
-  }
-
   if (insights.length === 0) return null;
 
   return (
@@ -770,6 +733,33 @@ const InsightCard: React.FC<InsightCardProps> = ({
     </View>
   );
 };
+
+const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
+  label, placeholder, value, onChange, expanded, onToggle, styles, colors,
+}) => (
+  <View style={styles.field}>
+    <TouchableOpacity style={styles.sectionHeader} onPress={onToggle} activeOpacity={0.7}>
+      <Text style={styles.label}>{label}</Text>
+      <View style={styles.sectionHeaderRight}>
+        {value.trim().length > 0 && (
+          <View style={styles.sectionDot} />
+        )}
+        <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textSub} />
+      </View>
+    </TouchableOpacity>
+    {expanded && (
+      <TextInput
+        style={styles.textArea}
+        placeholder={placeholder}
+        placeholderTextColor={colors.textDisabled}
+        value={value}
+        onChangeText={onChange}
+        multiline
+        textAlignVertical="top"
+      />
+    )}
+  </View>
+);
 
 const SectionField: React.FC<SectionFieldProps> = ({ label, placeholder, value, onChange, styles, colors }) => (
   <View style={styles.field}>
@@ -791,6 +781,27 @@ const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
     container: { flex: 1, backgroundColor: colors.background },
     content: { padding: sizes.spacing.lg, gap: sizes.spacing.lg, paddingBottom: 80 },
     field: { gap: sizes.spacing.sm },
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    sectionHeaderRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: sizes.spacing.xs,
+    },
+    sectionDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: colors.primary,
+    },
+    sectionCount: {
+      fontSize: sizes.font.xs,
+      color: colors.primary,
+      fontFamily: fontFamily.semibold,
+    },
     label: {
       fontSize: sizes.font.sm,
       fontFamily: fontFamily.semibold,

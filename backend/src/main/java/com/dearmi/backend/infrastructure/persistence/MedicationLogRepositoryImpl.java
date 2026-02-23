@@ -64,4 +64,9 @@ public class MedicationLogRepositoryImpl implements MedicationLogRepository {
             UUID medicationScheduleId, LocalDate logDate, String timeSlot) {
         return jpa.existsByMedicationScheduleIdAndLogDateAndTimeSlot(medicationScheduleId, logDate, timeSlot);
     }
+
+    @Override
+    public void delete(MedicationLog log) {
+        jpa.delete(log);
+    }
 }
