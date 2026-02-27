@@ -63,15 +63,6 @@ export const EmotionGraph: React.FC = () => {
   const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 5;
   const avgColor = getEmotionColor(Math.round(avgScore));
 
-  if (sorted.length === 0) {
-    return (
-      <View style={[styles.emptyContainer, { backgroundColor: colors.surface }]}>
-        <Text style={[styles.emptyText, { color: colors.textSub }]}>{t('graph_empty')}</Text>
-        <Text style={[styles.emptySubText, { color: colors.textDisabled }]}>{t('graph_empty_desc')}</Text>
-      </View>
-    );
-  }
-
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <View style={styles.periodRow}>
@@ -105,7 +96,14 @@ export const EmotionGraph: React.FC = () => {
         })}
       </View>
 
-      <LineChart
+      {sorted.length === 0 ? (
+        <View style={styles.emptyInner}>
+          <Text style={[styles.emptyText, { color: colors.textSub }]}>{t('graph_empty')}</Text>
+          <Text style={[styles.emptySubText, { color: colors.textDisabled }]}>{t('graph_empty_desc')}</Text>
+        </View>
+      ) : (
+        <>
+          <LineChart
         data={{
           labels,
           datasets: [{ data: scores.length > 0 ? scores : [5] }],
@@ -140,13 +138,15 @@ export const EmotionGraph: React.FC = () => {
         withOuterLines={false}
       />
 
-      <View style={styles.avgRow}>
-        <View style={[styles.avgDot, { backgroundColor: avgColor }]} />
-        <Text style={[styles.avgText, { color: colors.text }]}>
-          {t('avg_score', { score: avgScore.toFixed(1) })}
-        </Text>
-        <Text style={[styles.avgCount, { color: colors.textSub }]}>{t('days_recorded', { count: sorted.length })}</Text>
-      </View>
+          <View style={styles.avgRow}>
+            <View style={[styles.avgDot, { backgroundColor: avgColor }]} />
+            <Text style={[styles.avgText, { color: colors.text }]}>
+              {t('avg_score', { score: avgScore.toFixed(1) })}
+            </Text>
+            <Text style={[styles.avgCount, { color: colors.textSub }]}>{t('days_recorded', { count: sorted.length })}</Text>
+          </View>
+        </>
+      )}
     </View>
   );
 };
@@ -197,9 +197,8 @@ const styles = StyleSheet.create({
   avgCount: {
     fontSize: sizes.font.xs,
   },
-  emptyContainer: {
-    borderRadius: sizes.radius.lg,
-    padding: sizes.spacing.xl,
+  emptyInner: {
+    paddingVertical: sizes.spacing.xl,
     alignItems: 'center',
     gap: sizes.spacing.xs,
   },
