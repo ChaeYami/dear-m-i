@@ -92,7 +92,7 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.chloee0033.dearmiapp",
-      "versionCode": 4,
+      "versionCode": 6,
       "googleServicesFile": "./google-services.json",
       "permissions": [
         "android.permission.RECORD_AUDIO"
