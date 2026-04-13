@@ -11,7 +11,7 @@
 ## 스택 한 줄 요약
 RN 0.81 + Expo SDK 54, Zustand ^5 + React Query ^5, MMKV + SecureStore, i18next.
 Spring Boot 3.5 + JPA + QueryDSL + Flyway, PostgreSQL 15, JWT(OAuth2: Google/Apple),
-S3(Presigned), FCM, Claude Vision(OCR), e약은요(약품 30일 캐시), 토스페이먼츠/IAP.
+S3(Presigned), Expo Push, Claude Vision(OCR), e약은요(약품 30일 캐시), 토스페이먼츠/IAP.
 배포: AWS ECS Fargate + RDS + S3, 시크릿 AWS Secrets Manager (운영) / `.env` (로컬).
 
 ## 보안 6원칙 (절대 위반 금지)

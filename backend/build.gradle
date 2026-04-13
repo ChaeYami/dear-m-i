@@ -70,9 +70,6 @@ dependencies {
     // WebClient (약학정보원 API 연동)
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
-    // Firebase Admin SDK (FCM 푸시 알림)
-    implementation 'com.google.firebase:firebase-admin:9.3.0'
-
     // Google Play Developer API — 구독 영수증 서버 검증
     implementation 'com.google.apis:google-api-services-androidpublisher:v3-rev20260318-2.0.0'
     implementation 'com.google.auth:google-auth-library-oauth2-http:1.23.0'

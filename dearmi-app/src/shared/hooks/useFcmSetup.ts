@@ -2,15 +2,19 @@ import { useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import notificationApi from '@/features/notification/api';
 import i18n from '@/locales/i18n';
 
 /**
- * FCM 푸시 알림 초기 설정
+ * 푸시 알림 초기 설정 (Expo Push Service)
  * - 실기기 여부 확인
  * - 권한 요청
- * - FCM 토큰 획득 후 서버에 등록
- * MainTabNavigator에서 한 번만 호출
+ * - Expo Push 토큰 (`ExponentPushToken[...]`) 획득 후 서버에 등록
+ *
+ * iOS/Android 단일 토큰 형식. Expo 가 내부적으로 APNs/FCM 분배.
+ * 백엔드는 이 토큰을 Expo Push API (https://exp.host/--/api/v2/push/send) 로 그대로 전송.
+ * MainTabNavigator에서 한 번만 호출.
  */
 export const useFcmSetup = () => {
   useEffect(() => {
@@ -65,12 +69,18 @@ export const useFcmSetup = () => {
     ]);
 
     try {
-      const tokenData = await Notifications.getDevicePushTokenAsync();
+      // Expo Push token 발급 — projectId 필수 (EAS Build 환경에서도 동일하게 동작).
+      // iOS 는 APNs 키, Android 는 FCM 서버 키를 Expo 가 대신 관리한다.
+      const projectId =
+        Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+      if (!projectId) return;
+
+      const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
       await notificationApi.registerToken({
         fcmToken: tokenData.data,
       });
     } catch (e) {
-      // FCM 토큰 등록 실패는 무시 (알림 미수신으로 이어질 수 있으나 앱 동작에 영향 없음)
+      // 토큰 등록 실패는 무시 (알림 미수신으로 이어질 수 있으나 앱 동작에 영향 없음)
     }
   };
 };
