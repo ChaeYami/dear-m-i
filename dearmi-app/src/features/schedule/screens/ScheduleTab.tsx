@@ -132,23 +132,28 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
     setSelectedDate(getTodayString());
   }, []);
 
-  const handlePrevMonth = () => {
-    let y = visibleYear;
-    let m = visibleMonth - 1;
-    if (m === 0) { m = 12; y -= 1; }
-    setVisibleYear(y);
-    setVisibleMonth(m);
-    if (viewMode === 'week') setSelectedDate(`${y}-${String(m).padStart(2, '0')}-01`);
+  // 주간 모드: 7일씩 이동 / 전체 모드: 한 달씩 이동
+  const shiftWeek = (delta: 1 | -1) => {
+    const d = new Date(selectedDate);
+    d.setDate(d.getDate() + delta * 7);
+    setSelectedDate(
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+    );
+    setVisibleYear(d.getFullYear());
+    setVisibleMonth(d.getMonth() + 1);
   };
 
-  const handleNextMonth = () => {
+  const shiftMonth = (delta: 1 | -1) => {
     let y = visibleYear;
-    let m = visibleMonth + 1;
-    if (m === 13) { m = 1; y += 1; }
+    let m = visibleMonth + delta;
+    if (m === 0) { m = 12; y -= 1; }
+    else if (m === 13) { m = 1; y += 1; }
     setVisibleYear(y);
     setVisibleMonth(m);
-    if (viewMode === 'week') setSelectedDate(`${y}-${String(m).padStart(2, '0')}-01`);
   };
+
+  const handlePrevMonth = () => (viewMode === 'week' ? shiftWeek(-1) : shiftMonth(-1));
+  const handleNextMonth = () => (viewMode === 'week' ? shiftWeek(1) : shiftMonth(1));
 
   const isPast = useCallback((iso: string) => toDateString(iso) < todayStr, [todayStr]);
 
