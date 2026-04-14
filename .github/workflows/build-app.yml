@@ -1,4 +1,4 @@
-name: Build App (EAS)
+name: Build & Submit App (EAS)
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       platform:
-        description: 'Build platform'
+        description: 'Target platform'
         required: true
         default: 'all'
         type: choice
@@ -17,10 +17,16 @@ on:
           - all
           - ios
           - android
+      submit:
+        description: 'Auto-submit to stores (TestFlight / Play Internal)'
+        required: true
+        default: true
+        type: boolean
 
 jobs:
-  build:
+  build-and-submit:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     defaults:
       run:
         working-directory: dearmi-app
@@ -43,10 +49,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build with EAS
+      - name: Build with EAS (wait for completion)
         run: |
           eas build \
             --platform ${{ github.event.inputs.platform || 'all' }} \
             --profile production \
-            --non-interactive \
-            --no-wait
+            --non-interactive
+
+      - name: Submit to stores
+        if: ${{ github.event_name == 'push' || github.event.inputs.submit == 'true' }}
+        run: |
+          eas submit \
+            --platform ${{ github.event.inputs.platform || 'all' }} \
+            --profile production \
+            --latest \
+            --non-interactive
