@@ -2,6 +2,17 @@
 
 > RN 0.81 + Expo SDK 54. 루트 `CLAUDE.md` 의 6원칙 준수 (특히 ②③).
 
+## 배포 / CI/CD
+- 빌드 시스템: EAS Build. 자격증명은 EAS 서버 보관 (iOS ASC API Key + Android Service Account).
+- `eas.json`: `appVersionSource: "remote"` (buildNumber/versionCode 서버 관리), `production.autoIncrement: true`, `production.channel: "production"`.
+- `app.json`: `runtimeVersion.policy: "fingerprint"` + `updates.url` 설정됨. **네이티브 변경 (패키지 / app.json plugin / 권한 등) 자동 감지**.
+- GitHub Actions (`.github/workflows/build-app.yml`):
+  - `dearmi-app/**` 푸시 → fingerprint 비교 → 같으면 `eas update` (OTA, 양 플랫폼) / 다르면 `eas build --platform all` (iOS + Android 둘 다) + `eas submit --platform ios` (iOS 만 자동 제출).
+  - **Android 빌드는 매번 진행**되어 AAB 가 EAS 대시보드에 쌓임. **자동 submission 만 iOS 한정** — 한국 사업자 등록 + 통신판매업 신고번호 Play Console 입력 완료 후 Android 자동 submit 추가 예정 (TODO). 그 전까지 Play Console 업로드는 EAS 대시보드에서 AAB 다운로드 후 수동.
+  - `workflow_dispatch` 로 mode 강제 (`auto`/`build`/`update`) 가능.
+- OTA 가능한 변경: TS/TSX, 스타일, 텍스트, i18n, 번들 이미지. OTA 불가: `expo-*` 패키지 변경, app.json plugin/permission, 새 네이티브 모듈, 앱 아이콘/스플래시.
+- 사용자 보이는 버전 (`1.0.x`) 올릴 때만 `app.json` 의 `version` 수정. `buildNumber`/`versionCode` 는 EAS remote 가 자동 increment — 절대 수동 수정 금지.
+
 ## 폴더 구조
 ```
 src/
@@ -132,15 +143,17 @@ OcrResultScreen 저장 → Alert
 | `Button` | variant: primary/secondary/outline/ghost, size: sm/md/lg |
 | `Input`, `Card`, `LoadingSpinner` | 기본 |
 | `OfflineBanner` | `useNetworkStatus` 연동, RootNavigator 에 등록 |
-| `ScreenHeader` | variant: `tab` (탭 루트) / `back` (서브 화면), title, rightContent |
+| `ScreenHeader` | variant: `tab` (탭 루트) / `back` (서브 화면), title, rightContent. 아이콘 버튼 GlassView 사용 |
 | `EmotionSlider` | 1–10. red≤3 / amber≤6 / green≤10. `getEmotionColor(score)` export |
 | `AnimatedPressable` | 터치 시 scale 애니메이션 |
-| `InAppNotificationBanner` | 포그라운드 알림 슬라이드인 (3초 자동 해제) |
-| `CustomAlert` | Alert.alert 대체 커스텀 모달 (앱 전체 통일 디자인) |
-| `TimePickerModal` | @quidone/react-native-wheel-picker 기반 시간 선택 모달 |
+| `InAppNotificationBanner` | 포그라운드 알림 슬라이드인 (3초 자동 해제). GlassView 적용 |
+| `CustomAlert` | Alert.alert 대체 커스텀 모달. GlassView 적용 |
+| `TimePickerModal` | @quidone/react-native-wheel-picker 기반 시간 선택 모달. GlassView 적용 |
 | `SectionTitle` | 섹션 제목 공통 컴포넌트 |
-| `DatePickerModal` | 재사용 가능 날짜 선택 모달 (highlightedDates/maxDate 옵션) |
+| `DatePickerModal` | 재사용 가능 날짜 선택 모달 (highlightedDates/maxDate 옵션). GlassView 적용 |
 | `TabBarVisibilityContext` | 탭바 표시/숨김 제어 Context |
+| `GlassView` | iOS `expo-blur` BlurView / Android 반투명 fallback. intensity: subtle/regular/thick. 카드·모달·탭바·헤더 아이콘에 사용 |
+| `PhoneWidthContainer` | iPad/태블릿에서 콘텐츠를 440pt 폭으로 중앙 제한. App.tsx 에서 `RootNavigator` 감쌈. 좁은 화면은 패스스루 |
 
 ## 테마 시스템 (`src/shared/theme/`)
 - `ThemeProvider` 가 라이트/다크 모드 토글. `useTheme()` 로 `{ colors, isDark }` 사용.
@@ -154,11 +167,13 @@ OcrResultScreen 저장 → Alert
 변경/추가 시 mutation 의 `invalidateQueries` 매핑도 함께 업데이트.
 
 ## 주요 패키지
-설치됨: `expo-web-browser`, `@quidone/react-native-wheel-picker`, `react-native-calendars`,
+설치됨: `expo-web-browser`, `expo-blur`, `expo-updates`, `expo-dev-client`, `@quidone/react-native-wheel-picker`, `react-native-calendars`,
 `expo-image-picker`, `expo-secure-store`, `react-native-mmkv`, `@react-native-community/netinfo`,
 `@tanstack/react-query ^5`, `zustand ^5`, `expo-notifications`, `expo-device`,
 `i18next` + `react-i18next`, `expo-localization`, `react-native-chart-kit`,
 `expo-linear-gradient`, `react-native-iap`.
+
+푸시 알림은 **Expo Push Service** 직접 사용 (Firebase 의존 제거됨, 커밋 f246d17).
 
 미사용: `@react-native-community/datetimepicker` (설치는 되어 있으나 CustomAlert/DatePickerModal/TimePickerModal 로 대체됨).
 미설치: `expo-local-authentication` (생체인증), iOS/Android 위젯 라이브러리.

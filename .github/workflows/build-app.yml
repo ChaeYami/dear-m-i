@@ -1,4 +1,8 @@
-name: Deploy App (EAS — auto build/update)
+name: Deploy App (EAS — auto build both, submit iOS only)
+
+# 📝 빌드는 iOS + Android 둘 다 진행 (Android AAB 는 EAS 대시보드에 남아서 수동 업로드 가능).
+#    Submit (스토어 자동 업로드) 은 iOS 만. Android 자동 submission 은 한국 사업자 등록 +
+#    통신판매업 신고번호 Play Console 입력 완료 후 추가 예정.
 
 on:
   push:
@@ -15,8 +19,8 @@ on:
         type: choice
         options:
           - auto    # fingerprint 비교해서 자동 분기
-          - build   # 강제로 풀 빌드 + 제출
-          - update  # 강제로 OTA 만
+          - build   # 강제 풀 빌드 + 제출
+          - update  # 강제 OTA 만
 
 jobs:
   deploy:
@@ -44,42 +48,41 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # ─── auto 모드: 현재 fingerprint vs 마지막 production 빌드 fingerprint 비교 ───
       - name: Compute current fingerprint
         id: fp
-        if: github.event.inputs.mode == 'auto' || github.event.inputs.mode == '' || github.event.inputs.mode == null
         run: |
-          HASH=$(npx --yes @expo/fingerprint@latest fingerprint:generate --platform all . 2>/dev/null | jq -r .hash || npx --yes @expo/fingerprint@latest hash . | jq -r .hash)
+          OUTPUT=$(npx --yes @expo/fingerprint@latest .)
+          HASH=$(echo "$OUTPUT" | jq -r .hash)
           echo "current=$HASH" >> $GITHUB_OUTPUT
           echo "Current fingerprint: $HASH"
 
-      - name: Find last production build fingerprint
+      - name: Find latest production build runtimeVersion
         id: last
-        if: github.event.inputs.mode == 'auto' || github.event.inputs.mode == '' || github.event.inputs.mode == null
         run: |
-          LAST=$(eas build:list --platform ios --status finished --build-profile production --limit 1 --json --non-interactive 2>/dev/null | jq -r '.[0].runtimeVersion // ""')
+          JSON=$(eas build:list --platform ios --status finished --channel production --limit 1 --json --non-interactive 2>/dev/null || echo "[]")
+          LAST=$(echo "$JSON" | jq -r '.[0].runtimeVersion // ""')
           echo "last=$LAST" >> $GITHUB_OUTPUT
           echo "Last production runtimeVersion: $LAST"
 
       - name: Decide action
         id: decide
         run: |
-          MODE="${{ github.event.inputs.mode || 'auto' }}"
-          if [ "$MODE" = "build" ] || [ "$MODE" = "update" ]; then
-            echo "action=$MODE" >> $GITHUB_OUTPUT
-          else
-            CUR="${{ steps.fp.outputs.current }}"
-            LAST="${{ steps.last.outputs.last }}"
+          MODE="${{ github.event.inputs.mode }}"
+          CUR="${{ steps.fp.outputs.current }}"
+          LAST="${{ steps.last.outputs.last }}"
+          if [ -z "$MODE" ] || [ "$MODE" = "auto" ]; then
             if [ -n "$CUR" ] && [ -n "$LAST" ] && [ "$CUR" = "$LAST" ]; then
-              echo "action=update" >> $GITHUB_OUTPUT
+              ACTION="update"
             else
-              echo "action=build" >> $GITHUB_OUTPUT
+              ACTION="build"
             fi
+          else
+            ACTION="$MODE"
           fi
-          echo "Decided action: $(cat $GITHUB_OUTPUT | grep action= | tail -1)"
+          echo "action=$ACTION" >> $GITHUB_OUTPUT
+          echo "Decided: action=$ACTION (mode=$MODE current=$CUR last=$LAST)"
 
-      # ─── OTA: JS-only 변경 ───
-      - name: OTA Update
+      - name: OTA Update (both platforms)
         if: steps.decide.outputs.action == 'update'
         env:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
@@ -87,13 +90,13 @@ jobs:
           MSG="${COMMIT_MSG:-Manual OTA update}"
           eas update --branch production --message "$MSG" --non-interactive
 
-      # ─── Full build + submit: 네이티브 변경 또는 첫 빌드 ───
-      - name: Build with EAS
+      - name: Build with EAS (iOS + Android)
         if: steps.decide.outputs.action == 'build'
         run: |
           eas build --platform all --profile production --non-interactive
 
-      - name: Submit to stores
+      - name: Submit iOS to App Store Connect
+        # Android 자동 submission 은 한국 사업자 등록 완료 후 추가 예정 (TODO)
         if: steps.decide.outputs.action == 'build'
         run: |
-          eas submit --platform all --profile production --latest --non-interactive
+          eas submit --platform ios --profile production --latest --non-interactive

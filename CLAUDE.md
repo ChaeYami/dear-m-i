@@ -11,8 +11,16 @@
 ## 스택 한 줄 요약
 RN 0.81 + Expo SDK 54, Zustand ^5 + React Query ^5, MMKV + SecureStore, i18next.
 Spring Boot 3.5 + JPA + QueryDSL + Flyway, PostgreSQL 15, JWT(OAuth2: Google/Apple),
-S3(Presigned), Expo Push, Claude Vision(OCR), e약은요(약품 30일 캐시), 토스페이먼츠/IAP.
-배포: AWS ECS Fargate + RDS + S3, 시크릿 AWS Secrets Manager (운영) / `.env` (로컬).
+S3(Presigned), Expo Push (Firebase 제거됨), Claude Vision(OCR), e약은요(약품 30일 캐시), 토스페이먼츠/IAP.
+배포: 백엔드 AWS ECS Fargate + RDS + S3 / 앱 EAS Build + EAS Update (OTA, fingerprint). 시크릿 AWS Secrets Manager (운영) / `.env` (로컬).
+
+## CI/CD
+- **백엔드**: `.github/workflows/deploy-backend.yml` — `backend/**` 변경 시 `main` 푸시 → ECR + ECS 자동 배포.
+- **앱**: `.github/workflows/build-app.yml` — `dearmi-app/**` 변경 시 fingerprint 비교:
+  - 같은 fingerprint → `eas update --branch production` (OTA, JS 만 변경, 양 플랫폼)
+  - 다른 fingerprint → `eas build --platform all` (iOS + Android **둘 다 빌드**) → `eas submit --platform ios` (iOS 만 자동 제출)
+- **⚠️ Android 자동 submission 미적용 (TODO)**: 빌드까지는 매번 진행해서 AAB 가 EAS 대시보드에 쌓이지만, Play Console 자동 업로드는 한국 사업자 등록 + 통신판매업 신고번호 등 계정 정보 입력 완료 후 추가 예정. 그 전까지 Android 제출이 필요하면 EAS 대시보드에서 AAB 다운로드 후 Play Console 에 수동 업로드.
+- EAS 자격증명: iOS ASC API Key + Android Google Service Account (`dearmi-play-uploader@dearmi-493112.iam.gserviceaccount.com`) 모두 EAS 서버 저장됨. JSON 키 로컬 보관 금지.
 
 ## 보안 6원칙 (절대 위반 금지)
 
