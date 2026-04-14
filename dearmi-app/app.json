@@ -4,6 +4,12 @@
     "slug": "dearmi-app",
     "version": "1.0.2",
     "scheme": "dearmi",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/214f8cd5-3c46-4df1-925b-f82d91192d3d"
+    },
     "orientation": "portrait",
     "icon": "./assets/adaptive-icon.png",
     "userInterfaceStyle": "automatic",
