@@ -1,4 +1,4 @@
-name: Build & Submit App (EAS)
+name: Deploy App (EAS — auto build/update)
 
 on:
   push:
@@ -8,23 +8,18 @@ on:
       - '.github/workflows/build-app.yml'
   workflow_dispatch:
     inputs:
-      platform:
-        description: 'Target platform'
+      mode:
+        description: 'Action mode'
         required: true
-        default: 'all'
+        default: 'auto'
         type: choice
         options:
-          - all
-          - ios
-          - android
-      submit:
-        description: 'Auto-submit to stores (TestFlight / Play Internal)'
-        required: true
-        default: true
-        type: boolean
+          - auto    # fingerprint 비교해서 자동 분기
+          - build   # 강제로 풀 빌드 + 제출
+          - update  # 강제로 OTA 만
 
 jobs:
-  build-and-submit:
+  deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     defaults:
@@ -49,18 +44,56 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build with EAS (wait for completion)
+      # ─── auto 모드: 현재 fingerprint vs 마지막 production 빌드 fingerprint 비교 ───
+      - name: Compute current fingerprint
+        id: fp
+        if: github.event.inputs.mode == 'auto' || github.event.inputs.mode == '' || github.event.inputs.mode == null
         run: |
-          eas build \
-            --platform ${{ github.event.inputs.platform || 'all' }} \
-            --profile production \
-            --non-interactive
+          HASH=$(npx --yes @expo/fingerprint@latest fingerprint:generate --platform all . 2>/dev/null | jq -r .hash || npx --yes @expo/fingerprint@latest hash . | jq -r .hash)
+          echo "current=$HASH" >> $GITHUB_OUTPUT
+          echo "Current fingerprint: $HASH"
+
+      - name: Find last production build fingerprint
+        id: last
+        if: github.event.inputs.mode == 'auto' || github.event.inputs.mode == '' || github.event.inputs.mode == null
+        run: |
+          LAST=$(eas build:list --platform ios --status finished --build-profile production --limit 1 --json --non-interactive 2>/dev/null | jq -r '.[0].runtimeVersion // ""')
+          echo "last=$LAST" >> $GITHUB_OUTPUT
+          echo "Last production runtimeVersion: $LAST"
+
+      - name: Decide action
+        id: decide
+        run: |
+          MODE="${{ github.event.inputs.mode || 'auto' }}"
+          if [ "$MODE" = "build" ] || [ "$MODE" = "update" ]; then
+            echo "action=$MODE" >> $GITHUB_OUTPUT
+          else
+            CUR="${{ steps.fp.outputs.current }}"
+            LAST="${{ steps.last.outputs.last }}"
+            if [ -n "$CUR" ] && [ -n "$LAST" ] && [ "$CUR" = "$LAST" ]; then
+              echo "action=update" >> $GITHUB_OUTPUT
+            else
+              echo "action=build" >> $GITHUB_OUTPUT
+            fi
+          fi
+          echo "Decided action: $(cat $GITHUB_OUTPUT | grep action= | tail -1)"
+
+      # ─── OTA: JS-only 변경 ───
+      - name: OTA Update
+        if: steps.decide.outputs.action == 'update'
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          MSG="${COMMIT_MSG:-Manual OTA update}"
+          eas update --branch production --message "$MSG" --non-interactive
+
+      # ─── Full build + submit: 네이티브 변경 또는 첫 빌드 ───
+      - name: Build with EAS
+        if: steps.decide.outputs.action == 'build'
+        run: |
+          eas build --platform all --profile production --non-interactive
 
       - name: Submit to stores
-        if: ${{ github.event_name == 'push' || github.event.inputs.submit == 'true' }}
+        if: steps.decide.outputs.action == 'build'
         run: |
-          eas submit \
-            --platform ${{ github.event.inputs.platform || 'all' }} \
-            --profile production \
-            --latest \
-            --non-interactive
+          eas submit --platform all --profile production --latest --non-interactive
