@@ -11,10 +11,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import { GlassView } from '@/shared/components/GlassView';
 import { useSubscription } from '@/features/subscription/hooks/useSubscription';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
 
@@ -49,7 +51,8 @@ export const PaywallScreen: React.FC = () => {
   const isBusy = isPurchasing || isRestoring;
 
   const styles = useMemo(() => StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.surface },
+    container: { flex: 1, backgroundColor: colors.background },
+    gradientBg: { ...StyleSheet.absoluteFillObject },
     closeBtn: { alignSelf: 'flex-end', padding: sizes.spacing.lg },
     closeTxt: { fontSize: sizes.font.lg, color: colors.textSub },
     content: { paddingHorizontal: sizes.spacing.xl, paddingBottom: sizes.spacing.xl },
@@ -77,31 +80,32 @@ export const PaywallScreen: React.FC = () => {
     featureList: {
       gap: sizes.spacing.md,
       marginBottom: sizes.spacing.xl,
-      backgroundColor: colors.background,
-      borderRadius: sizes.radius.lg,
       padding: sizes.spacing.lg,
+      borderWidth: 1,
+      borderColor: colors.glassBorder,
     },
     featureRow: { flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.md },
     featureIcon: { fontSize: 18, width: 24, textAlign: 'center' },
     featureTxt: { fontSize: sizes.font.md, color: colors.text, flex: 1 },
     planRow: { flexDirection: 'row', gap: sizes.spacing.md },
-    planCard: {
+    planCardWrap: {
       flex: 1,
+      position: 'relative',
+    },
+    planCard: {
       borderWidth: 2,
       borderColor: colors.divider,
-      borderRadius: sizes.radius.lg,
       padding: sizes.spacing.md,
       alignItems: 'center',
       gap: 4,
-      position: 'relative',
     },
     planCardSelected: {
       borderColor: colors.primary,
-      backgroundColor: colors.primary + '08',
     },
     saveBadge: {
       position: 'absolute',
       top: -12,
+      alignSelf: 'center',
       backgroundColor: colors.secondary,
       paddingHorizontal: sizes.spacing.sm,
       paddingVertical: 2,
@@ -185,6 +189,12 @@ export const PaywallScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* 프리미엄 그라데이션 백드롭 */}
+      <LinearGradient
+        colors={[colors.primaryMuted, colors.background]}
+        style={styles.gradientBg}
+        pointerEvents="none"
+      />
       {/* 닫기 */}
       <TouchableOpacity
         style={styles.closeBtn}
@@ -208,50 +218,62 @@ export const PaywallScreen: React.FC = () => {
         </View>
 
         {/* 기능 목록 */}
-        <View style={styles.featureList}>
+        <GlassView intensity="regular" borderRadius={sizes.radius.lg} style={styles.featureList}>
           {FEATURES.map((f) => (
             <View key={f.text} style={styles.featureRow}>
               <Ionicons name={f.icon as any} size={18} color={colors.primary} />
               <Text style={styles.featureTxt}>{f.text}</Text>
             </View>
           ))}
-        </View>
+        </GlassView>
 
         {/* 플랜 선택 */}
         <View style={styles.planRow}>
           <TouchableOpacity
-            style={[styles.planCard, selected === 'monthly' && styles.planCardSelected]}
+            style={styles.planCardWrap}
             onPress={() => setSelected('monthly')}
             activeOpacity={0.8}
           >
-            <Text style={[styles.planLabel, selected === 'monthly' && styles.planLabelSelected]}>
-              {t('plan_monthly')}
-            </Text>
-            <Text style={[styles.planPrice, selected === 'monthly' && styles.planPriceSelected]}>
-              ₩3,900
-            </Text>
-            <Text style={[styles.planUnit, selected === 'monthly' && styles.planUnitSelected]}>
-              {t('per_month')}
-            </Text>
+            <GlassView
+              intensity={selected === 'monthly' ? 'thick' : 'regular'}
+              borderRadius={sizes.radius.lg}
+              style={[styles.planCard, selected === 'monthly' && styles.planCardSelected]}
+            >
+              <Text style={[styles.planLabel, selected === 'monthly' && styles.planLabelSelected]}>
+                {t('plan_monthly')}
+              </Text>
+              <Text style={[styles.planPrice, selected === 'monthly' && styles.planPriceSelected]}>
+                ₩3,900
+              </Text>
+              <Text style={[styles.planUnit, selected === 'monthly' && styles.planUnitSelected]}>
+                {t('per_month')}
+              </Text>
+            </GlassView>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.planCard, selected === 'yearly' && styles.planCardSelected]}
+            style={styles.planCardWrap}
             onPress={() => setSelected('yearly')}
             activeOpacity={0.8}
           >
+            <GlassView
+              intensity={selected === 'yearly' ? 'thick' : 'regular'}
+              borderRadius={sizes.radius.lg}
+              style={[styles.planCard, selected === 'yearly' && styles.planCardSelected]}
+            >
+              <Text style={[styles.planLabel, selected === 'yearly' && styles.planLabelSelected]}>
+                {t('plan_yearly')}
+              </Text>
+              <Text style={[styles.planPrice, selected === 'yearly' && styles.planPriceSelected]}>
+                ₩39,900
+              </Text>
+              <Text style={[styles.planUnit, selected === 'yearly' && styles.planUnitSelected]}>
+                {t('per_year')}
+              </Text>
+            </GlassView>
             <View style={styles.saveBadge}>
               <Text style={styles.saveBadgeText}>{t('save_badge')}</Text>
             </View>
-            <Text style={[styles.planLabel, selected === 'yearly' && styles.planLabelSelected]}>
-              {t('plan_yearly')}
-            </Text>
-            <Text style={[styles.planPrice, selected === 'yearly' && styles.planPriceSelected]}>
-              ₩39,900
-            </Text>
-            <Text style={[styles.planUnit, selected === 'yearly' && styles.planUnitSelected]}>
-              {t('per_year')}
-            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

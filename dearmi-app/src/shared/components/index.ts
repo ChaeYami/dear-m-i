@@ -1,4 +1,5 @@
 export * from './AnimatedPressable';
+export * from './GlassView';
 export * from './ScreenHeader';
 export * from './Button';
 export * from './Input';

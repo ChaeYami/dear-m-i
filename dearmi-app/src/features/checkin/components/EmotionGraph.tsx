@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LineChart } from 'react-native-chart-kit';
 import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import { GlassView } from '@/shared/components/GlassView';
 import { getEmotionColor } from '@/shared/components/EmotionSlider';
 import { useCheckinHistory } from '@/features/checkin/hooks/useCheckin';
 import { useAuthStore } from '@/features/auth/store/authStore';
@@ -64,7 +65,7 @@ export const EmotionGraph: React.FC = () => {
   const avgColor = getEmotionColor(Math.round(avgScore));
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.surface }]}>
+    <GlassView intensity="regular" borderRadius={sizes.radius.lg} style={[styles.container, { borderWidth: 1, borderColor: colors.glassBorder }]}>
       <View style={styles.periodRow}>
         {(['7d', '1m', '3m', 'all'] as Period[]).map((p) => {
           const locked = !isPremium && p !== '7d' && p !== '1m';
@@ -72,11 +73,18 @@ export const EmotionGraph: React.FC = () => {
           return (
             <TouchableOpacity
               key={p}
-              style={[styles.periodBtn, { backgroundColor: colors.background }, isActive && { backgroundColor: colors.primaryLight + '25' }]}
+              style={styles.periodBtn}
               onPress={() => !locked && setPeriod(p)}
               activeOpacity={locked ? 1 : 0.7}
             >
-              <View style={styles.periodBtnInner}>
+              <GlassView
+                intensity={isActive ? 'thick' : 'subtle'}
+                borderRadius={sizes.radius.full}
+                style={[
+                  styles.periodBtnInner,
+                  isActive && { borderWidth: 1, borderColor: colors.primary + '40' },
+                ]}
+              >
                 <Text
                   style={[
                     styles.periodBtnText,
@@ -90,7 +98,7 @@ export const EmotionGraph: React.FC = () => {
                 {locked && (
                   <Ionicons name="lock-closed" size={10} color={colors.textDisabled} />
                 )}
-              </View>
+              </GlassView>
             </TouchableOpacity>
           );
         })}
@@ -115,9 +123,11 @@ export const EmotionGraph: React.FC = () => {
         fromZero={false}
         segments={4}
         chartConfig={{
-          backgroundColor: colors.surface,
-          backgroundGradientFrom: colors.surface,
-          backgroundGradientTo: colors.surface,
+          backgroundColor: 'transparent',
+          backgroundGradientFrom: 'transparent',
+          backgroundGradientTo: 'transparent',
+          backgroundGradientFromOpacity: 0,
+          backgroundGradientToOpacity: 0,
           decimalPlaces: 0,
           color: () => avgColor,
           labelColor: () => colors.textSub,
@@ -147,7 +157,7 @@ export const EmotionGraph: React.FC = () => {
           </View>
         </>
       )}
-    </View>
+    </GlassView>
   );
 };
 
@@ -163,14 +173,14 @@ const styles = StyleSheet.create({
   },
   periodBtn: {
     flex: 1,
-    paddingVertical: 6,
-    borderRadius: sizes.radius.full,
-    alignItems: 'center',
   },
   periodBtnInner: {
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
     gap: 3,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
   },
   periodBtnText: {
     fontSize: sizes.font.xs,

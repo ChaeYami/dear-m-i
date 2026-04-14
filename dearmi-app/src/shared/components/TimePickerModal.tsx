@@ -8,6 +8,7 @@ import DateTimePicker, {
 } from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import { GlassView } from '@/shared/components/GlassView';
 
 interface Props {
   visible: boolean;
@@ -96,8 +97,14 @@ const IosTimePicker: React.FC<Props> = ({
 
   return (
     <Modal visible transparent animationType="fade" statusBarTranslucent>
+      <GlassView intensity="subtle" showHighlight={false} style={StyleSheet.absoluteFill} pointerEvents="none" />
       <Pressable style={styles.backdrop} onPress={onClose}>
-        <View style={styles.card} onStartShouldSetResponder={() => true}>
+        <View style={styles.cardWrap} onStartShouldSetResponder={() => true}>
+        <GlassView
+          intensity="thick"
+          borderRadius={sizes.radius.xxl}
+          style={[styles.card, { borderWidth: 1, borderColor: colors.glassBorder }]}
+        >
           <Text style={styles.label}>{t('time_picker_title')}</Text>
           <DateTimePicker
             value={value}
@@ -121,6 +128,7 @@ const IosTimePicker: React.FC<Props> = ({
               <Text style={[styles.actionText, { color: colors.primary, fontFamily: fontFamily.bold }]}>{t('confirm')}</Text>
             </TouchableOpacity>
           </View>
+        </GlassView>
         </View>
       </Pressable>
     </Modal>
@@ -130,15 +138,16 @@ const IosTimePicker: React.FC<Props> = ({
 const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
   StyleSheet.create({
     backdrop: {
-      flex: 1, backgroundColor: 'rgba(0,0,0,0.4)',
+      flex: 1, backgroundColor: 'rgba(0,0,0,0.32)',
       alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28,
     },
+    cardWrap: {
+      width: '100%', maxWidth: 320,
+      shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.18, shadowRadius: 24, elevation: 12,
+    },
     card: {
-      width: '100%', maxWidth: 320, backgroundColor: colors.surface,
-      borderRadius: sizes.radius.xxl,
       paddingTop: sizes.spacing.lg, paddingBottom: sizes.spacing.lg, paddingHorizontal: sizes.spacing.lg,
       alignItems: 'center',
-      shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.15, shadowRadius: 24, elevation: 12,
     },
     label: {
       fontSize: sizes.font.sm, fontFamily: fontFamily.medium, color: colors.textSub,

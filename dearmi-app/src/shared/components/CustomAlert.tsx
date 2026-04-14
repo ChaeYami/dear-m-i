@@ -16,6 +16,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import { GlassView } from '@/shared/components/GlassView';
 import i18n from '@/locales/i18n';
 
 // ─── 전역 상태 ────────────────────────────────────────
@@ -117,7 +118,12 @@ const AlertModal: React.FC<{
   }, [onDismiss]);
 
   const backdropStyle = useAnimatedStyle(() => ({
-    backgroundColor: `rgba(0,0,0,${0.4 * backdropOpacity.value})`,
+    backgroundColor: `rgba(0,0,0,${0.32 * backdropOpacity.value})`,
+    opacity: backdropOpacity.value,
+  }));
+
+  const blurBackdropStyle = useAnimatedStyle(() => ({
+    opacity: backdropOpacity.value,
   }));
 
   const cardStyle = useAnimatedStyle(() => ({
@@ -139,9 +145,14 @@ const AlertModal: React.FC<{
 
   return (
     <Modal transparent statusBarTranslucent animationType="none">
+      {/* 블러 백드롭 (iOS만 실제 블러, Android는 반투명) */}
+      <Animated.View style={[StyleSheet.absoluteFill, blurBackdropStyle]} pointerEvents="none">
+        <GlassView intensity="subtle" showHighlight={false} style={StyleSheet.absoluteFill} />
+      </Animated.View>
       <Animated.View style={[styles.backdrop, backdropStyle]}>
         <Pressable style={styles.backdropPress} onPress={() => handlePress()}>
-          <Animated.View style={[styles.card, cardStyle]}>
+          <Animated.View style={[styles.cardWrap, cardStyle]}>
+            <GlassView intensity="thick" borderRadius={sizes.radius.xxl} style={styles.card}>
             <Pressable>
               {/* 헤더 */}
               <View style={styles.header}>
@@ -187,6 +198,7 @@ const AlertModal: React.FC<{
                 })}
               </View>
             </Pressable>
+            </GlassView>
           </Animated.View>
         </Pressable>
       </Animated.View>
@@ -205,17 +217,19 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors'], _isH: boolean)
       alignItems: 'center',
       paddingHorizontal: 40,
     },
-    card: {
+    cardWrap: {
       width: '100%',
       maxWidth: 320,
-      backgroundColor: colors.surface,
       borderRadius: sizes.radius.xxl,
-      overflow: 'hidden',
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.15,
+      shadowOpacity: 0.18,
       shadowRadius: 24,
       elevation: 12,
+    },
+    card: {
+      borderWidth: 1,
+      borderColor: colors.glassBorder,
     },
     header: {
       paddingHorizontal: sizes.spacing.xl,

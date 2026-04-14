@@ -9,10 +9,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import { GlassView } from '@/shared/components/GlassView';
 import {
   subscriptionApi,
   type WebPlanType,
@@ -179,13 +181,23 @@ export const WebPaymentScreen: React.FC = () => {
   };
 
   const styles = useMemo(() => StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.surface },
+    container: { flex: 1, backgroundColor: colors.background },
+    gradientBg: { ...StyleSheet.absoluteFillObject },
     center: {
       flex: 1,
       alignItems: 'center',
       justifyContent: 'center',
       paddingHorizontal: sizes.spacing.xl,
       gap: sizes.spacing.lg,
+    },
+    glassCard: {
+      paddingVertical: sizes.spacing.xxl,
+      paddingHorizontal: sizes.spacing.xl,
+      alignItems: 'center',
+      gap: sizes.spacing.lg,
+      borderWidth: 1,
+      borderColor: colors.glassBorder,
+      minWidth: 240,
     },
     statusText: {
       fontSize: sizes.font.md,
@@ -237,32 +249,39 @@ export const WebPaymentScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <LinearGradient
+        colors={[colors.primaryMuted, colors.background]}
+        style={styles.gradientBg}
+        pointerEvents="none"
+      />
       <View style={styles.center}>
-        {status !== 'error' ? (
-          <>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={styles.statusText}>{statusText[status]}</Text>
-          </>
-        ) : (
-          <>
-            <Text style={styles.errorIcon}>!</Text>
-            <Text style={styles.errorText}>{errorMessage}</Text>
-            <TouchableOpacity
-              style={styles.retryBtn}
-              onPress={() => startPaymentFlow(planType)}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.retryBtnText}>{t('common:retry')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.closeBtn}
-              onPress={() => navigation.goBack()}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.closeBtnText}>{t('common:close')}</Text>
-            </TouchableOpacity>
-          </>
-        )}
+        <GlassView intensity="regular" borderRadius={sizes.radius.xxl} style={styles.glassCard}>
+          {status !== 'error' ? (
+            <>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={styles.statusText}>{statusText[status]}</Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.errorIcon}>!</Text>
+              <Text style={styles.errorText}>{errorMessage}</Text>
+              <TouchableOpacity
+                style={styles.retryBtn}
+                onPress={() => startPaymentFlow(planType)}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.retryBtnText}>{t('common:retry')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.closeBtn}
+                onPress={() => navigation.goBack()}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.closeBtnText}>{t('common:close')}</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </GlassView>
       </View>
     </SafeAreaView>
   );

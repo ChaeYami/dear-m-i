@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Pressable, Text, Platform } from 'react-native';
+import { View, Pressable, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {
   createBottomTabNavigator,
@@ -15,8 +15,8 @@ import Animated, {
   interpolateColor,
 } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
-import { BlurView } from 'expo-blur';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import { GlassView } from '@/shared/components/GlassView';
 import { runTabSwitchGuard } from '@/shared/navigation/tabSwitchGuard';
 import {
   TabBarVisibilityProvider,
@@ -174,8 +174,6 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
     opacity: interpolate(hidden.value, [0, 1], [1, 0]),
   }));
 
-  const bgColor = isDark ? 'rgba(31, 33, 37, 0.72)' : 'rgba(255, 255, 255, 0.72)';
-
   const focusedRoute = state.routes[state.index];
   const focusedChild = getFocusedRouteNameFromRoute(focusedRoute);
   const rootScreen = TAB_ROOT_SCREENS[focusedRoute.name];
@@ -192,17 +190,16 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
           containerStyle,
         ]}
       >
-        <View
+        <GlassView
+          intensity="regular"
+          borderRadius={32}
           style={{
             flexDirection: 'row',
             alignItems: 'center',
             paddingHorizontal: 6,
             paddingVertical: 6,
-            borderRadius: 32,
-            backgroundColor: bgColor,
             borderWidth: 1,
             borderColor: colors.glassBorder,
-            overflow: 'hidden',
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 6 },
             shadowOpacity: isDark ? 0.5 : 0.12,
@@ -210,19 +207,6 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
             elevation: 8,
           }}
         >
-          {Platform.OS === 'ios' ? (
-            <BlurView
-              tint={isDark ? 'dark' : 'light'}
-              intensity={60}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-              }}
-            />
-          ) : null}
           {state.routes.map((route, index) => {
             const { options } = descriptors[route.key];
             const isFocused = state.index === index;
@@ -264,7 +248,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
               />
             );
           })}
-        </View>
+        </GlassView>
       </Animated.View>
     </View>
   );

@@ -3,6 +3,7 @@ import { Modal, View, Text, StyleSheet, TouchableOpacity, Pressable } from 'reac
 import { Calendar } from 'react-native-calendars';
 import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import { GlassView } from '@/shared/components/GlassView';
 
 interface Props {
   visible: boolean;
@@ -117,10 +118,16 @@ export const DatePickerModal: React.FC<Props> = ({
       onRequestClose={onClose}
       statusBarTranslucent
     >
+      <GlassView intensity="subtle" showHighlight={false} style={StyleSheet.absoluteFill} pointerEvents="none" />
       <Pressable style={styles.backdrop} onPress={onClose}>
         <Pressable
-          style={[styles.card, { backgroundColor: colors.surfaceElevated }]}
+          style={styles.cardWrap}
           onPress={(e) => e.stopPropagation()}
+        >
+        <GlassView
+          intensity="thick"
+          borderRadius={sizes.radius.xxl}
+          style={[styles.card, { borderWidth: 1, borderColor: colors.glassBorder }]}
         >
           <Text style={[styles.label, { color: colors.textSub, fontFamily: fontFamily.medium }]}>
             {t('date_picker_title')}
@@ -154,6 +161,7 @@ export const DatePickerModal: React.FC<Props> = ({
               </Text>
             </TouchableOpacity>
           </View>
+        </GlassView>
         </Pressable>
       </Pressable>
     </Modal>
@@ -163,15 +171,21 @@ export const DatePickerModal: React.FC<Props> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.32)',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: sizes.spacing.lg,
   },
-  card: {
+  cardWrap: {
     width: '100%',
     maxWidth: 420,
-    borderRadius: sizes.radius.xxl,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  card: {
     paddingVertical: sizes.spacing.lg,
     paddingHorizontal: sizes.spacing.md,
   },

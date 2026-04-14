@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type * as Notifications from 'expo-notifications';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import { GlassView } from '@/shared/components/GlassView';
 
 interface Props {
   notification: Notifications.Notification;
@@ -71,31 +72,31 @@ export const InAppNotificationBanner: React.FC<Props> = ({
       }}
     >
       <TouchableOpacity
-        style={[
-          {
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor: colors.surface,
-            borderRadius: sizes.radius.lg,
-            minHeight: BANNER_HEIGHT,
-            paddingVertical: sizes.spacing.md,
-            paddingHorizontal: sizes.spacing.md,
-            gap: sizes.spacing.sm,
-            borderWidth: 1,
-            borderColor: colors.divider,
-          },
-          Platform.select({
-            ios: {
-              shadowColor: colors.glassShadow,
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 1,
-              shadowRadius: 12,
-            },
-            android: { elevation: 8 },
-          }),
-        ]}
         onPress={handlePress}
         activeOpacity={0.9}
+        style={Platform.select({
+          ios: {
+            shadowColor: colors.glassShadow,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 1,
+            shadowRadius: 12,
+          },
+          android: { elevation: 8 },
+        })}
+      >
+      <GlassView
+        intensity="thick"
+        borderRadius={sizes.radius.lg}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          minHeight: BANNER_HEIGHT,
+          paddingVertical: sizes.spacing.md,
+          paddingHorizontal: sizes.spacing.md,
+          gap: sizes.spacing.sm,
+          borderWidth: 1,
+          borderColor: colors.glassBorder,
+        }}
       >
         <View
           style={{
@@ -135,6 +136,7 @@ export const InAppNotificationBanner: React.FC<Props> = ({
         <TouchableOpacity style={{ padding: 4 }} onPress={dismiss} hitSlop={10}>
           <Ionicons name="close" size={sizes.font.md} color={colors.textDisabled} />
         </TouchableOpacity>
+      </GlassView>
       </TouchableOpacity>
     </Animated.View>
   );

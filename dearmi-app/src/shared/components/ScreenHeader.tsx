@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
+import { GlassView } from '@/shared/components/GlassView';
 import { navigationRef } from '@/navigation/navigationRef';
 import { useUnreadNotificationCount } from '@/features/notification/hooks/useNotificationHistory';
 
@@ -103,55 +104,53 @@ const TabHeader: React.FC<TabHeaderProps> = (props) => {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.sm }}>
         {props.rightContent}
         {props.searchScope && (
-          <TouchableOpacity
-            onPress={handleSearchPress}
-            hitSlop={8}
-            {...a11y.search}
+          <TouchableOpacity onPress={handleSearchPress} hitSlop={8} {...a11y.search}>
+            <GlassView
+              intensity="regular"
+              borderRadius={19}
+              style={{
+                width: 38,
+                height: 38,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderWidth: 1,
+                borderColor: colors.glassBorder,
+              }}
+            >
+              <Ionicons name="search-outline" size={20} color={colors.text} />
+            </GlassView>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity onPress={handleBellPress} hitSlop={8} {...a11y.bell(hasUnread)}>
+          <GlassView
+            intensity="regular"
+            borderRadius={19}
             style={{
               width: 38,
               height: 38,
-              borderRadius: 19,
-              backgroundColor: colors.surface,
               alignItems: 'center',
               justifyContent: 'center',
               borderWidth: 1,
-              borderColor: colors.cardBorder,
+              borderColor: colors.glassBorder,
             }}
           >
-            <Ionicons name="search-outline" size={20} color={colors.text} />
-          </TouchableOpacity>
-        )}
-        <TouchableOpacity
-          onPress={handleBellPress}
-          hitSlop={8}
-          {...a11y.bell(hasUnread)}
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: 19,
-            backgroundColor: colors.surface,
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderWidth: 1,
-            borderColor: colors.cardBorder,
-          }}
-        >
-          <Ionicons name="notifications-outline" size={20} color={colors.text} />
-          {hasUnread ? (
-            <View
-              style={{
-                position: 'absolute',
-                top: 8,
-                right: 9,
-                width: 8,
-                height: 8,
-                borderRadius: 4,
-                backgroundColor: colors.error,
-                borderWidth: 1.5,
-                borderColor: colors.surface,
-              }}
-            />
-          ) : null}
+            <Ionicons name="notifications-outline" size={20} color={colors.text} />
+            {hasUnread ? (
+              <View
+                style={{
+                  position: 'absolute',
+                  top: 8,
+                  right: 9,
+                  width: 8,
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: colors.error,
+                  borderWidth: 1.5,
+                  borderColor: colors.surface,
+                }}
+              />
+            ) : null}
+          </GlassView>
         </TouchableOpacity>
       </View>
     </View>

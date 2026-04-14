@@ -15,7 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
-import { softShadow, floatingShadow } from '@/shared/theme/shadows';
+import { floatingShadow } from '@/shared/theme/shadows';
 import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
 import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { SectionTitle } from '@/shared/components/SectionTitle';
@@ -170,8 +170,8 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
         contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarSafeBottom + 80 }]}
         {...scrollHandlers}
       >
-        {/* 통합 카드 */}
-        <View style={[styles.unifiedCard, { backgroundColor: colors.surface }, softShadow(colors)]}>
+        {/* 캘린더 + 일정 리스트 영역 (카드 wrap 제거 — 시각 레이어 정리) */}
+        <View style={styles.calendarBlock}>
           {/* 필터 */}
           <View style={[styles.viewToggle, { backgroundColor: colors.disabled }]}>
             {(['week', 'all'] as const).map((mode) => {
@@ -250,6 +250,9 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
               }}
             />
           )}
+
+          {/* 캘린더와 리스트를 시각적으로 분리하는 얇은 구분선 */}
+          <View style={[styles.sectionDivider, { backgroundColor: colors.divider }]} />
 
           {/* ── 주간 모드 리스트 ── */}
           {viewMode === 'week' && (
@@ -607,11 +610,15 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingTop: sizes.spacing.xs,
   },
-  unifiedCard: {
+  calendarBlock: {
     marginHorizontal: sizes.spacing.lg,
-    borderRadius: sizes.radius.xxl,
     paddingTop: sizes.spacing.sm,
     paddingBottom: sizes.spacing.md,
+  },
+  sectionDivider: {
+    height: 1,
+    marginVertical: sizes.spacing.md,
+    marginHorizontal: sizes.spacing.md,
   },
   weekCard: {
     marginHorizontal: sizes.spacing.lg,

@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { softShadow } from '@/shared/theme/shadows';
 import { AnimatedPressable } from '@/shared/components/AnimatedPressable';
+import { GlassView } from '@/shared/components/GlassView';
 import { CacheService } from '@/shared/cache';
 import { CACHE_KEYS } from '@/constants/cacheKeys';
 import { useSearch, useRecentSearches } from '@/features/search/hooks/useSearch';
@@ -221,14 +222,14 @@ export const SearchScreen: React.FC = () => {
     cancelText: { fontSize: sizes.font.md, fontFamily: fontFamily.medium, color: colors.textSub },
     content: { padding: sizes.spacing.lg, paddingBottom: 40 },
     freeBanner: {
-      backgroundColor: colors.accentMuted,
-      borderRadius: sizes.radius.xxl,
       padding: sizes.spacing.md,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       marginBottom: sizes.spacing.md,
       gap: sizes.spacing.sm,
+      borderWidth: 1,
+      borderColor: colors.glassBorder,
     },
     freeBannerText: {
       flex: 1,
@@ -280,12 +281,14 @@ export const SearchScreen: React.FC = () => {
     recentChipRemove: {
       marginLeft: 2,
     },
-    resultCard: {
-      backgroundColor: colors.surface,
-      borderRadius: sizes.radius.xxl,
-      padding: sizes.spacing.lg,
+    resultCardWrap: {
       marginBottom: sizes.spacing.sm,
+    },
+    resultCard: {
+      padding: sizes.spacing.lg,
       gap: sizes.spacing.xs,
+      borderWidth: 1,
+      borderColor: colors.glassBorder,
     },
     resultContent: {
       fontSize: sizes.font.md,
@@ -377,7 +380,7 @@ export const SearchScreen: React.FC = () => {
       >
         {/* 무료 플랜 안내 배너 */}
         {!isPremium && (
-          <View style={styles.freeBanner}>
+          <GlassView intensity="regular" borderRadius={sizes.radius.xxl} style={styles.freeBanner}>
             <Text style={styles.freeBannerText}>
               {tCommon('search_free_banner')}
             </Text>
@@ -389,7 +392,7 @@ export const SearchScreen: React.FC = () => {
             >
               <Text style={styles.freeBannerLink}>{tCommon('upgrade_arrow')}</Text>
             </TouchableOpacity>
-          </View>
+          </GlassView>
         )}
 
         {/* 검색 중 */}
@@ -416,16 +419,18 @@ export const SearchScreen: React.FC = () => {
                       <AnimatedPressable
                         key={r.id}
                         onPress={() => navigateToRecord(r.id)}
-                        style={[styles.resultCard, shadow]}
+                        style={[styles.resultCardWrap, shadow]}
                       >
-                        <HighlightText
-                          text={r.content}
-                          keyword={submitted}
-                          style={styles.resultContent}
-                          numberOfLines={3}
-                          colors={colors}
-                        />
-                        <Text style={styles.resultMeta}>{formatDate(r.createdAt)}</Text>
+                        <GlassView intensity="regular" borderRadius={sizes.radius.xxl} style={styles.resultCard}>
+                          <HighlightText
+                            text={r.content}
+                            keyword={submitted}
+                            style={styles.resultContent}
+                            numberOfLines={3}
+                            colors={colors}
+                          />
+                          <Text style={styles.resultMeta}>{formatDate(r.createdAt)}</Text>
+                        </GlassView>
                       </AnimatedPressable>
                     ))}
                   </View>
@@ -439,16 +444,18 @@ export const SearchScreen: React.FC = () => {
                       <AnimatedPressable
                         key={c.id}
                         onPress={() => {/* 하루 메모 화면 미구현 */}}
-                        style={[styles.resultCard, shadow]}
+                        style={[styles.resultCardWrap, shadow]}
                       >
-                        <HighlightText
-                          text={c.memo ?? ''}
-                          keyword={submitted}
-                          style={styles.resultContent}
-                          numberOfLines={3}
-                          colors={colors}
-                        />
-                        <Text style={styles.resultMeta}>{c.checkedAt}</Text>
+                        <GlassView intensity="regular" borderRadius={sizes.radius.xxl} style={styles.resultCard}>
+                          <HighlightText
+                            text={c.memo ?? ''}
+                            keyword={submitted}
+                            style={styles.resultContent}
+                            numberOfLines={3}
+                            colors={colors}
+                          />
+                          <Text style={styles.resultMeta}>{c.checkedAt}</Text>
+                        </GlassView>
                       </AnimatedPressable>
                     ))}
                   </View>
@@ -462,16 +469,18 @@ export const SearchScreen: React.FC = () => {
                       <AnimatedPressable
                         key={p.id}
                         onPress={() => navigateToPrepNote(p.id, p.scheduleId)}
-                        style={[styles.resultCard, shadow]}
+                        style={[styles.resultCardWrap, shadow]}
                       >
-                        <HighlightText
-                          text={p.content}
-                          keyword={submitted}
-                          style={styles.resultContent}
-                          numberOfLines={3}
-                          colors={colors}
-                        />
-                        <Text style={styles.resultMeta}>{formatDate(p.createdAt)}</Text>
+                        <GlassView intensity="regular" borderRadius={sizes.radius.xxl} style={styles.resultCard}>
+                          <HighlightText
+                            text={p.content}
+                            keyword={submitted}
+                            style={styles.resultContent}
+                            numberOfLines={3}
+                            colors={colors}
+                          />
+                          <Text style={styles.resultMeta}>{formatDate(p.createdAt)}</Text>
+                        </GlassView>
                       </AnimatedPressable>
                     ))}
                   </View>
