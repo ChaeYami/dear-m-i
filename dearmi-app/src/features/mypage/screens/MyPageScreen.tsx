@@ -32,14 +32,13 @@ type Nav = CompositeNavigationProp<
 >;
 
 interface MenuItemProps {
-  icon: keyof typeof Ionicons.glyphMap;
   label: string;
   onPress?: () => void;
   right?: React.ReactNode;
   colors: any;
 }
 
-const MenuItem: React.FC<MenuItemProps> = ({ icon, label, onPress, right, colors }) => (
+const MenuItem: React.FC<MenuItemProps> = ({ label, onPress, right, colors }) => (
   <AnimatedPressable
     onPress={onPress}
     disabled={!onPress}
@@ -51,18 +50,6 @@ const MenuItem: React.FC<MenuItemProps> = ({ icon, label, onPress, right, colors
       gap: sizes.spacing.md,
     }}
   >
-    <View
-      style={{
-        width: 32,
-        height: 32,
-        borderRadius: 10,
-        backgroundColor: colors.accentMuted,
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <Ionicons name={icon} size={18} color={colors.accent} />
-    </View>
     <Text
       style={{
         flex: 1,
@@ -316,7 +303,6 @@ export const MyPageScreen: React.FC = () => {
             </View>
             <View style={[styles.card, shadow]}>
               <MenuItem
-                icon="moon-outline"
                 label={t('theme_dark_mode')}
                 colors={colors}
                 right={
@@ -330,14 +316,12 @@ export const MyPageScreen: React.FC = () => {
               />
               <View style={styles.menuDivider} />
               <MenuItem
-                icon="notifications-outline"
                 label={t('menu_notification')}
                 onPress={() => navigation.navigate('NotificationSettings')}
                 colors={colors}
               />
               <View style={styles.menuDivider} />
               <MenuItem
-                icon="person-circle-outline"
                 label={t('menu_account')}
                 onPress={() => navigation.navigate('Account')}
                 colors={colors}
@@ -352,21 +336,18 @@ export const MyPageScreen: React.FC = () => {
             </View>
             <View style={[styles.card, shadow]}>
               <MenuItem
-                icon="megaphone-outline"
                 label={t('menu_notice')}
                 onPress={() => navigation.navigate('NoticeList')}
                 colors={colors}
               />
               <View style={styles.menuDivider} />
               <MenuItem
-                icon="help-circle-outline"
                 label={t('menu_faq')}
                 onPress={() => navigation.navigate('Faq')}
                 colors={colors}
               />
               <View style={styles.menuDivider} />
               <MenuItem
-                icon="book-outline"
                 label={t('menu_guide')}
                 onPress={() => navigation.navigate('Onboarding', { forceShow: true })}
                 colors={colors}

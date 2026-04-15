@@ -98,8 +98,6 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
         if (!map.has(d)) map.set(d, []);
         map.get(d)!.push(s);
       });
-    // 선택된 날짜가 일정 없어도 항상 포함 (강조 표시용)
-    if (!map.has(selectedDate)) map.set(selectedDate, []);
     return Array.from(map.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, items]) => ({ date, items }));
@@ -268,31 +266,31 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
                   {t('schedule:count_suffix', { count: weekTotalCount })}
                 </Text>
               </View>
-              {weekAllGrouped.map(({ date, items }) => {
-                const isSelected = date === selectedDate;
-                return (
-                  <View
-                    key={date}
-                    style={[
-                      styles.weekDateGroup,
-                      isSelected && { backgroundColor: colors.primaryMuted, borderRadius: sizes.radius.lg, padding: sizes.spacing.sm },
-                    ]}
-                  >
-                    <Text style={[
-                      styles.dateLabel,
-                      {
-                        color: isSelected ? colors.primary : colors.textSub,
-                        fontFamily: isSelected ? fontFamily.bold : fontFamily.semibold,
-                      },
-                    ]}>
-                      {formatDateFull(date)}
-                    </Text>
-                    {items.length === 0 ? (
-                      <Text style={[styles.noItemText, { color: colors.textDisabled, fontFamily: fontFamily.medium }]}>
-                        {t('schedule:no_schedule_item')}
+              {weekAllGrouped.length === 0 ? (
+                <Text style={[styles.noItemText, { color: colors.textDisabled, fontFamily: fontFamily.medium }]}>
+                  {t('schedule:no_schedule_item')}
+                </Text>
+              ) : (
+                weekAllGrouped.map(({ date, items }) => {
+                  const isSelected = date === selectedDate;
+                  return (
+                    <View
+                      key={date}
+                      style={[
+                        styles.weekDateGroup,
+                        isSelected && { backgroundColor: colors.primaryMuted, borderRadius: sizes.radius.lg, padding: sizes.spacing.sm },
+                      ]}
+                    >
+                      <Text style={[
+                        styles.dateLabel,
+                        {
+                          color: isSelected ? colors.primary : colors.textSub,
+                          fontFamily: isSelected ? fontFamily.bold : fontFamily.semibold,
+                        },
+                      ]}>
+                        {formatDateFull(date)}
                       </Text>
-                    ) : (
-                      items.map((item) => (
+                      {items.map((item) => (
                         <ScheduleListItem
                           key={item.id}
                           schedule={item}
@@ -302,11 +300,11 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
                           colors={colors}
                           doctorSuffixT={t}
                         />
-                      ))
-                    )}
-                  </View>
-                );
-              })}
+                      ))}
+                    </View>
+                  );
+                })
+              )}
             </View>
           )}
 
