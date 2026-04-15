@@ -55,7 +55,11 @@ jobs:
       - name: Find last production build commit
         id: last
         run: |
-          JSON=$(eas build:list --platform ios --status finished --channel production --limit 1 --json --non-interactive 2>/dev/null || echo "[]")
+          # eas-cli 가 stdout 에 업데이트 알림 같은 비-JSON 헤더를 출력함.
+          # sed 로 첫 '[' 부터만 추출해서 jq 에 넘김.
+          RAW=$(eas build:list --platform ios --status finished --channel production --limit 1 --json --non-interactive 2>/dev/null || echo "[]")
+          JSON=$(echo "$RAW" | sed -n '/^[[{]/,$p')
+          [ -z "$JSON" ] && JSON="[]"
           COMMIT=$(echo "$JSON" | jq -r '.[0].gitCommitHash // ""')
           echo "commit=$COMMIT" >> $GITHUB_OUTPUT
           echo "Last production build commit: $COMMIT"
