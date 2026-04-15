@@ -54,13 +54,23 @@ jobs:
 
       - name: Find last production build commit
         id: last
+        working-directory: dearmi-app   # EAS 가 app.json 위치에서 프로젝트 컨텍스트 인식해야 함
         run: |
-          # eas-cli 가 stdout 에 업데이트 알림 같은 비-JSON 헤더를 출력함.
-          # sed 로 첫 '[' 부터만 추출해서 jq 에 넘김.
-          RAW=$(eas build:list --platform ios --status finished --channel production --limit 1 --json --non-interactive 2>/dev/null || echo "[]")
+          set +e
+          echo "=== Running eas build:list ==="
+          RAW=$(eas build:list --platform ios --status finished --limit 10 --json --non-interactive 2>&1)
+          echo "Exit code: $?"
+          echo "=== Raw output preview (first 30 lines): ==="
+          echo "$RAW" | head -30
+          echo "=== End preview ==="
+
+          # 비-JSON 헤더 (eas-cli 업데이트 알림 등) 제거
           JSON=$(echo "$RAW" | sed -n '/^[[{]/,$p')
           [ -z "$JSON" ] && JSON="[]"
-          COMMIT=$(echo "$JSON" | jq -r '.[0].gitCommitHash // ""')
+
+          # production 채널의 가장 최근 finished 빌드 → gitCommitHash
+          COMMIT=$(echo "$JSON" | jq -r '[.[] | select(.channel == "production")][0].gitCommitHash // ""')
+
           echo "commit=$COMMIT" >> $GITHUB_OUTPUT
           echo "Last production build commit: $COMMIT"
 
