@@ -3,6 +3,10 @@ name: Deploy App (EAS — auto build both, submit iOS only)
 # 📝 빌드는 iOS + Android 둘 다 진행 (Android AAB 는 EAS 대시보드에 남아서 수동 업로드 가능).
 #    Submit (스토어 자동 업로드) 은 iOS 만. Android 자동 submission 은 한국 사업자 등록 +
 #    통신판매업 신고번호 Play Console 입력 완료 후 추가 예정.
+#
+# 분기 로직: 마지막 production 빌드의 commit 과 HEAD 간 git diff 로 "네이티브에 영향 주는 파일"
+#           변경 여부 체크 — 있으면 build, 없으면 OTA.
+#   (fingerprint 라이브러리 hash 가 EAS 내부 계산과 안 맞아서 git diff 방식으로 통일)
 
 on:
   push:
@@ -18,7 +22,7 @@ on:
         default: 'auto'
         type: choice
         options:
-          - auto    # fingerprint 비교해서 자동 분기
+          - auto    # git diff 로 자동 분기
           - build   # 강제 풀 빌드 + 제출
           - update  # 강제 OTA 만
 
@@ -26,13 +30,12 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 90
-    defaults:
-      run:
-        working-directory: dearmi-app
 
     steps:
-      - name: Checkout
+      - name: Checkout (with history for git diff)
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -46,44 +49,67 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Install dependencies
+        working-directory: dearmi-app
         run: npm ci
 
-      - name: Compute current fingerprint
-        id: fp
-        run: |
-          OUTPUT=$(npx --yes @expo/fingerprint@latest .)
-          HASH=$(echo "$OUTPUT" | jq -r .hash)
-          echo "current=$HASH" >> $GITHUB_OUTPUT
-          echo "Current fingerprint: $HASH"
-
-      - name: Find latest production build runtimeVersion
+      - name: Find last production build commit
         id: last
         run: |
           JSON=$(eas build:list --platform ios --status finished --channel production --limit 1 --json --non-interactive 2>/dev/null || echo "[]")
-          LAST=$(echo "$JSON" | jq -r '.[0].runtimeVersion // ""')
-          echo "last=$LAST" >> $GITHUB_OUTPUT
-          echo "Last production runtimeVersion: $LAST"
+          COMMIT=$(echo "$JSON" | jq -r '.[0].gitCommitHash // ""')
+          echo "commit=$COMMIT" >> $GITHUB_OUTPUT
+          echo "Last production build commit: $COMMIT"
 
-      - name: Decide action
-        id: decide
+      - name: Check for native-affecting changes since last build
+        id: diff
         run: |
           MODE="${{ github.event.inputs.mode }}"
-          CUR="${{ steps.fp.outputs.current }}"
-          LAST="${{ steps.last.outputs.last }}"
-          if [ -z "$MODE" ] || [ "$MODE" = "auto" ]; then
-            if [ -n "$CUR" ] && [ -n "$LAST" ] && [ "$CUR" = "$LAST" ]; then
-              ACTION="update"
-            else
-              ACTION="build"
-            fi
-          else
-            ACTION="$MODE"
+          LAST="${{ steps.last.outputs.commit }}"
+
+          if [ "$MODE" = "build" ] || [ "$MODE" = "update" ]; then
+            echo "Manual override: $MODE"
+            echo "action=$MODE" >> $GITHUB_OUTPUT
+            exit 0
           fi
-          echo "action=$ACTION" >> $GITHUB_OUTPUT
-          echo "Decided: action=$ACTION (mode=$MODE current=$CUR last=$LAST)"
+
+          if [ -z "$LAST" ]; then
+            echo "No previous build to compare → build"
+            echo "action=build" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # 이 파일들 중 하나라도 변경되면 네이티브 영향 → build
+          NATIVE_PATHSPEC=(
+            'dearmi-app/package.json'
+            'dearmi-app/package-lock.json'
+            'dearmi-app/app.json'
+            'dearmi-app/app.config.js'
+            'dearmi-app/app.config.ts'
+            'dearmi-app/eas.json'
+            'dearmi-app/babel.config.js'
+            'dearmi-app/metro.config.js'
+            'dearmi-app/GoogleService-Info.plist'
+            'dearmi-app/google-services.json'
+            'dearmi-app/plugins/'
+            'dearmi-app/assets/adaptive-icon.png'
+            'dearmi-app/assets/fonts/'
+            'dearmi-app/ios/'
+            'dearmi-app/android/'
+          )
+
+          CHANGED=$(git diff --name-only "$LAST" HEAD -- "${NATIVE_PATHSPEC[@]}" 2>/dev/null || echo "")
+          if [ -n "$CHANGED" ]; then
+            echo "Native-affecting files changed since $LAST:"
+            echo "$CHANGED"
+            echo "action=build" >> $GITHUB_OUTPUT
+          else
+            echo "No native-affecting changes since $LAST → OTA"
+            echo "action=update" >> $GITHUB_OUTPUT
+          fi
 
       - name: OTA Update (both platforms)
-        if: steps.decide.outputs.action == 'update'
+        if: steps.diff.outputs.action == 'update'
+        working-directory: dearmi-app
         env:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
@@ -91,12 +117,14 @@ jobs:
           eas update --branch production --message "$MSG" --non-interactive
 
       - name: Build with EAS (iOS + Android)
-        if: steps.decide.outputs.action == 'build'
+        if: steps.diff.outputs.action == 'build'
+        working-directory: dearmi-app
         run: |
           eas build --platform all --profile production --non-interactive
 
       - name: Submit iOS to App Store Connect
         # Android 자동 submission 은 한국 사업자 등록 완료 후 추가 예정 (TODO)
-        if: steps.decide.outputs.action == 'build'
+        if: steps.diff.outputs.action == 'build'
+        working-directory: dearmi-app
         run: |
           eas submit --platform ios --profile production --latest --non-interactive
