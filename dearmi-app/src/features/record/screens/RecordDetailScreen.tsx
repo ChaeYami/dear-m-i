@@ -109,6 +109,56 @@ export const RecordDetailScreen: React.FC = () => {
           </View>
         )}
 
+        {/* 구조화 섹션: 진단 / 처방 변화 / 다음 약속까지 / 오늘의 한 마디 */}
+        {([
+          { key: 'diagnosis', label: t('record:section_diagnosis') },
+          { key: 'rxChanges', label: t('record:section_rx_changes') },
+          { key: 'nextSteps', label: t('record:section_next_steps') },
+          { key: 'keyTakeaway', label: t('record:section_key_takeaway') },
+        ] as const).map((s) => {
+          const value = record.sections?.[s.key];
+          if (!value || !value.trim()) return null;
+          return (
+            <View key={s.key} style={[styles.card, softShadow(colors)]}>
+              <Text style={styles.sectionLabel}>{s.label}</Text>
+              <Text style={styles.contentText}>{value}</Text>
+            </View>
+          );
+        })}
+
+        {/* 진료 후 만족도 */}
+        {record.visitSatisfaction != null && (
+          <View style={[styles.card, softShadow(colors)]}>
+            <Text style={styles.sectionLabel}>{t('record:visit_satisfaction')}</Text>
+            <View style={styles.emotionRow}>
+              <View
+                style={[
+                  styles.emotionBadge,
+                  {
+                    backgroundColor: getEmotionColor(record.visitSatisfaction) + '20',
+                    borderColor: getEmotionColor(record.visitSatisfaction) + '40',
+                  },
+                ]}
+              >
+                <Text style={[styles.emotionScore, { color: getEmotionColor(record.visitSatisfaction) }]}>
+                  {record.visitSatisfaction}{t('common:score_unit')}
+                </Text>
+              </View>
+              <View style={styles.emotionBarBg}>
+                <View
+                  style={[
+                    styles.emotionBarFill,
+                    {
+                      width: `${record.visitSatisfaction * 10}%`,
+                      backgroundColor: getEmotionColor(record.visitSatisfaction),
+                    },
+                  ]}
+                />
+              </View>
+            </View>
+          </View>
+        )}
+
         {/* 상담 내용 */}
         <View style={[styles.card, softShadow(colors)]}>
           <Text style={styles.sectionLabel}>{t('record:content_label')}</Text>

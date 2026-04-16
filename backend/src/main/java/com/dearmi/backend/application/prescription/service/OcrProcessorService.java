@@ -2,6 +2,7 @@ package com.dearmi.backend.application.prescription.service;
 
 import com.dearmi.backend.application.druginfo.dto.DrugInfoDto;
 import com.dearmi.backend.application.druginfo.service.DrugInfoCacheService;
+import com.dearmi.backend.application.medication.service.AutoCreateMedicationSchedulesService;
 import com.dearmi.backend.application.prescription.dto.OcrMedicationItem;
 import com.dearmi.backend.application.prescription.dto.OcrResult;
 import com.dearmi.backend.application.prescription.port.PrescriptionOcrPort;
@@ -33,6 +34,7 @@ public class OcrProcessorService {
     private final PrescriptionMedicationRepository prescriptionMedicationRepository;
     private final PrescriptionOcrPort prescriptionOcrPort;
     private final DrugInfoCacheService drugInfoCacheService;
+    private final AutoCreateMedicationSchedulesService autoCreateMedicationSchedulesService;
     private final TransactionTemplate transactionTemplate;
     private final Executor taskExecutor;
 
@@ -41,12 +43,14 @@ public class OcrProcessorService {
             PrescriptionMedicationRepository prescriptionMedicationRepository,
             PrescriptionOcrPort prescriptionOcrPort,
             DrugInfoCacheService drugInfoCacheService,
+            AutoCreateMedicationSchedulesService autoCreateMedicationSchedulesService,
             PlatformTransactionManager txManager,
             @Qualifier("ocrTaskExecutor") Executor taskExecutor) {
         this.prescriptionRepository = prescriptionRepository;
         this.prescriptionMedicationRepository = prescriptionMedicationRepository;
         this.prescriptionOcrPort = prescriptionOcrPort;
         this.drugInfoCacheService = drugInfoCacheService;
+        this.autoCreateMedicationSchedulesService = autoCreateMedicationSchedulesService;
         this.transactionTemplate = new TransactionTemplate(txManager);
         this.taskExecutor = taskExecutor;
     }
@@ -109,6 +113,11 @@ public class OcrProcessorService {
                 prescription.completeOcr(null);
                 prescriptionRepository.save(prescription);
                 log.info("OCR 완료: prescriptionId={}, 약품={}건", prescriptionId, items.size());
+
+                // 처방 약품 → 복약 일정 자동 등록 (같은 트랜잭션 내, 같은 처방전에 동일 약품명이 이미 있으면 스킵)
+                autoCreateMedicationSchedulesService.autoCreate(
+                        userId, prescriptionId, prescription.getPrescribedAt(), savedMedications);
+
                 return true;
 
             } catch (PrescriptionOcrException e) {

@@ -1,5 +1,6 @@
 package com.dearmi.backend.application.prescription.usecase;
 
+import com.dearmi.backend.application.medication.service.AutoCreateMedicationSchedulesService;
 import com.dearmi.backend.application.prescription.dto.MedicationResult;
 import com.dearmi.backend.application.prescription.dto.PrescriptionResult;
 import com.dearmi.backend.application.prescription.dto.UpdateMedicationsCommand;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -23,6 +25,7 @@ public class UpdateMedicationsUseCaseImpl implements UpdateMedicationsUseCase {
     private final PrescriptionRepository prescriptionRepository;
     private final PrescriptionMedicationRepository prescriptionMedicationRepository;
     private final StoragePort storagePort;
+    private final AutoCreateMedicationSchedulesService autoCreateMedicationSchedulesService;
 
     @Override
     @Transactional
@@ -37,6 +40,7 @@ public class UpdateMedicationsUseCaseImpl implements UpdateMedicationsUseCase {
         // 기존 medications 전체 삭제 후 재등록
         prescriptionMedicationRepository.deleteByPrescriptionId(command.prescriptionId());
 
+        List<PrescriptionMedication> savedEntities = new ArrayList<>();
         List<MedicationResult> saved = command.medications().stream()
                 .map(item -> PrescriptionMedication.builder()
                         .prescriptionId(command.prescriptionId())
@@ -47,8 +51,13 @@ public class UpdateMedicationsUseCaseImpl implements UpdateMedicationsUseCase {
                         .days(item.days())
                         .build())
                 .map(prescriptionMedicationRepository::save)
+                .peek(savedEntities::add)
                 .map(MedicationResult::from)
                 .toList();
+
+        // 처방 약품 → 복약 일정 자동 등록 (같은 처방전에 동일 약품명이 이미 있으면 스킵)
+        autoCreateMedicationSchedulesService.autoCreate(
+                command.userId(), command.prescriptionId(), prescription.getPrescribedAt(), savedEntities);
 
         String imageUrl = prescription.getS3Key() != null
                 ? storagePort.generateGetPresignedUrl(prescription.getS3Key())

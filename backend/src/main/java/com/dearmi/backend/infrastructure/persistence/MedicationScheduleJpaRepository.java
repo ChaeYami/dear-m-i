@@ -16,6 +16,8 @@ public interface MedicationScheduleJpaRepository extends JpaRepository<Medicatio
 
     List<MedicationSchedule> findByUserIdAndDeletedAtIsNull(UUID userId);
 
+    List<MedicationSchedule> findByPrescriptionIdAndDeletedAtIsNull(UUID prescriptionId);
+
     List<MedicationSchedule> findAllByMorningGroupIdAndDeletedAtIsNull(UUID morningGroupId);
     List<MedicationSchedule> findAllByAfternoonGroupIdAndDeletedAtIsNull(UUID afternoonGroupId);
     List<MedicationSchedule> findAllByEveningGroupIdAndDeletedAtIsNull(UUID eveningGroupId);

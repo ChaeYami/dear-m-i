@@ -37,6 +37,11 @@ public class MedicationScheduleRepositoryImpl implements MedicationScheduleRepos
     }
 
     @Override
+    public List<MedicationSchedule> findByPrescriptionIdAndDeletedAtIsNull(UUID prescriptionId) {
+        return jpa.findByPrescriptionIdAndDeletedAtIsNull(prescriptionId);
+    }
+
+    @Override
     public List<MedicationSchedule> findActiveForDateAndUserId(LocalDate date, UUID userId) {
         return jpa.findActiveForDateAndUserId(date, userId);
     }

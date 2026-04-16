@@ -15,6 +15,9 @@ public interface MedicationScheduleRepository {
 
     List<MedicationSchedule> findByUserIdAndDeletedAtIsNull(UUID userId);
 
+    /** 처방전 자동 등록 idempotency 체크용 — 해당 처방전에 이미 연결된 (소프트삭제 안 된) 일정 목록 */
+    List<MedicationSchedule> findByPrescriptionIdAndDeletedAtIsNull(UUID prescriptionId);
+
     /** 오늘 기준 활성화된 해당 유저의 복약 일정 조회 (startDate <= date <= endDate, null 허용) */
     List<MedicationSchedule> findActiveForDateAndUserId(LocalDate date, UUID userId);
 

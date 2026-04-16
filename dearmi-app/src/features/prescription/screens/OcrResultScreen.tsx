@@ -435,53 +435,27 @@ export const OcrResultScreen: React.FC = () => {
   };
 
   const showMedicationSetupDialog = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // 백엔드가 처방전 약품을 복약 일정에 자동 등록 — 시간 슬롯 조정이 필요하면 일정 화면에서 편집.
+    const goPrescriptionList = () =>
+      navigation.dispatch(
+        CommonActions.reset({ index: 1, routes: [{ name: 'MedicationHome' }, { name: 'PrescriptionList' }] })
+      );
 
-    const activeMeds = medications
-      .filter((m) => m.medicationName.trim())
-      .map((m) => ({
-        drugName: m.medicationName.trim(),
-        dosage: m.dosage.trim() || undefined,
-        singleDose: m.singleDose.trim() || undefined,
-        totalDays: m.durationDays ? Number(m.durationDays) : undefined,
-      }))
-      .filter((m) => {
-        if (!prescribedAt || !m.totalDays) return true;
-        const start = new Date(prescribedAt + 'T00:00:00');
-        const end = new Date(start);
-        end.setDate(end.getDate() + m.totalDays - 1);
-        return end >= today;
-      });
-
-    if (activeMeds.length === 0) {
-      navigation.dispatch(CommonActions.reset({ index: 1, routes: [{ name: 'MedicationHome' }, { name: 'PrescriptionList' }] }));
+    const hasMeds = medications.some((m) => m.medicationName.trim());
+    if (!hasMeds) {
+      goPrescriptionList();
       return;
     }
 
     customAlert(
-      t('prescription:setup_reminder_title'),
-      t('prescription:setup_reminder_desc_multiline'),
+      t('prescription:auto_scheduled_title'),
+      t('prescription:auto_scheduled_desc'),
       [
+        { text: t('common:confirm'), onPress: goPrescriptionList },
         {
-          text: t('prescription:later'),
-          style: 'cancel',
-          onPress: () => navigation.dispatch(CommonActions.reset({ index: 1, routes: [{ name: 'MedicationHome' }, { name: 'PrescriptionList' }] })),
-        },
-        {
-          text: t('prescription:setup'),
-          onPress: () => {
-            const [first, ...rest] = activeMeds;
-            navigation.navigate('MedicationForm', {
-              drugName: first.drugName,
-              dosage: first.dosage,
-              singleDose: first.singleDose,
-              totalDays: first.totalDays,
-              startDate: prescribedAt || undefined,
-              isFromOcr: true,
-              remainingMeds: rest,
-            });
-          },
+          text: t('prescription:auto_scheduled_go'),
+          onPress: () =>
+            navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'MedicationHome' }] })),
         },
       ]
     );
