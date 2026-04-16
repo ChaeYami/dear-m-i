@@ -9,6 +9,7 @@ import com.dearmi.backend.application.prescription.usecase.GenerateUploadUrlUseC
 import com.dearmi.backend.application.prescription.usecase.GetPrescriptionDetailUseCase;
 import com.dearmi.backend.application.prescription.usecase.GetPrescriptionListUseCase;
 import com.dearmi.backend.application.prescription.usecase.RetryOcrUseCase;
+import com.dearmi.backend.application.prescription.usecase.SyncMedicationSchedulesUseCase;
 import com.dearmi.backend.application.prescription.usecase.UpdateMedicationsUseCase;
 import com.dearmi.backend.common.response.ApiResponse;
 import com.dearmi.backend.common.response.PageResponse;
@@ -43,6 +44,7 @@ public class PrescriptionController {
     private final UpdateMedicationsUseCase updateMedicationsUseCase;
     private final DeletePrescriptionUseCase deletePrescriptionUseCase;
     private final RetryOcrUseCase retryOcrUseCase;
+    private final SyncMedicationSchedulesUseCase syncMedicationSchedulesUseCase;
 
     /** POST /api/v1/prescriptions/presigned-url — S3 업로드용 PUT Presigned URL 발급 */
     @PostMapping("/presigned-url")
@@ -114,6 +116,18 @@ public class PrescriptionController {
             @PathVariable UUID id
     ) {
         retryOcrUseCase.retry(userId, id);
+    }
+
+    /**
+     * POST /api/v1/prescriptions/{id}/sync-medication-schedules — 처방전 약품 목록을 복약 일정에 일괄 등록.
+     * 동일 약품명이 이미 일정에 있으면 스킵 (idempotent).
+     */
+    @PostMapping("/{id}/sync-medication-schedules")
+    public ApiResponse<SyncMedicationSchedulesUseCase.SyncResult> syncMedicationSchedules(
+            @AuthenticatedUserId UUID userId,
+            @PathVariable UUID id
+    ) {
+        return ApiResponse.success(syncMedicationSchedulesUseCase.sync(userId, id));
     }
 
     /** PUT /api/v1/prescriptions/{id}/medications — 약품 목록 수동 수정 (전체 교체) */

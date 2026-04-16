@@ -438,7 +438,7 @@ export const OcrResultScreen: React.FC = () => {
     // 백엔드가 처방전 약품을 복약 일정에 자동 등록 — 시간 슬롯 조정이 필요하면 일정 화면에서 편집.
     const goPrescriptionList = () =>
       navigation.dispatch(
-        CommonActions.reset({ index: 1, routes: [{ name: 'MedicationHome' }, { name: 'PrescriptionList' }] })
+        CommonActions.reset({ index: 1, routes: [{ name: 'MedicationTab' }, { name: 'PrescriptionList' }] })
       );
 
     const hasMeds = medications.some((m) => m.medicationName.trim());
@@ -455,7 +455,8 @@ export const OcrResultScreen: React.FC = () => {
         {
           text: t('prescription:auto_scheduled_go'),
           onPress: () =>
-            navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'MedicationHome' }] })),
+            // 탭 루트인 MedicationTab 으로 reset — MedicationHome 직접 reset 시 탭바가 숨겨짐
+            navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'MedicationTab' }] })),
         },
       ]
     );

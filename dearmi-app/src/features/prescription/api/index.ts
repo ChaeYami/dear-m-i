@@ -90,4 +90,10 @@ export const prescriptionApi = {
   /** OCR 재시도 */
   retryOcr: (id: string) =>
     axiosInstance.post<ApiResponse<void>>(`/api/v1/prescriptions/${id}/retry-ocr`),
+
+  /** 처방 약품 목록을 복약 일정에 일괄 등록 (idempotent) */
+  syncMedicationSchedules: (id: string) =>
+    axiosInstance.post<ApiResponse<{ createdCount: number; totalMedications: number }>>(
+      `/api/v1/prescriptions/${id}/sync-medication-schedules`,
+    ),
 };

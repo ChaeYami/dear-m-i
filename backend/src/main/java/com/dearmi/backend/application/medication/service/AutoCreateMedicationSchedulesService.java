@@ -39,13 +39,13 @@ public class AutoCreateMedicationSchedulesService {
     private static final LocalTime DEFAULT_BEDTIME = LocalTime.of(22, 0);
     private static final Pattern TIMES_PER_DAY = Pattern.compile("(?:1\\s*일|하루)\\s*(\\d)\\s*회");
 
-    public void autoCreate(
+    public int autoCreate(
             UUID userId,
             UUID prescriptionId,
             LocalDate prescribedAt,
             List<PrescriptionMedication> medications
     ) {
-        if (medications == null || medications.isEmpty()) return;
+        if (medications == null || medications.isEmpty()) return 0;
 
         // 이미 같은 처방전 + 같은 약품명으로 등록된 일정은 스킵 (사용자 커스터마이즈 보존)
         Set<String> existingDrugNames = new HashSet<>();
@@ -57,6 +57,7 @@ public class AutoCreateMedicationSchedulesService {
 
         LocalDate startDate = prescribedAt != null ? prescribedAt : LocalDate.now();
 
+        int created = 0;
         for (PrescriptionMedication med : medications) {
             String drugName = med.getDrugName();
             if (drugName == null || drugName.isBlank()) continue;
@@ -91,7 +92,9 @@ public class AutoCreateMedicationSchedulesService {
 
             medicationDrugInfoService.fetchDrugInfoAsync(saved.getId(), userId);
             log.info("처방전 → 복약 일정 자동 등록: scheduleId={}, drugName={}", saved.getId(), drugName);
+            created++;
         }
+        return created;
     }
 
     private SlotConfig parseDirections(String directions) {

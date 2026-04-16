@@ -25,12 +25,12 @@ import {
   usePagedPrescriptions,
   useDeletePrescription,
   useBulkDeletePrescriptions,
+  useSyncMedicationSchedules,
 } from '@/features/prescription/hooks/usePrescription';
 import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
 import type { Prescription, PrescriptionMedication, OcrStatus } from '@/shared/types/domain.types';
-import { navigationRef } from '@/navigation/navigationRef';
 
 if (Platform.OS === 'android') {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
@@ -99,11 +99,11 @@ const PrescriptionCard: React.FC<{
   onMedPress: (med: PrescriptionMedication) => void;
   onDelete: () => void;
   onViewOcr: () => void;
-  onWriteRecord: () => void;
-  onWriteSchedule: () => void;
+  onSyncMeds: () => void;
+  isSyncing: boolean;
   colors: ReturnType<typeof useTheme>['colors'];
   shadow: object;
-}> = ({ item, expanded, selected, selectionMode, onToggle, onMedPress, onDelete, onViewOcr, onWriteRecord, onWriteSchedule, colors, shadow }) => {
+}> = ({ item, expanded, selected, selectionMode, onToggle, onMedPress, onDelete, onViewOcr, onSyncMeds, isSyncing, colors, shadow }) => {
   const { t } = useTranslation('prescription');
   const OCR_STATUS_CONFIG: Record<OcrStatus, { label: string; color: string; bg: string }> = {
     PENDING: { label: t('status_pending'), color: colors.warning, bg: colors.warningLight },
@@ -228,37 +228,25 @@ const PrescriptionCard: React.FC<{
             borderBottomLeftRadius: sizes.radius.xxl,
             borderBottomRightRadius: sizes.radius.xxl,
           }}>
-            {/* 일정 추가 */}
-            <TouchableOpacity
-              style={{
-                flex: 1,
-                paddingVertical: sizes.spacing.sm + 2,
-                borderRadius: sizes.radius.full,
-                alignItems: 'center',
-                backgroundColor: colors.primaryMuted,
-              }}
-              onPress={onWriteSchedule}
-            >
-              <Text style={{ fontFamily: fontFamily.medium, fontSize: sizes.font.sm, color: colors.primary }}>
-                {t('add_schedule_btn')}
-              </Text>
-            </TouchableOpacity>
-
-            {/* 기록하기 */}
-            <TouchableOpacity
-              style={{
-                flex: 1,
-                paddingVertical: sizes.spacing.sm + 2,
-                borderRadius: sizes.radius.full,
-                alignItems: 'center',
-                backgroundColor: colors.primaryMuted,
-              }}
-              onPress={onWriteRecord}
-            >
-              <Text style={{ fontFamily: fontFamily.medium, fontSize: sizes.font.sm, color: colors.primary }}>
-                {t('record_btn')}
-              </Text>
-            </TouchableOpacity>
+            {/* 복약 일정 일괄 등록 */}
+            {item.ocrStatus === 'COMPLETED' && item.medications.length > 0 && (
+              <TouchableOpacity
+                style={{
+                  flex: 1,
+                  paddingVertical: sizes.spacing.sm + 2,
+                  borderRadius: sizes.radius.full,
+                  alignItems: 'center',
+                  backgroundColor: colors.primaryMuted,
+                  opacity: isSyncing ? 0.6 : 1,
+                }}
+                onPress={onSyncMeds}
+                disabled={isSyncing}
+              >
+                <Text style={{ fontFamily: fontFamily.medium, fontSize: sizes.font.sm, color: colors.primary }}>
+                  {isSyncing ? t('sync_meds_progress') : t('sync_meds_btn')}
+                </Text>
+              </TouchableOpacity>
+            )}
 
             {(item.ocrStatus === 'FAILED' || item.ocrStatus === 'COMPLETED') && (
               <TouchableOpacity
@@ -309,8 +297,10 @@ export const PrescriptionTab: React.FC = () => {
     usePagedPrescriptions();
   const { mutate: deletePrescription } = useDeletePrescription();
   const { mutate: bulkDelete, isPending: isBulkDeleting } = useBulkDeletePrescriptions();
+  const { mutate: syncMeds } = useSyncMedicationSchedules();
 
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [syncingIds, setSyncingIds] = useState<Set<string>>(new Set());
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const shadow = softShadow(colors);
@@ -372,6 +362,36 @@ export const PrescriptionTab: React.FC = () => {
       { text: t('common:cancel'), style: 'cancel' },
       { text: t('common:delete'), style: 'destructive', onPress: () => deletePrescription(String(item.id)) },
     ]);
+  };
+
+  const handleSyncMeds = (item: Prescription) => {
+    const id = String(item.id);
+    if (syncingIds.has(id)) return;
+    setSyncingIds((prev) => new Set(prev).add(id));
+    syncMeds(id, {
+      onSuccess: (res) => {
+        const created = res.data.data?.createdCount ?? 0;
+        customAlert(
+          t('prescription:sync_meds_done_title'),
+          created > 0
+            ? t('prescription:sync_meds_done_desc', { count: created })
+            : t('prescription:sync_meds_already_done_desc'),
+          [{ text: t('common:confirm') }],
+        );
+      },
+      onError: () => {
+        customAlert(t('prescription:sync_meds_done_title'), t('prescription:sync_meds_failed'), [
+          { text: t('common:confirm') },
+        ]);
+      },
+      onSettled: () => {
+        setSyncingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      },
+    });
   };
 
   const handleBulkDelete = () => {
@@ -465,32 +485,8 @@ export const PrescriptionTab: React.FC = () => {
             onViewOcr={() =>
               navigation.navigate('OcrResult', { prescriptionId: String(item.id) })
             }
-            onWriteRecord={() => {
-              (navigationRef.current as any)?.navigate('Main', {
-                screen: 'Care',
-                params: {
-                  screen: 'RecordForm',
-                  params: { consultedAt: item.prescribedAt },
-                },
-              });
-            }}
-            onWriteSchedule={() => {
-              // 1단계: Schedule 탭 전환 (ScheduleTab이 스택에 먼저 쌓이도록)
-              (navigationRef.current as any)?.navigate('Main', { screen: 'Care' });
-              // 2단계: 다음 프레임에 ScheduleForm push → [CareHome, ScheduleForm] 보장
-              setTimeout(() => {
-                (navigationRef.current as any)?.navigate('Main', {
-                  screen: 'Care',
-                  params: {
-                    screen: 'ScheduleForm',
-                    params: {
-                      defaultDate: item.prescribedAt,
-                      defaultHospitalName: item.hospitalName,
-                    },
-                  },
-                });
-              }, 0);
-            }}
+            onSyncMeds={() => handleSyncMeds(item)}
+            isSyncing={syncingIds.has(String(item.id))}
             colors={colors}
             shadow={shadow}
           />

@@ -134,6 +134,18 @@ export const useDeletePrescription = () => {
   });
 };
 
+/** 처방 약품 → 복약 일정 일괄 등록 (idempotent) */
+export const useSyncMedicationSchedules = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => prescriptionApi.syncMedicationSchedules(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.todayMedication() });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.allMedicationSchedules() });
+    },
+  });
+};
+
 /** OCR 재시도 */
 export const useRetryOcr = () => {
   const queryClient = useQueryClient();
