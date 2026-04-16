@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Animated,
   Dimensions,
+  RefreshControl,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
@@ -28,6 +29,8 @@ import {
   useUncheckMedication,
   useDeleteMedicationSchedule,
 } from '@/features/medication/hooks/useMedication';
+import { useScreenRefresh } from '@/shared/hooks/useScreenRefresh';
+import { QUERY_KEYS } from '@/constants/cacheKeys';
 import {
   MedicationCard,
   SLOT_LABELS,
@@ -113,6 +116,10 @@ export const MedicationHomeScreen: React.FC<MedicationHomeProps> = ({
   const { mutate: checkMedication } = useCheckMedication();
   const { mutate: uncheckMedication } = useUncheckMedication();
   const { mutate: deleteMedicationSchedule } = useDeleteMedicationSchedule();
+  const { refreshing, onRefresh } = useScreenRefresh([
+    QUERY_KEYS.todayMedication(isToday ? undefined : selectedDate),
+    QUERY_KEYS.allMedicationSchedules(),
+  ]);
 
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const [localEditMode, setLocalEditMode] = useState(false);
@@ -453,7 +460,12 @@ export const MedicationHomeScreen: React.FC<MedicationHomeProps> = ({
       )}
 
       <Animated.View style={{ flex: 1, transform: [{ translateX: slideAnim }] }}>
-      <ScrollView ref={scrollViewRef} contentContainerStyle={styles.content} {...scrollHandlers}>
+      <ScrollView
+        ref={scrollViewRef}
+        contentContainerStyle={styles.content}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+        {...scrollHandlers}
+      >
         {/* 빠른 기록 — 부작용 기록 */}
         {isToday && (
           <TouchableOpacity

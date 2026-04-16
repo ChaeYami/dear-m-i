@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Modal,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,6 +27,8 @@ import {
   useDeleteMedicationSchedule,
   useAllMedicationSchedules,
 } from '@/features/medication/hooks/useMedication';
+import { useScreenRefresh } from '@/shared/hooks/useScreenRefresh';
+import { QUERY_KEYS } from '@/constants/cacheKeys';
 import {
   MedicationCard,
   SLOT_LABELS,
@@ -74,6 +77,10 @@ export const MedicationHistoryScreen: React.FC<{ embedded?: boolean }> = ({ embe
   const [, mo, da] = selectedDate.split('-').map(Number);
 
   const { data, isLoading } = useTodayMedication(isToday ? undefined : selectedDate);
+  const { refreshing, onRefresh } = useScreenRefresh([
+    QUERY_KEYS.todayMedication(isToday ? undefined : selectedDate),
+    QUERY_KEYS.allMedicationSchedules(),
+  ]);
   const { mutate: checkMedication } = useCheckMedication();
   const { mutate: deleteMedicationSchedule } = useDeleteMedicationSchedule();
   const { data: allSchedules = [] } = useAllMedicationSchedules(showCalendar);
@@ -281,7 +288,11 @@ export const MedicationHistoryScreen: React.FC<{ embedded?: boolean }> = ({ embe
         {isLoading ? (
           <LoadingSpinner fullscreen />
         ) : (
-          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            contentContainerStyle={styles.content}
+            showsVerticalScrollIndicator={false}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+          >
 
             {/* 완료율 카드 */}
             <View style={styles.summaryCard}>

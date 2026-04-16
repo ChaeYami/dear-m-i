@@ -23,6 +23,8 @@ import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import { useTabBarScrollHide } from '@/shared/hooks/useTabBarScrollHide';
 import { useTimeline, useDeleteRecord } from '@/features/record/hooks/useRecord';
+import { useScreenRefresh } from '@/shared/hooks/useScreenRefresh';
+import { QUERY_KEYS } from '@/constants/cacheKeys';
 import { haptics } from '@/shared/utils/haptics';
 import { getEmotionColor } from '@/shared/components/EmotionSlider';
 import { RecordCardSkeleton } from '@/shared/components/RecordCardSkeleton';
@@ -224,6 +226,7 @@ export const RecordTab: React.FC<{ embedded?: boolean }> = ({ embedded = false }
     isFetchingNextPage,
     isLoading,
   } = useTimeline();
+  const { refreshing, onRefresh } = useScreenRefresh([QUERY_KEYS.timeline(), QUERY_KEYS.records()]);
 
   const items = useMemo(() => {
     const allItems = data?.pages.flatMap((p) => p.content) ?? [];
@@ -279,6 +282,8 @@ export const RecordTab: React.FC<{ embedded?: boolean }> = ({ embedded = false }
         windowSize={10}
         maxToRenderPerBatch={8}
         initialNumToRender={10}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
         {...scrollHandlers}
         ListFooterComponent={
           isFetchingNextPage ? (

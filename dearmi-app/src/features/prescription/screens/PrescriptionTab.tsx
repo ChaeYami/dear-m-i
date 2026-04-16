@@ -28,6 +28,7 @@ import {
   useSyncMedicationSchedules,
 } from '@/features/prescription/hooks/usePrescription';
 import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
+import { useScreenRefresh } from '@/shared/hooks/useScreenRefresh';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
 import type { Prescription, PrescriptionMedication, OcrStatus } from '@/shared/types/domain.types';
@@ -298,6 +299,7 @@ export const PrescriptionTab: React.FC = () => {
   const { mutate: deletePrescription } = useDeletePrescription();
   const { mutate: bulkDelete, isPending: isBulkDeleting } = useBulkDeletePrescriptions();
   const { mutate: syncMeds } = useSyncMedicationSchedules();
+  const { refreshing, onRefresh } = useScreenRefresh([QUERY_KEYS.prescriptions(), QUERY_KEYS.timeline()]);
 
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [syncingIds, setSyncingIds] = useState<Set<string>>(new Set());
@@ -495,6 +497,8 @@ export const PrescriptionTab: React.FC = () => {
           if (hasNextPage && !isFetchingNextPage) fetchNextPage();
         }}
         onEndReachedThreshold={0.3}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
         ListFooterComponent={
           isFetchingNextPage ? (
             <ActivityIndicator color={colors.primary} style={{ marginVertical: sizes.spacing.lg }} />

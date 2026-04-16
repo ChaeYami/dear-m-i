@@ -17,6 +17,8 @@ import { ScreenHeader } from '@/shared/components/ScreenHeader';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import { customAlert } from '@/shared/components/CustomAlert';
 import { navigationRef } from '@/navigation/navigationRef';
+import { useScreenRefresh } from '@/shared/hooks/useScreenRefresh';
+import { QUERY_KEYS } from '@/constants/cacheKeys';
 import {
   useNotificationHistory,
   useMarkNotificationRead,
@@ -128,6 +130,10 @@ export const NotificationHistoryScreen: React.FC = () => {
   const { mutate: markAllRead } = useMarkAllNotificationsRead();
   const { mutate: deleteOne } = useDeleteNotification();
   const { mutate: deleteAll } = useDeleteAllNotifications();
+  const { refreshing, onRefresh } = useScreenRefresh([
+    QUERY_KEYS.notificationHistory(),
+    QUERY_KEYS.notificationUnreadCount(),
+  ]);
 
   const items: NotificationItem[] = useMemo(
     () => data?.pages.flatMap((p) => p.content) ?? [],
@@ -253,6 +259,8 @@ export const NotificationHistoryScreen: React.FC = () => {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           stickySectionHeadersEnabled
+          refreshing={refreshing}
+          onRefresh={onRefresh}
           renderSectionHeader={({ section }) => (
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>{section.title}</Text>

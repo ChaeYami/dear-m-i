@@ -11,6 +11,7 @@ import {
   Platform,
   Pressable,
   Modal,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,6 +27,8 @@ import { EmotionGraph } from '@/features/checkin/components/EmotionGraph';
 import { DailyCheckinForm } from '@/features/checkin/components/DailyCheckinForm';
 import { useCheckinHistory, useCreateCheckin } from '@/features/checkin/hooks/useCheckin';
 import { useDailyNotes, useCreateDailyNote, useDeleteDailyNote } from '@/features/checkin/hooks/useDailyNote';
+import { useScreenRefresh } from '@/shared/hooks/useScreenRefresh';
+import { QUERY_KEYS } from '@/constants/cacheKeys';
 import { useRecentSchedules } from '@/features/record/hooks/useRecord';
 import { useResetStackOnTabFocus } from '@/shared/hooks/useResetStackOnTabFocus';
 import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
@@ -119,6 +122,12 @@ export const CheckinHomeScreen: React.FC = () => {
 
   // 선택된 날짜의 스레드 메모 (해당 날짜 기준 ±0)
   const { data: dailyNotes = [], isLoading: notesLoading } = useDailyNotes(selectedDate, selectedDate);
+
+  const { refreshing, onRefresh } = useScreenRefresh([
+    QUERY_KEYS.checkinHistory(startDate30, todayStr),
+    QUERY_KEYS.dailyNotes(selectedDate, selectedDate),
+    QUERY_KEYS.todayCheckin(),
+  ]);
 
   // 다음 가까운 진료 일정 (배너용)
   const { data: upcomingSchedules = [] } = useRecentSchedules('FUTURE');
@@ -270,6 +279,7 @@ export const CheckinHomeScreen: React.FC = () => {
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
           {...scrollHandlers}
         >
           {/* ── 오늘의 기분 (이모지 빠른 탭) ── */}

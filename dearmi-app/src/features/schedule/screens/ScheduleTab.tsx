@@ -7,6 +7,7 @@ import {
   ScrollView,
   FlatList,
   Dimensions,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,6 +23,8 @@ import { SectionTitle } from '@/shared/components/SectionTitle';
 import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import { useTabBarScrollHide } from '@/shared/hooks/useTabBarScrollHide';
 import { useAllSchedules } from '@/features/schedule/hooks/useSchedule';
+import { useScreenRefresh } from '@/shared/hooks/useScreenRefresh';
+import { QUERY_KEYS } from '@/constants/cacheKeys';
 import { DatePickerModal } from '@/features/schedule/components/DatePickerModal';
 import type { CareStackParamList } from '@/navigation/CareNavigator';
 import type { HospitalSchedule } from '@/shared/types/domain.types';
@@ -79,6 +82,7 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
   const scrollHandlers = useTabBarScrollHide();
 
   const { data: allSchedules = [] } = useAllSchedules(true);
+  const { refreshing, onRefresh } = useScreenRefresh([QUERY_KEYS.allSchedules()]);
 
   const highlightedDates = useMemo(
     () => new Set(allSchedules.map((s) => toDateString(s.scheduledAt))),
@@ -171,6 +175,7 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarSafeBottom + 80 }]}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         {...scrollHandlers}
       >
         {/* 캘린더 + 일정 리스트 영역 (카드 wrap 제거 — 시각 레이어 정리) */}
