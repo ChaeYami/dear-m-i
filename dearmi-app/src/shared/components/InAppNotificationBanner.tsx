@@ -4,7 +4,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type * as Notifications from 'expo-notifications';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
-import { GlassView } from '@/shared/components/GlassView';
 
 interface Props {
   notification: Notifications.Notification;
@@ -84,9 +83,7 @@ export const InAppNotificationBanner: React.FC<Props> = ({
           android: { elevation: 8 },
         })}
       >
-      <GlassView
-        intensity="thick"
-        borderRadius={sizes.radius.lg}
+      <View
         style={{
           flexDirection: 'row',
           alignItems: 'center',
@@ -96,6 +93,9 @@ export const InAppNotificationBanner: React.FC<Props> = ({
           gap: sizes.spacing.sm,
           borderWidth: 1,
           borderColor: colors.glassBorder,
+          backgroundColor: colors.surface,
+          borderRadius: sizes.radius.lg,
+          overflow: 'hidden',
         }}
       >
         <View
@@ -136,7 +136,7 @@ export const InAppNotificationBanner: React.FC<Props> = ({
         <TouchableOpacity style={{ padding: 4 }} onPress={dismiss} hitSlop={10}>
           <Ionicons name="close" size={sizes.font.md} color={colors.textDisabled} />
         </TouchableOpacity>
-      </GlassView>
+      </View>
       </TouchableOpacity>
     </Animated.View>
   );

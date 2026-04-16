@@ -152,7 +152,8 @@ const AlertModal: React.FC<{
       <Animated.View style={[styles.backdrop, backdropStyle]}>
         <Pressable style={styles.backdropPress} onPress={() => handlePress()}>
           <Animated.View style={[styles.cardWrap, cardStyle]}>
-            <GlassView intensity="thick" borderRadius={sizes.radius.xxl} style={styles.card}>
+            {/* solid surface — iOS BlurView 는 너무 투명해서 글자 가독성 떨어짐 → 모달 카드는 불투명 배경 */}
+            <View style={styles.card}>
             <Pressable>
               {/* 헤더 */}
               <View style={styles.header}>
@@ -198,7 +199,7 @@ const AlertModal: React.FC<{
                 })}
               </View>
             </Pressable>
-            </GlassView>
+            </View>
           </Animated.View>
         </Pressable>
       </Animated.View>
@@ -228,8 +229,11 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors'], _isH: boolean)
       elevation: 12,
     },
     card: {
+      backgroundColor: colors.surface,
+      borderRadius: sizes.radius.xxl,
       borderWidth: 1,
       borderColor: colors.glassBorder,
+      overflow: 'hidden',
     },
     header: {
       paddingHorizontal: sizes.spacing.xl,

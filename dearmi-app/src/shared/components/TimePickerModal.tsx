@@ -100,10 +100,17 @@ const IosTimePicker: React.FC<Props> = ({
       <GlassView intensity="subtle" showHighlight={false} style={StyleSheet.absoluteFill} pointerEvents="none" />
       <Pressable style={styles.backdrop} onPress={onClose}>
         <View style={styles.cardWrap} onStartShouldSetResponder={() => true}>
-        <GlassView
-          intensity="thick"
-          borderRadius={sizes.radius.xxl}
-          style={[styles.card, { borderWidth: 1, borderColor: colors.glassBorder }]}
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: colors.surface,
+              borderRadius: sizes.radius.xxl,
+              borderWidth: 1,
+              borderColor: colors.glassBorder,
+              overflow: 'hidden',
+            },
+          ]}
         >
           <Text style={styles.label}>{t('time_picker_title')}</Text>
           <DateTimePicker
@@ -128,7 +135,7 @@ const IosTimePicker: React.FC<Props> = ({
               <Text style={[styles.actionText, { color: colors.primary, fontFamily: fontFamily.bold }]}>{t('confirm')}</Text>
             </TouchableOpacity>
           </View>
-        </GlassView>
+        </View>
         </View>
       </Pressable>
     </Modal>

@@ -124,10 +124,17 @@ export const DatePickerModal: React.FC<Props> = ({
           style={styles.cardWrap}
           onPress={(e) => e.stopPropagation()}
         >
-        <GlassView
-          intensity="thick"
-          borderRadius={sizes.radius.xxl}
-          style={[styles.card, { borderWidth: 1, borderColor: colors.glassBorder }]}
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: colors.surface,
+              borderRadius: sizes.radius.xxl,
+              borderWidth: 1,
+              borderColor: colors.glassBorder,
+              overflow: 'hidden',
+            },
+          ]}
         >
           <Text style={[styles.label, { color: colors.textSub, fontFamily: fontFamily.medium }]}>
             {t('date_picker_title')}
@@ -161,7 +168,7 @@ export const DatePickerModal: React.FC<Props> = ({
               </Text>
             </TouchableOpacity>
           </View>
-        </GlassView>
+        </View>
         </Pressable>
       </Pressable>
     </Modal>
