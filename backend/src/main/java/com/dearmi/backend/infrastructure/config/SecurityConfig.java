@@ -59,6 +59,11 @@ public class SecurityConfig {
             "/v3/api-docs/**",          // OpenAPI JSON
             "/swagger-ui/**",           // Swagger UI
             "/swagger-ui.html",         // Swagger UI entry
+            // 정적 약관/정책 페이지 (스토어 심사 + 외부 공유용)
+            "/privacy-ko.html", "/privacy-en.html",
+            "/terms-ko.html", "/terms-en.html",
+            "/licenses-ko.html", "/licenses-en.html",
+            "/css/**",
     };
 
     @Bean

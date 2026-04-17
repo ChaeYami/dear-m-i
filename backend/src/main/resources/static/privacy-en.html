@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="index, follow" />
+  <title>Privacy Policy — DearMI</title>
+  <link rel="stylesheet" href="/css/legal.css" />
+</head>
+<body>
+  <div class="container">
+    <header class="legal-header">
+      <div class="app-name">DearMI</div>
+      <nav class="lang-switch">
+        <a href="/privacy-ko.html">한국어</a>
+        <a href="/privacy-en.html" class="active">English</a>
+      </nav>
+    </header>
+
+    <h1 class="title">Privacy Policy</h1>
+    <p class="subtitle">Last updated: May 22, 2026 · Effective: May 22, 2026</p>
+
+    <div class="callout">
+      <strong>At a glance</strong>
+      DearMI helps users manage psychiatry and counseling appointments. Health information you enter is treated as sensitive data, encrypted with AES-256-GCM at the column level, and is never shared with third parties except for prescription OCR processing. Your data is permanently deleted within 30 days of account deletion.
+    </div>
+
+    <h2>Article 1 (Purpose)</h2>
+    <p>Chaeon Studio (the "Company") establishes this Privacy Policy (the "Policy") to protect the personal information of users (the "Users") of the DearMI service (the "Services"), to comply with the Personal Information Protection Act of Korea, the Act on Promotion of Information and Communications Network Utilization and Information Protection (the "Network Act"), and other applicable laws, and to promptly address User concerns regarding the protection of personal information.</p>
+
+    <h2>Article 2 (Principles of Processing)</h2>
+    <p>In accordance with applicable laws and this Policy, the Company may collect Users' personal information. Collected personal information may only be provided to third parties with the User's consent, except where lawfully compelled by statute.</p>
+
+    <h2>Article 3 (Disclosure of this Policy)</h2>
+    <p>① The Company discloses this Policy through the in-app "My Page &gt; Terms &amp; Policies" menu and via the Company's website so Users can review it at any time.</p>
+    <p>② The Company uses appropriate font sizes and colors to make the Policy easy to read.</p>
+
+    <h2>Article 4 (Amendments)</h2>
+    <p>① This Policy may be amended in response to changes in applicable laws or the Company's service policies.</p>
+    <p>② The Company will give notice of amendments by one or more of the following methods:
+a. In-app announcements or dedicated screens
+b. Notification by email or push notification</p>
+    <p>③ Notice will be given at least 7 days before the effective date. For material changes affecting User rights, at least 30 days in advance.</p>
+
+    <h2>Article 5 (Personal Information We Collect)</h2>
+    <p>The Company collects the following categories of personal information.</p>
+    <p><strong>① Account registration and identification (required)</strong>
+- Email address, name, and unique identifier (sub) received from the social login provider (Google / Apple)
+- Apple Private Relay address when the User chooses to hide their email</p>
+    <p><strong>② Information you enter while using the Services (required, includes sensitive health data)</strong>
+- Appointments: hospital name, scheduled date, notes
+- Counseling records: free-text content, tags, mood scores you write
+- Prescription images and OCR results (drug name, dosage)
+- Medication schedules and intake history
+- Mood check-ins and daily notes
+- Pre-appointment prep notes</p>
+    <p><strong>③ Payment and subscription information (when purchasing paid plans)</strong>
+- iOS: App Store IAP receipt and originalTransactionId
+- Android: Google Play purchase token, or Toss Payments transaction key
+- The Company does not directly store card numbers, CVCs, or other primary payment credentials.</p>
+    <p><strong>④ Automatically collected information (required)</strong>
+- Device push notification token (Expo Push Token)
+- App version, OS, language setting, time zone
+- Service usage logs (API call timestamps, error logs) and IP address</p>
+
+    <h2>Article 6 (Methods of Collection)</h2>
+    <p>The Company collects personal information by the following methods.</p>
+    <p>① Automatically received from the OAuth provider (Google / Apple) at sign-up
+② Directly entered by the User in app screens
+③ Uploaded by the User via camera or photo library (e.g., prescription images)
+④ Generated and collected automatically during service use (push registration, app launches, etc.)</p>
+
+    <h2>Article 7 (Purposes of Use)</h2>
+    <p>The Company uses collected personal information only for the following purposes.</p>
+    <p>① User identification and prevention of fraudulent registration
+② Provision of core service features (appointment records, medication management, etc.)
+③ Prescription image OCR analysis (Anthropic Claude Vision API)
+④ Drug information lookup (Korea Ministry of Food and Drug Safety "e-MedInfo" public API)
+⑤ Push notifications for appointments, medication, and check-ins (Expo Push Service)
+⑥ Paid subscription payment processing and receipt verification
+⑦ User support and dispute resolution
+⑧ Statistical analysis for service improvement (only in non-identifiable form)
+⑨ Response to violations of applicable laws or these Terms</p>
+
+    <h2>Article 8 (Delegation of Processing)</h2>
+    <p>For smooth service delivery, the Company delegates the processing of personal information as follows. Upon termination of the delegation contract or upon account deletion, the relevant information is destroyed without delay or recovered from the processor.</p>
+    <ul>
+      <li><strong>Amazon Web Services, Inc. (United States)</strong> — Server infrastructure (ECS Fargate), database (RDS), image storage (S3)</li>
+      <li><strong>Anthropic, PBC (United States)</strong> — Prescription image OCR analysis (Claude Vision API). Image and result data are not retained by Anthropic after processing; the Company applies the Zero Data Retention option.</li>
+      <li><strong>Expo (650 Industries, Inc., United States)</strong> — Push notification delivery (Expo Push Service). Only device push tokens are transmitted; notification content is generated on the Company's server.</li>
+      <li><strong>Google LLC (United States) / Apple Inc. (United States)</strong> — Social login (OAuth 2.0 / OIDC) and in-app purchase receipt verification</li>
+      <li><strong>Korea Ministry of Food and Drug Safety (Republic of Korea)</strong> — "e-MedInfo" public API lookup. Only the drug name is transmitted; no User-identifying information is sent.</li>
+      <li><strong>Toss Payments Co., Ltd. (Republic of Korea)</strong> — Android web payment processing</li>
+    </ul>
+
+    <h2>Article 9 (Transfer of Personal Information Overseas)</h2>
+    <p>The Company transfers personal information overseas to the U.S.-based processors listed in Article 8.</p>
+    <p><strong>Items transferred:</strong> The minimum items from Article 5 necessary to perform the relevant delegated work
+<strong>Country / time / method:</strong> United States / at the time of service use / over an encrypted network (TLS 1.2+)
+<strong>Recipients:</strong> Amazon Web Services Inc., Anthropic PBC, Expo (650 Industries Inc.), Google LLC, Apple Inc.
+<strong>Purpose and retention period:</strong> Until the purposes described in Article 7 are achieved, or until account deletion</p>
+    <p>By agreeing to this Policy at sign-up, the User consents to the overseas transfer described above. The User has the right to refuse, but refusal will prevent use of the core features of the Services.</p>
+
+    <h2>Article 10 (Retention and Use Period)</h2>
+    <p>① The Company retains personal information until the purposes of collection and use are achieved or until the User deletes their account.</p>
+    <p>② Upon account deletion, personal information is immediately soft-deleted and is permanently destroyed from databases and S3 storage within 30 days (cannot be recovered).</p>
+    <p>③ However, records of abusive use may be retained for up to one year after account deletion to prevent fraudulent re-registration.</p>
+
+    <h2>Article 11 (Retention Required by Law)</h2>
+    <p>The Company retains personal information as required by the following Korean statutes.</p>
+    <p>① Act on the Consumer Protection in Electronic Commerce, Etc.
+- Records on contracts or withdrawal of subscriptions: 5 years
+- Records on payment and supply of goods/services: 5 years
+- Records on consumer complaints or dispute resolution: 3 years
+- Records on display and advertising: 6 months
+② Protection of Communications Secrets Act: Website log records — 3 months
+③ Electronic Financial Transactions Act: Records on electronic financial transactions — 5 years</p>
+
+    <h2>Article 12 (Destruction Procedure and Method)</h2>
+    <p>① Personal information whose retention period has expired or whose processing purpose has been achieved is destroyed without delay.</p>
+    <p>② Information stored in electronic file form is permanently deleted using methods that prevent recovery; paper documents are destroyed by shredding or incineration.</p>
+
+    <h2>Article 13 (User Rights)</h2>
+    <p>Users and their legal representatives may at any time exercise the following rights.</p>
+    <p>① Right to access and correct — directly available within the app
+② Right to deletion — processed immediately via "Delete Account" in My Page
+③ Right to restrict processing — request via chaeon.studio@gmail.com
+④ Right to data portability — Premium Plan users can export their own data as PDF</p>
+
+    <h2>Article 14 (Children Under 14)</h2>
+    <p>The Company does not collect personal information from children under 14 and permits account registration only for users aged 14 or older. Any account identified as belonging to a child under 14 is deleted immediately.</p>
+
+    <h2>Article 15 (Security Safeguards)</h2>
+    <p>The Company implements the following technical and administrative safeguards to ensure the security of personal information.</p>
+    <p><strong>① Technical safeguards</strong>
+- Sensitive data such as counseling records is encrypted at the database column level using AES-256-GCM
+- Password-less authentication via OAuth (social login only)
+- JWT-based authentication; refresh tokens are stored as SHA-256 hashes and rotated on each use
+- All communication uses HTTPS (TLS 1.2 or above)
+- Images stored in S3 use SSE-S3 server-side encryption and are accessible only via Presigned URLs (15-minute expiry)
+- Intrusion prevention systems and regular security audits</p>
+    <p><strong>② Administrative safeguards</strong>
+- Minimization of personnel handling personal information and strict access control
+- Regular audits of delegated processors
+- Privacy and security training for staff</p>
+
+    <h2>Article 16 (Automatic Collection Devices)</h2>
+    <p>The Services are provided through a mobile application and do not use web cookies. Device push tokens are collected to deliver push notifications and can be disabled at any time via OS settings or in-app notification settings.</p>
+
+    <h2>Article 17 (Response to Data Breach)</h2>
+    <p>Upon becoming aware of any loss, theft, or leakage of personal information, the Company will, without delay, notify affected Users of the following and report the incident to the Personal Information Protection Commission or the Korea Internet &amp; Security Agency as required by the Personal Information Protection Act.</p>
+    <p>① Items of personal information affected
+② Time and circumstances of the leakage
+③ Actions the User can take
+④ The Company's response measures
+⑤ Contact for further consultation</p>
+
+    <h2>Article 18 (Personal Information Protection Officer)</h2>
+    <p>The Company designates the following Personal Information Protection Officer to oversee all matters relating to personal information processing and to handle related complaints.</p>
+    <p><strong>Personal Information Protection Officer</strong>
+- Organization: Chaeon Studio
+- Email: chaeon.studio@gmail.com</p>
+
+    <h2>Article 19 (Remedies for Infringement of Rights)</h2>
+    <p>Data subjects may apply for dispute resolution or consultation with the following bodies for relief from personal information infringement.</p>
+    <ul>
+      <li>Personal Information Dispute Mediation Committee: 1833-6972 (www.kopico.go.kr)</li>
+      <li>Privacy Infringement Report Center: 118 (privacy.kisa.or.kr)</li>
+      <li>Supreme Prosecutors' Office: 1301 (www.spo.go.kr)</li>
+      <li>National Police Agency: 182 (ecrm.cyber.go.kr)</li>
+    </ul>
+
+    <div class="addendum">
+      <h2>Addendum</h2>
+      <p>This Policy takes effect on May 22, 2026.</p>
+    </div>
+
+    <footer class="legal-footer">
+      <a href="/terms-en.html">Terms of Service</a> · <a href="/licenses-en.html">Open Source Licenses</a> · <a href="mailto:chaeon.studio@gmail.com">Contact</a>
+    </footer>
+  </div>
+</body>
+</html>
