@@ -24,12 +24,12 @@ import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 
 const LEGAL_URLS = {
   terms: {
-    ko: 'https://secretive-enthusiasm-4ee.notion.site/KO-348c270714d880e78508c1188f50a509',
-    en: 'https://secretive-enthusiasm-4ee.notion.site/EN-348c270714d88069884fe644df60d3d4',
+    ko: 'https://api.dearmi.link/terms-ko.html',
+    en: 'https://api.dearmi.link/terms-en.html',
   },
   privacy: {
-    ko: 'https://secretive-enthusiasm-4ee.notion.site/KO-344c270714d880c399c3f664783e011e',
-    en: 'https://secretive-enthusiasm-4ee.notion.site/EN-348c270714d8802c9d8bf90b11926a8e',
+    ko: 'https://api.dearmi.link/privacy-ko.html',
+    en: 'https://api.dearmi.link/privacy-en.html',
   },
 } as const;
 
