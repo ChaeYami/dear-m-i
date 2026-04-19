@@ -21,6 +21,7 @@ import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { softShadow, subtleShadow } from '@/shared/theme/shadows';
 import { useLogin } from '@/features/auth/hooks/useLogin';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
+import { useAuthStore } from '@/features/auth/store/authStore';
 
 const LEGAL_URLS = {
   terms: {
@@ -38,6 +39,7 @@ export const LoginScreen: React.FC = () => {
   const { t, i18n } = useTranslation('auth');
   const lang = i18n.language.startsWith('ko') ? 'ko' : 'en';
   const { loginWithGoogle, loginWithApple, loginWithDev, isLoading, error, clearError } = useLogin();
+  const enterGuestMode = useAuthStore((s) => s.enterGuestMode);
   const isDev = __DEV__;
 
   // -- Entry animation shared values --
@@ -253,6 +255,37 @@ export const LoginScreen: React.FC = () => {
               </Text>
             </TouchableOpacity>
           )}
+
+          {/* 게스트 모드 — App Store 5.1.1(v) 대응: 회원가입 없이 앱 둘러보기 가능 */}
+          <TouchableOpacity
+            onPress={enterGuestMode}
+            activeOpacity={0.7}
+            style={{
+              alignItems: 'center',
+              paddingVertical: sizes.spacing.sm,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: sizes.font.sm,
+                fontFamily: fontFamily.semibold,
+                color: colors.textSub,
+                textDecorationLine: 'underline',
+              }}
+            >
+              {t('guest_browse')}
+            </Text>
+            <Text
+              style={{
+                fontSize: sizes.font.xs,
+                fontFamily: fontFamily.regular,
+                color: colors.textDisabled,
+                marginTop: 2,
+              }}
+            >
+              {t('guest_browse_hint')}
+            </Text>
+          </TouchableOpacity>
 
           {/* Dev login button */}
           {isDev && (

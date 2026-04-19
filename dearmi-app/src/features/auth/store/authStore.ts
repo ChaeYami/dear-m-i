@@ -12,6 +12,8 @@ interface AuthState {
   refreshToken: string | null;
   user: User | null;
   isAuthenticated: boolean;
+  /** 회원가입 없이 앱 둘러보기 모드 (App Store 5.1.1(v) 대응) */
+  isGuest: boolean;
 }
 
 /** 인증 액션 */
@@ -37,6 +39,12 @@ interface AuthActions {
    * RootNavigator에서 호출
    */
   restoreTokens: () => Promise<boolean>;
+
+  /** 게스트(둘러보기) 모드 진입 — API 호출 없이 Main 스택으로 진입 가능. */
+  enterGuestMode: () => void;
+
+  /** 게스트 모드 종료 — LoginScreen 으로 복귀. */
+  exitGuestMode: () => void;
 }
 
 type AuthStore = AuthState & AuthActions;
@@ -47,12 +55,13 @@ export const useAuthStore = create<AuthStore>((set) => ({
   refreshToken: null,
   user: null,
   isAuthenticated: false,
+  isGuest: false,
 
-  // 토큰 저장 (SecureStore에도 영속화)
+  // 토큰 저장 (SecureStore에도 영속화) — 로그인 성공 시 게스트 모드 자동 해제
   setTokens: async (accessToken, refreshToken) => {
     await SecureStore.setItemAsync(SECURE_STORE_KEYS.ACCESS_TOKEN, accessToken);
     await SecureStore.setItemAsync(SECURE_STORE_KEYS.REFRESH_TOKEN, refreshToken);
-    set({ accessToken, refreshToken, isAuthenticated: true });
+    set({ accessToken, refreshToken, isAuthenticated: true, isGuest: false });
   },
 
   // 사용자 정보 설정
@@ -72,7 +81,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
     }
     await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.ACCESS_TOKEN);
     await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.REFRESH_TOKEN);
-    set({ accessToken: null, refreshToken: null, user: null, isAuthenticated: false });
+    set({ accessToken: null, refreshToken: null, user: null, isAuthenticated: false, isGuest: false });
     useSubscriptionStore.getState().reset();
     queryClient.clear();
   },
@@ -88,4 +97,9 @@ export const useAuthStore = create<AuthStore>((set) => ({
     }
     return false;
   },
+
+  // 게스트 모드 진입/종료 — 토큰 없이 Main 스택만 열어주는 플래그.
+  // 게스트 상태에서는 모든 mutation 이 useGuestGuard 로 차단되고, 쿼리 hook 도 mock 데이터 반환.
+  enterGuestMode: () => set({ isGuest: true }),
+  exitGuestMode: () => set({ isGuest: false }),
 }));

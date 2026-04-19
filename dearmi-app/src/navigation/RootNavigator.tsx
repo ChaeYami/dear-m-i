@@ -65,7 +65,7 @@ export const RootNavigator: React.FC = () => {
   const [forceUpdate, setForceUpdate] = useState<{ message?: string; storeUrl: string } | null>(null);
   const [activeNotification, setActiveNotification] = useState<Notifications.Notification | null>(null);
   const { t } = useTranslation();
-  const { isAuthenticated, restoreTokens, setUser, logout } = useAuthStore();
+  const { isAuthenticated, isGuest, restoreTokens, setUser, logout } = useAuthStore();
   const { fetchSubscription } = useSubscriptionStore();
   const queryClient = useQueryClient();
 
@@ -114,10 +114,10 @@ export const RootNavigator: React.FC = () => {
     handleNotificationResponse(lastResponse);
   }, [lastResponse, isLoading, isAuthenticated]);
 
-  // 첫 진입 시 온보딩 자동 표시 (인증 + 로딩 완료 후 1회)
+  // 첫 진입 시 온보딩 자동 표시 (인증 또는 게스트 + 로딩 완료 후 1회)
   const onboardingShownRef = useRef(false);
   useEffect(() => {
-    if (isLoading || !isAuthenticated || onboardingShownRef.current) return;
+    if (isLoading || (!isAuthenticated && !isGuest) || onboardingShownRef.current) return;
     const completed = CacheService.get<boolean>(CACHE_KEYS.ONBOARDING_COMPLETED);
     if (completed) return;
     onboardingShownRef.current = true;
@@ -127,7 +127,7 @@ export const RootNavigator: React.FC = () => {
         (navigationRef.current as any)?.navigate('Onboarding');
       }
     }, 0);
-  }, [isLoading, isAuthenticated]);
+  }, [isLoading, isAuthenticated, isGuest]);
 
   /** 인바운드 알림 응답 라우팅: 액션 버튼 or 본체 탭. */
   const handleNotificationResponse = (response: Notifications.NotificationResponse) => {
@@ -308,7 +308,7 @@ export const RootNavigator: React.FC = () => {
             cardStyle: { backgroundColor: 'transparent' },
           }}
         >
-          {isAuthenticated ? (
+          {(isAuthenticated || isGuest) ? (
             <Stack.Screen name="Main" component={MainTabNavigator} />
           ) : (
             <Stack.Screen name="Auth" component={AuthNavigator} />

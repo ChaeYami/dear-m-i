@@ -112,5 +112,11 @@
   "onboarding_ocr_desc": "처방전을 사진으로 찍으면 약품 정보를 자동으로 인식해요.\n복약 일정도 한 번에 등록할 수 있어요.",
   "onboarding_dont_show_again": "다시 보지 않기",
   "onboarding_next": "다음",
-  "onboarding_start": "시작하기"
+  "onboarding_start": "시작하기",
+  "guest_banner_title": "둘러보기 모드",
+  "guest_banner_desc": "표시된 데이터는 예시예요. 저장하려면 로그인이 필요해요.",
+  "guest_banner_cta": "로그인",
+  "guest_required_title": "로그인이 필요해요",
+  "guest_required_message": "이 기능은 로그인 후 이용할 수 있어요.",
+  "guest_required_cta": "로그인하기"
 }

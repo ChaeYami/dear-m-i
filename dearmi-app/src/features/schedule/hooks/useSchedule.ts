@@ -1,17 +1,26 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/constants/cacheKeys';
 import { scheduleApi } from '@/features/schedule/api';
+import { useAuthStore } from '@/features/auth/store/authStore';
+import { GUEST_SCHEDULES } from '@/shared/mocks/guestData';
 import type {
   HospitalSchedule,
   CreateScheduleRequest,
   UpdateScheduleRequest,
 } from '@/shared/types/domain.types';
 
-/** 월별 일정 목록 조회 */
+/** 월별 일정 목록 조회 — 게스트 모드면 해당 월에 속한 mock 일정만 반환 */
 export const useMonthlySchedules = (year: number, month: number) => {
+  const isGuest = useAuthStore((s) => s.isGuest);
   return useQuery({
-    queryKey: QUERY_KEYS.monthlySchedules(year, month),
+    queryKey: [...QUERY_KEYS.monthlySchedules(year, month), isGuest ? 'guest' : 'user'],
     queryFn: async () => {
+      if (isGuest) {
+        return GUEST_SCHEDULES.filter((s) => {
+          const d = new Date(s.scheduledAt);
+          return d.getFullYear() === year && d.getMonth() + 1 === month;
+        });
+      }
       const { data } = await scheduleApi.getMonthlySchedules(year, month);
       return data.data ?? [];
     },
@@ -20,9 +29,11 @@ export const useMonthlySchedules = (year: number, month: number) => {
 
 /** 전체 일정 목록 조회 (캘린더 없이 목록만 보여주는 "전체" 필터용) */
 export const useAllSchedules = (enabled: boolean = true) => {
+  const isGuest = useAuthStore((s) => s.isGuest);
   return useQuery({
-    queryKey: QUERY_KEYS.allSchedules(),
+    queryKey: [...QUERY_KEYS.allSchedules(), isGuest ? 'guest' : 'user'],
     queryFn: async () => {
+      if (isGuest) return GUEST_SCHEDULES;
       const { data } = await scheduleApi.getAllSchedules();
       return data.data ?? [];
     },
@@ -32,9 +43,13 @@ export const useAllSchedules = (enabled: boolean = true) => {
 
 /** 일정 상세 조회 */
 export const useScheduleDetail = (id: number | string) => {
+  const isGuest = useAuthStore((s) => s.isGuest);
   return useQuery({
-    queryKey: QUERY_KEYS.schedule(id),
+    queryKey: [...QUERY_KEYS.schedule(id), isGuest ? 'guest' : 'user'],
     queryFn: async () => {
+      if (isGuest) {
+        return GUEST_SCHEDULES.find((s) => s.id === String(id)) ?? null;
+      }
       const { data } = await scheduleApi.getScheduleDetail(id);
       return data.data ?? null;
     },

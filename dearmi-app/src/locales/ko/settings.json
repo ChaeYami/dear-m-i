@@ -1,6 +1,10 @@
 {
   "mypage_title": "마이페이지",
   "user_default": "사용자",
+  "guest_user_name": "둘러보기 사용자",
+  "guest_user_subtitle": "회원가입 없이 둘러보는 중",
+  "guest_login_cta": "로그인하기",
+  "guest_login_desc": "로그인하면 진료 기록·복약·하루 메모를 저장할 수 있어요",
   "premium_badge": "프리미엄",
   "free_badge": "무료",
   "premium_subscribing": "프리미엄 구독 중",

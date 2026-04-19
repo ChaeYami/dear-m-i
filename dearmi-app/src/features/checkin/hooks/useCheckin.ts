@@ -2,13 +2,21 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/constants/cacheKeys';
 import { checkinApi } from '@/features/checkin/api/checkinApi';
 import { haptics } from '@/shared/utils/haptics';
+import { useAuthStore } from '@/features/auth/store/authStore';
+import {
+  GUEST_TODAY_CHECKIN,
+  GUEST_CHECKIN_HISTORY,
+  GUEST_CHECKIN_SUMMARY,
+} from '@/shared/mocks/guestData';
 import type { CreateCheckinRequest } from '@/shared/types/domain.types';
 
 /** 오늘 체크인 상태 */
 export const useTodayCheckin = () => {
+  const isGuest = useAuthStore((s) => s.isGuest);
   return useQuery({
-    queryKey: QUERY_KEYS.todayCheckin(),
+    queryKey: [...QUERY_KEYS.todayCheckin(), isGuest ? 'guest' : 'user'],
     queryFn: async () => {
+      if (isGuest) return GUEST_TODAY_CHECKIN;
       const { data } = await checkinApi.getToday();
       return data.data ?? { checkedIn: false, checkin: null };
     },
@@ -19,9 +27,11 @@ export const useTodayCheckin = () => {
 
 /** 체크인 이력 */
 export const useCheckinHistory = (startDate?: string, endDate?: string) => {
+  const isGuest = useAuthStore((s) => s.isGuest);
   return useQuery({
-    queryKey: QUERY_KEYS.checkinHistory(startDate, endDate),
+    queryKey: [...QUERY_KEYS.checkinHistory(startDate, endDate), isGuest ? 'guest' : 'user'],
     queryFn: async () => {
+      if (isGuest) return GUEST_CHECKIN_HISTORY;
       const { data } = await checkinApi.getHistory(startDate, endDate);
       return data.data ?? { content: [], isLimited: false };
     },
@@ -30,9 +40,11 @@ export const useCheckinHistory = (startDate?: string, endDate?: string) => {
 
 /** 7일 요약 */
 export const useCheckinSummary = () => {
+  const isGuest = useAuthStore((s) => s.isGuest);
   return useQuery({
-    queryKey: QUERY_KEYS.checkinSummary(),
+    queryKey: [...QUERY_KEYS.checkinSummary(), isGuest ? 'guest' : 'user'],
     queryFn: async () => {
+      if (isGuest) return GUEST_CHECKIN_SUMMARY;
       const { data } = await checkinApi.getSummary();
       return data.data ?? null;
     },

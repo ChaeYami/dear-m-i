@@ -72,7 +72,7 @@ export const MyPageScreen: React.FC = () => {
   const { colors, isDark, setMode } = useTheme();
   const navigation = useNavigation<Nav>();
   const { t } = useTranslation('settings');
-  const { user } = useAuthStore();
+  const { user, isGuest, exitGuestMode } = useAuthStore();
   const { plan, expiresAt } = useSubscriptionStore();
   const tabBarSafeBottom = useTabBarSafeBottom();
   const scrollHandlers = useTabBarScrollHide();
@@ -229,40 +229,72 @@ export const MyPageScreen: React.FC = () => {
       <ScreenHeader variant="tab" title={t('mypage_title')} hasNotification />
 
       <ScrollView contentContainerStyle={styles.content} {...scrollHandlers}>
-        {/* Profile card */}
-        <View style={[styles.profileCard, shadow]}>
-          <View
-            style={[
-              styles.avatar,
-              {
-                shadowColor: colors.glassShadow,
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 1,
-                shadowRadius: 10,
-              },
-            ]}
-          >
-            <Text style={styles.avatarText}>
-              {user?.name?.charAt(0)?.toUpperCase() ?? '?'}
-            </Text>
-          </View>
-          <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{user?.name ?? t('user_default')}</Text>
-            <Text style={styles.profileEmail}>{user?.email ?? ''}</Text>
-          </View>
-          <View
-            style={[styles.planBadge, user?.plan === 'PREMIUM' && styles.planBadgePremium]}
-          >
-            <Text
+        {/* Profile card — 게스트면 둘러보기 안내 + 로그인 CTA 로 대체 */}
+        {isGuest ? (
+          <View style={[styles.profileCard, shadow]}>
+            <View
               style={[
-                styles.planBadgeText,
-                user?.plan === 'PREMIUM' && styles.planBadgeTextPremium,
+                styles.avatar,
+                {
+                  shadowColor: colors.glassShadow,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 1,
+                  shadowRadius: 10,
+                },
               ]}
             >
-              {user?.plan === 'PREMIUM' ? t('premium_badge') : t('free_badge')}
-            </Text>
+              <Ionicons name="person-outline" size={28} color={colors.textInverse} />
+            </View>
+            <View style={styles.profileInfo}>
+              <Text style={styles.profileName}>{t('guest_user_name')}</Text>
+              <Text style={styles.profileEmail}>{t('guest_user_subtitle')}</Text>
+            </View>
+            <TouchableOpacity
+              onPress={exitGuestMode}
+              activeOpacity={0.7}
+              style={[styles.planBadge, { backgroundColor: colors.primary }]}
+              hitSlop={6}
+            >
+              <Text style={[styles.planBadgeText, { color: colors.textInverse }]}>
+                {t('guest_login_cta')}
+              </Text>
+            </TouchableOpacity>
           </View>
-        </View>
+        ) : (
+          <View style={[styles.profileCard, shadow]}>
+            <View
+              style={[
+                styles.avatar,
+                {
+                  shadowColor: colors.glassShadow,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 1,
+                  shadowRadius: 10,
+                },
+              ]}
+            >
+              <Text style={styles.avatarText}>
+                {user?.name?.charAt(0)?.toUpperCase() ?? '?'}
+              </Text>
+            </View>
+            <View style={styles.profileInfo}>
+              <Text style={styles.profileName}>{user?.name ?? t('user_default')}</Text>
+              <Text style={styles.profileEmail}>{user?.email ?? ''}</Text>
+            </View>
+            <View
+              style={[styles.planBadge, user?.plan === 'PREMIUM' && styles.planBadgePremium]}
+            >
+              <Text
+                style={[
+                  styles.planBadgeText,
+                  user?.plan === 'PREMIUM' && styles.planBadgeTextPremium,
+                ]}
+              >
+                {user?.plan === 'PREMIUM' ? t('premium_badge') : t('free_badge')}
+              </Text>
+            </View>
+          </View>
+        )}
 
         <View style={{ paddingHorizontal: sizes.spacing.lg }}>
           {/* Subscription card */}

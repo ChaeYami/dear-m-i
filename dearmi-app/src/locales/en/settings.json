@@ -1,6 +1,10 @@
 {
   "mypage_title": "My Page",
   "user_default": "User",
+  "guest_user_name": "Guest User",
+  "guest_user_subtitle": "Browsing without an account",
+  "guest_login_cta": "Sign In",
+  "guest_login_desc": "Sign in to save records, medications, and daily notes",
   "premium_badge": "Premium",
   "free_badge": "Free",
   "premium_subscribing": "Premium Active",

@@ -2,30 +2,38 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/constants/cacheKeys';
 import { medicationApi } from '@/features/medication/api/medicationApi';
 import { haptics } from '@/shared/utils/haptics';
+import { useAuthStore } from '@/features/auth/store/authStore';
+import { GUEST_TODAY_MEDICATION, GUEST_MEDICATION_SCHEDULES } from '@/shared/mocks/guestData';
 import type { CreateMedicationScheduleRequest, UpdateMedicationScheduleRequest, CheckMedicationRequest, TimeSlotType } from '@/shared/types/domain.types';
 
 /** 특정 날짜(기본=오늘) 복약 현황 */
-export const useTodayMedication = (date?: string) =>
-  useQuery({
-    queryKey: QUERY_KEYS.todayMedication(date),
+export const useTodayMedication = (date?: string) => {
+  const isGuest = useAuthStore((s) => s.isGuest);
+  return useQuery({
+    queryKey: [...QUERY_KEYS.todayMedication(date), isGuest ? 'guest' : 'user'],
     queryFn: async () => {
+      if (isGuest) return GUEST_TODAY_MEDICATION;
       const { data } = await medicationApi.getToday(date);
       return data.data ?? { schedules: [] };
     },
     // 매분 알림이 오는 즉시성 데이터 — 전역 5분 stale 보다 짧게.
     staleTime: 30_000,
   });
+};
 
 /** 사용자의 모든 복약 일정 (캘린더 마킹용) */
-export const useAllMedicationSchedules = (enabled: boolean = true) =>
-  useQuery({
-    queryKey: QUERY_KEYS.allMedicationSchedules(),
+export const useAllMedicationSchedules = (enabled: boolean = true) => {
+  const isGuest = useAuthStore((s) => s.isGuest);
+  return useQuery({
+    queryKey: [...QUERY_KEYS.allMedicationSchedules(), isGuest ? 'guest' : 'user'],
     queryFn: async () => {
+      if (isGuest) return GUEST_MEDICATION_SCHEDULES;
       const { data } = await medicationApi.listAll();
       return data.data ?? [];
     },
     enabled,
   });
+};
 
 /** 복약 일정 등록 */
 export const useCreateMedicationSchedule = () => {
@@ -141,21 +149,36 @@ export const useAssignMedicationSlotGroup = () => {
 };
 
 /** 복약 이력 */
-export const useMedicationHistory = (startDate?: string, endDate?: string) =>
-  useQuery({
-    queryKey: QUERY_KEYS.medicationLogs(startDate, endDate),
+export const useMedicationHistory = (startDate?: string, endDate?: string) => {
+  const isGuest = useAuthStore((s) => s.isGuest);
+  return useQuery({
+    queryKey: [...QUERY_KEYS.medicationLogs(startDate, endDate), isGuest ? 'guest' : 'user'],
     queryFn: async () => {
+      if (isGuest) return { startDate: startDate ?? '', endDate: endDate ?? '', logs: [] };
       const { data } = await medicationApi.getLogs(startDate, endDate);
       return data.data ?? { startDate: startDate ?? '', endDate: endDate ?? '', logs: [] };
     },
   });
+};
 
 /** 복약 완료율 통계 */
-export const useMedicationStats = (startDate?: string, endDate?: string) =>
-  useQuery({
-    queryKey: QUERY_KEYS.medicationStats(startDate, endDate),
+export const useMedicationStats = (startDate?: string, endDate?: string) => {
+  const isGuest = useAuthStore((s) => s.isGuest);
+  return useQuery({
+    queryKey: [...QUERY_KEYS.medicationStats(startDate, endDate), isGuest ? 'guest' : 'user'],
     queryFn: async () => {
+      if (isGuest) {
+        return {
+          startDate: startDate ?? '',
+          endDate: endDate ?? '',
+          totalLogs: 14,
+          takenCount: 12,
+          skippedCount: 2,
+          completionRate: 0.86,
+        };
+      }
       const { data } = await medicationApi.getStats(startDate, endDate);
       return data.data ?? null;
     },
   });
+};

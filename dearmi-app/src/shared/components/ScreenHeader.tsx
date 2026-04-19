@@ -7,6 +7,7 @@ import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { GlassView } from '@/shared/components/GlassView';
 import { navigationRef } from '@/navigation/navigationRef';
 import { useUnreadNotificationCount } from '@/features/notification/hooks/useNotificationHistory';
+import { GuestModeBanner } from '@/shared/components/GuestModeBanner';
 
 const a11y = {
   search: { accessibilityRole: 'button' as const, accessibilityLabel: '검색' },
@@ -164,12 +165,19 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = (props) => {
   const { variant, title } = props;
 
   if (variant === 'tab') {
-    return <TabHeader {...(props as TabHeaderProps)} />;
+    return (
+      <>
+        <GuestModeBanner />
+        <TabHeader {...(props as TabHeaderProps)} />
+      </>
+    );
   }
 
   if (variant === 'back') {
     const handleBack = props.onBack ?? (() => navigation.goBack());
     return (
+      <>
+      <GuestModeBanner />
       <View
         style={{
           height: sizes.headerHeight,
@@ -212,12 +220,15 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = (props) => {
           </View>
         ) : null}
       </View>
+      </>
     );
   }
 
   // form
   const { onCancel, onSave, saveLabel = t('save'), cancelLabel = t('cancel'), saveDisabled = false } = props;
   return (
+    <>
+    <GuestModeBanner />
     <View
       style={{
         height: sizes.headerHeight,
@@ -266,5 +277,6 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = (props) => {
         </Text>
       </TouchableOpacity>
     </View>
+    </>
   );
 };

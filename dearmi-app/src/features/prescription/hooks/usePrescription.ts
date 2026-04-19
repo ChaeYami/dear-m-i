@@ -3,32 +3,49 @@ import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tansta
 import { AxiosError } from 'axios';
 import { QUERY_KEYS } from '@/constants/cacheKeys';
 import { prescriptionApi } from '@/features/prescription/api';
+import { useAuthStore } from '@/features/auth/store/authStore';
+import { GUEST_PRESCRIPTIONS } from '@/shared/mocks/guestData';
 import type { SavePrescriptionRequest } from '@/shared/types/domain.types';
 
 const OCR_POLL_INTERVAL_MS = 2000;
 const OCR_TIMEOUT_MS = 90_000;
 
 /** 처방전 목록 (단순, 소량일 때) */
-export const usePrescriptions = () =>
-  useQuery({
-    queryKey: QUERY_KEYS.prescriptions(),
+export const usePrescriptions = () => {
+  const isGuest = useAuthStore((s) => s.isGuest);
+  return useQuery({
+    queryKey: [...QUERY_KEYS.prescriptions(), isGuest ? 'guest' : 'user'],
     queryFn: async () => {
+      if (isGuest) return GUEST_PRESCRIPTIONS;
       const { data } = await prescriptionApi.getPrescriptions();
       return data.data ?? [];
     },
   });
+};
 
 /** 처방전 목록 무한 스크롤 (page 기반) */
-export const usePagedPrescriptions = () =>
-  useInfiniteQuery({
-    queryKey: [...QUERY_KEYS.prescriptions(), 'paged'],
+export const usePagedPrescriptions = () => {
+  const isGuest = useAuthStore((s) => s.isGuest);
+  return useInfiniteQuery({
+    queryKey: [...QUERY_KEYS.prescriptions(), 'paged', isGuest ? 'guest' : 'user'],
     queryFn: async ({ pageParam }) => {
+      if (isGuest) {
+        return {
+          content: GUEST_PRESCRIPTIONS,
+          page: 0,
+          size: 20,
+          totalElements: GUEST_PRESCRIPTIONS.length,
+          totalPages: 1,
+          hasNext: false,
+        };
+      }
       const { data } = await prescriptionApi.getPrescriptionsPaged(pageParam as number);
       return data.data ?? { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0, hasNext: false };
     },
     initialPageParam: 0 as number,
     getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.page + 1 : undefined),
   });
+};
 
 /** 약품 상세 (e약은요 정보) — drugInfoFetchedAt이 null이면 3초마다 폴링 */
 export const useMedicationDetail = (id: string) =>

@@ -1,5 +1,9 @@
 import { QueryClient } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
+import { isGuestModeError } from '@/shared/api/errors';
+import { customAlert } from '@/shared/components/CustomAlert';
+import { useAuthStore } from '@/features/auth/store/authStore';
+import i18n from '@/locales/i18n';
 
 /**
  * React Query 클라이언트 설정
@@ -44,6 +48,23 @@ export const queryClient = new QueryClient({
 
     mutations: {
       networkMode: 'offlineFirst',
+      // 게스트 모드에서 모든 쓰기 mutation 은 axios 인터셉터가 GuestModeError 로 차단.
+      //   여기서 캐치 → customAlert 로 로그인 유도 → 확인 시 게스트 모드 종료 → Auth 스택 전환.
+      //   호출 측에서 mutation.onError 를 추가해도 React Query 가 둘 다 실행하므로 무방.
+      onError: (error) => {
+        if (!isGuestModeError(error)) return;
+        customAlert(
+          i18n.t('common:guest_required_title'),
+          i18n.t('common:guest_required_message'),
+          [
+            { text: i18n.t('common:cancel'), style: 'cancel' },
+            {
+              text: i18n.t('common:guest_required_cta'),
+              onPress: () => useAuthStore.getState().exitGuestMode(),
+            },
+          ],
+        );
+      },
     },
   },
 });

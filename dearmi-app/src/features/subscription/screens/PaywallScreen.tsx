@@ -8,6 +8,7 @@ import {
   ScrollView,
   Platform,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,9 +23,21 @@ import type { RootStackParamList } from '@/navigation/RootNavigator';
 
 type PlanOption = 'monthly' | 'yearly';
 
+const LEGAL_URLS = {
+  terms: {
+    ko: 'https://api.dearmi.link/terms-ko.html',
+    en: 'https://api.dearmi.link/terms-en.html',
+  },
+  privacy: {
+    ko: 'https://api.dearmi.link/privacy-ko.html',
+    en: 'https://api.dearmi.link/privacy-en.html',
+  },
+} as const;
+
 export const PaywallScreen: React.FC = () => {
   const { colors } = useTheme();
-  const { t } = useTranslation('subscription');
+  const { t, i18n } = useTranslation('subscription');
+  const lang = i18n.language.startsWith('ko') ? 'ko' : 'en';
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const FEATURES = [
     { icon: 'document-text-outline', text: t('feature_ocr') },
@@ -185,6 +198,21 @@ export const PaywallScreen: React.FC = () => {
       lineHeight: 14,
       marginTop: sizes.spacing.xs,
     },
+    legalLinksRow: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginTop: 2,
+    },
+    legalLink: {
+      fontSize: 11,
+      color: colors.primary,
+      textDecorationLine: 'underline',
+    },
+    legalLinkSep: {
+      fontSize: 11,
+      color: colors.textDisabled,
+    },
   }), [colors]);
 
   return (
@@ -318,6 +346,23 @@ export const PaywallScreen: React.FC = () => {
             {t('ios_legal')}
           </Text>
         )}
+
+        {/* Terms / Privacy — App Store 3.1.2(c) 가 페이월 내 functional link 요구 */}
+        <View style={styles.legalLinksRow}>
+          <Text
+            style={styles.legalLink}
+            onPress={() => Linking.openURL(LEGAL_URLS.terms[lang])}
+          >
+            {t('legal_terms_link')}
+          </Text>
+          <Text style={styles.legalLinkSep}>{t('legal_links_separator')}</Text>
+          <Text
+            style={styles.legalLink}
+            onPress={() => Linking.openURL(LEGAL_URLS.privacy[lang])}
+          >
+            {t('legal_privacy_link')}
+          </Text>
+        </View>
       </View>
     </SafeAreaView>
   );

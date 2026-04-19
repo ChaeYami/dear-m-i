@@ -112,5 +112,11 @@
   "onboarding_ocr_desc": "Snap a photo of your prescription — drug info is detected automatically.\nMedication schedules can be set up in one go.",
   "onboarding_dont_show_again": "Don't show again",
   "onboarding_next": "Next",
-  "onboarding_start": "Get Started"
+  "onboarding_start": "Get Started",
+  "guest_banner_title": "Preview Mode",
+  "guest_banner_desc": "This is sample data. Sign in to save your own.",
+  "guest_banner_cta": "Sign In",
+  "guest_required_title": "Sign-in Required",
+  "guest_required_message": "This feature is available after sign-in.",
+  "guest_required_cta": "Sign In"
 }

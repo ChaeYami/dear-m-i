@@ -3,6 +3,11 @@ import * as SecureStore from 'expo-secure-store';
 import { SECURE_STORE_KEYS } from '@/constants/cacheKeys';
 import type { TokenRefreshResponse, ApiResponse } from '@/shared/types/api.types';
 import i18n from '@/locales/i18n';
+import { useAuthStore } from '@/features/auth/store/authStore';
+import { GuestModeError } from '@/shared/api/errors';
+
+/** 게스트가 만져도 무해한 read-only 메서드 화이트리스트 */
+const SAFE_METHODS = new Set(['get', 'head', 'options']);
 
 /**
  * Axios 인스턴스 설정
@@ -23,6 +28,15 @@ const axiosInstance = axios.create({
 // =====================================================================
 axiosInstance.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
+    // 게스트 모드면 쓰기 요청(POST/PUT/PATCH/DELETE) 차단 → GuestModeError.
+    //   읽기 요청은 통과시키지만 실제로는 hook 레벨에서 mock 으로 가로채므로 도달 X.
+    //   만약의 시나리오(직접 axios 호출)에서도 토큰 없이 401 받게 되므로 안전.
+    const isGuest = useAuthStore.getState().isGuest;
+    const method = (config.method ?? 'get').toLowerCase();
+    if (isGuest && !SAFE_METHODS.has(method)) {
+      throw new GuestModeError();
+    }
+
     const token = await SecureStore.getItemAsync(SECURE_STORE_KEYS.ACCESS_TOKEN);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
