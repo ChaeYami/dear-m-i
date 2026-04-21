@@ -90,7 +90,7 @@ public class SwaggerConfig {
         return GroupedOpenApi.builder()
                 .group("subscription")
                 .displayName("구독 · 결제")
-                .pathsToMatch("/api/v1/subscriptions/**", "/api/v1/payments/**")
+                .pathsToMatch("/api/v1/subscriptions/**")
                 .build();
     }
 

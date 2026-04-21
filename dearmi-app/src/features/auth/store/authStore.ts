@@ -57,10 +57,12 @@ export const useAuthStore = create<AuthStore>((set) => ({
   isAuthenticated: false,
   isGuest: false,
 
-  // 토큰 저장 (SecureStore에도 영속화) — 로그인 성공 시 게스트 모드 자동 해제
+  // 토큰 저장 (SecureStore에도 영속화) — 로그인 성공 시 게스트 모드 자동 해제.
+  // 게스트 mock 데이터가 로그인 사용자 화면에 잔존하지 않도록 React Query 캐시 초기화.
   setTokens: async (accessToken, refreshToken) => {
     await SecureStore.setItemAsync(SECURE_STORE_KEYS.ACCESS_TOKEN, accessToken);
     await SecureStore.setItemAsync(SECURE_STORE_KEYS.REFRESH_TOKEN, refreshToken);
+    queryClient.clear();
     set({ accessToken, refreshToken, isAuthenticated: true, isGuest: false });
   },
 

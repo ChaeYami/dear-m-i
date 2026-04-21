@@ -15,7 +15,6 @@ import { InAppNotificationBanner } from '@/shared/components/InAppNotificationBa
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import { OfflineBanner } from '@/shared/components/OfflineBanner';
 import { PaywallScreen } from '@/features/subscription/screens/PaywallScreen';
-import { WebPaymentScreen } from '@/features/subscription/screens/WebPaymentScreen';
 import { SearchScreen } from '@/features/search/screens/SearchScreen';
 import { OnboardingScreen } from '@/features/onboarding/screens/OnboardingScreen';
 import { NotificationHistoryScreen } from '@/features/notification/screens/NotificationHistoryScreen';
@@ -49,7 +48,6 @@ export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
   Paywall: undefined;
-  WebPayment: { planType: 'MONTHLY' | 'YEARLY' };
   Search: { scope?: 'RECORD' | 'CHECKIN' | 'PREPNOTE' } | undefined;
   Onboarding: { forceShow?: boolean } | undefined;
   NotificationHistory: undefined;
@@ -316,11 +314,6 @@ export const RootNavigator: React.FC = () => {
           <Stack.Screen
             name="Paywall"
             component={PaywallScreen}
-            options={{ presentation: 'modal' } as any}
-          />
-          <Stack.Screen
-            name="WebPayment"
-            component={WebPaymentScreen}
             options={{ presentation: 'modal' } as any}
           />
           <Stack.Screen

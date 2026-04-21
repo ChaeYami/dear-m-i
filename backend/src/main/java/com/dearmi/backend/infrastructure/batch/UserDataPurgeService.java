@@ -60,7 +60,6 @@ public class UserDataPurgeService {
         exec("DELETE FROM notification_settings WHERE user_id = :uid", userId);
         exec("DELETE FROM subscription_histories WHERE user_id = :uid", userId);
         exec("DELETE FROM subscriptions WHERE user_id = :uid", userId);
-        exec("DELETE FROM payments_temp WHERE user_id = :uid", userId);
         exec("DELETE FROM export_jobs WHERE user_id = :uid", userId);
         exec("DELETE FROM refresh_tokens WHERE user_id = :uid", userId);
 

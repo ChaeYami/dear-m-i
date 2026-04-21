@@ -336,11 +336,6 @@ export const PaywallScreen: React.FC = () => {
           )}
         </TouchableOpacity>
 
-        {/*
-          Toss 웹 결제 버튼 비활성 — Android 정책상 디지털 상품은 Play Billing 강제,
-          Toss 웹 우회는 심사 거부 위험. 백엔드 코드(WebPaymentScreen / /payments/*)는 dormant.
-        */}
-
         {Platform.OS === 'ios' && (
           <Text style={styles.legalText}>
             {t('ios_legal')}

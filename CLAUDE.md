@@ -11,7 +11,7 @@
 ## 스택 한 줄 요약
 RN 0.81 + Expo SDK 54, Zustand ^5 + React Query ^5, MMKV + SecureStore, i18next.
 Spring Boot 3.5 + JPA + QueryDSL + Flyway, PostgreSQL 15, JWT(OAuth2: Google/Apple),
-S3(Presigned), Expo Push (Firebase 제거됨), Claude Vision(OCR), e약은요(약품 30일 캐시), 토스페이먼츠/IAP.
+S3(Presigned), Expo Push (Firebase 제거됨), Claude Vision(OCR), e약은요(약품 30일 캐시), IAP(App Store / Play Billing).
 배포: 백엔드 AWS ECS Fargate + RDS + S3 / 앱 EAS Build + EAS Update (OTA, fingerprint). 시크릿 AWS Secrets Manager (운영) / `.env` (로컬).
 
 ## CI/CD
@@ -54,7 +54,7 @@ S3(Presigned), Expo Push (Firebase 제거됨), Claude Vision(OCR), e약은요(�
 users, hospital_schedules, counseling_records, daily_checkins,
 prescriptions, prescription_medications, medication_schedules, medication_logs,
 prep_notes, subscriptions, subscription_histories, refresh_tokens,
-notification_settings, audit_logs, payments_temp, export_jobs, app_versions
+notification_settings, audit_logs, export_jobs, app_versions
 ```
 PK 모두 UUID. soft delete = `deleted_at TIMESTAMP NULL`. 마이그레이션은 Flyway (V1~).
 

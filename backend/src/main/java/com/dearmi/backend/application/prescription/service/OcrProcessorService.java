@@ -83,8 +83,9 @@ public class OcrProcessorService {
                 OcrResult ocrResult = prescriptionOcrPort.analyze(s3Key);
                 List<OcrMedicationItem> items = ocrResult.medications();
 
-                log.info("OCR 파싱: hospitalName={}, prescribedAt={}, 약품={}건",
-                        ocrResult.hospitalName(), ocrResult.prescribedAt(), items.size());
+                // hospitalName 평문 로깅 금지 (PII — 정신과 식별 가능)
+                log.info("OCR 파싱: prescriptionId={}, prescribedAt={}, 약품={}건",
+                        prescriptionId, ocrResult.prescribedAt(), items.size());
 
                 LocalDate parsedDate = null;
                 try {
@@ -95,8 +96,7 @@ public class OcrProcessorService {
                 prescription.updateFromOcr(ocrResult.hospitalName(), parsedDate);
 
                 items.forEach(item -> {
-                    log.info("OCR 약품: drugName={}, dosage={}, singleDose={}, directions={}, days={}",
-                            item.drugName(), item.dosage(), item.singleDose(), item.directions(), item.days());
+                    // 약품명/용법/용량은 진료 기록 — 평문 로깅 금지
                     PrescriptionMedication med = prescriptionMedicationRepository.save(
                             PrescriptionMedication.builder()
                                     .prescriptionId(prescriptionId)

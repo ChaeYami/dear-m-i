@@ -272,7 +272,9 @@ public class NotificationScheduler {
                     .collect(Collectors.toList());
             String drugList = String.join(", ", drugNames);
 
-            log.debug("그룹 복약 알림 발송: userId={}, group={}, drugs={}", key.userId(), groupName, drugList);
+            // PII (groupName/drugList) 로깅 금지 — 정신과 약품/그룹명은 진단 추론 가능
+            log.debug("그룹 복약 알림 발송: userId={}, groupId={}, slot={}, drugs={}건",
+                    key.userId(), key.groupId(), key.slot(), drugNames.size());
             Locale locale = toLocale(user.getPreferredLocale());
             notificationSender.sendAndLog(
                     user.getId(),
@@ -315,7 +317,8 @@ public class NotificationScheduler {
 
     private void sendIndividualMedNotification(MedicationSchedule schedule, TimeSlot slot,
                                                 LocalDate today, User user) {
-        log.debug("복약 알림 발송: userId={}, drug={}, slot={}", schedule.getUserId(), schedule.getDrugName(), slot);
+        // drugName 로깅 금지 (PII) — 추적용 scheduleId 만 남김
+        log.debug("복약 알림 발송: userId={}, scheduleId={}, slot={}", schedule.getUserId(), schedule.getId(), slot);
         Locale locale = toLocale(user.getPreferredLocale());
         notificationSender.sendAndLog(
                 user.getId(),

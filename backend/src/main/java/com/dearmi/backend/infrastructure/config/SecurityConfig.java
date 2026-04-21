@@ -52,7 +52,6 @@ public class SecurityConfig {
     private static final String[] PUBLIC_ENDPOINTS = {
             "/api/v1/auth/refresh",     // Refresh Token으로 새 토큰 발급
             "/api/v1/app/version",      // 앱 버전 확인
-            "/api/v1/payments/webhook", // 토스페이먼츠 웹훅 (외부 호출)
             "/api/v1/webhooks/apple",  // Apple Server-to-Server 알림 (외부 호출)
             "/api/v1/dev/**",           // 로컬 개발 전용 (DevAuthController)
             "/actuator/health",         // 헬스체크

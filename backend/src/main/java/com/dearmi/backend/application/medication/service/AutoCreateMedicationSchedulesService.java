@@ -91,7 +91,8 @@ public class AutoCreateMedicationSchedulesService {
             existingDrugNames.add(drugName.trim().toLowerCase());
 
             medicationDrugInfoService.fetchDrugInfoAsync(saved.getId(), userId);
-            log.info("처방전 → 복약 일정 자동 등록: scheduleId={}, drugName={}", saved.getId(), drugName);
+            // drugName 로깅 금지 (PII)
+            log.info("처방전 → 복약 일정 자동 등록: scheduleId={}", saved.getId());
             created++;
         }
         return created;

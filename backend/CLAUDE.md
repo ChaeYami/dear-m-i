@@ -9,11 +9,11 @@ com.dearmi.backend/
 ├── application/       UseCase interface + impl, Command/Query DTO
 │                      (도메인: auth, appversion, schedule, record, prescription,
 │                       medication, druginfo, checkin, notification, prepnote,
-│                       search, subscription, payment)
+│                       search, subscription)
 ├── domain/            Entity, Repository interface, DomainService, Exception
 ├── infrastructure/
 │   ├── persistence/   JPA Repository impl + QueryDSL
-│   ├── external/      claude/, druginfo/, fcm/, s3/, payment/
+│   ├── external/      claude/, druginfo/, fcm/, s3/
 │   ├── config/        S3Config, AsyncConfig, EncryptionConfig, WebClientConfig 등
 │   ├── batch/         NotificationScheduler 등
 │   └── security/      JWT, OAuth2, AOP (PlanRequiredAspect, AuditLogAspect)
@@ -62,7 +62,8 @@ DRUG_INFO_API_KEY                           # e약은요
 AWS_S3_BUCKET, AWS_ACCESS_KEY, AWS_SECRET_KEY, AWS_REGION
 GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 APPLE_CLIENT_ID, APPLE_CLIENT_SECRET
-TOSS_SECRET_KEY
+PLAY_DEVELOPER_API_JSON, PLAY_PACKAGE_NAME       # Android IAP 검증
+APPLE_BUNDLE_ID, APPLE_APP_APPLE_ID, APPLE_ENV   # iOS IAP 검증
 ```
 운영: AWS Secrets Manager / ECS Task Definition.
 

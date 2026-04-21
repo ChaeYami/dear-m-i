@@ -133,8 +133,8 @@ OcrResultScreen 저장 → Alert
 - FREE 진입 차단이 필요하면 `PremiumGate` 컴포넌트로 감싸 PaywallScreen 으로 유도.
 
 ## 결제
-- iOS: App Store IAP 만. **웹 결제 버튼 노출 절대 금지**.
-- Android: Play Billing + 토스페이먼츠 웹 결제 병행 (`WebPaymentScreen` modal).
+- iOS: App Store IAP 만. **웹 결제 버튼 노출 절대 금지** (App Store 3.1.1 강제).
+- Android: Play Billing 만 (디지털 상품은 Play Billing 강제 정책 — 토스 웹 결제는 심사 거부 위험으로 제거됨).
 - `PaywallScreen` 은 `RootNavigator` 에 modal 로 등록.
 - `subscriptionStore` (Zustand) 가 플랜 동기화 — `RootNavigator` 가 me/subscription 호출 후 plan 불일치 시 `setUser` 갱신.
 

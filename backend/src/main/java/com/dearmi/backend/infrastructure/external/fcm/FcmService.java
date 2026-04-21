@@ -79,11 +79,10 @@ public class FcmService {
                     .retrieve()
                     .body(Map.class);
 
-            log.debug("Expo Push 발송 성공: title={}, token={}, response={}",
-                    title, tokenPreview, response);
+            // title 은 약품명/병원명을 포함할 수 있어 로깅 제외 (PII)
+            log.debug("Expo Push 발송 성공: token={}, response={}", tokenPreview, response);
         } catch (Exception e) {
-            log.warn("Expo Push 발송 실패 (무시): token={}, title={}, error={}",
-                    tokenPreview, title, e.getMessage());
+            log.warn("Expo Push 발송 실패 (무시): token={}, error={}", tokenPreview, e.getMessage());
         }
     }
 }

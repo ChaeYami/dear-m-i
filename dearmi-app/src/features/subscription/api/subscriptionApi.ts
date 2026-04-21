@@ -16,27 +16,6 @@ export interface VerifyIapRequest {
   receiptData: string;             // iOS: JWS, Android: purchaseToken
 }
 
-export type WebPlanType = 'MONTHLY' | 'YEARLY';
-
-export interface PreparePaymentResponse {
-  orderId: string;
-  amount: number;
-  customerName: string;
-  customerEmail: string;
-}
-
-export interface ConfirmPaymentRequest {
-  orderId: string;
-  paymentKey: string;
-  amount: number;
-}
-
-export interface ConfirmPaymentResponse {
-  success: boolean;
-  plan: string;
-  expiresAt: string;
-}
-
 export const subscriptionApi = {
   getStatus: () =>
     axiosInstance.get<ApiResponse<SubscriptionStatus>>('/api/v1/subscriptions'),
@@ -55,18 +34,4 @@ export const subscriptionApi = {
 
   cancel: () =>
     axiosInstance.delete<ApiResponse<void>>('/api/v1/subscriptions/cancel'),
-
-  /** 웹 결제 준비 (Android + 웹) — payments_temp에 임시 저장 */
-  preparePayment: (planType: WebPlanType) =>
-    axiosInstance.post<ApiResponse<PreparePaymentResponse>>(
-      '/api/v1/payments/prepare',
-      { planType }
-    ),
-
-  /** 웹 결제 승인 확인 (토스페이먼츠 결제 완료 후) */
-  confirmPayment: (data: ConfirmPaymentRequest) =>
-    axiosInstance.post<ApiResponse<ConfirmPaymentResponse>>(
-      '/api/v1/payments/confirm',
-      data
-    ),
 };
