@@ -23,6 +23,7 @@
   "legal_links_separator": " · ",
   "purchase_error": "Payment Error",
   "purchase_error_message": "An error occurred. Please try again.",
+  "product_unavailable": "Subscription products are temporarily unavailable. Please try again later.",
   "restore_done": "Restore Complete",
   "restore_empty": "No purchases to restore.",
   "restore_success": "Subscription restored.",

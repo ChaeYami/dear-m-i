@@ -123,7 +123,17 @@ export const useSubscription = () => {
     setIsPurchasing(true);
     try {
       await ensureIapConnection();
-      await fetchProducts({ skus: [productId] });
+      // App Store Connect / Play Console 에 product 가 등록 안 됐거나 metadata 누락 시
+      // fetchProducts 가 빈 배열을 반환. 이 상태로 requestPurchase 호출하면 StoreKit 이
+      // 모호한 에러를 던져서 원인 추적이 어려움 → 사전 검증으로 명확한 메시지 표시.
+      const products = await fetchProducts({ skus: [productId], type: 'subs' });
+      if (!products || products.length === 0) {
+        customAlert(
+          i18n.t('subscription:purchase_error'),
+          i18n.t('subscription:product_unavailable'),
+        );
+        return;
+      }
       // v15: 결과는 purchaseUpdatedListener 로 비동기 도착. 여기선 구매 요청만 트리거.
       await requestPurchase({
         request: Platform.OS === 'ios'

@@ -1,14 +1,17 @@
 package com.dearmi.backend.presentation.auth;
 
+import com.dearmi.backend.application.auth.dto.AppleNativeLoginCommand;
 import com.dearmi.backend.application.auth.dto.AuthTokenResult;
 import com.dearmi.backend.application.auth.dto.TokenRefreshCommand;
 import com.dearmi.backend.application.auth.dto.UserResult;
+import com.dearmi.backend.application.auth.usecase.AppleNativeLoginUseCase;
 import com.dearmi.backend.application.auth.usecase.GetCurrentUserUseCase;
 import com.dearmi.backend.application.auth.usecase.LogoutUseCase;
 import com.dearmi.backend.application.auth.usecase.TokenRefreshUseCase;
 import com.dearmi.backend.application.auth.usecase.WithdrawUseCase;
 import com.dearmi.backend.common.response.ApiResponse;
 import com.dearmi.backend.infrastructure.security.AuthenticatedUserId;
+import com.dearmi.backend.presentation.auth.dto.AppleNativeLoginRequest;
 import com.dearmi.backend.presentation.auth.dto.AuthTokenResponse;
 import com.dearmi.backend.presentation.auth.dto.TokenRefreshRequest;
 import com.dearmi.backend.presentation.auth.dto.UserResponse;
@@ -28,6 +31,26 @@ public class AuthController {
     private final LogoutUseCase logoutUseCase;
     private final GetCurrentUserUseCase getCurrentUserUseCase;
     private final WithdrawUseCase withdrawUseCase;
+    private final AppleNativeLoginUseCase appleNativeLoginUseCase;
+
+    /**
+     * Native Apple Sign-In (expo-apple-authentication) 로그인
+     * <p>
+     * 앱에서 ASAuthorizationController 로 받은 identityToken 을 서버가 Apple JWKS 로 검증 후
+     * JWT access/refresh 발급. iOS 26 의 ASWebAuthenticationSession dryRun 크래시 회피 목적.
+     * - 공개 엔드포인트 (JWT 불필요)
+     */
+    @PostMapping("/apple/native")
+    public ResponseEntity<ApiResponse<AuthTokenResponse>> appleNativeLogin(
+            @RequestBody @Valid AppleNativeLoginRequest request) {
+        AuthTokenResult result = appleNativeLoginUseCase.login(new AppleNativeLoginCommand(
+                request.identityToken(),
+                request.fullName(),
+                request.email()
+        ));
+        return ResponseEntity.ok(ApiResponse.success(
+                new AuthTokenResponse(result.accessToken(), result.refreshToken())));
+    }
 
     /**
      * Refresh Token으로 새 Access/Refresh Token 발급 (Rotation)

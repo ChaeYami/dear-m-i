@@ -50,8 +50,9 @@ public class SecurityConfig {
      * OAuth2 관련 경로(/oauth2/**, /login/oauth2/**)는 oauth2Login() 설정에서 자동 허용
      */
     private static final String[] PUBLIC_ENDPOINTS = {
-            "/api/v1/auth/refresh",     // Refresh Token으로 새 토큰 발급
-            "/api/v1/app/version",      // 앱 버전 확인
+            "/api/v1/auth/refresh",        // Refresh Token으로 새 토큰 발급
+            "/api/v1/auth/apple/native",  // Native Apple Sign-In (identityToken → JWT 발급)
+            "/api/v1/app/version",         // 앱 버전 확인
             "/api/v1/webhooks/apple",  // Apple Server-to-Server 알림 (외부 호출)
             "/api/v1/dev/**",           // 로컬 개발 전용 (DevAuthController)
             "/actuator/health",         // 헬스체크

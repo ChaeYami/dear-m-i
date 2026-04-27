@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import * as SecureStore from 'expo-secure-store';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { authApi } from '@/features/auth/api';
 import i18n from '@/locales/i18n';
@@ -44,7 +45,11 @@ export const useLogin = () => {
     }
   }, []);
 
-  const loginWithProvider = async (provider: 'google' | 'apple') => {
+  /**
+   * Web OAuth (expo-web-browser → 백엔드 /oauth2/authorization/{provider} → 딥링크 콜백).
+   * Apple 은 iOS 26 ASWebAuthenticationSession dryRun 크래시 회피를 위해 native 로 분리 — {@link loginWithApple} 참조.
+   */
+  const loginWithProvider = async (provider: 'google') => {
     setIsLoading(true);
     setError(null);
 
@@ -115,6 +120,72 @@ export const useLogin = () => {
     }
   };
 
+  /**
+   * Native Apple Sign-In (expo-apple-authentication).
+   *
+   * iOS 26 의 ASWebAuthenticationSession `_startDryRun` 단계에서
+   * SFSafariViewController.initWithURL: 가 NSException 을 raise 하며 SIGABRT 로 죽는 이슈가 있어,
+   * Apple 만 ASAuthorizationController 기반 네이티브 흐름으로 분리. App Store Review 2.1(a) 대응.
+   *
+   * 흐름: ASAuthorizationController 시트 → identityToken 수신 → 백엔드 `/api/v1/auth/apple/native`
+   * 가 Apple JWKS 로 서명/iss/aud/exp 검증 → JWT 발급.
+   */
+  const loginWithApple = async () => {
+    if (Platform.OS !== 'ios') {
+      setError(i18n.t('auth:login_error'));
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      if (!credential.identityToken) {
+        throw new Error(i18n.t('auth:login_no_token'));
+      }
+
+      // Apple 은 fullName 을 **최초 로그인 1회만** 제공 — 이때 백엔드로 같이 전달해야 영구 저장됨.
+      // 한국어 표기 우선 (성+이름, 공백 없음). 둘 다 비어있으면 null.
+      const fn = credential.fullName;
+      const fullName =
+        fn?.familyName || fn?.givenName
+          ? `${fn?.familyName ?? ''}${fn?.givenName ?? ''}`.trim() || null
+          : null;
+
+      const { data } = await authApi.appleNativeLogin({
+        identityToken: credential.identityToken,
+        fullName,
+        email: credential.email ?? null,
+      });
+
+      if (!data.success || !data.data) {
+        throw new Error(i18n.t('auth:login_error'));
+      }
+
+      await setTokens(data.data.accessToken, data.data.refreshToken);
+
+      const meRes = await authApi.getMe();
+      if (meRes.data.success && meRes.data.data) {
+        setUser(meRes.data.data);
+      }
+    } catch (e: unknown) {
+      // 시트 dismiss 는 정상 — 에러 표시 안 함
+      if (typeof e === 'object' && e !== null && 'code' in e && (e as { code: string }).code === 'ERR_REQUEST_CANCELED') {
+        return;
+      }
+      setError(e instanceof Error ? e.message : i18n.t('auth:login_error'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const loginWithDev = async () => {
     setIsLoading(true);
     setError(null);
@@ -141,7 +212,7 @@ export const useLogin = () => {
 
   return {
     loginWithGoogle: () => loginWithProvider('google'),
-    loginWithApple: () => loginWithProvider('apple'),
+    loginWithApple,
     loginWithDev,
     isLoading,
     error,

@@ -28,11 +28,13 @@ import java.util.Set;
  * 설정 env:
  *   APPLE_BUNDLE_ID          — 예: com.chloee0033.dearmiapp
  *   APPLE_APP_APPLE_ID       — App Store Connect 의 Apple ID(숫자). SignedDataVerifier 필수.
- *   APPLE_ENV                — SANDBOX | PRODUCTION (기본 SANDBOX)
+ *   APPLE_ENV                — 우선 시도 환경 힌트 (SANDBOX | PRODUCTION, 기본 PRODUCTION).
+ *                              실패 시 반대 환경으로 자동 fallback 하므로 운영/리뷰 모두 동작.
  *   APPLE_ROOT_CERT_PATH     — Apple Root CA 인증서 경로 (classpath:apple-root-ca-g3.cer 기본)
  *
- * 클라가 보낸 receiptData(JWS signedTransactionInfo) 를 SignedDataVerifier 로
- * 서명/체인 검증 후 페이로드의 expiresDate 추출.
+ * <p>중요: App Store reviewer 는 production 빌드에서 sandbox 영수증으로 테스트하므로
+ * production / sandbox verifier 를 둘 다 인스턴스화해서 fallback 한다. 이게 누락되면
+ * 리뷰 단계에서 2.1(b) IAP error 가 발생한다 (실제 v1.0(14) 빌드 거절 사유).
  */
 @Slf4j
 @Component
@@ -43,14 +45,17 @@ public class AppStoreIapValidator implements IapValidator {
     private final String envName;
     private final String rootCertPath;
 
-    private SignedDataVerifier verifier;
+    private SignedDataVerifier productionVerifier;
+    private SignedDataVerifier sandboxVerifier;
+    // 운영 트래픽의 99% 는 production. envName 힌트로 우선 시도 순서를 정해 fallback 비용 절감.
+    private boolean productionFirst = true;
 
     public AppStoreIapValidator(
             @Value("${iap.apple.bundle-id:}") String bundleId,
             // String 으로 수신 후 내부 파싱 — task def 에 실수로 ARN 등 비숫자가 들어와도
             // 빈 생성 단계에서 앱 전체가 죽지 않도록 방어.
             @Value("${iap.apple.app-apple-id:0}") String appAppleIdStr,
-            @Value("${iap.apple.environment:SANDBOX}") String envName,
+            @Value("${iap.apple.environment:PRODUCTION}") String envName,
             @Value("${iap.apple.root-cert-path:classpath:apple-root-ca-g3.cer}") String rootCertPath
     ) {
         this.bundleId = bundleId;
@@ -78,22 +83,54 @@ public class AppStoreIapValidator implements IapValidator {
             return;
         }
         try {
-            Set<java.io.InputStream> roots = loadRootCertificates();
-            Environment env = envName.equalsIgnoreCase("PRODUCTION")
-                    ? Environment.PRODUCTION
-                    : Environment.SANDBOX;
+            // SignedDataVerifier 는 생성자에서 InputStream 을 소비하므로 환경마다 새로 로드.
+            this.productionVerifier = new SignedDataVerifier(
+                    loadRootCertificates(), bundleId, appAppleId, Environment.PRODUCTION, true);
+            this.sandboxVerifier = new SignedDataVerifier(
+                    loadRootCertificates(), bundleId, appAppleId, Environment.SANDBOX, true);
 
-            this.verifier = new SignedDataVerifier(
-                    roots,
-                    bundleId,
-                    appAppleId,
-                    env,
-                    true  // enableOnlineChecks — 인증서 OCSP/CRL 체크
-            );
+            this.productionFirst = !envName.equalsIgnoreCase("SANDBOX");
 
-            log.info("[IAP] Apple validator initialized (bundle={}, env={})", bundleId, env);
+            log.info("[IAP] Apple validator initialized (bundle={}, productionFirst={})",
+                    bundleId, productionFirst);
         } catch (Exception e) {
             log.error("[IAP] Failed to init Apple validator", e);
+        }
+    }
+
+    /**
+     * production / sandbox verifier 를 차례로 시도. 운영 빌드의 sandbox 리뷰어 시나리오 대응.
+     * <p>두 환경 모두 실패하면 마지막 예외를 그대로 던진다.
+     */
+    private JWSTransactionDecodedPayload decodeTransactionWithFallback(String jws) throws Exception {
+        SignedDataVerifier first = productionFirst ? productionVerifier : sandboxVerifier;
+        SignedDataVerifier second = productionFirst ? sandboxVerifier : productionVerifier;
+        try {
+            return first.verifyAndDecodeTransaction(jws);
+        } catch (Exception primary) {
+            try {
+                return second.verifyAndDecodeTransaction(jws);
+            } catch (Exception fallback) {
+                log.warn("[IAP] Apple JWS verification failed in both environments (first={}): {}",
+                        productionFirst ? "PRODUCTION" : "SANDBOX", primary.getMessage());
+                throw fallback;
+            }
+        }
+    }
+
+    private ResponseBodyV2DecodedPayload decodeNotificationWithFallback(String signedPayload) throws Exception {
+        SignedDataVerifier first = productionFirst ? productionVerifier : sandboxVerifier;
+        SignedDataVerifier second = productionFirst ? sandboxVerifier : productionVerifier;
+        try {
+            return first.verifyAndDecodeNotification(signedPayload);
+        } catch (Exception primary) {
+            try {
+                return second.verifyAndDecodeNotification(signedPayload);
+            } catch (Exception fallback) {
+                log.warn("[IAP] Apple notification verification failed in both environments: {}",
+                        primary.getMessage());
+                throw fallback;
+            }
         }
     }
 
@@ -113,14 +150,13 @@ public class AppStoreIapValidator implements IapValidator {
 
     @Override
     public ValidationResult validate(String productId, String transactionId, String receiptData) {
-        if (verifier == null) {
+        if (productionVerifier == null || sandboxVerifier == null) {
             log.error("[IAP] Apple validator not initialized — missing credentials");
             throw new CustomException(ErrorCode.EXTERNAL_SERVICE_ERROR);
         }
 
         try {
-            JWSTransactionDecodedPayload payload =
-                    verifier.verifyAndDecodeTransaction(receiptData);
+            JWSTransactionDecodedPayload payload = decodeTransactionWithFallback(receiptData);
 
             if (!bundleId.equals(payload.getBundleId())) {
                 log.warn("[IAP] Apple bundleId mismatch: expected={}, got={}", bundleId, payload.getBundleId());
@@ -160,12 +196,12 @@ public class AppStoreIapValidator implements IapValidator {
      * notificationType / subtype / originalTransactionId / expiresAt(nullable).
      */
     public NotificationResult verifyAndDecodeNotification(String signedPayload) {
-        if (verifier == null) {
+        if (productionVerifier == null || sandboxVerifier == null) {
             log.error("[Apple Webhook] verifier not initialized");
             throw new CustomException(ErrorCode.EXTERNAL_SERVICE_ERROR);
         }
         try {
-            ResponseBodyV2DecodedPayload notification = verifier.verifyAndDecodeNotification(signedPayload);
+            ResponseBodyV2DecodedPayload notification = decodeNotificationWithFallback(signedPayload);
 
             NotificationTypeV2 type = notification.getNotificationType();
             Subtype subtype = notification.getSubtype();
@@ -181,7 +217,7 @@ public class AppStoreIapValidator implements IapValidator {
                 return new NotificationResult(type, subtype, null, null);
             }
 
-            JWSTransactionDecodedPayload txn = verifier.verifyAndDecodeTransaction(signedTxn);
+            JWSTransactionDecodedPayload txn = decodeTransactionWithFallback(signedTxn);
             String originalTxnId = txn.getOriginalTransactionId();
 
             LocalDateTime expiresAt = null;

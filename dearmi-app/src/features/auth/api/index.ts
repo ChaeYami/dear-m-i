@@ -7,9 +7,22 @@ interface AuthTokenData {
   refreshToken: string;
 }
 
+interface AppleNativeLoginPayload {
+  identityToken: string;
+  fullName?: string | null;
+  email?: string | null;
+}
+
 export const authApi = {
   /** 현재 로그인한 사용자 정보 조회 (토큰 유효성 검증에도 사용) */
   getMe: () => axiosInstance.get<ApiResponse<User>>('/api/v1/auth/me'),
+
+  /**
+   * Native Apple Sign-In — expo-apple-authentication 으로 받은 identityToken 을
+   * 백엔드에서 Apple JWKS 검증 후 JWT 발급. iOS 26 ASWebAuthenticationSession dryRun 크래시 회피용.
+   */
+  appleNativeLogin: (payload: AppleNativeLoginPayload) =>
+    axiosInstance.post<ApiResponse<AuthTokenData>>('/api/v1/auth/apple/native', payload),
 
   /** 로그아웃 — 서버에서 refresh_token + FCM 토큰 삭제 */
   logout: () => axiosInstance.post<ApiResponse<void>>('/api/v1/auth/logout'),
