@@ -32,6 +32,7 @@
   "period_3m": "3개월",
   "period_all": "전체",
   "avg_score": "평균 {{score}}점",
+  "graph_disclaimer": "감정 기록은 참고용이며, 의료 진단을 대체하지 않습니다.",
   "days_recorded": "{{count}}일 기록",
   "trigger_tags": {
     "family": "가족 갈등",

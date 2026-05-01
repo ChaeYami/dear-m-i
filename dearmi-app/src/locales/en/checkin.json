@@ -32,6 +32,7 @@
   "period_3m": "3M",
   "period_all": "All",
   "avg_score": "Avg. {{score}} pts",
+  "graph_disclaimer": "Mood records are for reference only and do not replace medical diagnosis.",
   "days_recorded": "{{count}} days recorded",
   "trigger_tags": {
     "family": "Family conflict",

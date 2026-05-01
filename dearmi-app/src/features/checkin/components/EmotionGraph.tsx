@@ -155,6 +155,10 @@ export const EmotionGraph: React.FC = () => {
             </Text>
             <Text style={[styles.avgCount, { color: colors.textSub }]}>{t('days_recorded', { count: sorted.length })}</Text>
           </View>
+
+          <Text style={[styles.disclaimer, { color: colors.textDisabled }]}>
+            {t('graph_disclaimer')}
+          </Text>
         </>
       )}
     </GlassView>
@@ -218,5 +222,10 @@ const styles = StyleSheet.create({
   },
   emptySubText: {
     fontSize: sizes.font.sm,
+  },
+  disclaimer: {
+    fontSize: sizes.font.xs,
+    lineHeight: 15,
+    paddingHorizontal: sizes.spacing.xs,
   },
 });

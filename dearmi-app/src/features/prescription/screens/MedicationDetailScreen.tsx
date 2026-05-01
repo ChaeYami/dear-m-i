@@ -229,6 +229,15 @@ export const MedicationDetailScreen: React.FC = () => {
               <Text style={styles.nedrugLinkText}>{t('drug_nedrug_link')}</Text>
               <Ionicons name="chevron-forward" size={14} color={colors.textDisabled} />
             </TouchableOpacity>
+
+            {/* 출처 표기 + 의료 면책 (App Store 4.1) */}
+            <View style={styles.attribution}>
+              <View style={styles.attributionRow}>
+                <Ionicons name="information-circle-outline" size={14} color={colors.textSub} />
+                <Text style={styles.attributionSource}>{t('drug_info_source')}</Text>
+              </View>
+              <Text style={styles.attributionDisclaimer}>{t('drug_info_disclaimer')}</Text>
+            </View>
           </>
         )}
       </ScrollView>
@@ -364,5 +373,25 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors'], _tabBarSafeBot
       color: colors.primary,
       fontFamily: fontFamily.semibold,
       flex: 1,
+    },
+    attribution: {
+      marginTop: sizes.spacing.xs,
+      paddingHorizontal: sizes.spacing.sm,
+      gap: 4,
+    },
+    attributionRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    attributionSource: {
+      fontSize: sizes.font.xs,
+      color: colors.textSub,
+      fontFamily: fontFamily.medium,
+    },
+    attributionDisclaimer: {
+      fontSize: sizes.font.xs,
+      color: colors.textDisabled,
+      lineHeight: 16,
     },
   });
