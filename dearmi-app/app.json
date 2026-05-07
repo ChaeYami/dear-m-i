@@ -23,7 +23,6 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.chloee0033.dearmiapp",
       "buildNumber": "1",
-      "googleServicesFile": "./GoogleService-Info.plist",
       "usesAppleSignIn": true,
       "entitlements": {
         "aps-environment": "production",
@@ -99,7 +98,6 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.chloee0033.dearmiapp",
       "versionCode": 6,
-      "googleServicesFile": "./google-services.json",
       "permissions": []
     },
     "web": {
