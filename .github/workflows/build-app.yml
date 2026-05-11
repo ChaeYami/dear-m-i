@@ -126,6 +126,11 @@ jobs:
         working-directory: dearmi-app
         env:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
+          # ⚠️ eas update 는 eas.json 의 빌드 프로필 env 를 읽지 않는다 (--profile 플래그 없음).
+          #    EXPO_PUBLIC_* 는 번들링 시점에 쉘 환경에서 인라인되므로 여기서 직접 주입해야
+          #    process.env.EXPO_PUBLIC_API_URL === undefined (OAuth/모든 API baseURL 깨짐) 를 막는다.
+          #    eas.json production.env 와 값이 일치해야 함.
+          EXPO_PUBLIC_API_URL: https://api.dearmi.link
         run: |
           MSG="${COMMIT_MSG:-Manual OTA update}"
           eas update --branch production --message "$MSG" --non-interactive
