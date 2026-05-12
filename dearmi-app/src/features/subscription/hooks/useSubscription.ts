@@ -76,8 +76,13 @@ export const useSubscription = () => {
     const errorSub = purchaseErrorListener((err) => {
       if (!mountedRef.current) return;
       if (err?.code !== ErrorCode.UserCancelled) {
-        console.warn('[IAP] purchase error', err);
-        customAlert(i18n.t('subscription:purchase_error'), i18n.t('subscription:purchase_error_message'));
+        // 에러 코드를 alert/로그에 노출 — 리뷰어 스크린샷/샌드박스 테스트에서 StoreKit·Billing
+        // 실패 원인(E_DEVELOPER_ERROR, E_UNKNOWN, billing-unavailable 등)을 바로 식별하기 위함.
+        console.warn('[IAP] purchase error', err?.code, err?.message, err);
+        customAlert(
+          i18n.t('subscription:purchase_error'),
+          `${i18n.t('subscription:purchase_error_message')}\n(${err?.code ?? 'UNKNOWN'})`,
+        );
       }
     });
 
@@ -143,7 +148,11 @@ export const useSubscription = () => {
       });
     } catch (err: any) {
       if (err?.code !== ErrorCode.UserCancelled) {
-        customAlert(i18n.t('subscription:purchase_error'), i18n.t('subscription:purchase_error_message'));
+        console.warn('[IAP] requestPurchase failed', err?.code, err?.message, err);
+        customAlert(
+          i18n.t('subscription:purchase_error'),
+          `${i18n.t('subscription:purchase_error_message')}\n(${err?.code ?? 'UNKNOWN'})`,
+        );
       }
     } finally {
       // 실제 완료는 listener 에서 처리되지만 UI 상 로딩 잠그는 건 여기서 풀어줌
