@@ -4,9 +4,9 @@ import { checkinApi } from '@/features/checkin/api/checkinApi';
 import { haptics } from '@/shared/utils/haptics';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import {
-  GUEST_TODAY_CHECKIN,
-  GUEST_CHECKIN_HISTORY,
-  GUEST_CHECKIN_SUMMARY,
+  getGuestTodayCheckin,
+  getGuestCheckinHistory,
+  getGuestCheckinSummary,
 } from '@/shared/mocks/guestData';
 import type { CreateCheckinRequest } from '@/shared/types/domain.types';
 
@@ -16,7 +16,7 @@ export const useTodayCheckin = () => {
   return useQuery({
     queryKey: [...QUERY_KEYS.todayCheckin(), isGuest ? 'guest' : 'user'],
     queryFn: async () => {
-      if (isGuest) return GUEST_TODAY_CHECKIN;
+      if (isGuest) return getGuestTodayCheckin();
       const { data } = await checkinApi.getToday();
       return data.data ?? { checkedIn: false, checkin: null };
     },
@@ -31,7 +31,7 @@ export const useCheckinHistory = (startDate?: string, endDate?: string) => {
   return useQuery({
     queryKey: [...QUERY_KEYS.checkinHistory(startDate, endDate), isGuest ? 'guest' : 'user'],
     queryFn: async () => {
-      if (isGuest) return GUEST_CHECKIN_HISTORY;
+      if (isGuest) return getGuestCheckinHistory();
       const { data } = await checkinApi.getHistory(startDate, endDate);
       return data.data ?? { content: [], isLimited: false };
     },
@@ -44,7 +44,7 @@ export const useCheckinSummary = () => {
   return useQuery({
     queryKey: [...QUERY_KEYS.checkinSummary(), isGuest ? 'guest' : 'user'],
     queryFn: async () => {
-      if (isGuest) return GUEST_CHECKIN_SUMMARY;
+      if (isGuest) return getGuestCheckinSummary();
       const { data } = await checkinApi.getSummary();
       return data.data ?? null;
     },

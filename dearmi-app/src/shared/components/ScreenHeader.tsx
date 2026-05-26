@@ -9,13 +9,14 @@ import { navigationRef } from '@/navigation/navigationRef';
 import { useUnreadNotificationCount } from '@/features/notification/hooks/useNotificationHistory';
 import { GuestModeBanner } from '@/shared/components/GuestModeBanner';
 
+type TFn = (key: string) => string;
 const a11y = {
-  search: { accessibilityRole: 'button' as const, accessibilityLabel: '검색' },
-  bell: (unread: boolean) => ({
+  search: (t: TFn) => ({ accessibilityRole: 'button' as const, accessibilityLabel: t('search') }),
+  bell: (t: TFn, unread: boolean) => ({
     accessibilityRole: 'button' as const,
-    accessibilityLabel: unread ? '알림 (읽지 않은 알림 있음)' : '알림',
+    accessibilityLabel: unread ? t('a11y_notifications_unread') : t('a11y_notifications'),
   }),
-  back: { accessibilityRole: 'button' as const, accessibilityLabel: '뒤로 가기' },
+  back: (t: TFn) => ({ accessibilityRole: 'button' as const, accessibilityLabel: t('a11y_back') }),
 };
 
 interface TabHeaderProps {
@@ -55,6 +56,7 @@ const BRAND_LOGO = require('../../../assets/banner-icon.png');
 
 const TabHeader: React.FC<TabHeaderProps> = (props) => {
   const { colors } = useTheme();
+  const { t } = useTranslation('common');
   const navigation = useNavigation<any>();
   const { data: unreadCount = 0 } = useUnreadNotificationCount();
   const hasUnread = unreadCount > 0;
@@ -105,7 +107,7 @@ const TabHeader: React.FC<TabHeaderProps> = (props) => {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: sizes.spacing.sm }}>
         {props.rightContent}
         {props.searchScope && (
-          <TouchableOpacity onPress={handleSearchPress} hitSlop={8} {...a11y.search}>
+          <TouchableOpacity onPress={handleSearchPress} hitSlop={8} {...a11y.search(t)}>
             <GlassView
               intensity="regular"
               borderRadius={19}
@@ -122,7 +124,7 @@ const TabHeader: React.FC<TabHeaderProps> = (props) => {
             </GlassView>
           </TouchableOpacity>
         )}
-        <TouchableOpacity onPress={handleBellPress} hitSlop={8} {...a11y.bell(hasUnread)}>
+        <TouchableOpacity onPress={handleBellPress} hitSlop={8} {...a11y.bell(t, hasUnread)}>
           <GlassView
             intensity="regular"
             borderRadius={19}
@@ -189,7 +191,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = (props) => {
         <TouchableOpacity
           onPress={handleBack}
           hitSlop={8}
-          {...a11y.back}
+          {...a11y.back(t)}
           style={{
             width: 36,
             height: 36,

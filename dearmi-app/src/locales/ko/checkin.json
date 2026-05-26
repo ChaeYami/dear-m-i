@@ -58,5 +58,22 @@
   "note_type_symptom": "증상",
   "note_type_question": "질문",
   "note_type_side_effect": "부작용",
-  "note_type_other": "메모"
+  "note_type_other": "메모",
+  "note_save_error": "메모를 저장하지 못했습니다.",
+  "note_delete_title": "메모 삭제",
+  "note_delete_confirm": "이 메모를 삭제할까요?",
+  "mood_today_title": "오늘의 기분",
+  "mood_date_title": "{{month}}/{{day}} 기분",
+  "mood_tap_hint": "탭해서 기분을 기록하세요",
+  "record_sleep_med": "수면 · 복약 기록하기",
+  "record_sleep_med_too": "수면 · 복약도 기록하기",
+  "next_visit_today": "오늘 진료",
+  "next_visit_days": "진료 {{days}}일 전",
+  "prep_note_cta": "준비 메모",
+  "note_section": "메모",
+  "note_input_placeholder": "지금 느끼는 것, 증상, 궁금한 것…",
+  "note_empty": "아직 메모가 없어요",
+  "note_used_in_prep": "진료 준비 메모에 사용됨",
+  "note_type_sheet_title": "메모 종류",
+  "note_time_today": "오늘 {{time}}"
 }

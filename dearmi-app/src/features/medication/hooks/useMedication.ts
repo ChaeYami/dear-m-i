@@ -3,7 +3,7 @@ import { QUERY_KEYS } from '@/constants/cacheKeys';
 import { medicationApi } from '@/features/medication/api/medicationApi';
 import { haptics } from '@/shared/utils/haptics';
 import { useAuthStore } from '@/features/auth/store/authStore';
-import { GUEST_TODAY_MEDICATION, GUEST_MEDICATION_SCHEDULES } from '@/shared/mocks/guestData';
+import { getGuestTodayMedication, getGuestMedicationSchedules } from '@/shared/mocks/guestData';
 import type { CreateMedicationScheduleRequest, UpdateMedicationScheduleRequest, CheckMedicationRequest, TimeSlotType } from '@/shared/types/domain.types';
 
 /** 특정 날짜(기본=오늘) 복약 현황 */
@@ -12,7 +12,7 @@ export const useTodayMedication = (date?: string) => {
   return useQuery({
     queryKey: [...QUERY_KEYS.todayMedication(date), isGuest ? 'guest' : 'user'],
     queryFn: async () => {
-      if (isGuest) return GUEST_TODAY_MEDICATION;
+      if (isGuest) return getGuestTodayMedication();
       const { data } = await medicationApi.getToday(date);
       return data.data ?? { schedules: [] };
     },
@@ -27,7 +27,7 @@ export const useAllMedicationSchedules = (enabled: boolean = true) => {
   return useQuery({
     queryKey: [...QUERY_KEYS.allMedicationSchedules(), isGuest ? 'guest' : 'user'],
     queryFn: async () => {
-      if (isGuest) return GUEST_MEDICATION_SCHEDULES;
+      if (isGuest) return getGuestMedicationSchedules();
       const { data } = await medicationApi.listAll();
       return data.data ?? [];
     },

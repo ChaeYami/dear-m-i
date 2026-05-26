@@ -2,7 +2,7 @@ import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tansta
 import { QUERY_KEYS } from '@/constants/cacheKeys';
 import { recordApi } from '@/features/record/api';
 import { useAuthStore } from '@/features/auth/store/authStore';
-import { GUEST_TIMELINE_PAGE, GUEST_RECORDS, GUEST_SCHEDULES } from '@/shared/mocks/guestData';
+import { getGuestTimelinePage, getGuestRecords, getGuestSchedules } from '@/shared/mocks/guestData';
 import type { CreateRecordRequest, UpdateRecordRequest } from '@/shared/types/domain.types';
 
 /** 진료 기록 타임라인 무한 스크롤 (page 기반) */
@@ -11,7 +11,7 @@ export const useTimeline = () => {
   return useInfiniteQuery({
     queryKey: [...QUERY_KEYS.timeline(), isGuest ? 'guest' : 'user'],
     queryFn: async ({ pageParam }) => {
-      if (isGuest) return GUEST_TIMELINE_PAGE;
+      if (isGuest) return getGuestTimelinePage();
       const { data } = await recordApi.getTimeline(pageParam as number, 20);
       return (
         data.data ?? {
@@ -39,7 +39,7 @@ export const useRecordDetail = (id: string) => {
     queryKey: [...QUERY_KEYS.record(id), isGuest ? 'guest' : 'user'],
     queryFn: async () => {
       if (isGuest) {
-        return GUEST_RECORDS.find((r) => r.id === id) ?? null;
+        return getGuestRecords().find((r) => r.id === id) ?? null;
       }
       const { data } = await recordApi.getRecord(id);
       return data.data ?? null;
@@ -60,7 +60,7 @@ export const useRecentSchedules = (direction: 'PAST' | 'FUTURE' = 'PAST') => {
     queryFn: async () => {
       if (isGuest) {
         const now = Date.now();
-        return GUEST_SCHEDULES.filter((s) => {
+        return getGuestSchedules().filter((s) => {
           const t = new Date(s.scheduledAt).getTime();
           return direction === 'PAST' ? t < now : t >= now;
         }).sort((a, b) => {

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   Modal,
   View,
@@ -27,8 +27,6 @@ interface Props {
   onClose: () => void;
 }
 
-const SUGGESTIONS = ['아침', '점심', '저녁', '취침전'];
-
 export const MedicationGroupModal: React.FC<Props> = ({
   visible,
   selectedSlotKeys,
@@ -38,6 +36,15 @@ export const MedicationGroupModal: React.FC<Props> = ({
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation(['settings', 'common']);
+  const suggestions = useMemo(
+    () => [
+      t('medication_morning'),
+      t('medication_afternoon'),
+      t('medication_evening'),
+      t('medication_bedtime'),
+    ],
+    [t],
+  );
   const [groupName, setGroupName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [timeError, setTimeError] = useState(false);
@@ -118,7 +125,7 @@ export const MedicationGroupModal: React.FC<Props> = ({
             contentContainerStyle={styles.suggestionsRow}
           >
             <Text style={styles.suggestLabel}>{t('medication_group_suggestions')}</Text>
-            {SUGGESTIONS.map((s) => (
+            {suggestions.map((s) => (
               <TouchableOpacity
                 key={s}
                 style={[
@@ -153,7 +160,7 @@ export const MedicationGroupModal: React.FC<Props> = ({
           {/* 같은 시간 오류 메시지 */}
           {timeError && (
             <Text style={[styles.errorText, { color: colors.error }]}>
-              같은 복약 시간으로 설정된 약끼리만 묶을 수 있어요
+              {t('medication_group_same_time_error')}
             </Text>
           )}
 

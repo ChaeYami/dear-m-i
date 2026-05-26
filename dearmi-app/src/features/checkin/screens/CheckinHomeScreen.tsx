@@ -79,7 +79,7 @@ const NOTE_TYPE_CONFIG: Array<{ type: DailyNoteType; icon: keyof typeof Ionicons
 const getNoteTypeConfig = (type: DailyNoteType) =>
   NOTE_TYPE_CONFIG.find((c) => c.type === type) ?? NOTE_TYPE_CONFIG[4];
 
-const formatNoteTime = (createdAt: string) => {
+const formatNoteTime = (createdAt: string, t: (key: string, opts?: any) => string) => {
   const d = new Date(createdAt);
   const now = new Date();
   const isToday =
@@ -88,7 +88,7 @@ const formatNoteTime = (createdAt: string) => {
     d.getDate() === now.getDate();
   const h = String(d.getHours()).padStart(2, '0');
   const m = String(d.getMinutes()).padStart(2, '0');
-  if (isToday) return `오늘 ${h}:${m}`;
+  if (isToday) return t('note_time_today', { time: `${h}:${m}` });
   const mo = d.getMonth() + 1;
   const da = d.getDate();
   return `${mo}/${da} ${h}:${m}`;
@@ -170,19 +170,19 @@ export const CheckinHomeScreen: React.FC = () => {
       { body, noteType, noteDate: selectedDate },
       {
         onSuccess: () => setNoteBody(''),
-        onError: () => customAlert('오류', '메모를 저장하지 못했습니다.'),
+        onError: () => customAlert(tCommon('error'), t('note_save_error')),
       },
     );
-  }, [noteBody, noteType, selectedDate, createNote]);
+  }, [noteBody, noteType, selectedDate, createNote, t, tCommon]);
 
   const handleDeleteNote = useCallback(
     (id: string) => {
-      customAlert('메모 삭제', '이 메모를 삭제할까요?', [
+      customAlert(t('note_delete_title'), t('note_delete_confirm'), [
         { text: tCommon('cancel'), style: 'cancel' },
         { text: tCommon('delete'), style: 'destructive', onPress: () => deleteNote(id) },
       ]);
     },
-    [deleteNote, tCommon],
+    [deleteNote, t, tCommon],
   );
 
   const styles = useMemo(() => makeStyles(colors, tabBarSafeBottom), [colors, tabBarSafeBottom]);
@@ -285,7 +285,7 @@ export const CheckinHomeScreen: React.FC = () => {
           {/* ── 오늘의 기분 (이모지 빠른 탭) ── */}
           <View style={[styles.card, softShadow(colors)]}>
             <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>{isToday ? '오늘의 기분' : `${new Date(selectedDate).getMonth() + 1}/${new Date(selectedDate).getDate()} 기분`}</Text>
+              <Text style={styles.cardTitle}>{isToday ? t('mood_today_title') : t('mood_date_title', { month: new Date(selectedDate).getMonth() + 1, day: new Date(selectedDate).getDate() })}</Text>
               {selectedCheckin && (
                 <TouchableOpacity onPress={() => setShowCheckinForm(true)} hitSlop={8}>
                   <Ionicons name="create-outline" size={18} color={colors.primary} />
@@ -323,19 +323,19 @@ export const CheckinHomeScreen: React.FC = () => {
             </View>
 
             {!selectedCheckin && (
-              <Text style={styles.emojiHint}>탭해서 기분을 기록하세요</Text>
+              <Text style={styles.emojiHint}>{t('mood_tap_hint')}</Text>
             )}
 
             {/* 상세 폼 바로가기 */}
             {selectedCheckin && (
               <TouchableOpacity onPress={() => setShowCheckinForm(true)} style={styles.detailBtn}>
-                <Text style={styles.detailBtnText}>수면 · 복약 기록하기</Text>
+                <Text style={styles.detailBtnText}>{t('record_sleep_med')}</Text>
                 <Ionicons name="chevron-forward" size={14} color={colors.primary} />
               </TouchableOpacity>
             )}
             {!selectedCheckin && isToday && (
               <TouchableOpacity onPress={() => setShowCheckinForm(true)} style={styles.detailBtn}>
-                <Text style={styles.detailBtnText}>수면 · 복약도 기록하기</Text>
+                <Text style={styles.detailBtnText}>{t('record_sleep_med_too')}</Text>
                 <Ionicons name="chevron-forward" size={14} color={colors.primary} />
               </TouchableOpacity>
             )}
@@ -357,7 +357,7 @@ export const CheckinHomeScreen: React.FC = () => {
                 <Ionicons name="medical" size={22} color={colors.primary} />
                 <View>
                   <Text style={styles.schedBannerTitle}>
-                    {daysUntilNext === 0 ? '오늘 진료' : `진료 ${daysUntilNext}일 전`}
+                    {daysUntilNext === 0 ? t('next_visit_today') : t('next_visit_days', { days: daysUntilNext })}
                   </Text>
                   <Text style={styles.schedBannerSub} numberOfLines={1}>
                     {nextSchedule.hospitalName}
@@ -365,7 +365,7 @@ export const CheckinHomeScreen: React.FC = () => {
                 </View>
               </View>
               <View style={styles.schedBannerCta}>
-                <Text style={styles.schedBannerCtaText}>준비 메모</Text>
+                <Text style={styles.schedBannerCtaText}>{t('prep_note_cta')}</Text>
                 <Ionicons name="chevron-forward" size={14} color={colors.primary} />
               </View>
             </TouchableOpacity>
@@ -373,7 +373,7 @@ export const CheckinHomeScreen: React.FC = () => {
 
           {/* ── 스레드 메모 피드 ── */}
           <View style={styles.threadSection}>
-            <Text style={styles.sectionTitle}>메모</Text>
+            <Text style={styles.sectionTitle}>{t('note_section')}</Text>
 
             {/* 입력창 */}
             <View style={[styles.noteInputCard, softShadow(colors)]}>
@@ -390,7 +390,7 @@ export const CheckinHomeScreen: React.FC = () => {
               <TextInput
                 ref={noteInputRef}
                 style={styles.noteInput}
-                placeholder="지금 느끼는 것, 증상, 궁금한 것…"
+                placeholder={t('note_input_placeholder')}
                 placeholderTextColor={colors.textDisabled}
                 value={noteBody}
                 onChangeText={setNoteBody}
@@ -411,7 +411,7 @@ export const CheckinHomeScreen: React.FC = () => {
             {/* 노트 목록 */}
             {notesLoading ? null : dailyNotes.length === 0 ? (
               <View style={styles.emptyNotes}>
-                <Text style={styles.emptyNotesText}>아직 메모가 없어요</Text>
+                <Text style={styles.emptyNotesText}>{t('note_empty')}</Text>
               </View>
             ) : (
               <View style={styles.noteList}>
@@ -426,7 +426,7 @@ export const CheckinHomeScreen: React.FC = () => {
                             {t(cfg.labelKey as any, { defaultValue: cfg.type })}
                           </Text>
                         </View>
-                        <Text style={styles.noteTime}>{formatNoteTime(note.createdAt)}</Text>
+                        <Text style={styles.noteTime}>{formatNoteTime(note.createdAt, t)}</Text>
                         <TouchableOpacity
                           onPress={() => handleDeleteNote(note.id)}
                           hitSlop={8}
@@ -437,7 +437,7 @@ export const CheckinHomeScreen: React.FC = () => {
                       </View>
                       <Text style={styles.noteBody}>{note.body}</Text>
                       {note.usedInPrepNoteId && (
-                        <Text style={styles.noteUsed}>진료 준비 메모에 사용됨</Text>
+                        <Text style={styles.noteUsed}>{t('note_used_in_prep')}</Text>
                       )}
                     </View>
                   );
@@ -476,7 +476,7 @@ export const CheckinHomeScreen: React.FC = () => {
       <Modal visible={showTypePicker} transparent animationType="slide" onRequestClose={() => setShowTypePicker(false)}>
         <Pressable style={styles.pickerBackdrop} onPress={() => setShowTypePicker(false)}>
           <View style={[styles.pickerSheet, { backgroundColor: colors.surface }]}>
-            <Text style={styles.pickerTitle}>메모 종류</Text>
+            <Text style={styles.pickerTitle}>{t('note_type_sheet_title')}</Text>
             {NOTE_TYPE_CONFIG.map((cfg) => (
               <TouchableOpacity
                 key={cfg.type}

@@ -69,5 +69,7 @@
   "timeline_visit": "진료 방문",
   "timeline_record": "진료 기록",
   "prep_note_empty_preview": "(내용 없음)",
-  "daily_note_linked": "하루 메모 {{count}}개"
+  "daily_note_linked": "하루 메모 {{count}}개",
+  "prep_note_shortcut_title": "진료 준비 기록",
+  "prep_note_shortcut_desc": "진료 전 메모와 질문을 정리해 두세요"
 }

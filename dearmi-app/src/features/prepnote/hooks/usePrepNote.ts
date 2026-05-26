@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/constants/cacheKeys';
 import { prepNoteApi } from '@/features/prepnote/api/prepNoteApi';
 import { useAuthStore } from '@/features/auth/store/authStore';
-import { GUEST_PREP_NOTES } from '@/shared/mocks/guestData';
+import { getGuestPrepNotes } from '@/shared/mocks/guestData';
 import type { CreatePrepNoteRequest, UpdatePrepNoteRequest } from '@/shared/types/domain.types';
 
 /** 전체 준비 메모 목록 */
@@ -11,7 +11,7 @@ export const usePrepNotes = () => {
   return useQuery({
     queryKey: [...QUERY_KEYS.prepNotes(), isGuest ? 'guest' : 'user'],
     queryFn: async () => {
-      if (isGuest) return GUEST_PREP_NOTES;
+      if (isGuest) return getGuestPrepNotes();
       const { data } = await prepNoteApi.getList();
       return data.data ?? [];
     },
@@ -25,7 +25,7 @@ export const usePrepNotesBySchedule = (scheduleId?: string) => {
     queryKey: [...QUERY_KEYS.prepNotesBySchedule(scheduleId ?? ''), isGuest ? 'guest' : 'user'],
     queryFn: async () => {
       if (isGuest) {
-        return GUEST_PREP_NOTES.filter((p) => p.scheduleId === scheduleId);
+        return getGuestPrepNotes().filter((p) => p.scheduleId === scheduleId);
       }
       const { data } = await prepNoteApi.getList(scheduleId);
       return data.data ?? [];

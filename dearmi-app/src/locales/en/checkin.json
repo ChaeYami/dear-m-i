@@ -58,5 +58,22 @@
   "note_type_symptom": "Symptom",
   "note_type_question": "Question",
   "note_type_side_effect": "Side Effect",
-  "note_type_other": "Note"
+  "note_type_other": "Note",
+  "note_save_error": "Failed to save note.",
+  "note_delete_title": "Delete Note",
+  "note_delete_confirm": "Delete this note?",
+  "mood_today_title": "Today's Mood",
+  "mood_date_title": "{{month}}/{{day}} Mood",
+  "mood_tap_hint": "Tap to record your mood",
+  "record_sleep_med": "Record sleep & medication",
+  "record_sleep_med_too": "Also record sleep & medication",
+  "next_visit_today": "Visit today",
+  "next_visit_days": "{{days}} days until visit",
+  "prep_note_cta": "Prep Note",
+  "note_section": "Notes",
+  "note_input_placeholder": "What you feel, symptoms, questions…",
+  "note_empty": "No notes yet",
+  "note_used_in_prep": "Used in visit prep note",
+  "note_type_sheet_title": "Note Type",
+  "note_time_today": "Today {{time}}"
 }

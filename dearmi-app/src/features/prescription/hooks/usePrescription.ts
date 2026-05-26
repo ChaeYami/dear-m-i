@@ -4,7 +4,7 @@ import { AxiosError } from 'axios';
 import { QUERY_KEYS } from '@/constants/cacheKeys';
 import { prescriptionApi } from '@/features/prescription/api';
 import { useAuthStore } from '@/features/auth/store/authStore';
-import { GUEST_PRESCRIPTIONS } from '@/shared/mocks/guestData';
+import { getGuestPrescriptions } from '@/shared/mocks/guestData';
 import type { SavePrescriptionRequest } from '@/shared/types/domain.types';
 
 const OCR_POLL_INTERVAL_MS = 2000;
@@ -16,7 +16,7 @@ export const usePrescriptions = () => {
   return useQuery({
     queryKey: [...QUERY_KEYS.prescriptions(), isGuest ? 'guest' : 'user'],
     queryFn: async () => {
-      if (isGuest) return GUEST_PRESCRIPTIONS;
+      if (isGuest) return getGuestPrescriptions();
       const { data } = await prescriptionApi.getPrescriptions();
       return data.data ?? [];
     },
@@ -30,11 +30,12 @@ export const usePagedPrescriptions = () => {
     queryKey: [...QUERY_KEYS.prescriptions(), 'paged', isGuest ? 'guest' : 'user'],
     queryFn: async ({ pageParam }) => {
       if (isGuest) {
+        const guestPrescriptions = getGuestPrescriptions();
         return {
-          content: GUEST_PRESCRIPTIONS,
+          content: guestPrescriptions,
           page: 0,
           size: 20,
-          totalElements: GUEST_PRESCRIPTIONS.length,
+          totalElements: guestPrescriptions.length,
           totalPages: 1,
           hasNext: false,
         };

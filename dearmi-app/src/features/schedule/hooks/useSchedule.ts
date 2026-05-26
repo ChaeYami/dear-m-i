@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/constants/cacheKeys';
 import { scheduleApi } from '@/features/schedule/api';
 import { useAuthStore } from '@/features/auth/store/authStore';
-import { GUEST_SCHEDULES } from '@/shared/mocks/guestData';
+import { getGuestSchedules } from '@/shared/mocks/guestData';
 import type {
   HospitalSchedule,
   CreateScheduleRequest,
@@ -16,7 +16,7 @@ export const useMonthlySchedules = (year: number, month: number) => {
     queryKey: [...QUERY_KEYS.monthlySchedules(year, month), isGuest ? 'guest' : 'user'],
     queryFn: async () => {
       if (isGuest) {
-        return GUEST_SCHEDULES.filter((s) => {
+        return getGuestSchedules().filter((s) => {
           const d = new Date(s.scheduledAt);
           return d.getFullYear() === year && d.getMonth() + 1 === month;
         });
@@ -33,7 +33,7 @@ export const useAllSchedules = (enabled: boolean = true) => {
   return useQuery({
     queryKey: [...QUERY_KEYS.allSchedules(), isGuest ? 'guest' : 'user'],
     queryFn: async () => {
-      if (isGuest) return GUEST_SCHEDULES;
+      if (isGuest) return getGuestSchedules();
       const { data } = await scheduleApi.getAllSchedules();
       return data.data ?? [];
     },
@@ -48,7 +48,7 @@ export const useScheduleDetail = (id: number | string) => {
     queryKey: [...QUERY_KEYS.schedule(id), isGuest ? 'guest' : 'user'],
     queryFn: async () => {
       if (isGuest) {
-        return GUEST_SCHEDULES.find((s) => s.id === String(id)) ?? null;
+        return getGuestSchedules().find((s) => s.id === String(id)) ?? null;
       }
       const { data } = await scheduleApi.getScheduleDetail(id);
       return data.data ?? null;

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 
 /** 키워드 하이라이팅 */
@@ -40,10 +41,11 @@ export const HighlightText: React.FC<{
 /** 섹션 헤더 */
 export const SectionHeader: React.FC<{ title: string; count: number }> = ({ title, count }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation('common');
   return (
     <View style={styles.sectionHeader}>
       <Text style={[styles.sectionTitle, { color: colors.textSub }]}>{title}</Text>
-      <Text style={[styles.sectionCount, { color: colors.textDisabled }]}>{count}건</Text>
+      <Text style={[styles.sectionCount, { color: colors.textDisabled }]}>{t('search_count', { count })}</Text>
     </View>
   );
 };

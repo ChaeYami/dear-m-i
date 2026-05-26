@@ -4,6 +4,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -21,8 +23,15 @@ import java.io.IOException;
  * <p>이 필터는 `/oauth2/authorization/**` 진입 시 `app_state` 쿼리를 servlet session 에 저장하고,
  * {@link OAuth2SuccessHandler} 가 redirect 시 꺼내 echo 한다. WebBrowser.openAuthSessionAsync 가
  * OAuth flow 동안 in-app browser 의 session cookie 를 유지하므로 같은 session 이 보장된다.
+ *
+ * <p><b>실행 순서 주의</b>: Spring Security 의 {@code OAuth2AuthorizationRequestRedirectFilter} 는
+ * `/oauth2/authorization/**` 매칭 시 Google 로 즉시 302 리다이렉트하며 필터 체인을 중단(chain.doFilter 미호출)한다.
+ * 따라서 이 필터가 Security 필터 체인보다 <b>먼저</b> 실행돼 app_state 를 세션에 저장해야 한다.
+ * {@code @Order(HIGHEST_PRECEDENCE)} 가 없으면 자동 등록 시 LOWEST_PRECEDENCE 로 Security 뒤에 놓여
+ * 실행되지 못하고, 콜백에서 state 가 누락돼 앱이 로그인 실패(state 불일치)로 처리한다.
  */
 @Component
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class OAuthAppStateFilter extends OncePerRequestFilter {
 
     public static final String SESSION_KEY = "DEARMI_OAUTH_APP_STATE";

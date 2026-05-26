@@ -69,5 +69,7 @@
   "timeline_visit": "Visit",
   "timeline_record": "Record",
   "prep_note_empty_preview": "(No content)",
-  "daily_note_linked": "{{count}} daily notes"
+  "daily_note_linked": "{{count}} daily notes",
+  "prep_note_shortcut_title": "Visit Prep Notes",
+  "prep_note_shortcut_desc": "Organize notes and questions before your visit"
 }
