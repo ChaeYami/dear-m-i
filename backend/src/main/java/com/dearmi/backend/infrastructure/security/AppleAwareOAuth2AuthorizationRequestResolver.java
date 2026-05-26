@@ -11,13 +11,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Apple Sign in with Apple 전용 요구: scope 에 name/email 포함 시 response_mode=form_post 강제.
- * Apple 외 provider (Google) 는 기본 동작 그대로.
+ * provider 별 authorization 요청 커스터마이즈:
+ * - Apple: Sign in with Apple 요구사항 — scope 에 name/email 포함 시 response_mode=form_post 강제.
+ * - Google: 저장된 세션/단일 계정과 무관하게 항상 계정 선택 화면을 띄우도록 prompt=select_account 강제.
  */
 @Component
 public class AppleAwareOAuth2AuthorizationRequestResolver implements OAuth2AuthorizationRequestResolver {
 
     private static final String APPLE_REG_ID = "apple";
+    private static final String GOOGLE_REG_ID = "google";
     private static final String AUTHORIZATION_BASE_URI = "/oauth2/authorization";
 
     private final OAuth2AuthorizationRequestResolver delegate;
@@ -41,15 +43,24 @@ public class AppleAwareOAuth2AuthorizationRequestResolver implements OAuth2Autho
             return null;
         }
         String regId = (String) req.getAttributes().get("registration_id");
-        if (!APPLE_REG_ID.equals(regId)) {
-            return req;
+
+        if (APPLE_REG_ID.equals(regId)) {
+            Map<String, Object> additional = new HashMap<>(req.getAdditionalParameters());
+            additional.put("response_mode", "form_post");
+            return OAuth2AuthorizationRequest.from(req)
+                    .additionalParameters(additional)
+                    .build();
         }
 
-        Map<String, Object> additional = new HashMap<>(req.getAdditionalParameters());
-        additional.put("response_mode", "form_post");
+        if (GOOGLE_REG_ID.equals(regId)) {
+            // 항상 계정 선택 화면 노출 (자동 로그인/단일 계정 자동 선택 방지)
+            Map<String, Object> additional = new HashMap<>(req.getAdditionalParameters());
+            additional.put("prompt", "select_account");
+            return OAuth2AuthorizationRequest.from(req)
+                    .additionalParameters(additional)
+                    .build();
+        }
 
-        return OAuth2AuthorizationRequest.from(req)
-                .additionalParameters(additional)
-                .build();
+        return req;
     }
 }
