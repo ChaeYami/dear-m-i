@@ -7,9 +7,9 @@
 - `eas.json`: `appVersionSource: "remote"` (buildNumber/versionCode 서버 관리), `production.autoIncrement: true`, `production.channel: "production"`.
 - `app.json`: `runtimeVersion.policy: "fingerprint"` + `updates.url` 설정됨. **네이티브 변경 (패키지 / app.json plugin / 권한 등) 자동 감지**.
 - GitHub Actions (`.github/workflows/build-app.yml`):
-  - `dearmi-app/**` 푸시 → 마지막 production 빌드의 commit 과 HEAD 간 `git diff` 로 네이티브 영향 파일 변경 여부 체크. 변경 없으면 `eas update` (OTA, 양 플랫폼), 변경 있으면 `eas build --platform all` (iOS + Android 둘 다) + `eas submit --platform ios` (iOS 만 자동 제출).
+  - `dearmi-app/**` 푸시 → 마지막 production 빌드의 commit 과 HEAD 간 `git diff` 로 네이티브 영향 파일 변경 여부 체크. 변경 없으면 `eas update` (OTA, 양 플랫폼), 변경 있으면 `eas build --platform all` (iOS + Android 둘 다) + `eas submit --platform ios` + `eas submit --platform android` (**양 플랫폼 자동 제출**).
   - "네이티브 영향 파일" 화이트리스트: `package.json`, `package-lock.json`, `app.json`/`app.config.*`, `eas.json`, `babel.config.js`, `metro.config.js`, `plugins/`, `GoogleService-Info.plist`, `google-services.json`, `assets/adaptive-icon.png`, `assets/fonts/`, `ios/`, `android/`. 새 네이티브 트리거 추가 시 워크플로의 `NATIVE_PATHSPEC` 도 같이 업데이트.
-  - **Android 빌드는 매번 진행**되어 AAB 가 EAS 대시보드에 쌓임. **자동 submission 만 iOS 한정** — 한국 사업자 등록 + 통신판매업 신고번호 Play Console 입력 완료 후 Android 자동 submit 추가 예정 (TODO). 그 전까지 Play Console 업로드는 EAS 대시보드에서 AAB 다운로드 후 수동.
+  - **iOS / Android 모두 자동 submission**: iOS → App Store Connect, Android → Play Console (`production` 트랙, `eas.json` submit.production.android 참조). 자격증명 양쪽 모두 EAS 서버 보관.
   - `workflow_dispatch` 로 mode 강제 (`auto`/`build`/`update`) 가능.
 - OTA 가능한 변경: TS/TSX, 스타일, 텍스트, i18n, 번들 이미지. OTA 불가: `expo-*` 패키지 변경, app.json plugin/permission, 새 네이티브 모듈, 앱 아이콘/스플래시.
 - 사용자 보이는 버전 (`1.0.x`) 올릴 때만 `app.json` 의 `version` 수정. `buildNumber`/`versionCode` 는 EAS remote 가 자동 increment — 절대 수동 수정 금지.

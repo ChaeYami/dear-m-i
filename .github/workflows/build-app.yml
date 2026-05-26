@@ -1,8 +1,8 @@
-name: Deploy App (EAS — auto build both, submit iOS only)
+name: Deploy App (EAS — auto build + submit both platforms)
 
-# 📝 빌드는 iOS + Android 둘 다 진행 (Android AAB 는 EAS 대시보드에 남아서 수동 업로드 가능).
-#    Submit (스토어 자동 업로드) 은 iOS 만. Android 자동 submission 은 한국 사업자 등록 +
-#    통신판매업 신고번호 Play Console 입력 완료 후 추가 예정.
+# 📝 빌드는 iOS + Android 둘 다 진행하고, Submit (스토어 자동 업로드) 도 양 플랫폼 모두 자동.
+#    iOS → App Store Connect, Android → Play Console (production 트랙).
+#    자격증명은 EAS 서버 보관 (iOS ASC API Key + Android Google Service Account).
 #
 # 분기 로직: 마지막 production 빌드의 commit 과 HEAD 간 git diff 로 "네이티브에 영향 주는 파일"
 #           변경 여부 체크 — 있으면 build, 없으면 OTA.
@@ -142,8 +142,13 @@ jobs:
           eas build --platform all --profile production --non-interactive
 
       - name: Submit iOS to App Store Connect
-        # Android 자동 submission 은 한국 사업자 등록 완료 후 추가 예정 (TODO)
         if: steps.diff.outputs.action == 'build'
         working-directory: dearmi-app
         run: |
           eas submit --platform ios --profile production --latest --non-interactive
+
+      - name: Submit Android to Play Console
+        if: steps.diff.outputs.action == 'build'
+        working-directory: dearmi-app
+        run: |
+          eas submit --platform android --profile production --latest --non-interactive

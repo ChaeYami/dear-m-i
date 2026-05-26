@@ -18,9 +18,9 @@ S3(Presigned), Expo Push (Firebase 제거됨), Claude Vision(OCR), e약은요(�
 - **백엔드**: `.github/workflows/deploy-backend.yml` — `backend/**` 변경 시 `main` 푸시 → ECR + ECS 자동 배포.
 - **앱**: `.github/workflows/build-app.yml` — `dearmi-app/**` 변경 시 마지막 production 빌드의 commit 과 HEAD 간 `git diff` 로 "네이티브 영향 파일" (package.json, app.json, eas.json, plugins/, GoogleService-Info.plist 등) 변경 여부 체크:
   - 변경 없음 → `eas update --branch production` (OTA, JS-only, 양 플랫폼)
-  - 변경 있음 → `eas build --platform all` (iOS + Android **둘 다 빌드**) → `eas submit --platform ios` (iOS 만 자동 제출)
+  - 변경 있음 → `eas build --platform all` (iOS + Android **둘 다 빌드**) → `eas submit --platform ios` + `eas submit --platform android` (**양 플랫폼 자동 제출**)
   - 분기 판정에 fingerprint 라이브러리 안 씀 (EAS 내부 해시와 외부 도구 hash 가 안 맞아서 git diff 가 결정적).
-- **⚠️ Android 자동 submission 미적용 (TODO)**: 빌드까지는 매번 진행해서 AAB 가 EAS 대시보드에 쌓이지만, Play Console 자동 업로드는 한국 사업자 등록 + 통신판매업 신고번호 등 계정 정보 입력 완료 후 추가 예정. 그 전까지 Android 제출이 필요하면 EAS 대시보드에서 AAB 다운로드 후 Play Console 에 수동 업로드.
+  - Android submit 트랙: `eas.json` submit.production.android `track: "production"`, `releaseStatus: "completed"`.
 - EAS 자격증명: iOS ASC API Key + Android Google Service Account (`dearmi-play-uploader@dearmi-493112.iam.gserviceaccount.com`) 모두 EAS 서버 저장됨. JSON 키 로컬 보관 금지.
 
 ## 보안 6원칙 (절대 위반 금지)
