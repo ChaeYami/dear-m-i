@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ScrollView,
   Switch,
+  Linking,
 } from 'react-native';
 import Constants from 'expo-constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -30,6 +31,12 @@ type Nav = CompositeNavigationProp<
   StackNavigationProp<MyPageStackParamList, 'MyPageTab'>,
   StackNavigationProp<RootStackParamList>
 >;
+
+const LEGAL_URLS = {
+  terms: 'https://chaeon.studio/dearmi/terms/',
+  privacy: 'https://chaeon.studio/dearmi/privacy/',
+  licenses: 'https://chaeon.studio/dearmi/licenses/',
+} as const;
 
 interface MenuItemProps {
   label: string;
@@ -391,7 +398,7 @@ export const MyPageScreen: React.FC = () => {
           <View style={styles.legalList}>
             <TouchableOpacity
               style={styles.legalRow}
-              onPress={() => navigation.navigate('Legal', { kind: 'terms' })}
+              onPress={() => Linking.openURL(LEGAL_URLS.terms)}
               hitSlop={8}
             >
               <Text style={styles.legalText}>{t('legal_terms')}</Text>
@@ -399,7 +406,7 @@ export const MyPageScreen: React.FC = () => {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.legalRow}
-              onPress={() => navigation.navigate('Legal', { kind: 'privacy' })}
+              onPress={() => Linking.openURL(LEGAL_URLS.privacy)}
               hitSlop={8}
             >
               <Text style={styles.legalText}>{t('legal_privacy')}</Text>
@@ -407,7 +414,7 @@ export const MyPageScreen: React.FC = () => {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.legalRow}
-              onPress={() => navigation.navigate('Legal', { kind: 'licenses' })}
+              onPress={() => Linking.openURL(LEGAL_URLS.licenses)}
               hitSlop={8}
             >
               <Text style={styles.legalText}>{t('legal_licenses')}</Text>

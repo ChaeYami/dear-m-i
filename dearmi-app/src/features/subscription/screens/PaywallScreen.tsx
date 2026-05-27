@@ -24,20 +24,13 @@ import type { RootStackParamList } from '@/navigation/RootNavigator';
 type PlanOption = 'monthly' | 'yearly';
 
 const LEGAL_URLS = {
-  terms: {
-    ko: 'https://api.dearmi.link/terms-ko.html',
-    en: 'https://api.dearmi.link/terms-en.html',
-  },
-  privacy: {
-    ko: 'https://api.dearmi.link/privacy-ko.html',
-    en: 'https://api.dearmi.link/privacy-en.html',
-  },
+  terms: 'https://chaeon.studio/dearmi/terms/',
+  privacy: 'https://chaeon.studio/dearmi/privacy/',
 } as const;
 
 export const PaywallScreen: React.FC = () => {
   const { colors } = useTheme();
-  const { t, i18n } = useTranslation('subscription');
-  const lang = i18n.language.startsWith('ko') ? 'ko' : 'en';
+  const { t } = useTranslation('subscription');
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const FEATURES = [
     { icon: 'document-text-outline', text: t('feature_ocr') },
@@ -346,14 +339,14 @@ export const PaywallScreen: React.FC = () => {
         <View style={styles.legalLinksRow}>
           <Text
             style={styles.legalLink}
-            onPress={() => Linking.openURL(LEGAL_URLS.terms[lang])}
+            onPress={() => Linking.openURL(LEGAL_URLS.terms)}
           >
             {t('legal_terms_link')}
           </Text>
           <Text style={styles.legalLinkSep}>{t('legal_links_separator')}</Text>
           <Text
             style={styles.legalLink}
-            onPress={() => Linking.openURL(LEGAL_URLS.privacy[lang])}
+            onPress={() => Linking.openURL(LEGAL_URLS.privacy)}
           >
             {t('legal_privacy_link')}
           </Text>

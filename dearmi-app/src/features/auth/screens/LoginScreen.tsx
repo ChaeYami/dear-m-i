@@ -24,20 +24,13 @@ import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import { useAuthStore } from '@/features/auth/store/authStore';
 
 const LEGAL_URLS = {
-  terms: {
-    ko: 'https://api.dearmi.link/terms-ko.html',
-    en: 'https://api.dearmi.link/terms-en.html',
-  },
-  privacy: {
-    ko: 'https://api.dearmi.link/privacy-ko.html',
-    en: 'https://api.dearmi.link/privacy-en.html',
-  },
+  terms: 'https://chaeon.studio/dearmi/terms/',
+  privacy: 'https://chaeon.studio/dearmi/privacy/',
 } as const;
 
 export const LoginScreen: React.FC = () => {
   const { colors } = useTheme();
-  const { t, i18n } = useTranslation('auth');
-  const lang = i18n.language.startsWith('ko') ? 'ko' : 'en';
+  const { t } = useTranslation('auth');
   const { loginWithGoogle, loginWithApple, loginWithDev, isLoading, error, clearError } = useLogin();
   const enterGuestMode = useAuthStore((s) => s.enterGuestMode);
   const isDev = __DEV__;
@@ -329,14 +322,14 @@ export const LoginScreen: React.FC = () => {
         >
           {t('terms_prefix')}
           <Text
-            onPress={() => Linking.openURL(LEGAL_URLS.terms[lang])}
+            onPress={() => Linking.openURL(LEGAL_URLS.terms)}
             style={{ color: colors.primary, textDecorationLine: 'underline' }}
           >
             {t('terms_service')}
           </Text>
           {t('terms_middle')}
           <Text
-            onPress={() => Linking.openURL(LEGAL_URLS.privacy[lang])}
+            onPress={() => Linking.openURL(LEGAL_URLS.privacy)}
             style={{ color: colors.primary, textDecorationLine: 'underline' }}
           >
             {t('privacy_policy')}

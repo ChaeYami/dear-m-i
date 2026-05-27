@@ -9,7 +9,6 @@ import { ThemeSettingsScreen } from '@/features/mypage/screens/ThemeSettingsScre
 import { AccountScreen } from '@/features/mypage/screens/AccountScreen';
 import { NoticeListScreen } from '@/features/mypage/screens/NoticeListScreen';
 import { FaqScreen } from '@/features/mypage/screens/FaqScreen';
-import { LegalScreen } from '@/features/mypage/screens/LegalScreen';
 
 export type MyPageStackParamList = {
   MyPageTab: undefined;
@@ -20,7 +19,6 @@ export type MyPageStackParamList = {
   Account: undefined;
   NoticeList: undefined;
   Faq: undefined;
-  Legal: { kind: 'terms' | 'privacy' | 'licenses' };
 };
 
 const Stack = createStackNavigator<MyPageStackParamList>();
@@ -40,6 +38,5 @@ export const MyPageNavigator: React.FC = () => (
     <Stack.Screen name="Account" component={AccountScreen} />
     <Stack.Screen name="NoticeList" component={NoticeListScreen} />
     <Stack.Screen name="Faq" component={FaqScreen} />
-    <Stack.Screen name="Legal" component={LegalScreen} />
   </Stack.Navigator>
 );
