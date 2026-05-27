@@ -105,7 +105,7 @@ jobs:
             'dearmi-app/GoogleService-Info.plist'
             'dearmi-app/google-services.json'
             'dearmi-app/plugins/'
-            'dearmi-app/assets/adaptive-icon.png'
+            'dearmi-app/assets/*icon*.png'
             'dearmi-app/assets/fonts/'
             'dearmi-app/ios/'
             'dearmi-app/android/'
