@@ -77,18 +77,20 @@ export const EmotionGraph: React.FC = () => {
               onPress={() => !locked && setPeriod(p)}
               activeOpacity={locked ? 1 : 0.7}
             >
-              <GlassView
-                intensity={isActive ? 'thick' : 'subtle'}
-                borderRadius={sizes.radius.full}
+              {/*
+                Android 버그 회피: GlassView(borderRadius→overflow:'hidden')를 re-render 하면
+                자식 Text 가 사라진다(intensity 토글 시 active 였던 버튼만 글자 증발).
+                기간 칩은 blur 가 불필요하므로 평범한 View + 배경색으로 대체.
+                borderWidth 는 항상 1(투명)로 둬서 active 토글 시 레이아웃 점프 방지.
+              */}
+              <View
                 style={[
                   styles.periodBtnInner,
-                  isActive && { borderWidth: 1, borderColor: colors.primary + '40' },
+                  { borderRadius: sizes.radius.full, borderWidth: 1, borderColor: 'transparent' },
+                  isActive && { backgroundColor: colors.primaryMuted, borderColor: colors.primary + '40' },
                 ]}
               >
                 <Text
-                  // Android 는 Text 인스턴스를 재사용하며 fontFamily(Medium↔Bold)를 바꾸면
-                  // 글자가 빈 칸으로 렌더되는 버그가 있다 → active 토글 시 remount 로 회피.
-                  key={isActive ? 'on' : 'off'}
                   style={[
                     styles.periodBtnText,
                     { color: colors.textSub },
@@ -101,7 +103,7 @@ export const EmotionGraph: React.FC = () => {
                 {locked && (
                   <Ionicons name="lock-closed" size={10} color={colors.textDisabled} />
                 )}
-              </GlassView>
+              </View>
             </TouchableOpacity>
           );
         })}

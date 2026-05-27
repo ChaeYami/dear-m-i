@@ -91,7 +91,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/dearmi-icon-android.png",
         "backgroundColor": "#F7F4F0"
       },
       "edgeToEdgeEnabled": true,
