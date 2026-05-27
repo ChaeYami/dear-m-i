@@ -86,6 +86,9 @@ export const EmotionGraph: React.FC = () => {
                 ]}
               >
                 <Text
+                  // Android 는 Text 인스턴스를 재사용하며 fontFamily(Medium↔Bold)를 바꾸면
+                  // 글자가 빈 칸으로 렌더되는 버그가 있다 → active 토글 시 remount 로 회피.
+                  key={isActive ? 'on' : 'off'}
                   style={[
                     styles.periodBtnText,
                     { color: colors.textSub },

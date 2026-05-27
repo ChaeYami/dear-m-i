@@ -60,7 +60,9 @@ export const TriggerTagSelector: React.FC<TriggerTagSelectorProps> = ({
               onPress={() => toggleTag(tag)}
               activeOpacity={0.75}
             >
-              <Text style={[
+              <Text
+                key={isSelected ? 'on' : 'off'}
+                style={[
                 styles.chipText,
                 { color: colors.textSub },
                 isSelected && { color: colors.accent, fontFamily: fontFamily.semibold },

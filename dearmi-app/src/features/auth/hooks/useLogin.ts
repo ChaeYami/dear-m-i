@@ -12,7 +12,9 @@ const OAUTH_STATE_KEY = 'oauth_app_state';
 
 /** 딥링크 쿼리 파라미터 파서 */
 const parseUrlParams = (url: string): Record<string, string> => {
-  const query = url.split('?')[1] ?? '';
+  // iOS ASWebAuthenticationSession 은 콜백 URL 끝에 빈 fragment(`#`)를 붙여 돌려줄 수 있다.
+  // fragment 를 떼지 않으면 마지막 쿼리 파라미터(state)에 `#`가 섞여 state 검증이 실패한다.
+  const query = (url.split('?')[1] ?? '').split('#')[0];
   return Object.fromEntries(
     query
       .split('&')

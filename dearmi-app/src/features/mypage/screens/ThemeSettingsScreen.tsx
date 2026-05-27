@@ -82,6 +82,7 @@ export const ThemeSettingsScreen: React.FC = () => {
                 />
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text
+                    key={isActive ? 'on' : 'off'}
                     style={{
                       fontFamily: isActive ? fontFamily.semibold : fontFamily.regular,
                       fontSize: sizes.font.md,

@@ -91,6 +91,7 @@ export const EmotionSlider: React.FC<EmotionSliderProps> = ({
               ]}
             >
               <Text
+                key={isSelected ? 'on' : 'off'}
                 style={[
                   {
                     fontFamily: fontFamily.semibold,

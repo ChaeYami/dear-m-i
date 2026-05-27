@@ -201,7 +201,10 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
                   ]}
                   onPress={() => setViewMode(mode)}
                 >
-                  <Text style={[
+                  <Text
+                    // Android: fontFamily 토글 시 Text 재사용하면 글자가 사라지는 버그 → remount 회피
+                    key={active ? 'on' : 'off'}
+                    style={[
                     styles.toggleBtnText,
                     { color: colors.textSub, fontFamily: fontFamily.medium },
                     active && { color: colors.primary, fontFamily: fontFamily.bold },
@@ -286,7 +289,9 @@ export const ScheduleTab: React.FC<{ embedded?: boolean }> = ({ embedded = false
                         isSelected && { backgroundColor: colors.primaryMuted, borderRadius: sizes.radius.lg, padding: sizes.spacing.sm },
                       ]}
                     >
-                      <Text style={[
+                      <Text
+                        key={isSelected ? 'on' : 'off'}
+                        style={[
                         styles.dateLabel,
                         {
                           color: isSelected ? colors.primary : colors.textSub,
@@ -509,6 +514,7 @@ const WeekStrip: React.FC<{
               activeOpacity={0.7}
             >
               <Text
+                key={`lbl-${isSelected ? 'on' : 'off'}`}
                 style={{
                   fontSize: sizes.font.xs,
                   color: isSelected ? colors.primary : dayColor,
@@ -518,6 +524,7 @@ const WeekStrip: React.FC<{
                 {dayLabel}
               </Text>
               <Text
+                key={`num-${isSelected || isToday ? 'on' : 'off'}`}
                 style={{
                   fontSize: sizes.font.md,
                   color: isSelected

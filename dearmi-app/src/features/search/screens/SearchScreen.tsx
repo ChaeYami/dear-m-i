@@ -359,6 +359,7 @@ export const SearchScreen: React.FC = () => {
                 }}
               >
                 <Text
+                  key={isActive ? 'on' : 'off'}
                   style={{
                     fontSize: sizes.font.xs,
                     fontFamily: isActive ? fontFamily.semibold : fontFamily.regular,

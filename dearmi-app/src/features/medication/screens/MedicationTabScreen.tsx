@@ -77,6 +77,7 @@ export const MedicationTabScreen: React.FC = () => {
               activeOpacity={0.75}
             >
               <Text
+                key={active ? 'on' : 'off'}
                 style={[
                   styles.subTabText,
                   active
