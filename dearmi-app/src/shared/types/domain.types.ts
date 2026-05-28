@@ -322,9 +322,11 @@ export interface MedicationStats {
   startDate: string;
   endDate: string;
   totalLogs: number;
+  scheduledDoses: number; // 기간 내 예정 복용 횟수 (완료율 분모)
   takenCount: number;
   skippedCount: number;
-  completionRate: number;
+  missedCount: number; // 예정인데 미체크 = 미복용
+  completionRate: number; // taken / scheduledDoses * 100
 }
 
 // ─── 진료 준비 메모 ────────────────────────────────────────────────────────────

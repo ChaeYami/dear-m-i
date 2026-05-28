@@ -2,7 +2,7 @@ import { Platform } from 'react-native';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system/legacy';
-import { CacheService } from '@/shared/cache';
+import ReactNativeBlobUtil from 'react-native-blob-util';
 import type {
   MedicationHistory,
   MedicationStats,
@@ -84,7 +84,8 @@ const buildHtml = (history: MedicationHistory, stats: MedicationStats | null, t:
 
   // 백엔드 completionRate 는 이미 퍼센트(0~100) — 추가로 *100 하지 말 것
   const ratePct = stats ? Math.round(stats.completionRate) : 0;
-  const total = stats?.totalLogs ?? history.logs.length;
+  const scheduled = stats?.scheduledDoses ?? history.logs.length; // 분모: 예정 복용 횟수
+  const missed = stats?.missedCount ?? 0;
 
   return `<!DOCTYPE html>
 <html lang="ko">
@@ -120,9 +121,10 @@ const buildHtml = (history: MedicationHistory, stats: MedicationStats | null, t:
   <h1>${esc(t('settings:medication_pdf_doc_title'))}</h1>
   <div class="meta">${esc(t('settings:medication_pdf_period'))}: ${esc(history.startDate || '-')} ~ ${esc(history.endDate || '-')}</div>
   <div class="summary">
-    <div class="card"><div class="label">${esc(t('settings:medication_pdf_total'))}</div><div class="value">${total}</div></div>
+    <div class="card"><div class="label">${esc(t('settings:medication_pdf_total'))}</div><div class="value">${scheduled}</div></div>
     <div class="card"><div class="label">${esc(t('settings:medication_status_taken'))}</div><div class="value" style="color:#10B981">${stats?.takenCount ?? '-'}</div></div>
     <div class="card"><div class="label">${esc(t('settings:medication_status_skipped'))}</div><div class="value" style="color:#F59E0B">${stats?.skippedCount ?? '-'}</div></div>
+    <div class="card"><div class="label">${esc(t('settings:medication_status_missed'))}</div><div class="value" style="color:#EF4444">${missed}</div></div>
     <div class="card"><div class="label">${esc(t('settings:medication_pdf_rate'))}</div><div class="value" style="color:#8B7EBD">${ratePct}%</div></div>
   </div>
   <table>
@@ -143,55 +145,39 @@ const buildHtml = (history: MedicationHistory, stats: MedicationStats | null, t:
 /** 다운로드 결과 — 화면이 안내 메시지를 분기하는 데 사용 */
 export type DownloadOutcome = 'saved' | 'shared' | 'cancelled';
 
-/** 안드로이드 SAF 로 한 번 고른 저장 폴더를 기억 (매번 폴더 묻지 않도록) */
-const SAF_DIR_KEY = 'medication_pdf_saf_dir_v1';
-
-/** 파일명: DearMI_복약이력_2026-06-14 (확장자 제외 — SAF/iOS 에서 각각 부여) */
+/** 파일명: DearMI_medication_2026-06-14 (확장자 제외 — 저장 시 .pdf 부여) */
 const baseFilename = (history: MedicationHistory): string => {
   const tail = (history.endDate || '').replace(/[^0-9-]/g, '') || 'history';
   return `DearMI_medication_${tail}`;
 };
 
-const writeBase64ToSaf = async (
-  dirUri: string,
-  filename: string,
+/**
+ * 안드로이드: 공개 **다운로드 폴더에 자동 저장** (MediaStore — 폴더 선택 불필요, 시스템 다운로드에 표시).
+ * 구버전/실패 시 공유 시트로 폴백.
+ */
+const saveAndroid = async (
   sourceUri: string,
-): Promise<void> => {
-  const base64 = await FileSystem.readAsStringAsync(sourceUri, {
-    encoding: FileSystem.EncodingType.Base64,
-  });
-  const destUri = await FileSystem.StorageAccessFramework.createFileAsync(
-    dirUri,
-    filename,
-    'application/pdf',
-  );
-  await FileSystem.writeAsStringAsync(destUri, base64, {
-    encoding: FileSystem.EncodingType.Base64,
-  });
-};
-
-/** 안드로이드: SAF 로 사용자가 고른 폴더(다운로드 등)에 저장 */
-const saveAndroid = async (sourceUri: string, filename: string): Promise<DownloadOutcome> => {
-  let dirUri = CacheService.get<string>(SAF_DIR_KEY);
-
-  if (!dirUri) {
-    const perm = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
-    if (!perm.granted) return 'cancelled';
-    dirUri = perm.directoryUri;
-    CacheService.set(SAF_DIR_KEY, dirUri);
-  }
-
+  filename: string,
+  t: TFunc,
+): Promise<DownloadOutcome> => {
   try {
-    await writeBase64ToSaf(dirUri, filename, sourceUri);
+    const srcPath = sourceUri.replace('file://', '');
+    await ReactNativeBlobUtil.MediaCollection.copyToMediaStore(
+      { name: `${filename}.pdf`, parentFolder: '', mimeType: 'application/pdf' },
+      'Download',
+      srcPath,
+    );
     return 'saved';
   } catch {
-    // 폴더 권한 만료/삭제 → 캐시 비우고 1회 재요청
-    CacheService.delete(SAF_DIR_KEY);
-    const perm = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
-    if (!perm.granted) return 'cancelled';
-    CacheService.set(SAF_DIR_KEY, perm.directoryUri);
-    await writeBase64ToSaf(perm.directoryUri, filename, sourceUri);
-    return 'saved';
+    if (await Sharing.isAvailableAsync()) {
+      await Sharing.shareAsync(sourceUri, {
+        mimeType: 'application/pdf',
+        dialogTitle: t('settings:medication_pdf_dialog'),
+        UTI: 'com.adobe.pdf',
+      });
+      return 'shared';
+    }
+    return 'cancelled';
   }
 };
 
@@ -230,7 +216,7 @@ export const downloadMedicationHistoryPdf = async (args: {
   const filename = baseFilename(args.history);
 
   if (Platform.OS === 'android') {
-    return saveAndroid(uri, filename);
+    return saveAndroid(uri, filename, args.t);
   }
   return saveIos(uri, filename, args.t);
 };

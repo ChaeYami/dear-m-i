@@ -172,9 +172,11 @@ export const useMedicationStats = (startDate?: string, endDate?: string) => {
           startDate: startDate ?? '',
           endDate: endDate ?? '',
           totalLogs: 14,
+          scheduledDoses: 15,
           takenCount: 12,
           skippedCount: 2,
-          completionRate: 86, // 백엔드와 동일하게 퍼센트(0~100)
+          missedCount: 1,
+          completionRate: 80, // taken/scheduledDoses*100 (퍼센트, 백엔드와 동일)
         };
       }
       const { data } = await medicationApi.getStats(startDate, endDate);
