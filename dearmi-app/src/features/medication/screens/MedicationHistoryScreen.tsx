@@ -26,7 +26,11 @@ import {
   useCheckMedication,
   useDeleteMedicationSchedule,
   useAllMedicationSchedules,
+  useMedicationHistory,
+  useMedicationStats,
 } from '@/features/medication/hooks/useMedication';
+import { exportMedicationHistoryPdf } from '@/features/medication/utils/medicationPdf';
+import { useAuthStore } from '@/features/auth/store/authStore';
 import { useScreenRefresh } from '@/shared/hooks/useScreenRefresh';
 import { QUERY_KEYS } from '@/constants/cacheKeys';
 import {
@@ -84,6 +88,35 @@ export const MedicationHistoryScreen: React.FC<{ embedded?: boolean }> = ({ embe
   const { mutate: checkMedication } = useCheckMedication();
   const { mutate: deleteMedicationSchedule } = useDeleteMedicationSchedule();
   const { data: allSchedules = [] } = useAllMedicationSchedules(showCalendar);
+
+  // ── 복약 이력 PDF 내보내기 (PREMIUM 전용 — 데이터 범위는 백엔드가 플랜별 게이팅) ──
+  const isPremium = useAuthStore((s) => s.user?.plan === 'PREMIUM');
+  const { data: fullHistory } = useMedicationHistory();
+  const { data: fullStats } = useMedicationStats();
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportPdf = async () => {
+    if (!isPremium) {
+      navigation.navigate('Paywall');
+      return;
+    }
+    if (!fullHistory || fullHistory.logs.length === 0) {
+      customAlert(t('settings:medication_pdf_export'), t('settings:medication_pdf_empty'), [
+        { text: t('common:confirm') },
+      ]);
+      return;
+    }
+    try {
+      setExporting(true);
+      await exportMedicationHistoryPdf({ history: fullHistory, stats: fullStats ?? null, t });
+    } catch {
+      customAlert(t('settings:medication_pdf_export'), t('settings:medication_pdf_error'), [
+        { text: t('common:confirm') },
+      ]);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const animateAndSet = (newDate: string, _direction?: 'prev' | 'next') => {
     setSelectedDate(newDate);
@@ -294,6 +327,23 @@ export const MedicationHistoryScreen: React.FC<{ embedded?: boolean }> = ({ embe
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
           >
 
+            {/* PDF 내보내기 (PREMIUM) */}
+            <TouchableOpacity
+              style={styles.exportBtn}
+              onPress={handleExportPdf}
+              disabled={exporting}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name={isPremium ? 'document-text-outline' : 'lock-closed'}
+                size={16}
+                color={colors.primary}
+              />
+              <Text style={styles.exportBtnText}>
+                {exporting ? t('settings:medication_pdf_exporting') : t('settings:medication_pdf_export')}
+              </Text>
+            </TouchableOpacity>
+
             {/* 완료율 카드 */}
             <View style={styles.summaryCard}>
               <View style={styles.summaryRow}>
@@ -437,6 +487,24 @@ const getStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
       color: colors.text,
       minWidth: 90,
       textAlign: 'center',
+    },
+
+    // ── PDF 내보내기 버튼 ──
+    exportBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: sizes.spacing.xs,
+      paddingVertical: sizes.spacing.sm,
+      borderRadius: sizes.radius.full,
+      borderWidth: 1,
+      borderColor: colors.primary + '40',
+      backgroundColor: colors.primaryMuted,
+    },
+    exportBtnText: {
+      fontSize: sizes.font.sm,
+      fontFamily: fontFamily.semibold,
+      color: colors.primary,
     },
 
     // ── 완료율 섹션 ──
