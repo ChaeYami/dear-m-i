@@ -121,7 +121,7 @@ OcrResultScreen 저장 → Alert
 ```
 
 ## 보안 (앱)
-- API 키/시크릿 직접 작성 금지 (원칙 ②). Claude API 등은 백엔드 경유.
+- API 키/시크릿 직접 작성 금지 (원칙 ②). Gemini API 등은 백엔드 경유.
 - 앱 시작 시 `GET /api/v1/app/version` 필수 (`RootNavigator.checkAppVersion`). `forceUpdate: true` 면 스토어 이동 + 진행 차단.
 - 토큰 복원 후 `getMe()` 로 유효성 검증 — 실패 시 자동 logout.
 

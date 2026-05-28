@@ -95,7 +95,7 @@ POST /prescriptions
   → S3 업로드 확인 → Prescription 저장
   → OcrProcessorService.processAsync()      ← 별도 빈 (self-invocation 방지)
      [@Async("ocrTaskExecutor") @Transactional, 별도 스레드]
-       → Claude Vision → medications 저장
+       → Gemini Vision (GeminiVisionClient) → medications 저장
        → DrugInfoCacheService 로 약품 정보 채움
 ```
 - drug info 조회 실패는 try-catch 무시 (OCR 결과에 영향 없음).

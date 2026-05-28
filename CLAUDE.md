@@ -11,7 +11,7 @@
 ## 스택 한 줄 요약
 RN 0.81 + Expo SDK 54, Zustand ^5 + React Query ^5, MMKV + SecureStore, i18next.
 Spring Boot 3.5 + JPA + QueryDSL + Flyway, PostgreSQL 15, JWT(OAuth2: Google/Apple),
-S3(Presigned), Expo Push (Firebase 제거됨), Claude Vision(OCR), e약은요(약품 30일 캐시), IAP(App Store / Play Billing).
+S3(Presigned), Expo Push (Firebase 제거됨), Gemini Vision(처방전 OCR — Google `gemini-2.5-flash`, fallback pro/flash-lite), e약은요(약품 30일 캐시), IAP(App Store / Play Billing).
 배포: 백엔드 AWS ECS Fargate + RDS + S3 / 앱 EAS Build + EAS Update (OTA, fingerprint). 시크릿 AWS Secrets Manager (운영) / `.env` (로컬).
 
 ## CI/CD
@@ -32,7 +32,7 @@ S3(Presigned), Expo Push (Firebase 제거됨), Claude Vision(OCR), e약은요(�
    Domain 에 Spring 의존성 금지. Controller 는 UseCase **interface** 만 주입 (impl 직접 참조 금지). `@Transactional` 은 UseCase impl 에만.
 
 2. **시크릿 하드코딩 금지**
-   앱 코드 어디에도 API 키/시크릿 금지. Claude API 등 외부 키가 필요하면 백엔드 경유. 로컬 시크릿은 `backend/.env` (gitignored), 운영은 AWS Secrets Manager.
+   앱 코드 어디에도 API 키/시크릿 금지. Gemini API 등 외부 키가 필요하면 백엔드 경유. 로컬 시크릿은 `backend/.env` (gitignored), 운영은 AWS Secrets Manager.
 
 3. **앱 버전 체크는 서버 위임**
    `RootNavigator.tsx` 가 시작 시 `GET /api/v1/app/version` 호출. `forceUpdate: true` 면 스토어로 보내고 진행 차단. 앱 코드에 버전 비교 로직 하드코딩 금지.

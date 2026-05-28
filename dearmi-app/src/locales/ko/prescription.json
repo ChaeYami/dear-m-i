@@ -132,5 +132,10 @@
   "upload_image_progress": "이미지 업로드 중… {{percent}}%",
   "review_confirm": "내용 확인",
   "review_required_title": "확인이 필요해요",
-  "review_required_desc": "{{count}}개 항목을 아직 확인하지 않았어요. 각 약품 내용을 확인한 후 저장해 주세요."
+  "review_required_desc": "{{count}}개 항목을 아직 확인하지 않았어요. 각 약품 내용을 확인한 후 저장해 주세요.",
+  "ai_consent_title": "처방전 사진의 AI 글자 인식 안내",
+  "ai_consent_desc": "약품 정보를 자동으로 추출하기 위해, 등록하신 처방전 사진이 글자 인식(OCR) 처리를 위해 제3자 AI 서비스인 Google Gemini로 전송됩니다. 전송되는 정보는 처방전 사진뿐이며, 이름·연락처 등 다른 개인정보는 함께 전송되지 않습니다.",
+  "ai_consent_checkbox": "위 내용을 확인했으며, 처방전 사진이 Google Gemini로 전송되는 것에 동의합니다.",
+  "ai_consent_privacy_link": "개인정보 처리방침 보기",
+  "ai_consent_required": "처방전 사진 전송에 동의해야 자동 인식을 진행할 수 있어요."
 }

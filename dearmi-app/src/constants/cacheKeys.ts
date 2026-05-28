@@ -19,6 +19,9 @@ export const CACHE_KEYS = {
   ONBOARDING_COMPLETED: 'onboarding_completed',
   NOTIFICATION_ENABLED: 'notification_enabled',
 
+  // 처방전 사진 → 제3자 AI(OCR) 전송 동의 (App Store 5.1.1/5.1.2 대응)
+  OCR_AI_CONSENT: 'ocr_ai_consent',
+
   // 기능별 캐시
   SCHEDULE_LIST: 'schedule_list',
   RECORD_LIST: 'record_list',

@@ -132,5 +132,10 @@
   "upload_image_progress": "Uploading image… {{percent}}%",
   "review_confirm": "Confirm",
   "review_required_title": "Review needed",
-  "review_required_desc": "{{count}} item(s) haven't been reviewed yet. Please confirm each medication before saving."
+  "review_required_desc": "{{count}} item(s) haven't been reviewed yet. Please confirm each medication before saving.",
+  "ai_consent_title": "AI text recognition for your prescription photo",
+  "ai_consent_desc": "To extract medication details automatically, your prescription photo is sent to Google Gemini, a third-party AI service, for text recognition (OCR). Only the prescription photo is sent — no other personal data such as your name or contact details is included.",
+  "ai_consent_checkbox": "I understand and agree that my prescription photo will be sent to Google Gemini.",
+  "ai_consent_privacy_link": "View Privacy Policy",
+  "ai_consent_required": "Please agree to sending your prescription photo to proceed with auto-scan."
 }

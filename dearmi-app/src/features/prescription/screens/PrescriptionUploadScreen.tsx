@@ -8,6 +8,7 @@ import {
   Platform,
   ScrollView,
   Animated,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,11 +21,16 @@ import { customAlert } from '@/shared/components/CustomAlert';
 import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { prescriptionApi } from '@/features/prescription/api';
 import { useAuthStore } from '@/features/auth/store/authStore';
+import { CacheService } from '@/shared/cache';
+import { CACHE_KEYS } from '@/constants/cacheKeys';
 import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
 
 type Nav = StackNavigationProp<MedicationStackParamList, 'PrescriptionUpload'>;
 
 type UploadStep = 'idle' | 'uploading_s3' | 'saving' | 'done' | 'error';
+
+// 처방전 사진을 제3자 AI(Google Gemini)로 보내기 전 고지 — 개인정보 처리방침 링크
+const PRIVACY_URL = 'https://chaeon.studio/dearmi/privacy/';
 
 export const PrescriptionUploadScreen: React.FC = () => {
   const { colors } = useTheme();
@@ -39,6 +45,18 @@ export const PrescriptionUploadScreen: React.FC = () => {
   const [uploadStep, setUploadStep] = useState<UploadStep>('idle');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [errorMsg, setErrorMsg] = useState('');
+  // 처방전 사진 → 제3자 AI(OCR) 전송 동의. 한 번 동의하면 기기에 저장 (App Store 5.1.1/5.1.2)
+  const [aiConsent, setAiConsent] = useState<boolean>(
+    () => CacheService.get<boolean>(CACHE_KEYS.OCR_AI_CONSENT) === true
+  );
+
+  const toggleAiConsent = () => {
+    setAiConsent((prev) => {
+      const next = !prev;
+      CacheService.set(CACHE_KEYS.OCR_AI_CONSENT, next);
+      return next;
+    });
+  };
 
   const isUploading = uploadStep === 'uploading_s3' || uploadStep === 'saving';
   const isLimitExceeded = uploadStep === 'error' && errorMsg.includes('limit');
@@ -110,6 +128,11 @@ export const PrescriptionUploadScreen: React.FC = () => {
 
   const handleUpload = async () => {
     if (!imageAsset) return;
+    // 제3자 AI 전송 동의가 없으면 진행 차단 (버튼도 비활성화되지만 안전장치)
+    if (!aiConsent) {
+      customAlert(t('prescription:ai_consent_title'), t('prescription:ai_consent_required'));
+      return;
+    }
 
     setUploadStep('uploading_s3');
     setUploadProgress(0);
@@ -363,6 +386,39 @@ export const PrescriptionUploadScreen: React.FC = () => {
           />
         </View>
 
+        {/* 제3자 AI(OCR) 전송 고지 + 동의 — App Store 5.1.1(i)/5.1.2(i) */}
+        <View style={[staticStyles.consentBox, { backgroundColor: colors.surface, borderColor: colors.divider }]}>
+          <View style={staticStyles.consentHeader}>
+            <Ionicons name="shield-checkmark-outline" size={16} color={colors.primary} />
+            <Text style={[staticStyles.consentTitle, { fontFamily: fontFamily.semibold, color: colors.text }]}>
+              {t('prescription:ai_consent_title')}
+            </Text>
+          </View>
+          <Text style={[staticStyles.consentDesc, { color: colors.textSub }]}>
+            {t('prescription:ai_consent_desc')}
+          </Text>
+          <TouchableOpacity onPress={() => Linking.openURL(PRIVACY_URL)} hitSlop={8} disabled={isUploading}>
+            <Text style={[staticStyles.consentLink, { color: colors.primary, fontFamily: fontFamily.medium }]}>
+              {t('prescription:ai_consent_privacy_link')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={staticStyles.consentCheckRow}
+            onPress={toggleAiConsent}
+            disabled={isUploading}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name={aiConsent ? 'checkbox' : 'square-outline'}
+              size={22}
+              color={aiConsent ? colors.primary : colors.textDisabled}
+            />
+            <Text style={[staticStyles.consentCheckText, { color: colors.text }]}>
+              {t('prescription:ai_consent_checkbox')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         {/* 진행 상태 */}
         {renderProgress()}
 
@@ -371,10 +427,10 @@ export const PrescriptionUploadScreen: React.FC = () => {
           style={[
             staticStyles.uploadBtn,
             { backgroundColor: colors.secondary },
-            (!imageAsset || isUploading || isLimitExceeded) && staticStyles.uploadBtnDisabled,
+            (!imageAsset || !aiConsent || isUploading || isLimitExceeded) && staticStyles.uploadBtnDisabled,
           ]}
           onPress={handleUpload}
-          disabled={!imageAsset || isUploading || isLimitExceeded}
+          disabled={!imageAsset || !aiConsent || isUploading || isLimitExceeded}
           activeOpacity={0.85}
         >
           <Text style={[staticStyles.uploadBtnText, { fontFamily: fontFamily.semibold, color: colors.textInverse }]}>
@@ -551,5 +607,40 @@ const staticStyles = StyleSheet.create({
   },
   tipHint: {
     fontSize: sizes.font.sm,
+  },
+  consentBox: {
+    borderRadius: sizes.radius.lg,
+    borderWidth: 1,
+    paddingHorizontal: sizes.spacing.md,
+    paddingVertical: sizes.spacing.md,
+    gap: sizes.spacing.sm,
+  },
+  consentHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sizes.spacing.sm,
+  },
+  consentTitle: {
+    fontSize: sizes.font.md,
+    flex: 1,
+  },
+  consentDesc: {
+    fontSize: sizes.font.sm,
+    lineHeight: 19,
+  },
+  consentLink: {
+    fontSize: sizes.font.sm,
+    textDecorationLine: 'underline',
+  },
+  consentCheckRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: sizes.spacing.sm,
+    marginTop: sizes.spacing.xs,
+  },
+  consentCheckText: {
+    flex: 1,
+    fontSize: sizes.font.sm,
+    lineHeight: 19,
   },
 });
