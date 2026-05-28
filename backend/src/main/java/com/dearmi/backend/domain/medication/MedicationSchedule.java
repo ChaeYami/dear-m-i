@@ -65,11 +65,11 @@ public class MedicationSchedule extends BaseTimeEntity {
     @Builder.Default
     private Boolean bedtime = false;
 
-    /** 약 종류 (항우울제, 수면진정제 등) — 사용자 입력 또는 e약은요 자동 채움 */
+    /** 약 종류 (항우울제, 수면진정제 등) — 사용자 입력 또는 허가정보 API 자동 채움 */
     @Column(name = "drug_category", length = 100)
     private String drugCategory;
 
-    // 약품 상세 정보 (e약은요 캐시)
+    // 약품 상세 정보 (허가정보 API 캐시)
     @Column(name = "drug_effect", columnDefinition = "text")
     private String drugEffect;
 

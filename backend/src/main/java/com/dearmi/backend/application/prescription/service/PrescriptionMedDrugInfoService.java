@@ -14,7 +14,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * 처방 약품의 e약은요 정보를 비동기로 갱신.
+ * 처방 약품의 허가정보(식약처 의약품 제품 허가정보 API)를 비동기로 갱신.
  * self-invocation 방지를 위해 별도 빈으로 분리.
  */
 @Slf4j

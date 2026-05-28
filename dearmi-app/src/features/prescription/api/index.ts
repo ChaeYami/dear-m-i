@@ -61,7 +61,7 @@ export const prescriptionApi = {
       params: { page, size },
     }),
 
-  /** 약품 상세 (e약은요 정보 포함) */
+  /** 약품 상세 (허가정보 API 정보 포함) */
   getMedicationDetail: (id: string) =>
     axiosInstance.get<ApiResponse<PrescriptionMedication>>(`/api/v1/prescription-medications/${id}`),
 

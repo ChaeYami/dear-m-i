@@ -48,7 +48,7 @@ export const usePagedPrescriptions = () => {
   });
 };
 
-/** 약품 상세 (e약은요 정보) — drugInfoFetchedAt이 null이면 3초마다 폴링 */
+/** 약품 상세 (허가정보 API 정보) — drugInfoFetchedAt이 null이면 3초마다 폴링 */
 export const useMedicationDetail = (id: string) =>
   useQuery({
     queryKey: QUERY_KEYS.medicationDetail(id),

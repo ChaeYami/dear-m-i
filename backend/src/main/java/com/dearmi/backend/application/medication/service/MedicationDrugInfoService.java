@@ -13,7 +13,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * 복약 일정 생성 후 비동기로 e약은요 약품 정보를 조회하여 캐시.
+ * 복약 일정 생성 후 비동기로 허가정보 API 약품 정보를 조회하여 캐시.
  * OcrProcessorService와 동일한 패턴 — self-invocation 방지를 위해 별도 빈.
  */
 @Slf4j

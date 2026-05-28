@@ -131,7 +131,7 @@ export interface Prescription {
   updatedAt: string;
 }
 
-/** 처방 약품 (e약은요 API 데이터 포함) */
+/** 처방 약품 (식약처 허가정보 API 데이터 포함) */
 export interface PrescriptionMedication {
   id: string;
   medicationName: string;
@@ -140,7 +140,7 @@ export interface PrescriptionMedication {
   singleDose?: string;
   frequency?: string;
   durationDays?: number;
-  // 약학정보원(e약은요) 비동기 조회 결과
+  // 식약처 의약품 제품 허가정보 API 비동기 조회 결과
   drugEffect?: string;       // 효능·효과
   drugCaution?: string;      // 주의사항
   drugInfoFetchedAt?: string; // null이면 아직 미조회 (스켈레톤 표시)

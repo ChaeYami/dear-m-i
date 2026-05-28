@@ -19,7 +19,7 @@ public class PrescriptionMedicationController {
     private final GetPrescriptionMedDetailUseCase getMedicationDetailUseCase;
     private final RefreshMedicationDrugInfoUseCase refreshMedicationDrugInfoUseCase;
 
-    /** GET /api/v1/prescription-medications/{id} — 약품 상세 (e약은요 정보 포함) */
+    /** GET /api/v1/prescription-medications/{id} — 약품 상세 (허가정보 API 정보 포함) */
     @GetMapping("/{id}")
     public ApiResponse<MedicationDetailResponse> getDetail(
             @AuthenticatedUserId UUID userId,

@@ -199,7 +199,7 @@ public class MedicationScheduleController {
         return ApiResponse.success(MedicationDrugInfoResponse.from(result));
     }
 
-    /** GET /api/v1/medication-schedules/{id}/drug-info — 약품 상세 정보 (e약은요) */
+    /** GET /api/v1/medication-schedules/{id}/drug-info — 약품 상세 정보 (허가정보 API) */
     @GetMapping("/{id}/drug-info")
     public ApiResponse<MedicationDrugInfoResponse> getDrugInfo(
             @AuthenticatedUserId UUID userId,

@@ -81,7 +81,7 @@ public class CreateMedicationScheduleUseCaseImpl implements CreateMedicationSche
 
         MedicationSchedule saved = medicationScheduleRepository.save(schedule);
 
-        // 비동기로 e약은요 약품 정보 조회 → 캐시 저장
+        // 비동기로 허가정보 API 약품 정보 조회 → 캐시 저장
         medicationDrugInfoService.fetchDrugInfoAsync(saved.getId(), command.userId());
 
         return MedicationScheduleResult.from(saved);
