@@ -18,9 +18,11 @@ S3(Presigned), Expo Push (Firebase 제거됨), Claude Vision(OCR), e약은요(�
 - **백엔드**: `.github/workflows/deploy-backend.yml` — `backend/**` 변경 시 `main` 푸시 → ECR + ECS 자동 배포.
 - **앱**: `.github/workflows/build-app.yml` — `dearmi-app/**` 변경 시 마지막 production 빌드의 commit 과 HEAD 간 `git diff` 로 "네이티브 영향 파일" (package.json, app.json, eas.json, plugins/, GoogleService-Info.plist 등) 변경 여부 체크:
   - 변경 없음 → `eas update --branch production` (OTA, JS-only, 양 플랫폼)
-  - 변경 있음 → `eas build --platform all` (iOS + Android **둘 다 빌드**) → `eas submit --platform ios` + `eas submit --platform android` (**양 플랫폼 자동 제출**)
+  - 변경 있음 → `eas build --platform all` (iOS + Android **둘 다 빌드**) → `eas submit --platform ios` + `eas submit --platform android` (**양 플랫폼 자동 제출 — 단, 운영 출시는 수동**)
   - 분기 판정에 fingerprint 라이브러리 안 씀 (EAS 내부 해시와 외부 도구 hash 가 안 맞아서 git diff 가 결정적).
-  - Android submit 트랙: `eas.json` submit.production.android `track: "production"`, `releaseStatus: "completed"`.
+  - **출시 모델: 양 플랫폼 모두 "테스트 자동 / 운영 수동(출시 노트 직접 작성)".**
+    - iOS: submit 은 App Store Connect 업로드 → **TestFlight 까지**. App Store 운영 출시는 버전 생성 + 심사 제출 수동.
+    - Android: `eas.json` submit.production.android `track: "internal"`, `releaseStatus: "completed"` → **내부 테스트 트랙까지** 자동. 운영 출시는 Play Console 에서 내부→프로덕션 승격 + 출시 노트 작성 후 수동 발행.
 - EAS 자격증명: iOS ASC API Key + Android Google Service Account (`dearmi-play-uploader@dearmi-493112.iam.gserviceaccount.com`) 모두 EAS 서버 저장됨. JSON 키 로컬 보관 금지.
 
 ## 보안 6원칙 (절대 위반 금지)

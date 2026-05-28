@@ -9,7 +9,7 @@
 - GitHub Actions (`.github/workflows/build-app.yml`):
   - `dearmi-app/**` 푸시 → 마지막 production 빌드의 commit 과 HEAD 간 `git diff` 로 네이티브 영향 파일 변경 여부 체크. 변경 없으면 `eas update` (OTA, 양 플랫폼), 변경 있으면 `eas build --platform all` (iOS + Android 둘 다) + `eas submit --platform ios` + `eas submit --platform android` (**양 플랫폼 자동 제출**).
   - "네이티브 영향 파일" 화이트리스트: `package.json`, `package-lock.json`, `app.json`/`app.config.*`, `eas.json`, `babel.config.js`, `metro.config.js`, `plugins/`, `GoogleService-Info.plist`, `google-services.json`, `assets/adaptive-icon.png`, `assets/fonts/`, `ios/`, `android/`. 새 네이티브 트리거 추가 시 워크플로의 `NATIVE_PATHSPEC` 도 같이 업데이트.
-  - **iOS / Android 모두 자동 submission**: iOS → App Store Connect, Android → Play Console (`production` 트랙, `eas.json` submit.production.android 참조). 자격증명 양쪽 모두 EAS 서버 보관.
+  - **iOS / Android 모두 자동 submission (단, 테스트 단계까지만 — 운영 출시는 수동, 출시 노트 직접 작성)**: iOS → App Store Connect 업로드(TestFlight). Android → Play Console **내부 테스트 트랙**(`eas.json` submit.production.android `track: "internal"`). 운영 출시는 각 콘솔에서 수동(iOS 심사 제출 / Android 내부→프로덕션 승격). 자격증명 양쪽 모두 EAS 서버 보관.
   - `workflow_dispatch` 로 mode 강제 (`auto`/`build`/`update`) 가능.
 - OTA 가능한 변경: TS/TSX, 스타일, 텍스트, i18n, 번들 이미지. OTA 불가: `expo-*` 패키지 변경, app.json plugin/permission, 새 네이티브 모듈, 앱 아이콘/스플래시.
 - 사용자 보이는 버전 (`1.0.x`) 올릴 때만 `app.json` 의 `version` 수정. `buildNumber`/`versionCode` 는 EAS remote 가 자동 increment — 절대 수동 수정 금지.
