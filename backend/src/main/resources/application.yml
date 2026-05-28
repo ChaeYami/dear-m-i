@@ -73,10 +73,11 @@ aws:
     access-key: ${AWS_ACCESS_KEY}
     secret-key: ${AWS_SECRET_KEY}
 
-# 약학정보원 e약은요 API
+# 식품의약품안전처 의약품 제품 허가정보 API (data.go.kr DrugPrdtPrmsnInfoService)
+# 실제 BASE_URL 은 DrugInfoClient 에 하드코딩(DrugPrdtPrmsnInfoService07). 아래 api-url 은 참고용.
 drug-info:
   api-key: ${DRUG_INFO_API_KEY}
-  api-url: https://apis.data.go.kr/1471000/DrbEasyDrugInfoService
+  api-url: https://apis.data.go.kr/1471000/DrugPrdtPrmsnInfoService07
 
 # Gemini API 설정 (처방전 OCR)
 # primary 503 시 fallback → lite-fallback 순으로 자동 전환

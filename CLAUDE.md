@@ -11,7 +11,7 @@
 ## 스택 한 줄 요약
 RN 0.81 + Expo SDK 54, Zustand ^5 + React Query ^5, MMKV + SecureStore, i18next.
 Spring Boot 3.5 + JPA + QueryDSL + Flyway, PostgreSQL 15, JWT(OAuth2: Google/Apple),
-S3(Presigned), Expo Push (Firebase 제거됨), Gemini Vision(처방전 OCR — Google `gemini-2.5-flash`, fallback pro/flash-lite), e약은요(약품 30일 캐시), IAP(App Store / Play Billing).
+S3(Presigned), Expo Push (Firebase 제거됨), Gemini Vision(처방전 OCR — Google `gemini-2.5-flash`, fallback pro/flash-lite), 식약처 의약품 제품 허가정보 API(약품 30일 캐시), IAP(App Store / Play Billing).
 배포: 백엔드 AWS ECS Fargate + RDS + S3 / 앱 EAS Build + EAS Update (OTA, fingerprint). 시크릿 AWS Secrets Manager (운영) / `.env` (로컬).
 
 ## CI/CD

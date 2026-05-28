@@ -58,7 +58,7 @@ DB_URL, DB_USERNAME, DB_PASSWORD
 JWT_SECRET
 ENCRYPTION_KEY                              # 진료 기록 AES-256-GCM
 GEMINI_API_KEY                              # Vision OCR
-DRUG_INFO_API_KEY                           # e약은요
+DRUG_INFO_API_KEY                           # 식약처 의약품 제품 허가정보 API
 AWS_S3_BUCKET, AWS_ACCESS_KEY, AWS_SECRET_KEY, AWS_REGION
 GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 APPLE_CLIENT_ID, APPLE_CLIENT_SECRET
@@ -101,9 +101,9 @@ POST /prescriptions
 - drug info 조회 실패는 try-catch 무시 (OCR 결과에 영향 없음).
 - 미조회 상태: `PrescriptionMedication.drugInfoFetchedAt == null` → 응답에 `drugInfoPending: true` → 앱이 폴링.
 
-### 약품 정보 30일 캐시 (DrugInfoCacheService)
-- `drugInfoFetchedAt > now - 30days` 면 DB 반환, 아니면 e약은요 호출 후 갱신.
-- e약은요 `ServiceKey` 는 **이미 URL 인코딩된 채 발급**됨 → `WebClient.queryParam()` 쓰면 이중 인코딩 → **raw URL 문자열로 직접 조합**할 것.
+### 약품 정보 30일 캐시 (DrugInfoCacheService — 식약처 의약품 제품 허가정보 API)
+- `drugInfoFetchedAt > now - 30days` 면 DB 반환, 아니면 허가정보 API 호출 후 갱신.
+- 허가정보 API `ServiceKey` 는 **이미 URL 인코딩된 채 발급**됨 → `WebClient.queryParam()` 쓰면 이중 인코딩 → **raw URL 문자열로 직접 조합**할 것.
 
 ### 복약 시간대 (TimeSlot)
 - `MedicationSchedule`: `morning/afternoon/evening/bedtime` (boolean) + `morningTime/...` (LocalTime) 컬럼.
