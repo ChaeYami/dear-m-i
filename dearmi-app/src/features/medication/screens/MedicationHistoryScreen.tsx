@@ -29,7 +29,7 @@ import {
   useMedicationHistory,
   useMedicationStats,
 } from '@/features/medication/hooks/useMedication';
-import { exportMedicationHistoryPdf } from '@/features/medication/utils/medicationPdf';
+import { downloadMedicationHistoryPdf } from '@/features/medication/utils/medicationPdf';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { useScreenRefresh } from '@/shared/hooks/useScreenRefresh';
 import { QUERY_KEYS } from '@/constants/cacheKeys';
@@ -108,7 +108,18 @@ export const MedicationHistoryScreen: React.FC<{ embedded?: boolean }> = ({ embe
     }
     try {
       setExporting(true);
-      await exportMedicationHistoryPdf({ history: fullHistory, stats: fullStats ?? null, t });
+      const outcome = await downloadMedicationHistoryPdf({
+        history: fullHistory,
+        stats: fullStats ?? null,
+        t,
+      });
+      if (outcome === 'saved') {
+        customAlert(
+          t('settings:medication_pdf_saved_title'),
+          t('settings:medication_pdf_saved_desc'),
+          [{ text: t('common:confirm') }],
+        );
+      }
     } catch {
       customAlert(t('settings:medication_pdf_export'), t('settings:medication_pdf_error'), [
         { text: t('common:confirm') },

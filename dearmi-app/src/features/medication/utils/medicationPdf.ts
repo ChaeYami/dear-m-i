@@ -1,5 +1,8 @@
+import { Platform } from 'react-native';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system/legacy';
+import { CacheService } from '@/shared/cache';
 import type {
   MedicationHistory,
   MedicationStats,
@@ -79,7 +82,8 @@ const buildHtml = (history: MedicationHistory, stats: MedicationStats | null, t:
     })
     .join('');
 
-  const ratePct = stats ? Math.round(stats.completionRate * 100) : 0;
+  // 백엔드 completionRate 는 이미 퍼센트(0~100) — 추가로 *100 하지 말 것
+  const ratePct = stats ? Math.round(stats.completionRate) : 0;
   const total = stats?.totalLogs ?? history.logs.length;
 
   return `<!DOCTYPE html>
@@ -136,24 +140,97 @@ const buildHtml = (history: MedicationHistory, stats: MedicationStats | null, t:
 </html>`;
 };
 
+/** 다운로드 결과 — 화면이 안내 메시지를 분기하는 데 사용 */
+export type DownloadOutcome = 'saved' | 'shared' | 'cancelled';
+
+/** 안드로이드 SAF 로 한 번 고른 저장 폴더를 기억 (매번 폴더 묻지 않도록) */
+const SAF_DIR_KEY = 'medication_pdf_saf_dir_v1';
+
+/** 파일명: DearMI_복약이력_2026-06-14 (확장자 제외 — SAF/iOS 에서 각각 부여) */
+const baseFilename = (history: MedicationHistory): string => {
+  const tail = (history.endDate || '').replace(/[^0-9-]/g, '') || 'history';
+  return `DearMI_medication_${tail}`;
+};
+
+const writeBase64ToSaf = async (
+  dirUri: string,
+  filename: string,
+  sourceUri: string,
+): Promise<void> => {
+  const base64 = await FileSystem.readAsStringAsync(sourceUri, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+  const destUri = await FileSystem.StorageAccessFramework.createFileAsync(
+    dirUri,
+    filename,
+    'application/pdf',
+  );
+  await FileSystem.writeAsStringAsync(destUri, base64, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+};
+
+/** 안드로이드: SAF 로 사용자가 고른 폴더(다운로드 등)에 저장 */
+const saveAndroid = async (sourceUri: string, filename: string): Promise<DownloadOutcome> => {
+  let dirUri = CacheService.get<string>(SAF_DIR_KEY);
+
+  if (!dirUri) {
+    const perm = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+    if (!perm.granted) return 'cancelled';
+    dirUri = perm.directoryUri;
+    CacheService.set(SAF_DIR_KEY, dirUri);
+  }
+
+  try {
+    await writeBase64ToSaf(dirUri, filename, sourceUri);
+    return 'saved';
+  } catch {
+    // 폴더 권한 만료/삭제 → 캐시 비우고 1회 재요청
+    CacheService.delete(SAF_DIR_KEY);
+    const perm = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+    if (!perm.granted) return 'cancelled';
+    CacheService.set(SAF_DIR_KEY, perm.directoryUri);
+    await writeBase64ToSaf(perm.directoryUri, filename, sourceUri);
+    return 'saved';
+  }
+};
+
+/** iOS: 예쁜 파일명으로 복사 후 '파일에 저장' 가능한 공유 시트 (iOS 의 기기 저장 경로) */
+const saveIos = async (sourceUri: string, filename: string, t: TFunc): Promise<DownloadOutcome> => {
+  let shareUri = sourceUri;
+  try {
+    const dest = `${FileSystem.cacheDirectory}${filename}.pdf`;
+    await FileSystem.copyAsync({ from: sourceUri, to: dest });
+    shareUri = dest;
+  } catch {
+    // 복사 실패 시 원본(임시 파일명)으로 공유
+  }
+  if (!(await Sharing.isAvailableAsync())) return 'cancelled';
+  await Sharing.shareAsync(shareUri, {
+    mimeType: 'application/pdf',
+    dialogTitle: t('settings:medication_pdf_dialog'),
+    UTI: 'com.adobe.pdf',
+  });
+  return 'shared';
+};
+
 /**
- * 복약 이력을 PDF 로 생성해 공유 시트로 내보낸다 (앱 측 생성: expo-print → expo-sharing).
+ * 복약 이력 PDF 를 생성해 **기기에 저장(다운로드)** 한다 (앱 측 생성: expo-print).
+ * - Android: SAF 로 사용자가 고른 폴더에 저장 (한 번 고르면 기억).
+ * - iOS: '파일에 저장' 가능한 공유 시트 (iOS 는 공개 다운로드 폴더 개념이 없음).
  * 한글 폰트는 기기 WebView 가 렌더하므로 별도 임베딩 불필요.
  */
-export const exportMedicationHistoryPdf = async (args: {
+export const downloadMedicationHistoryPdf = async (args: {
   history: MedicationHistory;
   stats: MedicationStats | null;
   t: TFunc;
-}): Promise<void> => {
+}): Promise<DownloadOutcome> => {
   const html = buildHtml(args.history, args.stats, args.t);
   const { uri } = await Print.printToFileAsync({ html });
+  const filename = baseFilename(args.history);
 
-  if (!(await Sharing.isAvailableAsync())) {
-    throw new Error('sharing-unavailable');
+  if (Platform.OS === 'android') {
+    return saveAndroid(uri, filename);
   }
-  await Sharing.shareAsync(uri, {
-    mimeType: 'application/pdf',
-    dialogTitle: args.t('settings:medication_pdf_dialog'),
-    UTI: 'com.adobe.pdf',
-  });
+  return saveIos(uri, filename, args.t);
 };
