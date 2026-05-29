@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.net.URI;
 import java.time.Duration;
 
 /**
@@ -24,14 +25,17 @@ public class RxNormClient {
 
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
+    private final String baseUrl;
 
     public RxNormClient(
             WebClient.Builder webClientBuilder,
             ObjectMapper objectMapper,
             @Value("${rxnorm.api-url}") String baseUrl
     ) {
-        this.webClient = webClientBuilder.baseUrl(baseUrl).build();
+        // baseUrl 미사용 — 절대 URI 직접 전달로 WebClient 템플릿 재인코딩 우회 (%20 이중 인코딩 방지)
+        this.webClient = webClientBuilder.build();
         this.objectMapper = objectMapper;
+        this.baseUrl = baseUrl;
     }
 
     /**
@@ -89,17 +93,17 @@ public class RxNormClient {
         return props.get(0).path("propValue").asText(null);
     }
 
-    private JsonNode get(String uri) {
+    private JsonNode get(String path) {
         try {
             String body = webClient.get()
-                    .uri(uri)
+                    .uri(URI.create(baseUrl + path))
                     .retrieve()
                     .bodyToMono(String.class)
                     .timeout(TIMEOUT)
                     .block();
             return (body == null || body.isBlank()) ? null : objectMapper.readTree(body);
         } catch (Exception e) {
-            log.debug("RxNav 호출 실패: uri={}, error={}", uri, e.getMessage());
+            log.debug("RxNav 호출 실패: path={}, error={}", path, e.getMessage());
             return null;
         }
     }

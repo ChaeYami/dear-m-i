@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.net.URI;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +48,7 @@ public class OpenFdaDrugInfoClient implements DrugInfoPort {
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
     private final RxNormClient rxNormClient;
+    private final String apiUrl;
     private final String apiKey;
 
     public OpenFdaDrugInfoClient(
@@ -56,9 +58,12 @@ public class OpenFdaDrugInfoClient implements DrugInfoPort {
             @Value("${openfda.api-url}") String apiUrl,
             @Value("${openfda.api-key:}") String apiKey
     ) {
-        this.webClient = webClientBuilder.baseUrl(apiUrl).build();
+        // baseUrl 미사용 — 절대 URI 를 직접 넘겨 WebClient 의 템플릿 재인코딩/baseUrl 결합을 우회한다.
+        // (search 식의 (), :, %22, + 가 이중 인코딩되면 검색이 무력화됨)
+        this.webClient = webClientBuilder.build();
         this.objectMapper = objectMapper;
         this.rxNormClient = rxNormClient;
+        this.apiUrl = apiUrl;
         this.apiKey = apiKey;
     }
 
@@ -89,14 +94,14 @@ public class OpenFdaDrugInfoClient implements DrugInfoPort {
         if (prescriptionOnly) {
             search += "+AND+openfda.product_type:%22HUMAN+PRESCRIPTION+DRUG%22";
         }
-        String uri = "?search=" + search + "&limit=1";
+        String url = apiUrl + "?search=" + search + "&limit=1";
         if (apiKey != null && !apiKey.isBlank()) {
-            uri += "&api_key=" + apiKey;
+            url += "&api_key=" + apiKey;
         }
 
         try {
             String body = webClient.get()
-                    .uri(uri)
+                    .uri(URI.create(url))
                     .retrieve()
                     .bodyToMono(String.class)
                     .timeout(TIMEOUT)
