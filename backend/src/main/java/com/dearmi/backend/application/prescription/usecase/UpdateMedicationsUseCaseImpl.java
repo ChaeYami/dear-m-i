@@ -57,7 +57,7 @@ public class UpdateMedicationsUseCaseImpl implements UpdateMedicationsUseCase {
 
         // 처방 약품 → 복약 일정 자동 등록 (같은 처방전에 동일 약품명이 이미 있으면 스킵)
         autoCreateMedicationSchedulesService.autoCreate(
-                command.userId(), command.prescriptionId(), prescription.getPrescribedAt(), savedEntities);
+                command.userId(), command.prescriptionId(), prescription.getPrescribedAt(), prescription.getRegion(), savedEntities);
 
         String imageUrl = prescription.getS3Key() != null
                 ? storagePort.generateGetPresignedUrl(prescription.getS3Key())

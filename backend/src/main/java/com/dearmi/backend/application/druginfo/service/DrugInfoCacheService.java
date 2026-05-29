@@ -29,21 +29,25 @@ public class DrugInfoCacheService {
     public Optional<DrugInfoDto> searchWithCache(String drugName, DrugRegion region) {
         if (drugName == null || drugName.isBlank()) return Optional.empty();
 
-        LocalDateTime threshold = LocalDateTime.now().minusDays(CACHE_DAYS);
-        Optional<PrescriptionMedication> cached =
-                prescriptionMedicationRepository.findCachedByDrugName(drugName, threshold);
+        // 캐시(prescription_medications)는 약품명으로만 조회되며 region 정보가 없다.
+        // KR/US 동명이의(예: 라틴 약품명) 교차 오염을 막기 위해 KR 만 캐시를 사용한다.
+        if (region == DrugRegion.KR) {
+            LocalDateTime threshold = LocalDateTime.now().minusDays(CACHE_DAYS);
+            Optional<PrescriptionMedication> cached =
+                    prescriptionMedicationRepository.findCachedByDrugName(drugName, threshold);
 
-        if (cached.isPresent()) {
-            PrescriptionMedication med = cached.get();
-            log.debug("약품 정보 캐시 히트: drugName={}", drugName);
-            return Optional.of(new DrugInfoDto(
-                    med.getDrugName(),
-                    med.getDrugEffect(),
-                    null,
-                    med.getDrugCaution(),
-                    med.getManufacturer(),
-                    null
-            ));
+            if (cached.isPresent()) {
+                PrescriptionMedication med = cached.get();
+                log.debug("약품 정보 캐시 히트: drugName={}", drugName);
+                return Optional.of(new DrugInfoDto(
+                        med.getDrugName(),
+                        med.getDrugEffect(),
+                        null,
+                        med.getDrugCaution(),
+                        med.getManufacturer(),
+                        null
+                ));
+            }
         }
 
         log.debug("약품 정보 API 조회: drugName={}, region={}", drugName, region);

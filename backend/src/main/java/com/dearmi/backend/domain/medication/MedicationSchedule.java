@@ -1,6 +1,7 @@
 package com.dearmi.backend.domain.medication;
 
 import com.dearmi.backend.common.entity.BaseTimeEntity;
+import com.dearmi.backend.domain.druginfo.DrugRegion;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -82,9 +83,15 @@ public class MedicationSchedule extends BaseTimeEntity {
     @Column(length = 200)
     private String manufacturer;
 
-    /** 품목기준코드 — 약학정보원 상세 링크용 */
-    @Column(name = "item_seq", length = 20)
+    /** 상세 링크용 코드 — KR: 품목기준코드(nedrug) / US: OpenFDA set_id(DailyMed) */
+    @Column(name = "item_seq", length = 64)
     private String itemSeq;
+
+    /** 약품 정보 지역 — 약품정보 조회 라우팅에 사용 (처방전/유저 로케일 기반) */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "region", length = 2, nullable = false)
+    @Builder.Default
+    private DrugRegion region = DrugRegion.KR;
 
     @Column(name = "drug_info_fetched_at")
     private java.time.LocalDateTime drugInfoFetchedAt;

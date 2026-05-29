@@ -67,6 +67,8 @@ public class OcrProcessorService {
         log.info("OCR 시작: prescriptionId={}, userId={}, s3Key={}", prescriptionId, userId, s3Key);
         // ── 1단계: OCR + 결과 저장 (트랜잭션 즉시 커밋) ─────────────────────────
         List<PrescriptionMedication> savedMedications = new ArrayList<>();
+        // 약품정보 조회 region — 처방전에서 읽어 2단계로 전달 (커밋 후라 엔티티 직접 접근 회피)
+        final DrugRegion[] regionHolder = {DrugRegion.KR};
 
         boolean ocrSucceeded = Boolean.TRUE.equals(transactionTemplate.execute(status -> {
             // ④ 원칙: async 진입점에서도 ownership 재검증 (호출자 누락/오용 방어)
@@ -76,6 +78,7 @@ public class OcrProcessorService {
                 log.warn("OCR 대상 처방전 없음(또는 타 유저): prescriptionId={}, userId={}", prescriptionId, userId);
                 return false;
             }
+            regionHolder[0] = prescription.getRegion();
 
             try {
                 prescription.startOcr();
@@ -117,7 +120,7 @@ public class OcrProcessorService {
 
                 // 처방 약품 → 복약 일정 자동 등록 (같은 트랜잭션 내, 같은 처방전에 동일 약품명이 이미 있으면 스킵)
                 autoCreateMedicationSchedulesService.autoCreate(
-                        userId, prescriptionId, prescription.getPrescribedAt(), savedMedications);
+                        userId, prescriptionId, prescription.getPrescribedAt(), prescription.getRegion(), savedMedications);
 
                 return true;
 
@@ -136,8 +139,7 @@ public class OcrProcessorService {
         List<CompletableFuture<Void>> futures = savedMedications.stream()
                 .map(med -> CompletableFuture.runAsync(() -> {
                     try {
-                        // TODO(global): 처방전 region 저장 후 med 의 실제 region 사용 (현재 KR 하드코딩)
-                        Optional<DrugInfoDto> drugInfo = drugInfoCacheService.searchWithCache(med.getDrugName(), DrugRegion.KR);
+                        Optional<DrugInfoDto> drugInfo = drugInfoCacheService.searchWithCache(med.getDrugName(), regionHolder[0]);
                         drugInfo.ifPresent(info -> transactionTemplate.execute(s -> {
                             med.updateDrugInfo(info.effect(), info.caution(), info.manufacturer());
                             prescriptionMedicationRepository.save(med);

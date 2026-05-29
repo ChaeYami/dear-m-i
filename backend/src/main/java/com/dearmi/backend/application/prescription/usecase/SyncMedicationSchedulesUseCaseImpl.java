@@ -34,7 +34,7 @@ public class SyncMedicationSchedulesUseCaseImpl implements SyncMedicationSchedul
                 prescriptionMedicationRepository.findByPrescriptionId(prescriptionId);
 
         int created = autoCreateMedicationSchedulesService.autoCreate(
-                userId, prescriptionId, prescription.getPrescribedAt(), medications);
+                userId, prescriptionId, prescription.getPrescribedAt(), prescription.getRegion(), medications);
 
         return new SyncResult(created, medications.size());
     }

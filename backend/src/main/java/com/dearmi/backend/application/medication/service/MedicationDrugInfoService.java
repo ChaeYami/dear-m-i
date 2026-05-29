@@ -2,7 +2,6 @@ package com.dearmi.backend.application.medication.service;
 
 import com.dearmi.backend.application.druginfo.dto.DrugInfoDto;
 import com.dearmi.backend.application.druginfo.service.DrugInfoRouter;
-import com.dearmi.backend.domain.druginfo.DrugRegion;
 import com.dearmi.backend.domain.medication.MedicationScheduleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,8 +45,7 @@ public class MedicationDrugInfoService {
         if (!force && schedule.getDrugInfoFetchedAt() != null) return;
 
         try {
-            // TODO(global): schedule 의 region 사용 (현재 KR 하드코딩)
-            Optional<DrugInfoDto> info = drugInfoRouter.searchByName(schedule.getDrugName(), DrugRegion.KR);
+            Optional<DrugInfoDto> info = drugInfoRouter.searchByName(schedule.getDrugName(), schedule.getRegion());
             if (info.isPresent()) {
                 schedule.updateDrugInfo(info.get().effect(), info.get().usage(), info.get().caution(), null, info.get().manufacturer(), info.get().itemSeq());
                 log.info("약품 정보 저장 완료: scheduleId={}, drugName={}", scheduleId, schedule.getDrugName());

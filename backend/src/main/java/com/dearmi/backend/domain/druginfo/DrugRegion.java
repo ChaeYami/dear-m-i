@@ -8,5 +8,14 @@ package com.dearmi.backend.domain.druginfo;
  */
 public enum DrugRegion {
     KR,
-    US
+    US;
+
+    /**
+     * 앱 로케일/언어 코드 → 약품 정보 지역.
+     * en* → US, 그 외(ko 포함 비대상 로케일) → KR (기본/게이팅).
+     */
+    public static DrugRegion fromLocale(String locale) {
+        if (locale == null || locale.isBlank()) return KR;
+        return locale.toLowerCase().startsWith("en") ? US : KR;
+    }
 }

@@ -1,5 +1,6 @@
 package com.dearmi.backend.application.medication.service;
 
+import com.dearmi.backend.domain.druginfo.DrugRegion;
 import com.dearmi.backend.domain.medication.MedicationSchedule;
 import com.dearmi.backend.domain.medication.MedicationScheduleRepository;
 import com.dearmi.backend.domain.prescription.PrescriptionMedication;
@@ -43,6 +44,7 @@ public class AutoCreateMedicationSchedulesService {
             UUID userId,
             UUID prescriptionId,
             LocalDate prescribedAt,
+            DrugRegion region,
             List<PrescriptionMedication> medications
     ) {
         if (medications == null || medications.isEmpty()) return 0;
@@ -75,6 +77,7 @@ public class AutoCreateMedicationSchedulesService {
                     .drugName(drugName)
                     .dosage(med.getDosage())
                     .singleDose(med.getSingleDose())
+                    .region(region)
                     .startDate(startDate)
                     .endDate(endDate)
                     .morning(slots.morning)

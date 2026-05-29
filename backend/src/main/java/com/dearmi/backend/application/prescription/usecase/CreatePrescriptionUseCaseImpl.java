@@ -4,9 +4,11 @@ import com.dearmi.backend.application.prescription.dto.CreatePrescriptionCommand
 import com.dearmi.backend.application.prescription.service.OcrProcessorService;
 import com.dearmi.backend.common.exception.CustomException;
 import com.dearmi.backend.common.exception.ErrorCode;
+import com.dearmi.backend.domain.druginfo.DrugRegion;
 import com.dearmi.backend.domain.prescription.Prescription;
 import com.dearmi.backend.domain.prescription.PrescriptionRepository;
 import com.dearmi.backend.domain.subscription.SubscriptionRepository;
+import com.dearmi.backend.domain.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,7 @@ public class CreatePrescriptionUseCaseImpl implements CreatePrescriptionUseCase 
     private final PrescriptionRepository prescriptionRepository;
     private final OcrProcessorService ocrProcessorService;
     private final SubscriptionRepository subscriptionRepository;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
@@ -42,11 +45,17 @@ public class CreatePrescriptionUseCaseImpl implements CreatePrescriptionUseCase 
             }
         }
 
+        // 유저 로케일 → 약품 정보 지역 (ko→KR / en→US). 약품정보 조회 라우팅 및 복약 일정에 전파.
+        DrugRegion region = userRepository.findByIdAndDeletedAtIsNull(command.userId())
+                .map(u -> DrugRegion.fromLocale(u.getPreferredLocale()))
+                .orElse(DrugRegion.KR);
+
         Prescription prescription = Prescription.builder()
                 .userId(command.userId())
                 .s3Key(command.s3Key())
                 .scheduleId(command.scheduleId())
                 .prescribedAt(command.prescribedAt())
+                .region(region)
                 .build();
 
         Prescription saved = prescriptionRepository.save(prescription);

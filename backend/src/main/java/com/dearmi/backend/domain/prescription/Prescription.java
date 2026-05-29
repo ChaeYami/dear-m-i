@@ -1,6 +1,7 @@
 package com.dearmi.backend.domain.prescription;
 
 import com.dearmi.backend.common.entity.BaseTimeEntity;
+import com.dearmi.backend.domain.druginfo.DrugRegion;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -42,6 +43,12 @@ public class Prescription extends BaseTimeEntity {
 
     @Column(name = "prescribed_at")
     private LocalDate prescribedAt;
+
+    /** 약품 정보 지역 — 처방전 생성 시 유저 로케일로 결정, 약품정보 조회 라우팅에 사용 */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "region", length = 2, nullable = false)
+    @Builder.Default
+    private DrugRegion region = DrugRegion.KR;
 
     public void detachSchedule() {
         this.scheduleId = null;

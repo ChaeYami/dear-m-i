@@ -11,6 +11,7 @@ import com.dearmi.backend.domain.prescription.Prescription;
 import com.dearmi.backend.domain.prescription.PrescriptionMedication;
 import com.dearmi.backend.domain.prescription.PrescriptionMedicationRepository;
 import com.dearmi.backend.domain.prescription.PrescriptionRepository;
+import com.dearmi.backend.domain.user.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +35,7 @@ class CreateMedicationScheduleUseCaseImplTest {
     @Mock private PrescriptionMedicationRepository prescriptionMedicationRepository;
     @Mock private PrescriptionRepository prescriptionRepository;
     @Mock private MedicationDrugInfoService medicationDrugInfoService;
+    @Mock private UserRepository userRepository;
 
     @InjectMocks
     private CreateMedicationScheduleUseCaseImpl createUseCase;

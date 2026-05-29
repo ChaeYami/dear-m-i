@@ -5,11 +5,13 @@ import com.dearmi.backend.application.medication.dto.MedicationScheduleResult;
 import com.dearmi.backend.application.medication.service.MedicationDrugInfoService;
 import com.dearmi.backend.common.exception.CustomException;
 import com.dearmi.backend.common.exception.ErrorCode;
+import com.dearmi.backend.domain.druginfo.DrugRegion;
 import com.dearmi.backend.domain.medication.MedicationSchedule;
 import com.dearmi.backend.domain.medication.MedicationScheduleRepository;
 import com.dearmi.backend.domain.prescription.PrescriptionMedication;
 import com.dearmi.backend.domain.prescription.PrescriptionMedicationRepository;
 import com.dearmi.backend.domain.prescription.PrescriptionRepository;
+import com.dearmi.backend.domain.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +24,7 @@ public class CreateMedicationScheduleUseCaseImpl implements CreateMedicationSche
     private final PrescriptionMedicationRepository prescriptionMedicationRepository;
     private final PrescriptionRepository prescriptionRepository;
     private final MedicationDrugInfoService medicationDrugInfoService;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
@@ -31,6 +34,8 @@ public class CreateMedicationScheduleUseCaseImpl implements CreateMedicationSche
         String resolvedDosage = command.dosage();
         String resolvedSingleDose = command.singleDose();
         java.util.UUID resolvedPrescriptionId = null;
+        // region: 처방전 연동이면 처방전 region 상속, 단독 생성이면 유저 로케일로 결정
+        DrugRegion region = null;
 
         if (command.prescriptionMedicationId() != null) {
             PrescriptionMedication pm = prescriptionMedicationRepository
@@ -43,6 +48,7 @@ public class CreateMedicationScheduleUseCaseImpl implements CreateMedicationSche
                     .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
             resolvedPrescriptionId = prescription.getId();
+            region = prescription.getRegion();
             if (resolvedDrugName == null || resolvedDrugName.isBlank()) {
                 resolvedDrugName = pm.getDrugName();
             }
@@ -58,6 +64,13 @@ public class CreateMedicationScheduleUseCaseImpl implements CreateMedicationSche
             throw new CustomException(ErrorCode.INVALID_REQUEST, "약품명은 필수입니다.");
         }
 
+        // 처방전 미연동(단독 생성)이면 유저 로케일로 region 결정
+        if (region == null) {
+            region = userRepository.findByIdAndDeletedAtIsNull(command.userId())
+                    .map(u -> DrugRegion.fromLocale(u.getPreferredLocale()))
+                    .orElse(DrugRegion.KR);
+        }
+
         MedicationSchedule schedule = MedicationSchedule.builder()
                 .userId(command.userId())
                 .prescriptionId(resolvedPrescriptionId)
@@ -65,6 +78,7 @@ public class CreateMedicationScheduleUseCaseImpl implements CreateMedicationSche
                 .drugName(resolvedDrugName)
                 .dosage(resolvedDosage)
                 .singleDose(resolvedSingleDose)
+                .region(region)
                 .drugCategory(command.drugCategory())
                 .timesPerDay(command.timesPerDay())
                 .startDate(command.startDate())
