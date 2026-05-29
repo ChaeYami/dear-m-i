@@ -84,7 +84,7 @@ public class OcrProcessorService {
                 prescription.startOcr();
                 prescriptionRepository.save(prescription);
 
-                OcrResult ocrResult = prescriptionOcrPort.analyze(s3Key);
+                OcrResult ocrResult = prescriptionOcrPort.analyze(s3Key, prescription.getRegion());
                 List<OcrMedicationItem> items = ocrResult.medications();
 
                 // hospitalName 평문 로깅 금지 (PII — 정신과 식별 가능)

@@ -4,6 +4,7 @@ import com.dearmi.backend.application.prescription.dto.OcrMedicationItem;
 import com.dearmi.backend.application.prescription.dto.OcrResult;
 import com.dearmi.backend.application.prescription.port.PrescriptionOcrPort;
 import com.dearmi.backend.common.exception.PrescriptionOcrException;
+import com.dearmi.backend.domain.druginfo.DrugRegion;
 import com.dearmi.backend.infrastructure.external.s3.S3Service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -43,7 +44,7 @@ public class GeminiVisionClient implements PrescriptionOcrPort {
     @Value("${gemini.lite-fallback-url}")
     private String liteFallbackUrl;
 
-    private static final String PROMPT =
+    private static final String PROMPT_KR =
             "이 한국 처방전 이미지에서 정보를 추출해줘.\n" +
             "반드시 아래 예시와 동일한 JSON 형식으로만 응답해. 다른 텍스트 없이.\n" +
             "각 약품 객체는 반드시 { 로 시작하고 } 로 끝나야 해. 여러 약품이면 , 로 구분해.\n\n" +
@@ -71,6 +72,45 @@ public class GeminiVisionClient implements PrescriptionOcrPort {
             "값이 없으면 null. medications가 없으면 빈 배열 [].\n" +
             "처방일(prescribedAt)은 반드시 YYYY-MM-DD 형식.";
 
+    private static final String PROMPT_US =
+            "Extract information from this US prescription (Rx) image.\n" +
+            "Respond ONLY in the exact JSON format shown below. No other text.\n" +
+            "Each medication object must start with { and end with }. Separate multiple medications with ,.\n\n" +
+            "Example:\n" +
+            "{\n" +
+            "  \"hospitalName\": \"Bay Area Psychiatry Clinic\",\n" +
+            "  \"prescribedAt\": \"2026-04-16\",\n" +
+            "  \"medications\": [\n" +
+            "    {\n" +
+            "      \"drugName\": \"Fluoxetine\",\n" +
+            "      \"dosage\": \"20mg\",\n" +
+            "      \"singleDose\": \"1 tablet\",\n" +
+            "      \"directions\": \"Take 1 tablet by mouth once daily\",\n" +
+            "      \"days\": 30\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"drugName\": \"Alprazolam\",\n" +
+            "      \"dosage\": \"0.25mg\",\n" +
+            "      \"singleDose\": \"1 tablet\",\n" +
+            "      \"directions\": \"Take 1 tablet at bedtime as needed\",\n" +
+            "      \"days\": 14\n" +
+            "    }\n" +
+            "  ]\n" +
+            "}\n\n" +
+            "Rules:\n" +
+            "- drugName: medication name only (brand or generic), WITHOUT the strength.\n" +
+            "- dosage: the strength (e.g. 20mg, 0.25mg).\n" +
+            "- singleDose: amount per dose (e.g. 1 tablet, 2 capsules).\n" +
+            "- directions: the full Sig / directions text, in English.\n" +
+            "- days: days supply as an integer; derive from quantity if needed; null if unknown.\n" +
+            "- hospitalName: the clinic or prescriber name.\n" +
+            "- Use null for any missing value. If there are no medications, use [].\n" +
+            "- prescribedAt MUST be YYYY-MM-DD (convert from MM/DD/YYYY if necessary).";
+
+    private static String promptFor(DrugRegion region) {
+        return region == DrugRegion.US ? PROMPT_US : PROMPT_KR;
+    }
+
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(10);
     // 3단 폴백 총 최악 지연: 30s × 3 = 90s (앱 OCR 타임아웃과 동일). 503 은 보통 ~5s 에 반환.
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(30);
@@ -82,15 +122,15 @@ public class GeminiVisionClient implements PrescriptionOcrPort {
             .build();
 
     @Override
-    public OcrResult analyze(String s3Key) {
+    public OcrResult analyze(String s3Key, DrugRegion region) {
         byte[] imageBytes = s3Service.getObjectBytes(s3Key);
         String mimeType = detectMimeType(s3Key);
         String base64Data = Base64.getEncoder().encodeToString(imageBytes);
-        log.info("Gemini OCR 호출 시작: s3Key={}, imageBytes={}KB", s3Key, imageBytes.length / 1024);
+        log.info("Gemini OCR 호출 시작: s3Key={}, region={}, imageBytes={}KB", s3Key, region, imageBytes.length / 1024);
 
         Map<String, Object> inlineData = Map.of("mime_type", mimeType, "data", base64Data);
         Map<String, Object> imagePart = Map.of("inline_data", inlineData);
-        Map<String, Object> textPart = Map.of("text", PROMPT);
+        Map<String, Object> textPart = Map.of("text", promptFor(region));
         Map<String, Object> content = Map.of("parts", List.of(imagePart, textPart));
         Map<String, Object> body = Map.of("contents", List.of(content));
 
