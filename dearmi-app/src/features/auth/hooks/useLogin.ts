@@ -114,6 +114,7 @@ export const useLogin = () => {
       const { data } = await authApi.getMe();
       if (data.success && data.data) {
         setUser(data.data);
+        authApi.updateLocale(i18n.language === 'ko' ? 'ko' : 'en').catch(() => {});
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : i18n.t('auth:login_error'));
@@ -176,6 +177,7 @@ export const useLogin = () => {
       const meRes = await authApi.getMe();
       if (meRes.data.success && meRes.data.data) {
         setUser(meRes.data.data);
+        authApi.updateLocale(i18n.language === 'ko' ? 'ko' : 'en').catch(() => {});
       }
     } catch (e: unknown) {
       // 시트 dismiss 는 정상 — 에러 표시 안 함
@@ -204,6 +206,7 @@ export const useLogin = () => {
       const meRes = await authApi.getMe();
       if (meRes.data.success && meRes.data.data) {
         setUser(meRes.data.data);
+        authApi.updateLocale(i18n.language === 'ko' ? 'ko' : 'en').catch(() => {});
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : i18n.t('auth:dev_login_error'));

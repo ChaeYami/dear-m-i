@@ -18,6 +18,13 @@ export const authApi = {
   getMe: () => axiosInstance.get<ApiResponse<User>>('/api/v1/auth/me'),
 
   /**
+   * 선호 로케일 동기화 — 백엔드 약품 정보 region 라우팅(ko→KR / en→US) + 푸시 알림 다국어화의 단일 출처.
+   * 로그인 직후 / 언어 변경 시 호출. 비로그인·네트워크 실패는 무시(다음 동기화에서 보정).
+   */
+  updateLocale: (locale: 'ko' | 'en') =>
+    axiosInstance.patch<ApiResponse<void>>('/api/v1/auth/me/locale', { locale }),
+
+  /**
    * Native Apple Sign-In — expo-apple-authentication 으로 받은 identityToken 을
    * 백엔드에서 Apple JWKS 검증 후 JWT 발급. iOS 26 ASWebAuthenticationSession dryRun 크래시 회피용.
    */

@@ -76,10 +76,17 @@ i18n.use(initReactI18next).init({
   interpolation: { escapeValue: false },
 });
 
-/** 언어 변경 + MMKV 저장 */
+/** 언어 변경 + MMKV 저장 + 백엔드 동기화 */
 export const changeLanguage = async (lang: 'ko' | 'en') => {
   await i18n.changeLanguage(lang);
   CacheService.set(LANGUAGE_KEY, lang);
+  // 백엔드 선호 로케일 동기화 (약품 region 라우팅 + 푸시 다국어).
+  // axiosInstance ↔ i18n 순환 import 방지 위해 지연 require. 비로그인/실패는 무시.
+  try {
+    await require('@/features/auth/api').authApi.updateLocale(lang);
+  } catch {
+    // 비로그인·게스트·네트워크 실패 — 다음 로그인 시 동기화에서 보정
+  }
 };
 
 export default i18n;

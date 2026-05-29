@@ -8,6 +8,7 @@ import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 
 import { useTranslation } from 'react-i18next';
+import i18n from '@/locales/i18n';
 import { navigationRef } from './navigationRef';
 import { AuthNavigator } from './AuthNavigator';
 import { MainTabNavigator } from './MainTabNavigator';
@@ -240,6 +241,8 @@ export const RootNavigator: React.FC = () => {
       const { data } = await authApi.getMe();
       if (data.success && data.data) {
         setUser(data.data);
+        // 선호 로케일 백엔드 동기화 (기존 유저 보정 — 약품 region 라우팅 + 푸시 다국어). 실패 무시.
+        authApi.updateLocale(i18n.language === 'ko' ? 'ko' : 'en').catch(() => {});
         fetchSubscription((plan) => {
           if (data.data && data.data.plan !== plan) {
             setUser({ ...data.data, plan });

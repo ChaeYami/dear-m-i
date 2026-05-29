@@ -8,12 +8,14 @@ import com.dearmi.backend.application.auth.usecase.AppleNativeLoginUseCase;
 import com.dearmi.backend.application.auth.usecase.GetCurrentUserUseCase;
 import com.dearmi.backend.application.auth.usecase.LogoutUseCase;
 import com.dearmi.backend.application.auth.usecase.TokenRefreshUseCase;
+import com.dearmi.backend.application.auth.usecase.UpdateUserLocaleUseCase;
 import com.dearmi.backend.application.auth.usecase.WithdrawUseCase;
 import com.dearmi.backend.common.response.ApiResponse;
 import com.dearmi.backend.infrastructure.security.AuthenticatedUserId;
 import com.dearmi.backend.presentation.auth.dto.AppleNativeLoginRequest;
 import com.dearmi.backend.presentation.auth.dto.AuthTokenResponse;
 import com.dearmi.backend.presentation.auth.dto.TokenRefreshRequest;
+import com.dearmi.backend.presentation.auth.dto.UpdateLocaleRequest;
 import com.dearmi.backend.presentation.auth.dto.UserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +34,7 @@ public class AuthController {
     private final GetCurrentUserUseCase getCurrentUserUseCase;
     private final WithdrawUseCase withdrawUseCase;
     private final AppleNativeLoginUseCase appleNativeLoginUseCase;
+    private final UpdateUserLocaleUseCase updateUserLocaleUseCase;
 
     /**
      * Native Apple Sign-In (expo-apple-authentication) 로그인
@@ -83,6 +86,19 @@ public class AuthController {
         UserResult result = getCurrentUserUseCase.getCurrentUser(userId);
         return ResponseEntity.ok(ApiResponse.success(
                 new UserResponse(result.userId(), result.email(), result.name(), result.plan())));
+    }
+
+    /**
+     * 사용자 선호 로케일 갱신 — 약품 정보 region 라우팅 + 푸시 알림 다국어화의 단일 출처.
+     * 앱이 로그인 직후 / 언어 변경 시 호출.
+     * - JWT 인증 필요
+     */
+    @PatchMapping("/me/locale")
+    public ResponseEntity<ApiResponse<Void>> updateLocale(
+            @AuthenticatedUserId UUID userId,
+            @RequestBody @Valid UpdateLocaleRequest request) {
+        updateUserLocaleUseCase.updateLocale(userId, request.locale());
+        return ResponseEntity.ok(ApiResponse.success());
     }
 
     /**
