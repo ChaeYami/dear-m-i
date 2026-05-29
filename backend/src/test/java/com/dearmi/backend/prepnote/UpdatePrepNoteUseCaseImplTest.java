@@ -42,7 +42,7 @@ class UpdatePrepNoteUseCaseImplTest {
         when(prepNoteRepository.save(any())).thenReturn(updated);
 
         PrepNoteResult result = updatePrepNoteUseCase.update(
-                new UpdatePrepNoteCommand(userId, noteId, "수정된 내용", null));
+                new UpdatePrepNoteCommand(userId, noteId, "수정된 내용", null, null));
 
         assertThat(result.content()).isEqualTo("수정된 내용");
         verify(prepNoteRepository).save(note);
@@ -58,7 +58,7 @@ class UpdatePrepNoteUseCaseImplTest {
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> updatePrepNoteUseCase.update(
-                new UpdatePrepNoteCommand(userId, noteId, "수정", null)))
+                new UpdatePrepNoteCommand(userId, noteId, "수정", null, null)))
                 .isInstanceOf(CustomException.class)
                 .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode())
                         .isEqualTo(ErrorCode.NOT_FOUND.getCode()));

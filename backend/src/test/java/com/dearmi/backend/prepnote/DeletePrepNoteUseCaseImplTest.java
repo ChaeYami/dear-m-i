@@ -3,6 +3,7 @@ package com.dearmi.backend.prepnote;
 import com.dearmi.backend.application.prepnote.usecase.DeletePrepNoteUseCaseImpl;
 import com.dearmi.backend.common.exception.CustomException;
 import com.dearmi.backend.common.exception.ErrorCode;
+import com.dearmi.backend.domain.dailynote.DailyNoteRepository;
 import com.dearmi.backend.domain.prepnote.PrepNote;
 import com.dearmi.backend.domain.prepnote.PrepNoteRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -12,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -23,6 +25,7 @@ import static org.mockito.Mockito.*;
 class DeletePrepNoteUseCaseImplTest {
 
     @Mock private PrepNoteRepository prepNoteRepository;
+    @Mock private DailyNoteRepository dailyNoteRepository;
 
     @InjectMocks
     private DeletePrepNoteUseCaseImpl deletePrepNoteUseCase;
@@ -36,6 +39,7 @@ class DeletePrepNoteUseCaseImplTest {
 
         when(prepNoteRepository.findByIdAndUserIdAndDeletedAtIsNull(noteId, userId))
                 .thenReturn(Optional.of(note));
+        when(dailyNoteRepository.findByUsedInPrepNoteId(noteId)).thenReturn(List.of());
         when(prepNoteRepository.save(any())).thenReturn(note);
 
         deletePrepNoteUseCase.delete(userId, noteId);
