@@ -131,7 +131,10 @@ export interface Prescription {
   updatedAt: string;
 }
 
-/** 처방 약품 (식약처 허가정보 API 데이터 포함) */
+/** 약품 정보 출처 지역 — KR: 식약처/nedrug, US: OpenFDA/DailyMed */
+export type DrugRegion = 'KR' | 'US';
+
+/** 처방 약품 (약품 허가정보 데이터 포함) */
 export interface PrescriptionMedication {
   id: string;
   medicationName: string;
@@ -140,9 +143,10 @@ export interface PrescriptionMedication {
   singleDose?: string;
   frequency?: string;
   durationDays?: number;
-  // 식약처 의약품 제품 허가정보 API 비동기 조회 결과
+  // 약품 허가정보 비동기 조회 결과 (KR 식약처 / US OpenFDA)
   drugEffect?: string;       // 효능·효과
   drugCaution?: string;      // 주의사항
+  region?: DrugRegion;       // 출처 지역 — 상세 링크/출처 라벨 분기
   drugInfoFetchedAt?: string; // null이면 아직 미조회 (스켈레톤 표시)
 }
 

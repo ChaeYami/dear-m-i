@@ -17,6 +17,7 @@ import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { SkeletonLoader } from '@/shared/components/SkeletonLoader';
 import { useMedicationDetail } from '@/features/prescription/hooks/usePrescription';
 import { QUERY_KEYS } from '@/constants/cacheKeys';
+import { drugDetailUrl, drugLinkLabelKey, drugSourceKey } from '@/shared/utils/drugSource';
 import axiosInstance from '@/shared/api/axiosInstance';
 import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
 
@@ -214,19 +215,17 @@ export const MedicationDetailScreen: React.FC = () => {
               />
             )}
 
-            {/* 약학정보원 더보기 링크 */}
+            {/* 약품 상세 더보기 링크 (KR: 식약처 / US: DailyMed) */}
             <TouchableOpacity
               style={styles.nedrugLink}
               onPress={() => {
                 const name = med?.medicationName ?? medicationName;
-                Linking.openURL(
-                  `https://nedrug.mfds.go.kr/searchDrug?searchYn=true&page=1&drug_name=${encodeURIComponent(name)}`
-                );
+                Linking.openURL(drugDetailUrl(med?.region, name));
               }}
               activeOpacity={0.8}
             >
               <Ionicons name="open-outline" size={16} color={colors.primary} />
-              <Text style={styles.nedrugLinkText}>{t('drug_nedrug_link')}</Text>
+              <Text style={styles.nedrugLinkText}>{t(drugLinkLabelKey(med?.region))}</Text>
               <Ionicons name="chevron-forward" size={14} color={colors.textDisabled} />
             </TouchableOpacity>
 
@@ -234,7 +233,7 @@ export const MedicationDetailScreen: React.FC = () => {
             <View style={styles.attribution}>
               <View style={styles.attributionRow}>
                 <Ionicons name="information-circle-outline" size={14} color={colors.textSub} />
-                <Text style={styles.attributionSource}>{t('drug_info_source')}</Text>
+                <Text style={styles.attributionSource}>{t(drugSourceKey(med?.region))}</Text>
               </View>
               <Text style={styles.attributionDisclaimer}>{t('drug_info_disclaimer')}</Text>
             </View>

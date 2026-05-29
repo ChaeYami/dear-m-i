@@ -17,6 +17,8 @@ import { useTheme, sizes, fontFamily } from '@/shared/theme';
 import { useTabBarSafeBottom } from '@/shared/hooks/useTabBarSafeBottom';
 import axiosInstance from '@/shared/api/axiosInstance';
 import { SkeletonLoader } from '@/shared/components/SkeletonLoader';
+import { drugDetailUrl, drugLinkLabelKey } from '@/shared/utils/drugSource';
+import type { DrugRegion } from '@/shared/types/domain.types';
 import type { MedicationStackParamList } from '@/navigation/MedicationNavigator';
 
 type Nav = StackNavigationProp<MedicationStackParamList, 'MedicationScheduleDetail'>;
@@ -31,6 +33,7 @@ interface DrugInfoResponse {
   drugCaution: string | null;
   manufacturer: string | null;
   itemSeq: string | null;
+  region: DrugRegion | null;
   drugInfoPending: boolean;
 }
 
@@ -201,19 +204,16 @@ export const MedicationScheduleDetailScreen: React.FC = () => {
               />
             )}
 
-            {/* 약학정보원 더보기 링크 */}
+            {/* 약품 상세 더보기 링크 (KR: 식약처 / US: DailyMed) */}
             <TouchableOpacity
               style={styles.nedrugLink}
               onPress={() => {
-                const url = info?.itemSeq
-                  ? `https://nedrug.mfds.go.kr/pbp/CCBBB01/getItemDetail?itemSeq=${info.itemSeq}`
-                  : `https://nedrug.mfds.go.kr/searchDrug?searchYn=true&page=1&drug_name=${encodeURIComponent(info?.drugName ?? drugName)}`;
-                Linking.openURL(url);
+                Linking.openURL(drugDetailUrl(info?.region, info?.drugName ?? drugName, info?.itemSeq));
               }}
               activeOpacity={0.8}
             >
               <Ionicons name="open-outline" size={16} color={colors.primary} />
-              <Text style={styles.nedrugLinkText}>{t('prescription:drug_nedrug_link')}</Text>
+              <Text style={styles.nedrugLinkText}>{t('prescription:' + drugLinkLabelKey(info?.region))}</Text>
               <Ionicons name="chevron-forward" size={14} color={colors.textDisabled} />
             </TouchableOpacity>
           </>

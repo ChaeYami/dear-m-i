@@ -30,10 +30,10 @@ public class GetMedicationDetailUseCaseImpl implements GetMedicationDetailUseCas
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
         // ④ 원칙: 처방전 소유자 확인 (불일치 시 404 반환)
-        prescriptionRepository
+        var prescription = prescriptionRepository
                 .findByIdAndUserIdAndDeletedAtIsNull(medication.getPrescriptionId(), userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
-        return MedicationDetailResult.from(medication);
+        return MedicationDetailResult.from(medication, prescription.getRegion());
     }
 }

@@ -26,10 +26,10 @@ public class GetPrescriptionMedDetailUseCaseImpl implements GetPrescriptionMedDe
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
         // 소유권 검증: 약품이 속한 처방전이 해당 유저 것인지 확인
-        prescriptionRepository
+        var prescription = prescriptionRepository
                 .findByIdAndUserIdAndDeletedAtIsNull(medication.getPrescriptionId(), userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
-        return MedicationDetailResult.from(medication);
+        return MedicationDetailResult.from(medication, prescription.getRegion());
     }
 }

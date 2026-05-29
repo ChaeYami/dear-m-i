@@ -1,6 +1,7 @@
 package com.dearmi.backend.presentation.prescription.dto;
 
 import com.dearmi.backend.application.prescription.dto.MedicationDetailResult;
+import com.dearmi.backend.domain.druginfo.DrugRegion;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDateTime;
@@ -16,6 +17,7 @@ public record MedicationDetailResponse(
         String drugEffect,
         String drugCaution,
         String manufacturer,
+        DrugRegion region,
         LocalDateTime drugInfoFetchedAt
 ) {
     public static MedicationDetailResponse from(MedicationDetailResult result) {
@@ -29,6 +31,7 @@ public record MedicationDetailResponse(
                 result.drugEffect(),
                 result.drugCaution(),
                 result.manufacturer(),
+                result.region(),
                 result.drugInfoFetchedAt()
         );
     }

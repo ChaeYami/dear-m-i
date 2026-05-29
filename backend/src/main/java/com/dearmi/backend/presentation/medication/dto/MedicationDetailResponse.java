@@ -1,6 +1,7 @@
 package com.dearmi.backend.presentation.medication.dto;
 
 import com.dearmi.backend.application.medication.dto.MedicationDetailResult;
+import com.dearmi.backend.domain.druginfo.DrugRegion;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.util.UUID;
@@ -15,6 +16,7 @@ public record MedicationDetailResponse(
         String drugEffect,
         String drugCaution,
         String manufacturer,
+        DrugRegion region,
         boolean drugInfoPending,
         String drugInfoMessage       // drugInfoFetchedAt null이면 "약품 정보 조회 중"
 ) {
@@ -29,6 +31,7 @@ public record MedicationDetailResponse(
                 result.drugEffect(),
                 result.drugCaution(),
                 result.manufacturer(),
+                result.region(),
                 pending,
                 pending ? "약품 정보 조회 중" : null
         );
