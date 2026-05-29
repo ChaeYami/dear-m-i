@@ -73,11 +73,20 @@ aws:
     access-key: ${AWS_ACCESS_KEY}
     secret-key: ${AWS_SECRET_KEY}
 
-# 식품의약품안전처 의약품 제품 허가정보 API (data.go.kr DrugPrdtPrmsnInfoService)
+# 식품의약품안전처 의약품 제품 허가정보 API (data.go.kr DrugPrdtPrmsnInfoService) — region=KR
 # 실제 BASE_URL 은 DrugInfoClient 에 하드코딩(DrugPrdtPrmsnInfoService07). 아래 api-url 은 참고용.
 drug-info:
   api-key: ${DRUG_INFO_API_KEY}
   api-url: https://apis.data.go.kr/1471000/DrugPrdtPrmsnInfoService07
+
+# OpenFDA Drug Label API (미국 약품 라벨) + RxNorm/RxNav (NLM, 약품명 정규화) — region=US
+# api-key 미설정 시 키 없이 호출(1,000 req/일·240 req/분 제한). 운영은 OPENFDA_API_KEY 주입.
+# RxNorm 은 키 불필요.
+openfda:
+  api-key: ${OPENFDA_API_KEY:}
+  api-url: https://api.fda.gov/drug/label.json
+rxnorm:
+  api-url: https://rxnav.nlm.nih.gov/REST
 
 # Gemini API 설정 (처방전 OCR)
 # primary 503 시 fallback → lite-fallback 순으로 자동 전환

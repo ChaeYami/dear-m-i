@@ -1,7 +1,8 @@
 package com.dearmi.backend.application.medication.service;
 
 import com.dearmi.backend.application.druginfo.dto.DrugInfoDto;
-import com.dearmi.backend.application.druginfo.port.DrugInfoPort;
+import com.dearmi.backend.application.druginfo.service.DrugInfoRouter;
+import com.dearmi.backend.domain.druginfo.DrugRegion;
 import com.dearmi.backend.domain.medication.MedicationScheduleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +23,7 @@ import java.util.UUID;
 public class MedicationDrugInfoService {
 
     private final MedicationScheduleRepository medicationScheduleRepository;
-    private final DrugInfoPort drugInfoPort;
+    private final DrugInfoRouter drugInfoRouter;
 
     @Async("ocrTaskExecutor")
     @Transactional
@@ -45,7 +46,8 @@ public class MedicationDrugInfoService {
         if (!force && schedule.getDrugInfoFetchedAt() != null) return;
 
         try {
-            Optional<DrugInfoDto> info = drugInfoPort.searchByName(schedule.getDrugName());
+            // TODO(global): schedule 의 region 사용 (현재 KR 하드코딩)
+            Optional<DrugInfoDto> info = drugInfoRouter.searchByName(schedule.getDrugName(), DrugRegion.KR);
             if (info.isPresent()) {
                 schedule.updateDrugInfo(info.get().effect(), info.get().usage(), info.get().caution(), null, info.get().manufacturer(), info.get().itemSeq());
                 log.info("약품 정보 저장 완료: scheduleId={}, drugName={}", scheduleId, schedule.getDrugName());

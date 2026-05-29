@@ -3,7 +3,9 @@
     "allow": [
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\ssall\\\\Desktop\\\\dev\\\\git\\\\dear-m-i\" -Directory)",
+      "Bash(Select-Object Name)"
     ]
   }
 }

@@ -2,6 +2,7 @@ package com.dearmi.backend.infrastructure.external.druginfo;
 
 import com.dearmi.backend.application.druginfo.dto.DrugInfoDto;
 import com.dearmi.backend.application.druginfo.port.DrugInfoPort;
+import com.dearmi.backend.domain.druginfo.DrugRegion;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +39,11 @@ public class DrugInfoClient implements DrugInfoPort {
         this.webClient = webClientBuilder.baseUrl(BASE_URL).build();
         this.objectMapper = objectMapper;
         this.serviceKey = serviceKey;
+    }
+
+    @Override
+    public DrugRegion region() {
+        return DrugRegion.KR;
     }
 
     @Override

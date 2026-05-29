@@ -2,6 +2,7 @@ package com.dearmi.backend.application.prescription.service;
 
 import com.dearmi.backend.application.druginfo.dto.DrugInfoDto;
 import com.dearmi.backend.application.druginfo.service.DrugInfoCacheService;
+import com.dearmi.backend.domain.druginfo.DrugRegion;
 import com.dearmi.backend.application.medication.service.AutoCreateMedicationSchedulesService;
 import com.dearmi.backend.application.prescription.dto.OcrMedicationItem;
 import com.dearmi.backend.application.prescription.dto.OcrResult;
@@ -135,7 +136,8 @@ public class OcrProcessorService {
         List<CompletableFuture<Void>> futures = savedMedications.stream()
                 .map(med -> CompletableFuture.runAsync(() -> {
                     try {
-                        Optional<DrugInfoDto> drugInfo = drugInfoCacheService.searchWithCache(med.getDrugName());
+                        // TODO(global): 처방전 region 저장 후 med 의 실제 region 사용 (현재 KR 하드코딩)
+                        Optional<DrugInfoDto> drugInfo = drugInfoCacheService.searchWithCache(med.getDrugName(), DrugRegion.KR);
                         drugInfo.ifPresent(info -> transactionTemplate.execute(s -> {
                             med.updateDrugInfo(info.effect(), info.caution(), info.manufacturer());
                             prescriptionMedicationRepository.save(med);

@@ -1,7 +1,8 @@
 package com.dearmi.backend.application.prescription.service;
 
 import com.dearmi.backend.application.druginfo.dto.DrugInfoDto;
-import com.dearmi.backend.application.druginfo.port.DrugInfoPort;
+import com.dearmi.backend.application.druginfo.service.DrugInfoRouter;
+import com.dearmi.backend.domain.druginfo.DrugRegion;
 import com.dearmi.backend.domain.prescription.PrescriptionMedicationRepository;
 import com.dearmi.backend.domain.prescription.PrescriptionRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,7 @@ public class PrescriptionMedDrugInfoService {
 
     private final PrescriptionMedicationRepository prescriptionMedicationRepository;
     private final PrescriptionRepository prescriptionRepository;
-    private final DrugInfoPort drugInfoPort;
+    private final DrugInfoRouter drugInfoRouter;
 
     @Async("ocrTaskExecutor")
     @Transactional
@@ -39,7 +40,8 @@ public class PrescriptionMedDrugInfoService {
         }
 
         try {
-            Optional<DrugInfoDto> info = drugInfoPort.searchByName(med.getDrugName());
+            // TODO(global): med 의 처방전 region 사용 (현재 KR 하드코딩)
+            Optional<DrugInfoDto> info = drugInfoRouter.searchByName(med.getDrugName(), DrugRegion.KR);
             if (info.isPresent()) {
                 med.updateDrugInfo(info.get().effect(), info.get().caution(), info.get().manufacturer());
                 log.info("처방 약품 정보 갱신 완료: medicationId={}, drugName={}", medicationId, med.getDrugName());
