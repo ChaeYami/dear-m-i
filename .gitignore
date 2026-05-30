@@ -75,3 +75,5 @@ store-screenshots/*
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+
+docs/tdd-analysis.md

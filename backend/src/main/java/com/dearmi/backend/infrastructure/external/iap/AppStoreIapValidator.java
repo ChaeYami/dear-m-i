@@ -205,16 +205,17 @@ public class AppStoreIapValidator implements IapValidator {
 
             NotificationTypeV2 type = notification.getNotificationType();
             Subtype subtype = notification.getSubtype();
+            String notificationUuid = notification.getNotificationUUID();
 
             var data = notification.getData();
             if (data == null) {
                 log.warn("[Apple Webhook] notification data null: type={}", type);
-                return new NotificationResult(type, subtype, null, null);
+                return new NotificationResult(notificationUuid, type, subtype, null, null);
             }
 
             String signedTxn = data.getSignedTransactionInfo();
             if (signedTxn == null) {
-                return new NotificationResult(type, subtype, null, null);
+                return new NotificationResult(notificationUuid, type, subtype, null, null);
             }
 
             JWSTransactionDecodedPayload txn = decodeTransactionWithFallback(signedTxn);
@@ -226,7 +227,7 @@ public class AppStoreIapValidator implements IapValidator {
                         Instant.ofEpochMilli(txn.getExpiresDate()), ZoneId.systemDefault());
             }
 
-            return new NotificationResult(type, subtype, originalTxnId, expiresAt);
+            return new NotificationResult(notificationUuid, type, subtype, originalTxnId, expiresAt);
 
         } catch (CustomException e) {
             throw e;
@@ -237,6 +238,7 @@ public class AppStoreIapValidator implements IapValidator {
     }
 
     public record NotificationResult(
+            String notificationUuid,
             NotificationTypeV2 type,
             Subtype subtype,
             String originalTransactionId,

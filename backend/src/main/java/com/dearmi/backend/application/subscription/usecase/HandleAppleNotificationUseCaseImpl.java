@@ -19,6 +19,7 @@ public class HandleAppleNotificationUseCaseImpl implements HandleAppleNotificati
     private final AppStoreIapValidator appStoreIapValidator;
     private final SubscriptionRepository subscriptionRepository;
     private final SubscriptionHistoryRepository subscriptionHistoryRepository;
+    private final ProcessedAppleNotificationRepository processedAppleNotificationRepository;
 
     @Override
     @Transactional
@@ -31,10 +32,20 @@ public class HandleAppleNotificationUseCaseImpl implements HandleAppleNotificati
             return;
         }
 
+        String notificationUuid = result.notificationUuid();
+
+        // 멱등성: 이미 처리한 알림이면 재처리하지 않음 (Apple at-least-once 전달 대비).
+        if (notificationUuid != null
+                && processedAppleNotificationRepository.existsByNotificationUuid(notificationUuid)) {
+            log.info("[Apple Webhook] 이미 처리된 알림 — skip: notificationUuid={}", notificationUuid);
+            return;
+        }
+
         NotificationTypeV2 type = result.type();
         String originalTxnId = result.originalTransactionId();
 
-        log.info("[Apple Webhook] type={}, subtype={}, originalTxnId={}", type, result.subtype(), originalTxnId);
+        log.info("[Apple Webhook] uuid={}, type={}, subtype={}, originalTxnId={}",
+                notificationUuid, type, result.subtype(), originalTxnId);
 
         if (originalTxnId == null) {
             log.warn("[Apple Webhook] originalTransactionId 없음 — 무시");
@@ -55,6 +66,12 @@ public class HandleAppleNotificationUseCaseImpl implements HandleAppleNotificati
                 log.info("[Apple Webhook] 처리 불필요한 이벤트 — 무시: type={}", type);
             }
         }, () -> log.warn("[Apple Webhook] 구독 레코드 없음: originalTxnId={}", originalTxnId));
+
+        // 처리 완료 표시 — 같은 트랜잭션에서 영속화되므로, 위 처리가 예외로 롤백되면
+        // 이 기록도 롤백되어 재시도가 가능하다.
+        if (notificationUuid != null) {
+            processedAppleNotificationRepository.save(ProcessedAppleNotification.of(notificationUuid));
+        }
     }
 
     private boolean isActivateEvent(NotificationTypeV2 type) {

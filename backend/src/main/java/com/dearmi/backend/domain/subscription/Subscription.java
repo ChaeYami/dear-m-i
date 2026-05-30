@@ -48,6 +48,17 @@ public class Subscription extends BaseTimestampEntity {
         return SubscriptionPlan.PREMIUM.name().equals(this.plan);
     }
 
+    /**
+     * 기준 시각(now) 기준으로 "유효한" PREMIUM 인지 확인한다.
+     * plan 이 PREMIUM 이어도 expiresAt 가 지났으면(만료 배치/웹훅이 아직 FREE 로 못 내린 상태) false.
+     * 호출자가 Clock 으로부터 now 를 결정해 전달한다(도메인은 시간 소스에 의존하지 않음).
+     */
+    public boolean isActivePremium(LocalDateTime now) {
+        return isPremium()
+                && this.expiresAt != null
+                && this.expiresAt.isAfter(now);
+    }
+
     public void activatePremium(PaymentProvider provider, String transactionId, LocalDateTime expiresAt) {
         this.plan = SubscriptionPlan.PREMIUM.name();
         this.paymentProvider = provider.name();

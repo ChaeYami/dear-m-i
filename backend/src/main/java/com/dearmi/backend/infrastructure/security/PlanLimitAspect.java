@@ -11,6 +11,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
@@ -24,6 +26,7 @@ import java.util.UUID;
 public class PlanLimitAspect {
 
     private final SubscriptionRepository subscriptionRepository;
+    private final Clock clock;
 
     @Around("@annotation(planRequired)")
     public Object checkPlan(ProceedingJoinPoint joinPoint, PlanRequired planRequired) throws Throwable {
@@ -32,11 +35,13 @@ public class PlanLimitAspect {
             throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
 
-        boolean isPremium = subscriptionRepository.findByUserId(userId)
-                .map(s -> s.isPremium())
+        // plan 필드뿐 아니라 expiresAt 까지 확인 — 만료됐으나 배치/웹훅이 아직 FREE 로
+        // 못 내린 PREMIUM 이 게이트를 통과하던 결함 방지.
+        boolean activePremium = subscriptionRepository.findByUserId(userId)
+                .map(s -> s.isActivePremium(LocalDateTime.now(clock)))
                 .orElse(false);
 
-        if (!isPremium) {
+        if (!activePremium) {
             throw new CustomException(ErrorCode.PLAN_REQUIRED);
         }
 
