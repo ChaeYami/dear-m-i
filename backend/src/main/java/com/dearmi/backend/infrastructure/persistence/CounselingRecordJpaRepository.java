@@ -1,6 +1,6 @@
 package com.dearmi.backend.infrastructure.persistence;
 
-import com.dearmi.backend.domain.counseling.CounselingRecord;
+import com.dearmi.backend.domain.record.CounselingRecord;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

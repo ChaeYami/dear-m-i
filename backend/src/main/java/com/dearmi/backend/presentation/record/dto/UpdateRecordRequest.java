@@ -1,6 +1,6 @@
 package com.dearmi.backend.presentation.record.dto;
 
-import com.dearmi.backend.domain.counseling.RecordSections;
+import com.dearmi.backend.domain.record.RecordSections;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 

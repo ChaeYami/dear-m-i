@@ -1,4 +1,4 @@
-package com.dearmi.backend.domain.counseling;
+package com.dearmi.backend.domain.record;
 
 import java.time.LocalDateTime;
 import java.util.List;

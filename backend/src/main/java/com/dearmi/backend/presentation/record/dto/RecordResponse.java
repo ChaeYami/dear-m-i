@@ -1,7 +1,7 @@
 package com.dearmi.backend.presentation.record.dto;
 
 import com.dearmi.backend.application.record.dto.RecordResult;
-import com.dearmi.backend.domain.counseling.RecordSections;
+import com.dearmi.backend.domain.record.RecordSections;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

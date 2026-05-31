@@ -1,4 +1,4 @@
-package com.dearmi.backend.domain.counseling;
+package com.dearmi.backend.domain.record;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;

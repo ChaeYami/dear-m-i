@@ -2,8 +2,8 @@ package com.dearmi.backend.application.record.usecase;
 
 import com.dearmi.backend.application.record.dto.RecordSummaryResult;
 import com.dearmi.backend.application.record.dto.RecordTimelineResult;
-import com.dearmi.backend.domain.counseling.CounselingRecord;
-import com.dearmi.backend.domain.counseling.CounselingRecordRepository;
+import com.dearmi.backend.domain.record.CounselingRecord;
+import com.dearmi.backend.domain.record.CounselingRecordRepository;
 import com.dearmi.backend.domain.schedule.HospitalSchedule;
 import com.dearmi.backend.domain.schedule.HospitalScheduleRepository;
 import com.dearmi.backend.domain.subscription.SubscriptionRepository;

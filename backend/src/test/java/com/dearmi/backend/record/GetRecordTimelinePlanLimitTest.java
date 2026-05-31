@@ -2,7 +2,7 @@ package com.dearmi.backend.record;
 
 import com.dearmi.backend.application.record.dto.RecordTimelineResult;
 import com.dearmi.backend.application.record.usecase.GetRecordTimelineUseCaseImpl;
-import com.dearmi.backend.domain.counseling.CounselingRecordRepository;
+import com.dearmi.backend.domain.record.CounselingRecordRepository;
 import com.dearmi.backend.domain.subscription.Subscription;
 import com.dearmi.backend.domain.subscription.SubscriptionRepository;
 import org.junit.jupiter.api.DisplayName;

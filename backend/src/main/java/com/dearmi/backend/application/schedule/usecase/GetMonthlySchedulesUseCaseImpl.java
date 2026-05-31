@@ -1,7 +1,7 @@
 package com.dearmi.backend.application.schedule.usecase;
 
 import com.dearmi.backend.application.schedule.dto.ScheduleResult;
-import com.dearmi.backend.domain.counseling.CounselingRecordRepository;
+import com.dearmi.backend.domain.record.CounselingRecordRepository;
 import com.dearmi.backend.domain.schedule.HospitalSchedule;
 import com.dearmi.backend.domain.schedule.HospitalScheduleRepository;
 import lombok.RequiredArgsConstructor;

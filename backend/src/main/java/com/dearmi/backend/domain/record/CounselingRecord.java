@@ -1,4 +1,4 @@
-package com.dearmi.backend.domain.counseling;
+package com.dearmi.backend.domain.record;
 
 import com.dearmi.backend.common.entity.BaseTimeEntity;
 import com.dearmi.backend.common.converter.AesEncryptionConverter;

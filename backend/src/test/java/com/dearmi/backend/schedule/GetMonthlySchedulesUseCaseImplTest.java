@@ -2,7 +2,7 @@ package com.dearmi.backend.schedule;
 
 import com.dearmi.backend.application.schedule.dto.ScheduleResult;
 import com.dearmi.backend.application.schedule.usecase.GetMonthlySchedulesUseCaseImpl;
-import com.dearmi.backend.domain.counseling.CounselingRecordRepository;
+import com.dearmi.backend.domain.record.CounselingRecordRepository;
 import com.dearmi.backend.domain.schedule.HospitalSchedule;
 import com.dearmi.backend.domain.schedule.HospitalScheduleRepository;
 import org.junit.jupiter.api.DisplayName;

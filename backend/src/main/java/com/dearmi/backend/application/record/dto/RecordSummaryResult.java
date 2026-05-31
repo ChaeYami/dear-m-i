@@ -1,6 +1,6 @@
 package com.dearmi.backend.application.record.dto;
 
-import com.dearmi.backend.domain.counseling.CounselingRecord;
+import com.dearmi.backend.domain.record.CounselingRecord;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

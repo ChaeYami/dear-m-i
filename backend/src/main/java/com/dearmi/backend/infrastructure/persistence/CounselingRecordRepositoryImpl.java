@@ -1,8 +1,8 @@
 package com.dearmi.backend.infrastructure.persistence;
 
-import com.dearmi.backend.domain.counseling.CounselingRecord;
-import com.dearmi.backend.domain.counseling.CounselingRecordRepository;
-import com.dearmi.backend.domain.counseling.QCounselingRecord;
+import com.dearmi.backend.domain.record.CounselingRecord;
+import com.dearmi.backend.domain.record.CounselingRecordRepository;
+import com.dearmi.backend.domain.record.QCounselingRecord;
 import com.dearmi.backend.domain.schedule.QHospitalSchedule;
 import com.querydsl.core.types.dsl.DateTemplate;
 import com.querydsl.core.types.dsl.Expressions;
