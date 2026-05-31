@@ -1,4 +1,4 @@
-package com.dearmi.backend.domain.hospital;
+package com.dearmi.backend.domain.schedule;
 
 import com.dearmi.backend.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;

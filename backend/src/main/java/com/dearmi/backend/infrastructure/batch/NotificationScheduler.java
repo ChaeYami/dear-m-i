@@ -2,8 +2,8 @@ package com.dearmi.backend.infrastructure.batch;
 
 import com.dearmi.backend.application.notification.NotificationSender;
 import com.dearmi.backend.domain.checkin.DailyCheckinRepository;
-import com.dearmi.backend.domain.hospital.HospitalSchedule;
-import com.dearmi.backend.domain.hospital.HospitalScheduleRepository;
+import com.dearmi.backend.domain.schedule.HospitalSchedule;
+import com.dearmi.backend.domain.schedule.HospitalScheduleRepository;
 import com.dearmi.backend.domain.medication.MedicationSchedule;
 import com.dearmi.backend.domain.medication.MedicationScheduleRepository;
 import com.dearmi.backend.domain.medication.MedicationLogRepository;

@@ -2,9 +2,9 @@ package com.dearmi.backend.application.schedule.usecase;
 
 import com.dearmi.backend.application.schedule.dto.CreateScheduleCommand;
 import com.dearmi.backend.application.schedule.dto.ScheduleResult;
-import com.dearmi.backend.domain.hospital.HospitalSchedule;
-import com.dearmi.backend.domain.hospital.HospitalScheduleRepository;
-import com.dearmi.backend.domain.hospital.ScheduleStatus;
+import com.dearmi.backend.domain.schedule.HospitalSchedule;
+import com.dearmi.backend.domain.schedule.HospitalScheduleRepository;
+import com.dearmi.backend.domain.schedule.ScheduleStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

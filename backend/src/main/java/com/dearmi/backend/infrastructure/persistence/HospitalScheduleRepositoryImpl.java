@@ -1,8 +1,8 @@
 package com.dearmi.backend.infrastructure.persistence;
 
-import com.dearmi.backend.domain.hospital.HospitalSchedule;
-import com.dearmi.backend.domain.hospital.HospitalScheduleRepository;
-import com.dearmi.backend.domain.hospital.QHospitalSchedule;
+import com.dearmi.backend.domain.schedule.HospitalSchedule;
+import com.dearmi.backend.domain.schedule.HospitalScheduleRepository;
+import com.dearmi.backend.domain.schedule.QHospitalSchedule;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;

@@ -3,7 +3,7 @@ package com.dearmi.backend.infrastructure.persistence;
 import com.dearmi.backend.domain.counseling.CounselingRecord;
 import com.dearmi.backend.domain.counseling.CounselingRecordRepository;
 import com.dearmi.backend.domain.counseling.QCounselingRecord;
-import com.dearmi.backend.domain.hospital.QHospitalSchedule;
+import com.dearmi.backend.domain.schedule.QHospitalSchedule;
 import com.querydsl.core.types.dsl.DateTemplate;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;

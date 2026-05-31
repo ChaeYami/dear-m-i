@@ -4,8 +4,8 @@ import com.dearmi.backend.application.schedule.usecase.DeleteScheduleUseCaseImpl
 import com.dearmi.backend.common.exception.CustomException;
 import com.dearmi.backend.common.exception.ErrorCode;
 import com.dearmi.backend.domain.counseling.CounselingRecordRepository;
-import com.dearmi.backend.domain.hospital.HospitalSchedule;
-import com.dearmi.backend.domain.hospital.HospitalScheduleRepository;
+import com.dearmi.backend.domain.schedule.HospitalSchedule;
+import com.dearmi.backend.domain.schedule.HospitalScheduleRepository;
 import com.dearmi.backend.domain.notification.NotificationRepository;
 import com.dearmi.backend.domain.prepnote.PrepNoteRepository;
 import com.dearmi.backend.domain.prescription.PrescriptionRepository;

@@ -1,4 +1,4 @@
-package com.dearmi.backend.domain.hospital;
+package com.dearmi.backend.domain.schedule;
 
 public enum ScheduleStatus {
     SCHEDULED,

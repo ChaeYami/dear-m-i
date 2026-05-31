@@ -1,4 +1,4 @@
-package com.dearmi.backend.domain.hospital;
+package com.dearmi.backend.domain.schedule;
 
 import java.time.LocalDateTime;
 import java.util.List;

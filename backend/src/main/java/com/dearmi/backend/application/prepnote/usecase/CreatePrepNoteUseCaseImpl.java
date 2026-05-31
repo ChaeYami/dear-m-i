@@ -6,7 +6,7 @@ import com.dearmi.backend.common.exception.CustomException;
 import com.dearmi.backend.common.exception.ErrorCode;
 import com.dearmi.backend.domain.dailynote.DailyNote;
 import com.dearmi.backend.domain.dailynote.DailyNoteRepository;
-import com.dearmi.backend.domain.hospital.HospitalScheduleRepository;
+import com.dearmi.backend.domain.schedule.HospitalScheduleRepository;
 import com.dearmi.backend.domain.prepnote.PrepNote;
 import com.dearmi.backend.domain.prepnote.PrepNoteRepository;
 import com.dearmi.backend.domain.prepnote.PrepNoteSections;

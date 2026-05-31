@@ -1,6 +1,6 @@
 package com.dearmi.backend.infrastructure.persistence;
 
-import com.dearmi.backend.domain.hospital.HospitalSchedule;
+import com.dearmi.backend.domain.schedule.HospitalSchedule;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;
