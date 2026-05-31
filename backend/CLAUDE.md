@@ -32,6 +32,24 @@ Controller / UseCase 목록은 코드 직접 grep (스테일 방지).
 - **Presentation**: UseCase interface 만 주입. `@AuthenticatedUserId UUID userId` 로 인증된 사용자 ID 받음. Request DTO → Command 변환 후 호출.
 - **Infrastructure/external**: 외부 API 호출은 Client 클래스로 격리. UseCase 는 Port interface 통해서만 사용.
 - `common/converter` 는 domain 도 사용 가능 — Spring 의존성 없는 순수 변환 로직만 둘 것.
+- **패키지 명명 일관성**: 한 도메인은 `domain`/`application`/`presentation` 세 계층에서 **같은 패키지명**을 쓸 것 (예: `schedule`, `record`). 엔티티 클래스명은 디스크립티브하게 달라도 됨 (패키지 `schedule` + 엔티티 `HospitalSchedule` — `MedicationSchedule` 과 구분). DB 테이블명/라우트는 별개로 유지.
+
+## UseCase 분할 기준
+
+**기본값 = "쓰기(Command) 연산 1개 = UseCase 1개"** (다수파: auth/medication/prescription/schedule/notification). 단, 아래로 합치기/쪼개기 판정:
+
+- 다음 중 하나라도 해당 → **반드시 독립 UseCase**:
+  - 자기만의 트랜잭션 경계 (`@Async`, 별도 propagation, 멱등 처리 등)
+  - 이 연산에만 붙는 정책 애너테이션 (`@PlanRequired`, `@Audited`)
+  - Controller 외 호출자 존재 (Scheduler / Webhook / 다른 UseCase 가 재사용)
+  - impl 본문 ~50줄↑ 거나 외부 연동(OCR·IAP·S3) 포함
+- 위 어디에도 안 걸리는 **단순 CRUD** → 같은 aggregate 형제 연산과 한 인터페이스로 묶어도 됨 (예: `SideEffectUseCase`). 명사형 인터페이스명 허용.
+- **과거 자산 churn 금지**: 규칙은 신규 + 해당 파일 어차피 건드릴 때만 적용. 일관성 명분으로 동작 코드 대량 리네임 X.
+
+### `usecase/` vs `service/` 경계
+- `usecase/XxxUseCase(+Impl)` — **Controller 진입점 1:1**. Controller 가 직접 주입. `@Transactional` impl 에.
+- `service/XxxService` — **여러 UseCase 공유** 또는 **비동기/조합 로직** (예: `OcrProcessorService`, `DrugInfoCacheService`, `AutoCreateMedicationSchedulesService`). 호출자는 UseCase/Scheduler/다른 Service. 자체 트랜잭션 경계 가질 수 있음.
+- 판정: "Controller 가 직접 부르나?" → usecase / "UseCase 들이 공유하는 내부 협력자?" → service.
 
 ## DB
 - PK 모두 UUID, soft delete `deleted_at TIMESTAMP NULL`.
